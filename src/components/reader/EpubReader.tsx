@@ -85,6 +85,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     const progressRef = useRef<number>(0);
     const highlightIdsRef = useRef<Set<string>>(new Set());
     const [isReady, setIsReady] = useState(false);
+    const [isRenditionReady, setIsRenditionReady] = useState(false);
     const pendingHighlightsRef = useRef<Array<{ cfiRange: string; color: string; id: string }>>([]);
 
     // ---- Expose API via ref ----
@@ -161,6 +162,13 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
 
           // Display the book at initial location or beginning
           rendition.display(initialLocation || undefined);
+
+          // Mark rendition as ready once the first section is displayed,
+          // so highlights can be applied immediately without waiting for
+          // the expensive locations.generate() call.
+          rendition.once("displayed", () => {
+            setIsRenditionReady(true);
+          });
 
           // ---- Location change handler ----
           rendition.on(
@@ -260,6 +268,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       return () => {
         cancelled = true;
         setIsReady(false);
+        setIsRenditionReady(false);
         highlightIdsRef.current.clear();
         highlightMapRef.current.clear();
         pendingHighlightsRef.current = [];
@@ -294,7 +303,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     // epubjs loses SVG annotations when re-rendering a section (chapter switch).
     const applyHighlights = useCallback(() => {
       const rendition = renditionRef.current;
-      if (!rendition || !isReady) return;
+      if (!rendition || !isRenditionReady) return;
 
       const currentHighlights = pendingHighlightsRef.current;
 
@@ -328,7 +337,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
           // CFI may not be in current section – this is expected
         }
       });
-    }, [isReady]);
+    }, [isRenditionReady]);
 
     // Update pending highlights when props change (including when cleared)
     useEffect(() => {
@@ -336,12 +345,12 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       applyHighlights();
     }, [highlights, applyHighlights]);
 
-    // Apply highlights when ready state changes
+    // Apply highlights when rendition becomes ready
     useEffect(() => {
-      if (isReady) {
+      if (isRenditionReady) {
         applyHighlights();
       }
-    }, [isReady, applyHighlights]);
+    }, [isRenditionReady, applyHighlights]);
 
     // Re-apply highlights after each section is rendered
     useEffect(() => {
@@ -349,10 +358,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       if (!rendition) return;
 
       const handleDisplayed = () => {
-        // Small delay to ensure content is fully rendered
-        setTimeout(() => {
-          applyHighlights();
-        }, 100);
+        applyHighlights();
       };
 
       rendition.on("displayed", handleDisplayed);

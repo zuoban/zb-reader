@@ -377,6 +377,11 @@ function ReaderContent() {
       const { cfiRange, text } = selectionMenu;
       if (!cfiRange) return;
 
+      // Optimistically add highlight immediately for instant visual feedback
+      const tempId = `temp-${Date.now()}`;
+      setHighlights((prev) => [...prev, { cfiRange, color, id: tempId }]);
+      setSelectionMenu((prev) => ({ ...prev, visible: false }));
+
       try {
         const res = await fetch("/api/notes", {
           method: "POST",
@@ -393,13 +398,19 @@ function ReaderContent() {
         const data = await res.json();
         if (res.ok) {
           setNotes((prev) => [data.note, ...prev]);
+          // Replace temp highlight with real id
+          setHighlights((prev) =>
+            prev.map((h) => (h.id === tempId ? { ...h, id: data.note.id } : h))
+          );
           toast.success("已添加高亮");
+        } else {
+          // Remove optimistic highlight on failure
+          setHighlights((prev) => prev.filter((h) => h.id !== tempId));
         }
       } catch {
+        setHighlights((prev) => prev.filter((h) => h.id !== tempId));
         toast.error("操作失败");
       }
-
-      setSelectionMenu((prev) => ({ ...prev, visible: false }));
     },
     [selectionMenu, bookId, currentPage]
   );
@@ -422,7 +433,12 @@ function ReaderContent() {
   const handleSaveNote = useCallback(
     async (content: string, color: string) => {
       if (noteEditor.editingId) {
-        // Edit existing note
+        // Edit existing note — optimistically update highlight color
+        setHighlights((prev) =>
+          prev.map((h) =>
+            h.id === noteEditor.editingId ? { ...h, color } : h
+          )
+        );
         try {
           await fetch(`/api/notes/${noteEditor.editingId}`, {
             method: "PUT",
@@ -439,7 +455,14 @@ function ReaderContent() {
           toast.error("更新失败");
         }
       } else {
-        // Create new note
+        // Create new note — optimistic highlight
+        const tempId = `temp-${Date.now()}`;
+        if (noteEditor.cfiRange) {
+          setHighlights((prev) => [
+            ...prev,
+            { cfiRange: noteEditor.cfiRange, color, id: tempId },
+          ]);
+        }
         try {
           const res = await fetch("/api/notes", {
             method: "POST",
@@ -457,9 +480,17 @@ function ReaderContent() {
           const data = await res.json();
           if (res.ok) {
             setNotes((prev) => [data.note, ...prev]);
+            setHighlights((prev) =>
+              prev.map((h) =>
+                h.id === tempId ? { ...h, id: data.note.id } : h
+              )
+            );
             toast.success("已添加笔记");
+          } else {
+            setHighlights((prev) => prev.filter((h) => h.id !== tempId));
           }
         } catch {
+          setHighlights((prev) => prev.filter((h) => h.id !== tempId));
           toast.error("操作失败");
         }
       }
