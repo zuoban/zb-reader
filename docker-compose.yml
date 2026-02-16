@@ -1,0 +1,11 @@
+services:
+  zb-reader:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - NEXTAUTH_SECRET=your-secret-key-change-this
+      - NEXTAUTH_URL=http://localhost:3000
+    restart: unless-stopped
