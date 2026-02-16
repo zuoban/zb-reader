@@ -232,15 +232,28 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
             // inside the epubjs iframe may not be a standard DOM element
             const container = viewerRef.current;
             if (!container) return;
+
+            // Check if user clicked a link - let default behavior handle navigation
+            if (e.target && (e.target as Element).closest("a")) {
+              return;
+            }
+
             const rect = container.getBoundingClientRect();
-            const relX = e.clientX - rect.left;
+
+            // Check if the event source is the iframe window
+            const isIframe = e.view && e.view !== window;
+            // If iframe, clientX is relative to the iframe viewport, so we don't subtract rect.left
+            const relX = isIframe ? e.clientX : e.clientX - rect.left;
 
             if (relX < rect.width * 0.3) {
+              // e.preventDefault(); // Commenting out to avoid passive listener issues
               rendition.prev();
             } else if (relX > rect.width * 0.7) {
+              // e.preventDefault(); // Commenting out to avoid passive listener issues
               rendition.next();
             } else {
               // Center area click — toggle toolbar
+              // e.preventDefault(); // Commenting out to avoid passive listener issues
               onCenterClick?.();
             }
           });
@@ -384,6 +397,12 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     const handleKeyDown = useCallback((e: KeyboardEvent) => {
       const rendition = renditionRef.current;
       if (!rendition) return;
+
+      // Only handle if arrow keys and not inside an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
       if (e.key === "ArrowLeft") {
         rendition.prev();
       } else if (e.key === "ArrowRight") {
@@ -404,6 +423,11 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       if (!rendition) return;
 
       const onKeyDown = (e: KeyboardEvent) => {
+        // Only handle if arrow keys and not inside an input
+        if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+          return;
+        }
+
         if (e.key === "ArrowLeft") {
           rendition.prev();
         } else if (e.key === "ArrowRight") {
