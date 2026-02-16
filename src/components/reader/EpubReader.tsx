@@ -1,0 +1,413 @@
+"use client";
+
+import {
+  useRef,
+  useEffect,
+  useCallback,
+  forwardRef,
+  useImperativeHandle,
+  useState,
+} from "react";
+import ePub, { Book, Rendition } from "epubjs";
+
+interface EpubReaderProps {
+  url: string;
+  initialLocation?: string;
+  fontSize?: number;
+  theme?: "light" | "dark" | "sepia";
+  onLocationChange?: (location: {
+    cfi: string;
+    progress: number;
+    currentPage?: number;
+    totalPages?: number;
+    href?: string;
+  }) => void;
+  onTocLoaded?: (toc: { label: string; href: string; id?: string }[]) => void;
+  onTextSelected?: (cfiRange: string, text: string) => void;
+  onReady?: () => void;
+  onCenterClick?: () => void;
+  highlights?: Array<{ cfiRange: string; color: string; id: string }>;
+}
+
+export interface EpubReaderRef {
+  goToLocation: (cfi: string) => void;
+  goToHref: (href: string) => void;
+  nextPage: () => void;
+  prevPage: () => void;
+  getCurrentLocation: () => string | null;
+  getProgress: () => number;
+}
+
+const THEME_STYLES: Record<
+  NonNullable<EpubReaderProps["theme"]>,
+  { body: Record<string, string> }
+> = {
+  light: {
+    body: {
+      background: "#ffffff",
+      color: "#000000",
+    },
+  },
+  dark: {
+    body: {
+      background: "#1a1a2e",
+      color: "#eeeeee",
+    },
+  },
+  sepia: {
+    body: {
+      background: "#f4ecd8",
+      color: "#5b4636",
+    },
+  },
+};
+
+const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
+  (
+    {
+      url,
+      initialLocation,
+      fontSize = 16,
+      theme = "light",
+      onLocationChange,
+      onTocLoaded,
+      onTextSelected,
+      onReady,
+      onCenterClick,
+      highlights,
+    },
+    ref
+  ) => {
+    const viewerRef = useRef<HTMLDivElement>(null);
+    const bookRef = useRef<Book | null>(null);
+    const renditionRef = useRef<Rendition | null>(null);
+    const currentLocationRef = useRef<string | null>(null);
+    const progressRef = useRef<number>(0);
+    const highlightIdsRef = useRef<Set<string>>(new Set());
+    const [isReady, setIsReady] = useState(false);
+    const pendingHighlightsRef = useRef<Array<{ cfiRange: string; color: string; id: string }>>([]);
+
+    // ---- Expose API via ref ----
+    useImperativeHandle(ref, () => ({
+      goToLocation(cfi: string) {
+        renditionRef.current?.display(cfi);
+      },
+      goToHref(href: string) {
+        renditionRef.current?.display(href);
+      },
+      nextPage() {
+        renditionRef.current?.next();
+      },
+      prevPage() {
+        renditionRef.current?.prev();
+      },
+      getCurrentLocation() {
+        return currentLocationRef.current;
+      },
+      getProgress() {
+        return progressRef.current;
+      },
+    }));
+
+    // ---- Initialize book & rendition ----
+    useEffect(() => {
+      if (!viewerRef.current) return;
+
+      let cancelled = false;
+      let book: Book | null = null;
+
+      // Fetch the EPUB as ArrayBuffer first, then pass to epubjs
+      // This prevents epubjs from treating the URL as a directory base path
+      async function init() {
+        try {
+          const response = await fetch(url);
+          if (!response.ok) throw new Error("Failed to fetch EPUB file");
+          const arrayBuffer = await response.arrayBuffer();
+
+          if (cancelled || !viewerRef.current) return;
+
+          book = ePub(arrayBuffer as unknown as string);
+          bookRef.current = book;
+
+          // Strip file:// references BEFORE content is injected into iframe
+          // Some EPUBs (e.g. from Kindle) contain file:///mnt/us/... font paths
+          // that browsers block. We intercept the serialized HTML string and
+          // remove all url() values pointing to file:// resources.
+          book.spine.hooks.serialize.register(
+            (output: string, section: { output: string }) => {
+              section.output = output.replace(
+                /url\s*\(\s*["']?file:\/\/[^)"']+["']?\s*\)/gi,
+                'url("data:application/x-empty,")'
+              );
+            }
+          );
+
+          const rendition = book.renderTo(viewerRef.current, {
+            width: "100%",
+            height: "100%",
+            spread: "none",
+            allowScriptedContent: true,
+          });
+          renditionRef.current = rendition;
+
+          // Register all themes
+          Object.entries(THEME_STYLES).forEach(([name, styles]) => {
+            rendition.themes.register(name, styles);
+          });
+
+          // Apply initial theme and font size
+          rendition.themes.select(theme);
+          rendition.themes.override("font-size", `${fontSize}px`);
+
+          // Display the book at initial location or beginning
+          rendition.display(initialLocation || undefined);
+
+          // ---- Location change handler ----
+          rendition.on(
+            "relocated",
+            (location: {
+              start: {
+                cfi: string;
+                percentage: number;
+                displayed: { page: number; total: number };
+                href: string;
+              };
+            }) => {
+              const cfi = location.start.cfi;
+              const progress = location.start.percentage ?? 0;
+              currentLocationRef.current = cfi;
+              progressRef.current = progress;
+
+              onLocationChange?.({
+                cfi,
+                progress,
+                currentPage: location.start.displayed?.page,
+                totalPages: location.start.displayed?.total,
+                href: location.start.href,
+              });
+            }
+          );
+
+          // ---- Text selection handler ----
+          rendition.on(
+            "selected",
+            (cfiRange: string, contents: { window: Window }) => {
+              if (!onTextSelected) return;
+              book!.getRange(cfiRange).then((range: Range) => {
+                const text = range.toString();
+                if (text.length > 0) {
+                  onTextSelected(cfiRange, text);
+                }
+              });
+            }
+          );
+
+          // ---- Click-based page navigation + center click ----
+          rendition.on("click", (e: MouseEvent) => {
+            // Ignore clicks while selecting text
+            const selection = (e.view as Window)?.getSelection();
+            if (selection && selection.toString().length > 0) return;
+
+            // Use the viewer container for dimensions since e.currentTarget
+            // inside the epubjs iframe may not be a standard DOM element
+            const container = viewerRef.current;
+            if (!container) return;
+            const rect = container.getBoundingClientRect();
+            const relX = e.clientX - rect.left;
+
+            if (relX < rect.width * 0.3) {
+              rendition.prev();
+            } else if (relX > rect.width * 0.7) {
+              rendition.next();
+            } else {
+              // Center area click — toggle toolbar
+              onCenterClick?.();
+            }
+          });
+
+          // ---- TOC parsing (with nested subitems support) ----
+          book.loaded.navigation.then((nav) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            function parseTocItems(items: any[]): { label: string; href: string; id?: string; subitems?: { label: string; href: string; id?: string; subitems?: any[] }[] }[] {
+              return items.map((item) => ({
+                label: item.label.trim(),
+                href: item.href,
+                id: item.id || undefined,
+                ...(item.subitems && item.subitems.length > 0
+                  ? { subitems: parseTocItems(item.subitems) }
+                  : {}),
+              }));
+            }
+            onTocLoaded?.(parseTocItems(nav.toc));
+          });
+
+          // ---- Ready callback ----
+          book.ready.then(() => {
+            // Generate locations for progress tracking
+            book!.locations.generate(1024).then(() => {
+              setIsReady(true);
+              onReady?.();
+            });
+          });
+        } catch (error) {
+          console.error("Failed to load EPUB:", error);
+        }
+      }
+
+      init();
+
+      // ---- Cleanup ----
+      return () => {
+        cancelled = true;
+        setIsReady(false);
+        highlightIdsRef.current.clear();
+        highlightMapRef.current.clear();
+        pendingHighlightsRef.current = [];
+        renditionRef.current = null;
+        bookRef.current = null;
+        if (book) book.destroy();
+      };
+      // Only re-init when the url changes
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [url]);
+
+    // ---- Theme updates ----
+    useEffect(() => {
+      const rendition = renditionRef.current;
+      if (!rendition) return;
+      rendition.themes.select(theme);
+    }, [theme]);
+
+    // ---- Font size updates ----
+    useEffect(() => {
+      const rendition = renditionRef.current;
+      if (!rendition) return;
+      rendition.themes.override("font-size", `${fontSize}px`);
+    }, [fontSize]);
+
+    // ---- Highlights ----
+    // We store a map of id -> cfiRange so we can remove by cfiRange (which is
+    // what epubjs annotations.remove() actually requires).
+    const highlightMapRef = useRef<Map<string, string>>(new Map());
+
+    // Apply highlights function – always re-applies all highlights because
+    // epubjs loses SVG annotations when re-rendering a section (chapter switch).
+    const applyHighlights = useCallback(() => {
+      const rendition = renditionRef.current;
+      if (!rendition || !isReady) return;
+
+      const currentHighlights = pendingHighlightsRef.current;
+
+      // Remove all previously applied highlights first – epubjs requires the
+      // cfiRange (not a custom id) as the first argument to annotations.remove().
+      highlightMapRef.current.forEach((cfiRange, _id) => {
+        try {
+          rendition.annotations.remove(cfiRange, "highlight");
+        } catch {
+          // ignore – may already be gone after section switch
+        }
+      });
+      highlightMapRef.current.clear();
+      highlightIdsRef.current.clear();
+
+      if (!currentHighlights || currentHighlights.length === 0) return;
+
+      // Add all highlights fresh
+      currentHighlights.forEach((h) => {
+        try {
+          rendition.annotations.highlight(
+            h.cfiRange,
+            { id: h.id },
+            undefined,
+            undefined,
+            { fill: h.color, "fill-opacity": "0.3" }
+          );
+          highlightIdsRef.current.add(h.id);
+          highlightMapRef.current.set(h.id, h.cfiRange);
+        } catch {
+          // CFI may not be in current section – this is expected
+        }
+      });
+    }, [isReady]);
+
+    // Update pending highlights when props change (including when cleared)
+    useEffect(() => {
+      pendingHighlightsRef.current = highlights || [];
+      applyHighlights();
+    }, [highlights, applyHighlights]);
+
+    // Apply highlights when ready state changes
+    useEffect(() => {
+      if (isReady) {
+        applyHighlights();
+      }
+    }, [isReady, applyHighlights]);
+
+    // Re-apply highlights after each section is rendered
+    useEffect(() => {
+      const rendition = renditionRef.current;
+      if (!rendition) return;
+
+      const handleDisplayed = () => {
+        // Small delay to ensure content is fully rendered
+        setTimeout(() => {
+          applyHighlights();
+        }, 100);
+      };
+
+      rendition.on("displayed", handleDisplayed);
+
+      return () => {
+        rendition.off("displayed", handleDisplayed);
+      };
+    }, [applyHighlights]);
+
+    // ---- Keyboard navigation ----
+    const handleKeyDown = useCallback((e: KeyboardEvent) => {
+      const rendition = renditionRef.current;
+      if (!rendition) return;
+      if (e.key === "ArrowLeft") {
+        rendition.prev();
+      } else if (e.key === "ArrowRight") {
+        rendition.next();
+      }
+    }, []);
+
+    useEffect(() => {
+      document.addEventListener("keydown", handleKeyDown);
+      return () => {
+        document.removeEventListener("keydown", handleKeyDown);
+      };
+    }, [handleKeyDown]);
+
+    // Also bind keyboard events inside the rendition iframe
+    useEffect(() => {
+      const rendition = renditionRef.current;
+      if (!rendition) return;
+
+      const onKeyDown = (e: KeyboardEvent) => {
+        if (e.key === "ArrowLeft") {
+          rendition.prev();
+        } else if (e.key === "ArrowRight") {
+          rendition.next();
+        }
+      };
+
+      rendition.on("keydown", onKeyDown);
+
+      return () => {
+        rendition.off("keydown", onKeyDown);
+      };
+    }, [url]);
+
+    return (
+      <div className="relative h-full w-full">
+        <div ref={viewerRef} id="epub-viewer" className="h-full w-full" />
+      </div>
+    );
+  }
+);
+
+EpubReader.displayName = "EpubReader";
+
+export default EpubReader;
