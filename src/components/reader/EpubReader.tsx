@@ -26,6 +26,7 @@ interface EpubReaderProps {
   onTextSelected?: (cfiRange: string, text: string) => void;
   onReady?: () => void;
   onCenterClick?: () => void;
+  toolbarVisible?: boolean;
   highlights?: Array<{ cfiRange: string; color: string; id: string }>;
 }
 
@@ -74,6 +75,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       onTextSelected,
       onReady,
       onCenterClick,
+      toolbarVisible,
       highlights,
     },
     ref
@@ -87,6 +89,12 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     const [isReady, setIsReady] = useState(false);
     const [isRenditionReady, setIsRenditionReady] = useState(false);
     const pendingHighlightsRef = useRef<Array<{ cfiRange: string; color: string; id: string }>>([]);
+    const toolbarVisibleRef = useRef(toolbarVisible);
+
+    // Keep ref in sync with prop so the iframe click handler can read the latest value
+    useEffect(() => {
+      toolbarVisibleRef.current = toolbarVisible;
+    }, [toolbarVisible]);
 
     // ---- Expose API via ref ----
     useImperativeHandle(ref, () => ({
@@ -215,6 +223,10 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
             // Ignore clicks while selecting text
             const selection = (e.view as Window)?.getSelection();
             if (selection && selection.toString().length > 0) return;
+
+            // When toolbar (and its overlay) is visible, ignore iframe
+            // clicks entirely — the overlay on top handles dismissal.
+            if (toolbarVisibleRef.current) return;
 
             // Use the viewer container for dimensions since e.currentTarget
             // inside the epubjs iframe may not be a standard DOM element
@@ -409,6 +421,15 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     return (
       <div className="relative h-full w-full">
         <div ref={viewerRef} id="epub-viewer" className="h-full w-full" />
+        {/* When toolbar is visible, cover the iframe to intercept all clicks.
+            The iframe has its own event system that ignores DOM z-index,
+            so we must block pointer events from ever reaching it. */}
+        {toolbarVisible && (
+          <div
+            className="absolute inset-0 z-10"
+            onClick={() => onCenterClick?.()}
+          />
+        )}
       </div>
     );
   }

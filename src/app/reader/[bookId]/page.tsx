@@ -11,7 +11,7 @@ import { SidePanel } from "@/components/reader/SidePanel";
 import { ReadingSettings } from "@/components/reader/ReadingSettings";
 import { TextSelectionMenu } from "@/components/reader/TextSelectionMenu";
 import { NoteEditor } from "@/components/reader/NoteEditor";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, Menu } from "lucide-react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import type { EpubReaderRef } from "@/components/reader/EpubReader";
@@ -605,6 +605,7 @@ function ReaderContent() {
             onTocLoaded={handleTocLoaded}
             onTextSelected={handleTextSelected}
             onCenterClick={handleToggleToolbar}
+            toolbarVisible={toolbarVisible}
             highlights={highlights}
           />
         )}
@@ -653,6 +654,51 @@ function ReaderContent() {
           </div>
         )}
       </div>
+
+      {/* Tap zone hints overlay — shown when toolbar is visible.
+           This is purely visual; click interception is handled by a
+           transparent div inside EpubReader that sits above the iframe. */}
+      {toolbarVisible && (
+        <div
+          className="fixed inset-0 z-40 pointer-events-none bg-black/40 backdrop-blur-[2px] transition-opacity duration-300"
+          style={{ top: 56, bottom: 64 }}
+        >
+          {book.format === "epub" ? (
+            /* EPUB: three tap zones */
+            <div className="flex h-full w-full">
+              {/* Left zone: previous page */}
+              <div className="flex items-center justify-center w-[30%] border-r border-dashed border-white/25">
+                <div className="flex flex-col items-center gap-2 text-white/80">
+                  <ChevronLeft className="size-8" />
+                  <span className="text-sm font-medium">上一页</span>
+                </div>
+              </div>
+              {/* Center zone: toggle menu */}
+              <div className="flex items-center justify-center w-[40%]">
+                <div className="flex flex-col items-center gap-2 text-white/80">
+                  <Menu className="size-8" />
+                  <span className="text-sm font-medium">显示/隐藏菜单</span>
+                </div>
+              </div>
+              {/* Right zone: next page */}
+              <div className="flex items-center justify-center w-[30%] border-l border-dashed border-white/25">
+                <div className="flex flex-col items-center gap-2 text-white/80">
+                  <ChevronRight className="size-8" />
+                  <span className="text-sm font-medium">下一页</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* PDF / TXT: single tap zone */
+            <div className="flex items-center justify-center h-full w-full">
+              <div className="flex flex-col items-center gap-2 text-white/80">
+                <Menu className="size-8" />
+                <span className="text-sm font-medium">点击任意位置 显示/隐藏菜单</span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Toolbar */}
       <ReaderToolbar
