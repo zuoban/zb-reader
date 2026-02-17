@@ -66,6 +66,8 @@ const TxtReader = dynamic<{
 
 const DEFAULT_LEGADO_PRELOAD_COUNT = 3;
 const DEFAULT_MICROSOFT_PRELOAD_COUNT = 3;
+const MAX_TTS_RETRY_COUNT = 5;
+const TTS_RETRY_DELAY_MS = 450;
 
 interface TocItem {
   label: string;
@@ -165,6 +167,12 @@ function ReaderContent() {
   const [activeTtsParagraph, setActiveTtsParagraph] = useState("");
   const currentParagraphIndexRef = useRef(0);
   const allParagraphsRef = useRef<string[]>([]);
+
+  const wait = useCallback((ms: number) => {
+    return new Promise<void>((resolve) => {
+      setTimeout(resolve, ms);
+    });
+  }, []);
 
   // ---- Load book data ----
   useEffect(() => {
@@ -900,60 +908,92 @@ function ReaderContent() {
 
         ensurePreloadWindow(i + 1);
 
-        const objectUrl = await (
-          preparedTaskMap.get(i) ?? requestMicrosoftSpeech(paragraph)
-        ).catch(() => {
-          if (ttsSessionRef.current === sessionId) {
-            setActiveTtsParagraph("");
-            setIsSpeaking(false);
-            toast.error("朗读失败");
-          }
-          throw new Error("speech_failed");
-        });
+        let paragraphSucceeded = false;
 
-        await new Promise<void>((resolve, reject) => {
+        for (let attempt = 1; attempt <= MAX_TTS_RETRY_COUNT; attempt += 1) {
           if (ttsSessionRef.current !== sessionId) {
-            URL.revokeObjectURL(objectUrl);
-            resolve();
             return;
           }
 
-          const audio = new Audio(objectUrl);
-          currentAudioRef.current = audio;
+          let objectUrl: string | null = null;
 
-          audio.ontimeupdate = () => {
-            if (!Number.isFinite(audio.duration) || audio.duration <= 0) return;
-            setTtsPlaybackProgress(
-              Math.min(1, Math.max(0, audio.currentTime / audio.duration))
+          try {
+            objectUrl = await (
+              attempt === 1
+                ? preparedTaskMap.get(i) ?? requestMicrosoftSpeech(paragraph)
+                : requestMicrosoftSpeech(paragraph)
             );
-          };
 
-          audio.onended = () => {
-            URL.revokeObjectURL(objectUrl);
-            currentAudioRef.current = null;
-            setTtsPlaybackProgress(1);
-            resolve();
-          };
+            await new Promise<void>((resolve, reject) => {
+              if (ttsSessionRef.current !== sessionId) {
+                resolve();
+                return;
+              }
 
-          audio.onerror = () => {
-            URL.revokeObjectURL(objectUrl);
-            currentAudioRef.current = null;
-            reject(new Error("audio_play_error"));
-          };
+              const audio = new Audio(objectUrl as string);
+              currentAudioRef.current = audio;
+              let cleaned = false;
 
-          audio.play().catch(() => {
-            URL.revokeObjectURL(objectUrl);
+              const cleanup = () => {
+                if (cleaned) return;
+                cleaned = true;
+                if (objectUrl) {
+                  URL.revokeObjectURL(objectUrl);
+                  objectUrl = null;
+                }
+                currentAudioRef.current = null;
+              };
+
+              audio.ontimeupdate = () => {
+                if (!Number.isFinite(audio.duration) || audio.duration <= 0) return;
+                setTtsPlaybackProgress(
+                  Math.min(1, Math.max(0, audio.currentTime / audio.duration))
+                );
+              };
+
+              audio.onended = () => {
+                cleanup();
+                setTtsPlaybackProgress(1);
+                resolve();
+              };
+
+              audio.onerror = () => {
+                cleanup();
+                reject(new Error("audio_play_error"));
+              };
+
+              audio.play().catch(() => {
+                cleanup();
+                reject(new Error("audio_play_error"));
+              });
+            });
+
+            paragraphSucceeded = true;
+            break;
+          } catch {
+            if (objectUrl) {
+              URL.revokeObjectURL(objectUrl);
+            }
             currentAudioRef.current = null;
-            reject(new Error("audio_play_error"));
-          });
-        }).catch(() => {
+
+            if (attempt < MAX_TTS_RETRY_COUNT) {
+              if (ttsSessionRef.current === sessionId) {
+                toast(`朗读失败，正在重试（${attempt + 1}/${MAX_TTS_RETRY_COUNT}）`);
+              }
+              // eslint-disable-next-line no-await-in-loop
+              await wait(TTS_RETRY_DELAY_MS);
+            }
+          }
+        }
+
+        if (!paragraphSucceeded) {
           if (ttsSessionRef.current === sessionId) {
             setActiveTtsParagraph("");
             setIsSpeaking(false);
-            toast.error("朗读失败");
+            toast.error(`朗读失败，已重试${MAX_TTS_RETRY_COUNT}次`);
           }
           throw new Error("speech_failed");
-        });
+        }
       }
 
       for (const [, task] of preparedTaskMap) {
@@ -971,7 +1011,7 @@ function ReaderContent() {
         setIsSpeaking(false);
       }
     },
-    [microsoftPreloadCount, requestMicrosoftSpeech]
+    [microsoftPreloadCount, requestMicrosoftSpeech, wait]
   );
 
   type PreparedLegadoSpeech =
@@ -1118,27 +1158,39 @@ function ReaderContent() {
         const currentPreparedPromise =
           preparedTaskMap.get(index) ?? requestLegadoSpeech(paragraph);
 
-        let prepared: PreparedLegadoSpeech;
-        try {
-          // eslint-disable-next-line no-await-in-loop
-          prepared = await currentPreparedPromise;
-        } catch {
-          if (ttsSessionRef.current === sessionId) {
-            setActiveTtsParagraph("");
-            setIsSpeaking(false);
-            toast.error("朗读失败");
+        let paragraphSucceeded = false;
+
+        for (let attempt = 1; attempt <= MAX_TTS_RETRY_COUNT; attempt += 1) {
+          if (ttsSessionRef.current !== sessionId) {
+            return;
           }
-          return;
+
+          try {
+            const prepared =
+              // eslint-disable-next-line no-await-in-loop
+              await (attempt === 1
+                ? currentPreparedPromise
+                : requestLegadoSpeech(paragraph));
+            // eslint-disable-next-line no-await-in-loop
+            await playLegadoPreparedSpeech(prepared, paragraph, sessionId);
+            paragraphSucceeded = true;
+            break;
+          } catch {
+            if (attempt < MAX_TTS_RETRY_COUNT) {
+              if (ttsSessionRef.current === sessionId) {
+                toast(`朗读失败，正在重试（${attempt + 1}/${MAX_TTS_RETRY_COUNT}）`);
+              }
+              // eslint-disable-next-line no-await-in-loop
+              await wait(TTS_RETRY_DELAY_MS);
+            }
+          }
         }
 
-        try {
-          // eslint-disable-next-line no-await-in-loop
-          await playLegadoPreparedSpeech(prepared, paragraph, sessionId);
-        } catch {
+        if (!paragraphSucceeded) {
           if (ttsSessionRef.current === sessionId) {
             setActiveTtsParagraph("");
             setIsSpeaking(false);
-            toast.error("音频播放失败");
+            toast.error(`朗读失败，已重试${MAX_TTS_RETRY_COUNT}次`);
           }
           return;
         }
@@ -1154,6 +1206,7 @@ function ReaderContent() {
       playLegadoPreparedSpeech,
       requestLegadoSpeech,
       selectedLegadoConfigId,
+      wait,
     ]
   );
 
