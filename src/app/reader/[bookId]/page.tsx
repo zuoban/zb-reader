@@ -174,6 +174,11 @@ function ReaderContent() {
     });
   }, []);
 
+  const isRetryableTtsError = useCallback((error: unknown) => {
+    if (!(error instanceof Error)) return true;
+    return error.message !== "audio_play_error";
+  }, []);
+
   // ---- Load book data ----
   useEffect(() => {
     async function loadBook() {
@@ -909,6 +914,7 @@ function ReaderContent() {
         ensurePreloadWindow(i + 1);
 
         let paragraphSucceeded = false;
+        let lastError: unknown = null;
 
         for (let attempt = 1; attempt <= MAX_TTS_RETRY_COUNT; attempt += 1) {
           if (ttsSessionRef.current !== sessionId) {
@@ -970,19 +976,25 @@ function ReaderContent() {
 
             paragraphSucceeded = true;
             break;
-          } catch {
+          } catch (error) {
+            lastError = error;
             if (objectUrl) {
               URL.revokeObjectURL(objectUrl);
             }
             currentAudioRef.current = null;
 
-            if (attempt < MAX_TTS_RETRY_COUNT) {
+            const canRetry = isRetryableTtsError(error);
+
+            if (attempt < MAX_TTS_RETRY_COUNT && canRetry) {
               if (ttsSessionRef.current === sessionId) {
                 toast(`朗读失败，正在重试（${attempt + 1}/${MAX_TTS_RETRY_COUNT}）`);
               }
               // eslint-disable-next-line no-await-in-loop
               await wait(TTS_RETRY_DELAY_MS);
+              continue;
             }
+
+            break;
           }
         }
 
@@ -990,7 +1002,11 @@ function ReaderContent() {
           if (ttsSessionRef.current === sessionId) {
             setActiveTtsParagraph("");
             setIsSpeaking(false);
-            toast.error(`朗读失败，已重试${MAX_TTS_RETRY_COUNT}次`);
+            if (!isRetryableTtsError(lastError)) {
+              toast.error("音频播放失败，请检查浏览器自动播放权限");
+            } else {
+              toast.error(`朗读失败，已重试${MAX_TTS_RETRY_COUNT}次`);
+            }
           }
           throw new Error("speech_failed");
         }
@@ -1011,7 +1027,7 @@ function ReaderContent() {
         setIsSpeaking(false);
       }
     },
-    [microsoftPreloadCount, requestMicrosoftSpeech, wait]
+    [isRetryableTtsError, microsoftPreloadCount, requestMicrosoftSpeech, wait]
   );
 
   type PreparedLegadoSpeech =
@@ -1159,6 +1175,7 @@ function ReaderContent() {
           preparedTaskMap.get(index) ?? requestLegadoSpeech(paragraph);
 
         let paragraphSucceeded = false;
+        let lastError: unknown = null;
 
         for (let attempt = 1; attempt <= MAX_TTS_RETRY_COUNT; attempt += 1) {
           if (ttsSessionRef.current !== sessionId) {
@@ -1175,14 +1192,20 @@ function ReaderContent() {
             await playLegadoPreparedSpeech(prepared, paragraph, sessionId);
             paragraphSucceeded = true;
             break;
-          } catch {
-            if (attempt < MAX_TTS_RETRY_COUNT) {
+          } catch (error) {
+            lastError = error;
+            const canRetry = isRetryableTtsError(error);
+
+            if (attempt < MAX_TTS_RETRY_COUNT && canRetry) {
               if (ttsSessionRef.current === sessionId) {
                 toast(`朗读失败，正在重试（${attempt + 1}/${MAX_TTS_RETRY_COUNT}）`);
               }
               // eslint-disable-next-line no-await-in-loop
               await wait(TTS_RETRY_DELAY_MS);
+              continue;
             }
+
+            break;
           }
         }
 
@@ -1190,7 +1213,11 @@ function ReaderContent() {
           if (ttsSessionRef.current === sessionId) {
             setActiveTtsParagraph("");
             setIsSpeaking(false);
-            toast.error(`朗读失败，已重试${MAX_TTS_RETRY_COUNT}次`);
+            if (!isRetryableTtsError(lastError)) {
+              toast.error("音频播放失败，请检查浏览器自动播放权限");
+            } else {
+              toast.error(`朗读失败，已重试${MAX_TTS_RETRY_COUNT}次`);
+            }
           }
           return;
         }
@@ -1207,6 +1234,7 @@ function ReaderContent() {
       requestLegadoSpeech,
       selectedLegadoConfigId,
       wait,
+      isRetryableTtsError,
     ]
   );
 
