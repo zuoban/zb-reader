@@ -27,8 +27,10 @@ interface EpubReaderProps {
   onReady?: () => void;
   onCenterClick?: () => void;
   toolbarVisible?: boolean;
+  disableTouchNavigation?: boolean;
   highlights?: Array<{ cfiRange: string; color: string; id: string }>;
   activeTtsParagraph?: string;
+  ttsPlaybackProgress?: number;
   ttsImmersiveMode?: boolean;
 }
 
@@ -67,6 +69,9 @@ const THEME_STYLES: Record<
   },
 };
 
+const TELEPROMPTER_FOLLOW_FACTOR = 0.16;
+const TELEPROMPTER_VIEWPORT_ANCHOR = 0.42;
+
 const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
   (
     {
@@ -80,8 +85,10 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       onReady,
       onCenterClick,
       toolbarVisible,
+      disableTouchNavigation = false,
       highlights,
       activeTtsParagraph,
+      ttsPlaybackProgress = 0,
       ttsImmersiveMode = false,
     },
     ref
@@ -159,6 +166,27 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       return text.replace(/\s+/g, "").trim();
     }, []);
 
+    const getTeleprompterScrollTop = useCallback(
+      (element: HTMLElement, progress: number) => {
+        const scrollRange = Math.max(0, element.scrollHeight - element.clientHeight);
+        if (scrollRange <= 0) return 0;
+
+        const clampedProgress = Math.min(1, Math.max(0, progress));
+        const leadIn = 0.08;
+        const leadOut = 0.94;
+
+        if (clampedProgress <= leadIn) return 0;
+        if (clampedProgress >= leadOut) return scrollRange;
+
+        const normalized = (clampedProgress - leadIn) / (leadOut - leadIn);
+        const eased = normalized * normalized * (3 - 2 * normalized);
+        const contentPosition = eased * element.scrollHeight;
+        const anchoredTop = contentPosition - element.clientHeight * TELEPROMPTER_VIEWPORT_ANCHOR;
+        return Math.min(scrollRange, Math.max(0, anchoredTop));
+      },
+      []
+    );
+
     useEffect(() => {
       const contents = renditionRef.current?.getContents?.() as
         | Array<{ document?: Document }>
@@ -169,9 +197,30 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       const activeNodes = doc.body.querySelectorAll("[data-tts-active='1']");
       activeNodes.forEach((node) => {
         node.removeAttribute("data-tts-active");
-        (node as HTMLElement).style.backgroundColor = "";
-        (node as HTMLElement).style.transition = "";
+        const element = node as HTMLElement;
+        element.style.backgroundColor = "";
+        element.style.transition = "";
+        element.style.opacity = "";
+        element.style.display = "";
+        element.style.padding = "";
+        element.style.border = "";
+        element.style.borderRadius = "";
+        element.style.boxShadow = "";
+        element.style.maxWidth = "";
+        element.style.width = "";
+        element.style.fontSize = "";
+        element.style.lineHeight = "";
+        element.style.margin = "";
       });
+
+      doc.body.removeAttribute("data-tts-immersive");
+      doc.body.style.display = "";
+      doc.body.style.alignItems = "";
+      doc.body.style.justifyContent = "";
+      doc.body.style.minHeight = "";
+      doc.body.style.boxSizing = "";
+      doc.body.style.padding = "";
+      doc.body.style.margin = "";
 
       if (!activeTtsParagraph) return;
 
@@ -182,40 +231,135 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         "p, li, blockquote, h1, h2, h3, h4, h5, h6"
       );
 
-      if (ttsImmersiveMode) {
-        candidates.forEach((element) => {
-          (element as HTMLElement).style.opacity = "0.16";
-        });
-      } else {
-        candidates.forEach((element) => {
-          (element as HTMLElement).style.opacity = "";
-        });
-      }
+      candidates.forEach((element) => {
+        const node = element as HTMLElement;
+        node.style.opacity = "";
+        node.style.display = "";
+      });
+
+      const getCommonPrefixLength = (a: string, b: string) => {
+        const limit = Math.min(a.length, b.length);
+        let count = 0;
+        while (count < limit && a[count] === b[count]) {
+          count += 1;
+        }
+        return count;
+      };
 
       let matchedElement: Element | null = null;
+      let bestScore = -1;
+
       for (const element of Array.from(candidates)) {
         const content = normalizeText(element.textContent || "");
         if (!content) continue;
-        if (content.includes(needle) || needle.includes(content.slice(0, 40))) {
+
+        const tag = element.tagName.toLowerCase();
+        const isHeading = /^h[1-6]$/.test(tag);
+        const minContainedLength = Math.min(
+          48,
+          Math.max(24, Math.floor(needle.length * 0.65))
+        );
+
+        let score = -1;
+        if (content === needle) {
+          score = 10000;
+        } else if (content.includes(needle)) {
+          score = 8000 - Math.abs(content.length - needle.length);
+        } else if (needle.includes(content) && content.length >= minContainedLength) {
+          score = 5000 + content.length;
+        } else {
+          const commonPrefixLength = getCommonPrefixLength(content, needle);
+          const requiredPrefix = Math.min(30, Math.floor(needle.length * 0.5));
+          if (commonPrefixLength >= requiredPrefix && content.length >= 24) {
+            score = 4200 + commonPrefixLength;
+          }
+        }
+
+        if (score < 0) continue;
+
+        if (isHeading && score < 10000) {
+          score -= 2500;
+        }
+
+        if (score > bestScore) {
+          bestScore = score;
           matchedElement = element;
-          break;
         }
       }
 
       if (!matchedElement) return;
 
       matchedElement.setAttribute("data-tts-active", "1");
-      (matchedElement as HTMLElement).style.backgroundColor =
-        theme === "dark" ? "rgba(251, 191, 36, 0.25)" : "rgba(250, 204, 21, 0.35)";
-      (matchedElement as HTMLElement).style.transition = "background-color 160ms ease";
-      (matchedElement as HTMLElement).style.opacity = "1";
+      const activeElement = matchedElement as HTMLElement;
+      activeElement.style.backgroundColor = "";
+      activeElement.style.transition = "all 220ms ease";
+      activeElement.style.opacity = "1";
 
-      matchedElement.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-        inline: "nearest",
-      });
+      if (ttsImmersiveMode) {
+        doc.body.setAttribute("data-tts-immersive", "1");
+        doc.body.style.display = "flex";
+        doc.body.style.alignItems = "center";
+        doc.body.style.justifyContent = "center";
+        doc.body.style.minHeight = "100vh";
+        doc.body.style.boxSizing = "border-box";
+        doc.body.style.padding = "min(12vh, 96px) 24px";
+        doc.body.style.margin = "0";
+
+        candidates.forEach((element) => {
+          if (element === matchedElement) return;
+          (element as HTMLElement).style.display = "none";
+        });
+
+        activeElement.style.display = "block";
+        activeElement.style.maxWidth = "48rem";
+        activeElement.style.width = "100%";
+        activeElement.style.padding = "0";
+        activeElement.style.borderRadius = "0";
+        activeElement.style.maxHeight = "76vh";
+        activeElement.style.overflowY = "auto";
+        activeElement.style.border = "0";
+        activeElement.style.boxShadow = "none";
+        activeElement.style.fontSize = "1.24em";
+        activeElement.style.lineHeight = "1.95";
+        activeElement.style.margin = "0";
+
+      } else {
+        activeElement.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+          inline: "nearest",
+        });
+      }
     }, [activeTtsParagraph, normalizeText, theme, ttsImmersiveMode]);
+
+    useEffect(() => {
+      if (!ttsImmersiveMode || !activeTtsParagraph) return;
+
+      const contents = renditionRef.current?.getContents?.() as
+        | Array<{ document?: Document }>
+        | undefined;
+      const doc = contents?.[0]?.document;
+      if (!doc?.body) return;
+
+      const activeElement = doc.body.querySelector("[data-tts-active='1']") as
+        | HTMLElement
+        | null;
+      if (!activeElement) return;
+
+      const targetTop = getTeleprompterScrollTop(activeElement, ttsPlaybackProgress);
+      const currentTop = activeElement.scrollTop;
+      const delta = targetTop - currentTop;
+      const nextTop =
+        Math.abs(delta) < 0.5
+          ? targetTop
+          : currentTop + delta * TELEPROMPTER_FOLLOW_FACTOR;
+      activeElement.scrollTop = nextTop;
+    }, [
+      activeTtsParagraph,
+      getTeleprompterScrollTop,
+      ttsImmersiveMode,
+      ttsPlaybackProgress,
+    ]);
 
     // ---- Initialize book & rendition ----
     useEffect(() => {
@@ -319,6 +463,8 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
 
           // ---- Click-based page navigation + center click ----
           rendition.on("click", (e: MouseEvent) => {
+            if (disableTouchNavigation) return;
+
             // Ignore clicks while selecting text
             const selection = (e.view as Window)?.getSelection();
             if (selection && selection.toString().length > 0) return;
@@ -402,7 +548,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       };
       // Only re-init when the url changes
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [url]);
+    }, [url, disableTouchNavigation]);
 
     // ---- Theme updates ----
     useEffect(() => {

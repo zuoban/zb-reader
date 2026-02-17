@@ -11,6 +11,7 @@ interface TxtReaderProps {
   theme?: "light" | "dark" | "sepia";
   onPageChange?: (page: number, totalPages: number) => void;
   activeTtsParagraph?: string;
+  ttsPlaybackProgress?: number;
   onRegisterController?: (controller: { nextPage: () => boolean }) => void;
   ttsImmersiveMode?: boolean;
 }
@@ -21,6 +22,9 @@ const themeStyles: Record<string, { bg: string; text: string }> = {
   sepia: { bg: "bg-[#f4ecd8]", text: "text-[#5b4636]" },
 };
 
+const TELEPROMPTER_FOLLOW_FACTOR = 0.16;
+const TELEPROMPTER_VIEWPORT_ANCHOR = 0.42;
+
 function TxtReader({
   url,
   initialPage = 1,
@@ -28,6 +32,7 @@ function TxtReader({
   theme = "light",
   onPageChange,
   activeTtsParagraph,
+  ttsPlaybackProgress = 0,
   onRegisterController,
   ttsImmersiveMode = false,
 }: TxtReaderProps) {
@@ -140,6 +145,25 @@ function TxtReader({
 
   const normalizeText = (value: string) => value.replace(/\s+/g, "").trim();
   const activeNeedle = normalizeText(activeTtsParagraph || "").slice(0, 80);
+  const isImmersiveActive = ttsImmersiveMode && !!activeNeedle;
+
+  const getTeleprompterScrollTop = useCallback((element: HTMLElement, progress: number) => {
+    const scrollRange = Math.max(0, element.scrollHeight - element.clientHeight);
+    if (scrollRange <= 0) return 0;
+
+    const clampedProgress = Math.min(1, Math.max(0, progress));
+    const leadIn = 0.08;
+    const leadOut = 0.94;
+
+    if (clampedProgress <= leadIn) return 0;
+    if (clampedProgress >= leadOut) return scrollRange;
+
+    const normalized = (clampedProgress - leadIn) / (leadOut - leadIn);
+    const eased = normalized * normalized * (3 - 2 * normalized);
+    const contentPosition = eased * element.scrollHeight;
+    const anchoredTop = contentPosition - element.clientHeight * TELEPROMPTER_VIEWPORT_ANCHOR;
+    return Math.min(scrollRange, Math.max(0, anchoredTop));
+  }, []);
 
   useEffect(() => {
     if (!activeNeedle) return;
@@ -159,6 +183,27 @@ function TxtReader({
     });
   }, [activeNeedle, currentPage]);
 
+  useEffect(() => {
+    if (!isImmersiveActive) return;
+
+    const container = containerRef.current;
+    if (!container) return;
+
+    const activeElement = container.querySelector("[data-tts-active='1']") as
+      | HTMLElement
+      | null;
+    if (!activeElement) return;
+
+    const targetTop = getTeleprompterScrollTop(activeElement, ttsPlaybackProgress);
+    const currentTop = activeElement.scrollTop;
+    const delta = targetTop - currentTop;
+    const nextTop =
+      Math.abs(delta) < 0.5
+        ? targetTop
+        : currentTop + delta * TELEPROMPTER_FOLLOW_FACTOR;
+    activeElement.scrollTop = nextTop;
+  }, [activeNeedle, getTeleprompterScrollTop, isImmersiveActive, ttsPlaybackProgress]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -171,14 +216,23 @@ function TxtReader({
     <div className={`flex flex-col h-full ${style.bg}`}>
       <div
         ref={containerRef}
-        className={`flex-1 overflow-auto px-8 py-6 max-w-3xl mx-auto w-full ${style.text}`}
+        className={`flex-1 overflow-auto px-6 py-6 w-full ${style.text} ${
+          isImmersiveActive ? "flex items-center justify-center" : "max-w-3xl mx-auto"
+        }`}
         style={{
           fontSize: `${fontSize}px`,
           lineHeight: 1.8,
         }}
       >
         {pageParagraphs.length > 0 ? (
-          <div data-reader-txt-page="true" className="space-y-4">
+          <div
+            data-reader-txt-page="true"
+            className={`${
+              isImmersiveActive
+                ? "w-full max-w-3xl"
+                : "space-y-4"
+            }`}
+          >
             {pageParagraphs.map((paragraph, index) => {
               const paragraphKey = `${index}-${paragraph.slice(0, 12)}`;
               const isActive =
@@ -193,12 +247,12 @@ function TxtReader({
                 <p
                   key={paragraphKey}
                   data-tts-active={isActive ? "1" : undefined}
-                  className={`whitespace-pre-wrap leading-8 rounded-sm transition-colors ${
-                    isActive
-                      ? theme === "dark"
-                        ? "bg-amber-300/25"
-                        : "bg-amber-200/55"
-                      : ""
+                  className={`whitespace-pre-wrap transition-all ${
+                    isImmersiveActive
+                      ? "text-[1.25em] leading-[1.95]"
+                      : "leading-8 rounded-sm"
+                  } ${
+                    isActive ? "px-0 py-0 max-h-[76vh] overflow-y-auto" : ""
                   }`}
                 >
                   {paragraph}

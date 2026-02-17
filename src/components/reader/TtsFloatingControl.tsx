@@ -30,17 +30,51 @@ export function TtsFloatingControl({
   });
   const [isDragging, setIsDragging] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isAutoTransparent, setIsAutoTransparent] = useState(false);
   const dragStartRef = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const hasMovedRef = useRef(false);
+  const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     localStorage.setItem("tts-floating-x", String(position.x));
     localStorage.setItem("tts-floating-y", String(position.y));
   }, [position.x, position.y]);
 
+  const clearFadeTimer = useCallback(() => {
+    if (!fadeTimerRef.current) return;
+    clearTimeout(fadeTimerRef.current);
+    fadeTimerRef.current = null;
+  }, []);
+
+  const scheduleAutoTransparent = useCallback(() => {
+    clearFadeTimer();
+
+    if (!isSpeaking || isExpanded || isDragging) {
+      setIsAutoTransparent(false);
+      return;
+    }
+
+    fadeTimerRef.current = setTimeout(() => {
+      setIsAutoTransparent(true);
+    }, 1800);
+  }, [clearFadeTimer, isDragging, isExpanded, isSpeaking]);
+
+  const handleInteraction = useCallback(() => {
+    if (isAutoTransparent) {
+      setIsAutoTransparent(false);
+    }
+    scheduleAutoTransparent();
+  }, [isAutoTransparent, scheduleAutoTransparent]);
+
+  useEffect(() => {
+    scheduleAutoTransparent();
+    return () => clearFadeTimer();
+  }, [clearFadeTimer, scheduleAutoTransparent]);
+
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     if (e.button !== 0) return;
+    handleInteraction();
     hasMovedRef.current = false;
     setIsDragging(true);
     dragStartRef.current = {
@@ -50,10 +84,11 @@ export function TtsFloatingControl({
       posY: position.y,
     };
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
-  }, [position]);
+  }, [handleInteraction, position]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (!isDragging) return;
+    handleInteraction();
 
     const deltaX = e.clientX - dragStartRef.current.x;
     const deltaY = e.clientY - dragStartRef.current.y;
@@ -74,27 +109,31 @@ export function TtsFloatingControl({
         y: Math.max(0, Math.min(newY, maxY)),
       });
     }
-  }, [isDragging]);
+  }, [handleInteraction, isDragging]);
 
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
+    handleInteraction();
     if (isDragging) {
       setIsDragging(false);
       (e.target as HTMLElement).releasePointerCapture(e.pointerId);
     }
-  }, [isDragging]);
+  }, [handleInteraction, isDragging]);
 
   const handleMainClick = useCallback(() => {
+    handleInteraction();
     if (!hasMovedRef.current) {
       setIsExpanded((prev) => !prev);
     }
-  }, []);
+  }, [handleInteraction]);
 
   return (
     <div
       ref={containerRef}
       className={cn(
-        "fixed z-50 flex items-center gap-2 transition-shadow",
+        "fixed z-50 flex items-center gap-2 transition-shadow transition-opacity",
         isDragging ? "" : "transition-all duration-200"
+        ,
+        isAutoTransparent && !isExpanded && !isDragging ? "opacity-45" : "opacity-60"
       )}
       style={{
         left: position.x,
@@ -103,6 +142,7 @@ export function TtsFloatingControl({
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
+      onPointerEnter={handleInteraction}
     >
       {isExpanded && (
         <div
@@ -115,43 +155,43 @@ export function TtsFloatingControl({
             <button
               type="button"
               onClick={onPrev}
-              className="flex size-8 items-center justify-center rounded-full text-primary-foreground hover:bg-primary-foreground/20 transition-colors cursor-pointer"
+              className="flex size-7 items-center justify-center rounded-full text-primary-foreground hover:bg-primary-foreground/20 transition-colors cursor-pointer"
               title="上一段"
             >
-              <SkipBack className="size-4" />
+              <SkipBack className="size-3.5" />
             </button>
           )}
 
           <button
             type="button"
             onClick={onToggle}
-            className="flex size-8 items-center justify-center rounded-full text-primary-foreground hover:bg-primary-foreground/20 transition-colors cursor-pointer"
+            className="flex size-7 items-center justify-center rounded-full text-primary-foreground hover:bg-primary-foreground/20 transition-colors cursor-pointer"
             title={isSpeaking ? "暂停" : "播放"}
           >
             {isSpeaking ? (
-              <Pause className="size-4" />
+              <Pause className="size-3.5" />
             ) : (
-              <Play className="size-4" />
+              <Play className="size-3.5" />
             )}
           </button>
 
           <button
             type="button"
             onClick={onStop}
-            className="flex size-8 items-center justify-center rounded-full text-primary-foreground hover:bg-primary-foreground/20 transition-colors cursor-pointer"
+            className="flex size-7 items-center justify-center rounded-full text-primary-foreground hover:bg-primary-foreground/20 transition-colors cursor-pointer"
             title="停止"
           >
-            <Square className="size-4" />
+            <Square className="size-3.5" />
           </button>
 
           {onNext && (
             <button
               type="button"
               onClick={onNext}
-              className="flex size-8 items-center justify-center rounded-full text-primary-foreground hover:bg-primary-foreground/20 transition-colors cursor-pointer"
+              className="flex size-7 items-center justify-center rounded-full text-primary-foreground hover:bg-primary-foreground/20 transition-colors cursor-pointer"
               title="下一段"
             >
-              <SkipForward className="size-4" />
+              <SkipForward className="size-3.5" />
             </button>
           )}
         </div>
@@ -162,7 +202,7 @@ export function TtsFloatingControl({
         onPointerDown={handlePointerDown}
         onClick={handleMainClick}
         className={cn(
-          "flex size-12 items-center justify-center rounded-full shadow-lg transition-all cursor-pointer",
+          "flex size-10 items-center justify-center rounded-full shadow-lg transition-all cursor-pointer",
           "bg-primary text-primary-foreground",
           isDragging && "scale-110 shadow-xl",
           isSpeaking && "ring-2 ring-primary-foreground/30 ring-offset-2 ring-offset-primary"
@@ -170,9 +210,9 @@ export function TtsFloatingControl({
         title="朗读控制"
       >
         {isSpeaking ? (
-          <Pause className="size-5" />
+          <Pause className="size-4" />
         ) : (
-          <Play className="size-5" />
+          <Play className="size-4" />
         )}
       </button>
     </div>

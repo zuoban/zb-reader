@@ -51,6 +51,7 @@ const TxtReader = dynamic<{
   fontSize?: number;
   theme?: "light" | "dark" | "sepia";
   activeTtsParagraph?: string;
+  ttsPlaybackProgress?: number;
   onPageChange?: (page: number, totalPages: number) => void;
   onRegisterController?: (controller: { nextPage: () => boolean }) => void;
   ttsImmersiveMode?: boolean;
@@ -113,6 +114,7 @@ function ReaderContent() {
   );
   const [ttsImmersiveMode, setTtsImmersiveMode] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [ttsPlaybackProgress, setTtsPlaybackProgress] = useState(0);
 
   // Side panel
   const [sidePanelOpen, setSidePanelOpen] = useState(false);
@@ -306,6 +308,10 @@ function ReaderContent() {
     localStorage.setItem("reader-tts-immersive-mode", ttsImmersiveMode ? "1" : "0");
   }, [ttsImmersiveMode]);
 
+  useEffect(() => {
+    setTtsPlaybackProgress(0);
+  }, [activeTtsParagraph]);
+
   const stopSpeaking = useCallback(() => {
     ttsSessionRef.current += 1;
     if (currentAudioRef.current) {
@@ -314,6 +320,7 @@ function ReaderContent() {
       currentAudioRef.current = null;
     }
     setActiveTtsParagraph("");
+    setTtsPlaybackProgress(0);
     setIsSpeaking(false);
   }, []);
 
@@ -464,9 +471,12 @@ function ReaderContent() {
   }, []);
 
   const handleToggleToolbar = useCallback(() => {
+    if (isSpeaking) {
+      return;
+    }
     setToolbarVisible((prev) => !prev);
     setSelectionMenu((prev) => ({ ...prev, visible: false }));
-  }, []);
+  }, [isSpeaking]);
 
   const handleBack = useCallback(() => {
     saveProgress();
@@ -791,9 +801,11 @@ function ReaderContent() {
 
       if (!res.ok) {
         const data = (await res.json().catch(() => null)) as
-          | { error?: string }
+          | { error?: string; details?: string }
           | null;
-        throw new Error(data?.error || "朗读失败");
+        const message = data?.error || "朗读失败";
+        const details = data?.details ? `：${data.details}` : "";
+        throw new Error(`${message}${details}`);
       }
 
       const audioBlob = await res.blob();
@@ -821,7 +833,11 @@ function ReaderContent() {
           cursor += 1
         ) {
           if (!preparedTaskMap.has(cursor)) {
-            preparedTaskMap.set(cursor, requestMicrosoftSpeech(queue[cursor]));
+            const task = requestMicrosoftSpeech(queue[cursor]);
+            task.catch(() => {
+              // avoid unhandled promise rejection for preloaded items
+            });
+            preparedTaskMap.set(cursor, task);
           }
         }
       };
@@ -860,9 +876,17 @@ function ReaderContent() {
           const audio = new Audio(objectUrl);
           currentAudioRef.current = audio;
 
+          audio.ontimeupdate = () => {
+            if (!Number.isFinite(audio.duration) || audio.duration <= 0) return;
+            setTtsPlaybackProgress(
+              Math.min(1, Math.max(0, audio.currentTime / audio.duration))
+            );
+          };
+
           audio.onended = () => {
             URL.revokeObjectURL(objectUrl);
             currentAudioRef.current = null;
+            setTtsPlaybackProgress(1);
             resolve();
           };
 
@@ -971,11 +995,19 @@ function ReaderContent() {
       currentAudioRef.current = audio;
 
       await new Promise<void>((resolve, reject) => {
+        audio.ontimeupdate = () => {
+          if (!Number.isFinite(audio.duration) || audio.duration <= 0) return;
+          setTtsPlaybackProgress(
+            Math.min(1, Math.max(0, audio.currentTime / audio.duration))
+          );
+        };
+
         audio.onended = () => {
           if (prepared.kind === "blob") {
             URL.revokeObjectURL(prepared.objectUrl);
           }
           currentAudioRef.current = null;
+          setTtsPlaybackProgress(1);
           resolve();
         };
         audio.onerror = () => {
@@ -1019,7 +1051,11 @@ function ReaderContent() {
           cursor += 1
         ) {
           if (!preparedTaskMap.has(cursor)) {
-            preparedTaskMap.set(cursor, requestLegadoSpeech(queue[cursor]));
+            const task = requestLegadoSpeech(queue[cursor]);
+            task.catch(() => {
+              // avoid unhandled promise rejection for preloaded items
+            });
+            preparedTaskMap.set(cursor, task);
           }
         }
       };
@@ -1472,14 +1508,16 @@ function ReaderContent() {
             onTextSelected={handleTextSelected}
             onCenterClick={handleToggleToolbar}
             toolbarVisible={toolbarVisible}
+            disableTouchNavigation={isSpeaking}
             highlights={highlights}
             activeTtsParagraph={activeTtsParagraph}
+            ttsPlaybackProgress={ttsPlaybackProgress}
             ttsImmersiveMode={ttsImmersiveMode}
           />
         )}
 
         {book.format === "pdf" && (
-          <div onClick={handleToggleToolbar}>
+          <div onClick={isSpeaking ? undefined : handleToggleToolbar}>
             <PdfReader
               url={`/api/books/${book.id}/file`}
               initialPage={currentPage}
@@ -1499,13 +1537,17 @@ function ReaderContent() {
         )}
 
         {book.format === "txt" && (
-          <div className="h-full" onClick={handleToggleToolbar}>
+          <div
+            className="h-full"
+            onClick={isSpeaking ? undefined : handleToggleToolbar}
+          >
             <TxtReader
               url={`/api/books/${book.id}/file`}
               initialPage={currentPage}
               fontSize={fontSize}
               theme={readerTheme}
               activeTtsParagraph={activeTtsParagraph}
+              ttsPlaybackProgress={ttsPlaybackProgress}
               ttsImmersiveMode={ttsImmersiveMode}
               onRegisterController={(controller) => {
                 txtReaderControllerRef.current = controller;
@@ -1534,11 +1576,11 @@ function ReaderContent() {
       {/* Tap zone hints overlay — shown when toolbar is visible.
            This is purely visual; click interception is handled by a
            transparent div inside EpubReader that sits above the iframe. */}
-      {toolbarVisible && (
-        <div
-          className="fixed inset-0 z-40 pointer-events-none bg-black/40 backdrop-blur-[2px] transition-opacity duration-300"
-          style={{ top: 56, bottom: 64 }}
-        >
+        {toolbarVisible && !isSpeaking && (
+          <div
+            className="fixed inset-0 z-40 pointer-events-none bg-black/40 backdrop-blur-[2px] transition-opacity duration-300"
+            style={{ top: 56, bottom: 64 }}
+          >
           {book.format === "epub" ? (
             /* EPUB: three tap zones */
             <div className="flex h-full w-full">
