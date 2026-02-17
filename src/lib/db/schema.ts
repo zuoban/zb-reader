@@ -121,6 +121,36 @@ export const ttsConfigs = sqliteTable("tts_configs", {
     .notNull(),
 });
 
+export const readerSettings = sqliteTable("reader_settings", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .unique()
+    .references(() => users.id, { onDelete: "cascade" }),
+  fontSize: integer("font_size").default(16).notNull(),
+  theme: text("theme", { enum: ["light", "dark", "sepia"] })
+    .default("light")
+    .notNull(),
+  ttsEngine: text("tts_engine", { enum: ["browser", "legado"] })
+    .default("browser")
+    .notNull(),
+  browserVoiceId: text("browser_voice_id"),
+  ttsRate: real("tts_rate").default(1).notNull(),
+  ttsPitch: real("tts_pitch").default(1).notNull(),
+  ttsVolume: real("tts_volume").default(1).notNull(),
+  microsoftPreloadCount: integer("microsoft_preload_count").default(3).notNull(),
+  legadoRate: integer("legado_rate").default(50).notNull(),
+  legadoConfigId: text("legado_config_id"),
+  legadoPreloadCount: integer("legado_preload_count").default(3).notNull(),
+  ttsImmersiveMode: integer("tts_immersive_mode").default(0).notNull(),
+  createdAt: text("created_at")
+    .default(sql`(datetime('now'))`)
+    .notNull(),
+  updatedAt: text("updated_at")
+    .default(sql`(datetime('now'))`)
+    .notNull(),
+});
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Book = typeof books.$inferSelect;
@@ -133,3 +163,5 @@ export type Note = typeof notes.$inferSelect;
 export type NewNote = typeof notes.$inferInsert;
 export type TtsConfig = typeof ttsConfigs.$inferSelect;
 export type NewTtsConfig = typeof ttsConfigs.$inferInsert;
+export type ReaderSettings = typeof readerSettings.$inferSelect;
+export type NewReaderSettings = typeof readerSettings.$inferInsert;

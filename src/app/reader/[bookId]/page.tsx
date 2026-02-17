@@ -160,6 +160,8 @@ function ReaderContent() {
   const txtReaderControllerRef = useRef<{ nextPage: () => boolean } | null>(null);
   const pdfReaderControllerRef = useRef<{ nextPage: () => boolean } | null>(null);
   const ttsSessionRef = useRef(0);
+  const settingsLoadedRef = useRef(false);
+  const settingsSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [activeTtsParagraph, setActiveTtsParagraph] = useState("");
   const currentParagraphIndexRef = useRef(0);
   const allParagraphsRef = useRef<string[]>([]);
@@ -216,97 +218,142 @@ function ReaderContent() {
     setHighlights(hl);
   }, [notes]);
 
-  // ---- Load settings from localStorage ----
+  // ---- Load settings from database ----
   useEffect(() => {
-    const savedFontSize = localStorage.getItem("reader-fontSize");
-    const savedTheme = localStorage.getItem("reader-theme");
-    const savedTtsEngine = localStorage.getItem("reader-tts-engine");
-    const savedTtsVoiceId = localStorage.getItem("reader-tts-voiceId");
-    const savedTtsRate = localStorage.getItem("reader-tts-rate");
-    const savedTtsPitch = localStorage.getItem("reader-tts-pitch");
-    const savedTtsVolume = localStorage.getItem("reader-tts-volume");
-    const savedMicrosoftPreloadCount = localStorage.getItem(
-      "reader-tts-microsoft-preload-count"
-    );
-    const savedLegadoConfigId = localStorage.getItem("reader-tts-legado-config-id");
-    const savedLegadoPreloadCount = localStorage.getItem(
-      "reader-tts-legado-preload-count"
-    );
-    const savedTtsImmersiveMode = localStorage.getItem("reader-tts-immersive-mode");
+    const loadReaderSettings = async () => {
+      try {
+        const res = await fetch("/api/reader-settings");
+        if (!res.ok) return;
 
-    if (savedFontSize) setFontSize(parseInt(savedFontSize));
-    if (savedTheme) setReaderTheme(savedTheme as "light" | "dark" | "sepia");
-    if (savedTtsEngine === "browser" || savedTtsEngine === "legado") {
-      setTtsEngine(savedTtsEngine);
-    }
-    if (savedTtsVoiceId) setSelectedBrowserVoiceId(savedTtsVoiceId);
-    if (savedTtsRate) {
-      const rate = Number(savedTtsRate);
-      if (Number.isFinite(rate)) {
-        setTtsRate(Math.min(5, Math.max(1, rate)));
+        const data = (await res.json()) as {
+          settings?: {
+            fontSize?: number;
+            theme?: "light" | "dark" | "sepia";
+            ttsEngine?: "browser" | "legado";
+            browserVoiceId?: string;
+            ttsRate?: number;
+            ttsPitch?: number;
+            ttsVolume?: number;
+            microsoftPreloadCount?: number;
+            legadoRate?: number;
+            legadoConfigId?: string;
+            legadoPreloadCount?: number;
+            ttsImmersiveMode?: boolean;
+          };
+        };
+
+        const settings = data.settings;
+        if (!settings) return;
+
+        if (typeof settings.fontSize === "number") {
+          setFontSize(Math.min(28, Math.max(12, settings.fontSize)));
+        }
+        if (
+          settings.theme === "light" ||
+          settings.theme === "dark" ||
+          settings.theme === "sepia"
+        ) {
+          setReaderTheme(settings.theme);
+        }
+        if (settings.ttsEngine === "browser" || settings.ttsEngine === "legado") {
+          setTtsEngine(settings.ttsEngine);
+        }
+        if (typeof settings.browserVoiceId === "string") {
+          setSelectedBrowserVoiceId(settings.browserVoiceId);
+        }
+        if (typeof settings.ttsRate === "number") {
+          setTtsRate(Math.min(5, Math.max(1, settings.ttsRate)));
+        }
+        if (typeof settings.ttsPitch === "number") {
+          setTtsPitch(Math.min(2, Math.max(0.5, settings.ttsPitch)));
+        }
+        if (typeof settings.ttsVolume === "number") {
+          setTtsVolume(Math.min(1, Math.max(0, settings.ttsVolume)));
+        }
+        if (
+          typeof settings.microsoftPreloadCount === "number" &&
+          [1, 2, 3, 5].includes(settings.microsoftPreloadCount)
+        ) {
+          setMicrosoftPreloadCount(settings.microsoftPreloadCount);
+        }
+        if (typeof settings.legadoRate === "number") {
+          setLegadoRate(Math.min(500, Math.max(1, settings.legadoRate)));
+        }
+        if (typeof settings.legadoConfigId === "string") {
+          setSelectedLegadoConfigId(settings.legadoConfigId);
+        }
+        if (
+          typeof settings.legadoPreloadCount === "number" &&
+          [1, 2, 3, 5].includes(settings.legadoPreloadCount)
+        ) {
+          setLegadoPreloadCount(settings.legadoPreloadCount);
+        }
+        if (typeof settings.ttsImmersiveMode === "boolean") {
+          setTtsImmersiveMode(settings.ttsImmersiveMode);
+        }
+      } catch {
+        // ignore
+      } finally {
+        settingsLoadedRef.current = true;
       }
-    }
-    if (savedTtsPitch) setTtsPitch(Number(savedTtsPitch));
-    if (savedTtsVolume) setTtsVolume(Number(savedTtsVolume));
-    if (savedMicrosoftPreloadCount) {
-      const count = Number(savedMicrosoftPreloadCount);
-      if ([1, 2, 3, 5].includes(count)) {
-        setMicrosoftPreloadCount(count);
+    };
+
+    loadReaderSettings();
+
+    return () => {
+      if (settingsSaveTimerRef.current) {
+        clearTimeout(settingsSaveTimerRef.current);
+        settingsSaveTimerRef.current = null;
       }
-    }
-    if (savedLegadoConfigId) setSelectedLegadoConfigId(savedLegadoConfigId);
-    if (savedLegadoPreloadCount) {
-      const count = Number(savedLegadoPreloadCount);
-      if ([1, 2, 3, 5].includes(count)) {
-        setLegadoPreloadCount(count);
-      }
-    }
-    if (savedTtsImmersiveMode === "1") {
-      setTtsImmersiveMode(true);
-    }
+    };
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("reader-tts-engine", ttsEngine);
-  }, [ttsEngine]);
+    if (!settingsLoadedRef.current) return;
 
-  useEffect(() => {
-    localStorage.setItem("reader-tts-voiceId", selectedBrowserVoiceId);
-  }, [selectedBrowserVoiceId]);
+    if (settingsSaveTimerRef.current) {
+      clearTimeout(settingsSaveTimerRef.current);
+      settingsSaveTimerRef.current = null;
+    }
 
-  useEffect(() => {
-    localStorage.setItem("reader-tts-rate", String(ttsRate));
-  }, [ttsRate]);
-
-  useEffect(() => {
-    localStorage.setItem("reader-tts-pitch", String(ttsPitch));
-  }, [ttsPitch]);
-
-  useEffect(() => {
-    localStorage.setItem("reader-tts-volume", String(ttsVolume));
-  }, [ttsVolume]);
-
-  useEffect(() => {
-    localStorage.setItem(
-      "reader-tts-microsoft-preload-count",
-      String(microsoftPreloadCount)
-    );
-  }, [microsoftPreloadCount]);
-
-  useEffect(() => {
-    localStorage.setItem("reader-tts-legado-config-id", selectedLegadoConfigId);
-  }, [selectedLegadoConfigId]);
-
-  useEffect(() => {
-    localStorage.setItem(
-      "reader-tts-legado-preload-count",
-      String(legadoPreloadCount)
-    );
-  }, [legadoPreloadCount]);
-
-  useEffect(() => {
-    localStorage.setItem("reader-tts-immersive-mode", ttsImmersiveMode ? "1" : "0");
-  }, [ttsImmersiveMode]);
+    settingsSaveTimerRef.current = setTimeout(async () => {
+      try {
+        await fetch("/api/reader-settings", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fontSize,
+            theme: readerTheme,
+            ttsEngine,
+            browserVoiceId: selectedBrowserVoiceId,
+            ttsRate,
+            ttsPitch,
+            ttsVolume,
+            microsoftPreloadCount,
+            legadoRate,
+            legadoConfigId: selectedLegadoConfigId,
+            legadoPreloadCount,
+            ttsImmersiveMode,
+          }),
+        });
+      } catch {
+        // ignore
+      }
+    }, 220);
+  }, [
+    fontSize,
+    legadoPreloadCount,
+    legadoRate,
+    microsoftPreloadCount,
+    readerTheme,
+    selectedBrowserVoiceId,
+    selectedLegadoConfigId,
+    ttsEngine,
+    ttsImmersiveMode,
+    ttsPitch,
+    ttsRate,
+    ttsVolume,
+  ]);
 
   useEffect(() => {
     setTtsPlaybackProgress(0);
@@ -710,12 +757,10 @@ function ReaderContent() {
   // ---- Settings handlers ----
   const handleFontSizeChange = useCallback((size: number) => {
     setFontSize(size);
-    localStorage.setItem("reader-fontSize", String(size));
   }, []);
 
   const handleThemeChange = useCallback((theme: "light" | "dark" | "sepia") => {
     setReaderTheme(theme);
-    localStorage.setItem("reader-theme", theme);
   }, []);
 
   const getCurrentReadableText = useCallback(() => {

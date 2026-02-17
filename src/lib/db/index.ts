@@ -108,10 +108,30 @@ function getConnection() {
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
+    CREATE TABLE IF NOT EXISTS reader_settings (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+      font_size INTEGER NOT NULL DEFAULT 16,
+      theme TEXT NOT NULL DEFAULT 'light' CHECK(theme IN ('light', 'dark', 'sepia')),
+      tts_engine TEXT NOT NULL DEFAULT 'browser' CHECK(tts_engine IN ('browser', 'legado')),
+      browser_voice_id TEXT,
+      tts_rate REAL NOT NULL DEFAULT 1,
+      tts_pitch REAL NOT NULL DEFAULT 1,
+      tts_volume REAL NOT NULL DEFAULT 1,
+      microsoft_preload_count INTEGER NOT NULL DEFAULT 3,
+      legado_rate INTEGER NOT NULL DEFAULT 50,
+      legado_config_id TEXT,
+      legado_preload_count INTEGER NOT NULL DEFAULT 3,
+      tts_immersive_mode INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
     CREATE INDEX IF NOT EXISTS idx_books_uploader ON books(uploader_id);
     CREATE INDEX IF NOT EXISTS idx_reading_progress_user_book ON reading_progress(user_id, book_id);
     CREATE INDEX IF NOT EXISTS idx_bookmarks_user_book ON bookmarks(user_id, book_id);
     CREATE INDEX IF NOT EXISTS idx_notes_user_book ON notes(user_id, book_id);
+    CREATE INDEX IF NOT EXISTS idx_reader_settings_user ON reader_settings(user_id);
   `);
 
   _sqlite = sqlite;

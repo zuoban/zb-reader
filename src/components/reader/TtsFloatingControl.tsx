@@ -51,7 +51,9 @@ export function TtsFloatingControl({
     clearFadeTimer();
 
     if (!isSpeaking || isExpanded || isDragging) {
-      setIsAutoTransparent(false);
+      setTimeout(() => {
+        setIsAutoTransparent(false);
+      }, 0);
       return;
     }
 
@@ -133,7 +135,9 @@ export function TtsFloatingControl({
         "fixed z-50 flex items-center gap-2 transition-shadow transition-opacity",
         isDragging ? "" : "transition-all duration-200"
         ,
-        isAutoTransparent && !isExpanded && !isDragging ? "opacity-45" : "opacity-60"
+        isAutoTransparent && isSpeaking && !isExpanded && !isDragging
+          ? "opacity-45"
+          : "opacity-60"
       )}
       style={{
         left: position.x,

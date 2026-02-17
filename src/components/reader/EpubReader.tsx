@@ -103,11 +103,16 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     const [isRenditionReady, setIsRenditionReady] = useState(false);
     const pendingHighlightsRef = useRef<Array<{ cfiRange: string; color: string; id: string }>>([]);
     const toolbarVisibleRef = useRef(toolbarVisible);
+    const disableTouchNavigationRef = useRef(disableTouchNavigation);
 
     // Keep ref in sync with prop so the iframe click handler can read the latest value
     useEffect(() => {
       toolbarVisibleRef.current = toolbarVisible;
     }, [toolbarVisible]);
+
+    useEffect(() => {
+      disableTouchNavigationRef.current = disableTouchNavigation;
+    }, [disableTouchNavigation]);
 
     // ---- Expose API via ref ----
     useImperativeHandle(ref, () => ({
@@ -463,7 +468,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
 
           // ---- Click-based page navigation + center click ----
           rendition.on("click", (e: MouseEvent) => {
-            if (disableTouchNavigation) return;
+            if (disableTouchNavigationRef.current) return;
 
             // Ignore clicks while selecting text
             const selection = (e.view as Window)?.getSelection();
@@ -548,7 +553,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       };
       // Only re-init when the url changes
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [url, disableTouchNavigation]);
+    }, [url]);
 
     // ---- Theme updates ----
     useEffect(() => {
