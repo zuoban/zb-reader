@@ -1,6 +1,6 @@
 services:
   zb-reader:
-    build: .
+    image: ghcr.io/zuoban/zb-reader
     ports:
       - "3000:3000"
     volumes:
@@ -8,4 +8,5 @@ services:
     environment:
       - NEXTAUTH_SECRET=your-secret-key-change-this
       - NEXTAUTH_URL=http://localhost:3000
+      - AUTH_TRUST_HOST=true
     restart: unless-stopped
