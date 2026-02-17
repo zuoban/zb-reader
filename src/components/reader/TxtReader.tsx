@@ -10,6 +10,9 @@ interface TxtReaderProps {
   fontSize?: number;
   theme?: "light" | "dark" | "sepia";
   onPageChange?: (page: number, totalPages: number) => void;
+  activeTtsParagraph?: string;
+  onRegisterController?: (controller: { nextPage: () => boolean }) => void;
+  ttsImmersiveMode?: boolean;
 }
 
 const themeStyles: Record<string, { bg: string; text: string }> = {
@@ -24,6 +27,9 @@ function TxtReader({
   fontSize = 16,
   theme = "light",
   onPageChange,
+  activeTtsParagraph,
+  onRegisterController,
+  ttsImmersiveMode = false,
 }: TxtReaderProps) {
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(true);
@@ -100,6 +106,18 @@ function TxtReader({
     [pages.length, onPageChange]
   );
 
+  useEffect(() => {
+    onRegisterController?.({
+      nextPage: () => {
+        if (currentPage >= pages.length) {
+          return false;
+        }
+        goToPage(currentPage + 1);
+        return true;
+      },
+    });
+  }, [currentPage, goToPage, onRegisterController, pages.length]);
+
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -114,6 +132,32 @@ function TxtReader({
   }, [currentPage, goToPage]);
 
   const style = themeStyles[theme] || themeStyles.light;
+  const pageText = pages[currentPage - 1] || "";
+  const pageParagraphs = pageText
+    .split(/\n\s*\n+/)
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+
+  const normalizeText = (value: string) => value.replace(/\s+/g, "").trim();
+  const activeNeedle = normalizeText(activeTtsParagraph || "").slice(0, 80);
+
+  useEffect(() => {
+    if (!activeNeedle) return;
+
+    const container = containerRef.current;
+    if (!container) return;
+
+    const activeElement = container.querySelector("[data-tts-active='1']") as
+      | HTMLElement
+      | null;
+    if (!activeElement) return;
+
+    activeElement.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+      inline: "nearest",
+    });
+  }, [activeNeedle, currentPage]);
 
   if (loading) {
     return (
@@ -133,9 +177,40 @@ function TxtReader({
           lineHeight: 1.8,
         }}
       >
-        <pre className="whitespace-pre-wrap font-[inherit] m-0">
-          {pages[currentPage - 1] || ""}
-        </pre>
+        {pageParagraphs.length > 0 ? (
+          <div data-reader-txt-page="true" className="space-y-4">
+            {pageParagraphs.map((paragraph, index) => {
+              const paragraphKey = `${index}-${paragraph.slice(0, 12)}`;
+              const isActive =
+                !!activeNeedle &&
+                normalizeText(paragraph).includes(activeNeedle);
+
+              if (ttsImmersiveMode && activeNeedle && !isActive) {
+                return null;
+              }
+
+              return (
+                <p
+                  key={paragraphKey}
+                  data-tts-active={isActive ? "1" : undefined}
+                  className={`whitespace-pre-wrap leading-8 rounded-sm transition-colors ${
+                    isActive
+                      ? theme === "dark"
+                        ? "bg-amber-300/25"
+                        : "bg-amber-200/55"
+                      : ""
+                  }`}
+                >
+                  {paragraph}
+                </p>
+              );
+            })}
+          </div>
+        ) : (
+          <pre data-reader-txt-page="true" className="whitespace-pre-wrap font-[inherit] m-0">
+            {pageText}
+          </pre>
+        )}
       </div>
 
       {/* Navigation */}

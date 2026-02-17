@@ -14,9 +14,15 @@ interface PdfReaderProps {
   url: string;
   initialPage?: number;
   onPageChange?: (page: number, totalPages: number) => void;
+  onRegisterController?: (controller: { nextPage: () => boolean }) => void;
 }
 
-function PdfReader({ url, initialPage, onPageChange }: PdfReaderProps) {
+function PdfReader({
+  url,
+  initialPage,
+  onPageChange,
+  onRegisterController,
+}: PdfReaderProps) {
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState(initialPage || 1);
   const [containerWidth, setContainerWidth] = useState<number>(0);
@@ -51,6 +57,18 @@ function PdfReader({ url, initialPage, onPageChange }: PdfReaderProps) {
     },
     [numPages, onPageChange]
   );
+
+  useEffect(() => {
+    onRegisterController?.({
+      nextPage: () => {
+        if (pageNumber >= numPages) {
+          return false;
+        }
+        goToPage(pageNumber + 1);
+        return true;
+      },
+    });
+  }, [goToPage, numPages, onRegisterController, pageNumber]);
 
   // Keyboard navigation
   useEffect(() => {

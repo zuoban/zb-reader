@@ -1,6 +1,15 @@
 "use client";
 
-import { ArrowLeft, Bookmark, BookmarkCheck, Settings, List, StickyNote } from "lucide-react";
+import {
+  ArrowLeft,
+  Bookmark,
+  BookmarkCheck,
+  Settings,
+  List,
+  StickyNote,
+  Volume2,
+  Pause,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -22,6 +31,8 @@ interface ReaderToolbarProps {
   onToggleBookmark: () => void;
   onToggleSettings: () => void;
   onToggleNotes: () => void;
+  onToggleTts: () => void;
+  isSpeaking: boolean;
   onProgressChange: (progress: number) => void;
 }
 
@@ -37,6 +48,8 @@ export function ReaderToolbar({
   onToggleBookmark,
   onToggleSettings,
   onToggleNotes,
+  onToggleTts,
+  isSpeaking,
   onProgressChange,
 }: ReaderToolbarProps) {
   return (
@@ -115,6 +128,24 @@ export function ReaderToolbar({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>笔记</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onToggleTts}
+                  className="cursor-pointer transition-all duration-200 hover:bg-primary/10 hover:scale-105"
+                >
+                  {isSpeaking ? (
+                    <Pause className="size-5 text-primary" />
+                  ) : (
+                    <Volume2 className="size-5" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{isSpeaking ? "暂停朗读" : "开始朗读"}</TooltipContent>
             </Tooltip>
 
             <Tooltip>

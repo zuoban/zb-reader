@@ -28,6 +28,8 @@ interface EpubReaderProps {
   onCenterClick?: () => void;
   toolbarVisible?: boolean;
   highlights?: Array<{ cfiRange: string; color: string; id: string }>;
+  activeTtsParagraph?: string;
+  ttsImmersiveMode?: boolean;
 }
 
 export interface EpubReaderRef {
@@ -37,6 +39,8 @@ export interface EpubReaderRef {
   prevPage: () => void;
   getCurrentLocation: () => string | null;
   getProgress: () => number;
+  getCurrentText: () => string | null;
+  getCurrentParagraphs: () => string[];
 }
 
 const THEME_STYLES: Record<
@@ -77,6 +81,8 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       onCenterClick,
       toolbarVisible,
       highlights,
+      activeTtsParagraph,
+      ttsImmersiveMode = false,
     },
     ref
   ) => {
@@ -116,7 +122,100 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       getProgress() {
         return progressRef.current;
       },
+      getCurrentText() {
+        const contents = renditionRef.current?.getContents?.() as
+          | Array<{ document?: Document }>
+          | undefined;
+        const text = contents?.[0]?.document?.body?.innerText?.trim();
+        return text && text.length > 0 ? text : null;
+      },
+      getCurrentParagraphs() {
+        const contents = renditionRef.current?.getContents?.() as
+          | Array<{ document?: Document }>
+          | undefined;
+        const doc = contents?.[0]?.document;
+        if (!doc?.body) return [];
+
+        const nodes = doc.body.querySelectorAll(
+          "p, li, blockquote, h1, h2, h3, h4, h5, h6"
+        );
+
+        const paragraphs = Array.from(nodes)
+          .map((node) => node.textContent?.trim() || "")
+          .filter((text) => text.length > 0);
+
+        if (paragraphs.length > 0) {
+          return paragraphs;
+        }
+
+        return (doc.body.innerText || "")
+          .split(/\n\s*\n+/)
+          .map((text) => text.trim())
+          .filter((text) => text.length > 0);
+      },
     }));
+
+    const normalizeText = useCallback((text: string) => {
+      return text.replace(/\s+/g, "").trim();
+    }, []);
+
+    useEffect(() => {
+      const contents = renditionRef.current?.getContents?.() as
+        | Array<{ document?: Document }>
+        | undefined;
+      const doc = contents?.[0]?.document;
+      if (!doc?.body) return;
+
+      const activeNodes = doc.body.querySelectorAll("[data-tts-active='1']");
+      activeNodes.forEach((node) => {
+        node.removeAttribute("data-tts-active");
+        (node as HTMLElement).style.backgroundColor = "";
+        (node as HTMLElement).style.transition = "";
+      });
+
+      if (!activeTtsParagraph) return;
+
+      const needle = normalizeText(activeTtsParagraph).slice(0, 80);
+      if (!needle) return;
+
+      const candidates = doc.body.querySelectorAll(
+        "p, li, blockquote, h1, h2, h3, h4, h5, h6"
+      );
+
+      if (ttsImmersiveMode) {
+        candidates.forEach((element) => {
+          (element as HTMLElement).style.opacity = "0.16";
+        });
+      } else {
+        candidates.forEach((element) => {
+          (element as HTMLElement).style.opacity = "";
+        });
+      }
+
+      let matchedElement: Element | null = null;
+      for (const element of Array.from(candidates)) {
+        const content = normalizeText(element.textContent || "");
+        if (!content) continue;
+        if (content.includes(needle) || needle.includes(content.slice(0, 40))) {
+          matchedElement = element;
+          break;
+        }
+      }
+
+      if (!matchedElement) return;
+
+      matchedElement.setAttribute("data-tts-active", "1");
+      (matchedElement as HTMLElement).style.backgroundColor =
+        theme === "dark" ? "rgba(251, 191, 36, 0.25)" : "rgba(250, 204, 21, 0.35)";
+      (matchedElement as HTMLElement).style.transition = "background-color 160ms ease";
+      (matchedElement as HTMLElement).style.opacity = "1";
+
+      matchedElement.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+        inline: "nearest",
+      });
+    }, [activeTtsParagraph, normalizeText, theme, ttsImmersiveMode]);
 
     // ---- Initialize book & rendition ----
     useEffect(() => {

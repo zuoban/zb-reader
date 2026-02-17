@@ -104,6 +104,23 @@ export const notes = sqliteTable("notes", {
     .notNull(),
 });
 
+export const ttsConfigs = sqliteTable("tts_configs", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  url: text("url").notNull(),
+  method: text("method").default("GET").notNull(),
+  headers: text("headers", { mode: "json" }),
+  body: text("body", { mode: "json" }),
+  contentType: text("content_type"),
+  concurrentRate: integer("concurrent_rate"),
+  createdAt: text("created_at")
+    .default(sql`(datetime('now'))`)
+    .notNull(),
+  updatedAt: text("updated_at")
+    .default(sql`(datetime('now'))`)
+    .notNull(),
+});
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Book = typeof books.$inferSelect;
@@ -114,3 +131,5 @@ export type Bookmark = typeof bookmarks.$inferSelect;
 export type NewBookmark = typeof bookmarks.$inferInsert;
 export type Note = typeof notes.$inferSelect;
 export type NewNote = typeof notes.$inferInsert;
+export type TtsConfig = typeof ttsConfigs.$inferSelect;
+export type NewTtsConfig = typeof ttsConfigs.$inferInsert;

@@ -8,6 +8,16 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import type { BrowserVoiceOption, TtsConfigApiItem } from "@/lib/tts";
 
 interface ReadingSettingsProps {
   open: boolean;
@@ -16,6 +26,28 @@ interface ReadingSettingsProps {
   onFontSizeChange: (size: number) => void;
   theme: "light" | "dark" | "sepia";
   onThemeChange: (theme: "light" | "dark" | "sepia") => void;
+  ttsEngine: "browser" | "legado";
+  onTtsEngineChange: (engine: "browser" | "legado") => void;
+  browserVoices: BrowserVoiceOption[];
+  selectedBrowserVoiceId: string;
+  onSelectedBrowserVoiceIdChange: (voiceId: string) => void;
+  ttsRate: number;
+  onTtsRateChange: (value: number) => void;
+  ttsPitch: number;
+  onTtsPitchChange: (value: number) => void;
+  ttsVolume: number;
+  onTtsVolumeChange: (value: number) => void;
+  legadoConfigs: TtsConfigApiItem[];
+  selectedLegadoConfigId: string;
+  onSelectedLegadoConfigIdChange: (configId: string) => void;
+  legadoImportText: string;
+  onLegadoImportTextChange: (text: string) => void;
+  onLegadoImport: () => void;
+  legadoImporting: boolean;
+  legadoPreloadCount: number;
+  onLegadoPreloadCountChange: (value: number) => void;
+  ttsImmersiveMode: boolean;
+  onTtsImmersiveModeChange: (value: boolean) => void;
 }
 
 const themeOptions = [
@@ -46,6 +78,28 @@ export function ReadingSettings({
   onFontSizeChange,
   theme,
   onThemeChange,
+  ttsEngine,
+  onTtsEngineChange,
+  browserVoices,
+  selectedBrowserVoiceId,
+  onSelectedBrowserVoiceIdChange,
+  ttsRate,
+  onTtsRateChange,
+  ttsPitch,
+  onTtsPitchChange,
+  ttsVolume,
+  onTtsVolumeChange,
+  legadoConfigs,
+  selectedLegadoConfigId,
+  onSelectedLegadoConfigIdChange,
+  legadoImportText,
+  onLegadoImportTextChange,
+  onLegadoImport,
+  legadoImporting,
+  legadoPreloadCount,
+  onLegadoPreloadCountChange,
+  ttsImmersiveMode,
+  onTtsImmersiveModeChange,
 }: ReadingSettingsProps) {
   const handleDecrease = () => {
     if (fontSize > 12) {
@@ -147,6 +201,215 @@ export function ReadingSettings({
               ))}
             </div>
           </div>
+
+          {/* 朗读设置 */}
+          <div className="space-y-3">
+            <label className="text-sm font-medium text-muted-foreground">
+              朗读引擎
+            </label>
+            <Select
+              value={ttsEngine}
+              onValueChange={(value) =>
+                onTtsEngineChange(value as "browser" | "legado")
+              }
+            >
+              <SelectTrigger className="w-full cursor-pointer">
+                <SelectValue placeholder="选择朗读引擎" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="browser">浏览器内置语音</SelectItem>
+                <SelectItem value="legado">Legado 规则</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center justify-between rounded-md border border-border px-3 py-2">
+            <div className="space-y-0.5">
+              <p className="text-sm font-medium">朗读沉浸模式</p>
+              <p className="text-xs text-muted-foreground">只显示当前朗读段落</p>
+            </div>
+            <Input
+              type="checkbox"
+              checked={ttsImmersiveMode}
+              onChange={(event) => onTtsImmersiveModeChange(event.currentTarget.checked)}
+              className="h-4 w-4 cursor-pointer"
+            />
+          </div>
+
+          {ttsEngine === "browser" && (
+            <>
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-muted-foreground">
+                  语音
+                </label>
+                <Select
+                  value={selectedBrowserVoiceId}
+                  onValueChange={onSelectedBrowserVoiceIdChange}
+                >
+                  <SelectTrigger className="w-full cursor-pointer">
+                    <SelectValue placeholder="选择语音" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {browserVoices.length === 0 ? (
+                      <SelectItem value="__none" disabled>
+                        未检测到可用语音
+                      </SelectItem>
+                    ) : (
+                      browserVoices.map((voice) => (
+                        <SelectItem key={voice.id} value={voice.id}>
+                          {voice.name} ({voice.lang})
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-muted-foreground">
+                  语速 ({ttsRate.toFixed(1)})
+                </label>
+                <Input
+                  type="range"
+                  min={1}
+                  max={5}
+                  step={0.1}
+                  value={ttsRate}
+                  className="cursor-pointer"
+                  onChange={(event) =>
+                    onTtsRateChange(Number(event.currentTarget.value))
+                  }
+                />
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-muted-foreground">
+                  音调 ({ttsPitch.toFixed(1)})
+                </label>
+                <Input
+                  type="range"
+                  min={0.5}
+                  max={2}
+                  step={0.1}
+                  value={ttsPitch}
+                  className="cursor-pointer"
+                  onChange={(event) =>
+                    onTtsPitchChange(Number(event.currentTarget.value))
+                  }
+                />
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-muted-foreground">
+                  音量 ({ttsVolume.toFixed(1)})
+                </label>
+                <Input
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.1}
+                  value={ttsVolume}
+                  className="cursor-pointer"
+                  onChange={(event) =>
+                    onTtsVolumeChange(Number(event.currentTarget.value))
+                  }
+                />
+              </div>
+            </>
+          )}
+
+          {ttsEngine === "legado" && (
+            <>
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-muted-foreground">
+                  朗读速度 ({ttsRate.toFixed(1)})
+                </label>
+                <Input
+                  type="range"
+                  min={1}
+                  max={5}
+                  step={0.1}
+                  value={ttsRate}
+                  className="cursor-pointer"
+                  onChange={(event) =>
+                    onTtsRateChange(Number(event.currentTarget.value))
+                  }
+                />
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-muted-foreground">
+                  预加载段数
+                </label>
+                <Select
+                  value={String(legadoPreloadCount)}
+                  onValueChange={(value) =>
+                    onLegadoPreloadCountChange(Number(value))
+                  }
+                >
+                  <SelectTrigger className="w-full cursor-pointer">
+                    <SelectValue placeholder="选择预加载段数" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 段</SelectItem>
+                    <SelectItem value="2">2 段</SelectItem>
+                    <SelectItem value="3">3 段</SelectItem>
+                    <SelectItem value="5">5 段</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-muted-foreground">
+                  已导入配置
+                </label>
+                <Select
+                  value={selectedLegadoConfigId}
+                  onValueChange={onSelectedLegadoConfigIdChange}
+                >
+                  <SelectTrigger className="w-full cursor-pointer">
+                    <SelectValue placeholder="选择配置" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {legadoConfigs.length === 0 ? (
+                      <SelectItem value="__none" disabled>
+                        暂无配置，请先导入
+                      </SelectItem>
+                    ) : (
+                      legadoConfigs.map((config) => (
+                        <SelectItem key={config.id} value={config.id}>
+                          {config.name}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-muted-foreground">
+                  导入 Legado 配置(JSON)
+                </label>
+                <Textarea
+                  value={legadoImportText}
+                  onChange={(event) =>
+                    onLegadoImportTextChange(event.currentTarget.value)
+                  }
+                  className="min-h-28"
+                  placeholder='粘贴 Legado 的 TTS JSON（对象或数组）'
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full cursor-pointer"
+                  disabled={legadoImporting || !legadoImportText.trim()}
+                  onClick={onLegadoImport}
+                >
+                  {legadoImporting ? "导入中..." : "导入配置"}
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </SheetContent>
     </Sheet>

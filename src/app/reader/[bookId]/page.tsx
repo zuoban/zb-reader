@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import type { EpubReaderRef } from "@/components/reader/EpubReader";
 import type { Book, Bookmark, Note } from "@/lib/db/schema";
+import type { BrowserVoiceOption, TtsConfigApiItem } from "@/lib/tts";
 
 // Dynamic import for EpubReader (client-only, depends on browser APIs)
 const EpubReader = dynamic(() => import("@/components/reader/EpubReader"), {
@@ -32,6 +33,7 @@ const PdfReader = dynamic<{
   url: string;
   initialPage?: number;
   onPageChange?: (page: number, totalPages: number) => void;
+  onRegisterController?: (controller: { nextPage: () => boolean }) => void;
 }>(() => import("@/components/reader/PdfReader"), {
   ssr: false,
   loading: () => (
@@ -47,7 +49,10 @@ const TxtReader = dynamic<{
   initialPage?: number;
   fontSize?: number;
   theme?: "light" | "dark" | "sepia";
+  activeTtsParagraph?: string;
   onPageChange?: (page: number, totalPages: number) => void;
+  onRegisterController?: (controller: { nextPage: () => boolean }) => void;
+  ttsImmersiveMode?: boolean;
 }>(() => import("@/components/reader/TxtReader"), {
   ssr: false,
   loading: () => (
@@ -56,6 +61,8 @@ const TxtReader = dynamic<{
     </div>
   ),
 });
+
+const DEFAULT_LEGADO_PRELOAD_COUNT = 3;
 
 interface TocItem {
   label: string;
@@ -85,6 +92,21 @@ function ReaderContent() {
   // Settings
   const [fontSize, setFontSize] = useState(16);
   const [readerTheme, setReaderTheme] = useState<"light" | "dark" | "sepia">("light");
+  const [ttsEngine, setTtsEngine] = useState<"browser" | "legado">("browser");
+  const [browserVoices, setBrowserVoices] = useState<BrowserVoiceOption[]>([]);
+  const [selectedBrowserVoiceId, setSelectedBrowserVoiceId] = useState("");
+  const [ttsRate, setTtsRate] = useState(1);
+  const [ttsPitch, setTtsPitch] = useState(1);
+  const [ttsVolume, setTtsVolume] = useState(1);
+  const [legadoConfigs, setLegadoConfigs] = useState<TtsConfigApiItem[]>([]);
+  const [selectedLegadoConfigId, setSelectedLegadoConfigId] = useState("");
+  const [legadoImportText, setLegadoImportText] = useState("");
+  const [legadoImporting, setLegadoImporting] = useState(false);
+  const [legadoPreloadCount, setLegadoPreloadCount] = useState(
+    DEFAULT_LEGADO_PRELOAD_COUNT
+  );
+  const [ttsImmersiveMode, setTtsImmersiveMode] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   // Side panel
   const [sidePanelOpen, setSidePanelOpen] = useState(false);
@@ -126,6 +148,12 @@ function ReaderContent() {
   const currentLocationRef = useRef<string | null>(null);
   const progressRef = useRef(0);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const currentUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+  const txtReaderControllerRef = useRef<{ nextPage: () => boolean } | null>(null);
+  const pdfReaderControllerRef = useRef<{ nextPage: () => boolean } | null>(null);
+  const ttsSessionRef = useRef(0);
+  const [activeTtsParagraph, setActiveTtsParagraph] = useState("");
 
   // ---- Load book data ----
   useEffect(() => {
@@ -183,9 +211,135 @@ function ReaderContent() {
   useEffect(() => {
     const savedFontSize = localStorage.getItem("reader-fontSize");
     const savedTheme = localStorage.getItem("reader-theme");
+    const savedTtsEngine = localStorage.getItem("reader-tts-engine");
+    const savedTtsVoiceId = localStorage.getItem("reader-tts-voiceId");
+    const savedTtsRate = localStorage.getItem("reader-tts-rate");
+    const savedTtsPitch = localStorage.getItem("reader-tts-pitch");
+    const savedTtsVolume = localStorage.getItem("reader-tts-volume");
+    const savedLegadoConfigId = localStorage.getItem("reader-tts-legado-config-id");
+    const savedLegadoPreloadCount = localStorage.getItem(
+      "reader-tts-legado-preload-count"
+    );
+    const savedTtsImmersiveMode = localStorage.getItem("reader-tts-immersive-mode");
+
     if (savedFontSize) setFontSize(parseInt(savedFontSize));
     if (savedTheme) setReaderTheme(savedTheme as "light" | "dark" | "sepia");
+    if (savedTtsEngine === "browser" || savedTtsEngine === "legado") {
+      setTtsEngine(savedTtsEngine);
+    }
+    if (savedTtsVoiceId) setSelectedBrowserVoiceId(savedTtsVoiceId);
+    if (savedTtsRate) {
+      const rate = Number(savedTtsRate);
+      if (Number.isFinite(rate)) {
+        setTtsRate(Math.min(5, Math.max(1, rate)));
+      }
+    }
+    if (savedTtsPitch) setTtsPitch(Number(savedTtsPitch));
+    if (savedTtsVolume) setTtsVolume(Number(savedTtsVolume));
+    if (savedLegadoConfigId) setSelectedLegadoConfigId(savedLegadoConfigId);
+    if (savedLegadoPreloadCount) {
+      const count = Number(savedLegadoPreloadCount);
+      if ([1, 2, 3, 5].includes(count)) {
+        setLegadoPreloadCount(count);
+      }
+    }
+    if (savedTtsImmersiveMode === "1") {
+      setTtsImmersiveMode(true);
+    }
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem("reader-tts-engine", ttsEngine);
+  }, [ttsEngine]);
+
+  useEffect(() => {
+    localStorage.setItem("reader-tts-voiceId", selectedBrowserVoiceId);
+  }, [selectedBrowserVoiceId]);
+
+  useEffect(() => {
+    localStorage.setItem("reader-tts-rate", String(ttsRate));
+  }, [ttsRate]);
+
+  useEffect(() => {
+    localStorage.setItem("reader-tts-pitch", String(ttsPitch));
+  }, [ttsPitch]);
+
+  useEffect(() => {
+    localStorage.setItem("reader-tts-volume", String(ttsVolume));
+  }, [ttsVolume]);
+
+  useEffect(() => {
+    localStorage.setItem("reader-tts-legado-config-id", selectedLegadoConfigId);
+  }, [selectedLegadoConfigId]);
+
+  useEffect(() => {
+    localStorage.setItem(
+      "reader-tts-legado-preload-count",
+      String(legadoPreloadCount)
+    );
+  }, [legadoPreloadCount]);
+
+  useEffect(() => {
+    localStorage.setItem("reader-tts-immersive-mode", ttsImmersiveMode ? "1" : "0");
+  }, [ttsImmersiveMode]);
+
+  const stopSpeaking = useCallback(() => {
+    ttsSessionRef.current += 1;
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current.currentTime = 0;
+      currentAudioRef.current = null;
+    }
+    currentUtteranceRef.current = null;
+    setActiveTtsParagraph("");
+    setIsSpeaking(false);
+  }, []);
+
+  const loadLegadoConfigs = useCallback(async () => {
+    try {
+      const res = await fetch("/api/tts");
+      if (!res.ok) return;
+      const data = (await res.json()) as TtsConfigApiItem[];
+      setLegadoConfigs(data || []);
+      if (!selectedLegadoConfigId && data.length > 0) {
+        setSelectedLegadoConfigId(data[0].id);
+      }
+    } catch {
+      // ignore
+    }
+  }, [selectedLegadoConfigId]);
+
+  useEffect(() => {
+    loadLegadoConfigs();
+  }, [loadLegadoConfigs]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+
+    const loadVoices = () => {
+      const voices = window.speechSynthesis.getVoices();
+      const mapped = voices.map((voice) => ({
+        id: voice.voiceURI,
+        name: voice.name,
+        lang: voice.lang,
+      }));
+      setBrowserVoices(mapped);
+
+      if (mapped.length > 0 && !mapped.some((voice) => voice.id === selectedBrowserVoiceId)) {
+        setSelectedBrowserVoiceId(mapped[0].id);
+      }
+    };
+
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+
+    return () => {
+      window.speechSynthesis.onvoiceschanged = null;
+    };
+  }, [selectedBrowserVoiceId]);
 
   // ---- Save progress ----
   const saveProgress = useCallback(async () => {
@@ -539,6 +693,472 @@ function ReaderContent() {
     localStorage.setItem("reader-theme", theme);
   }, []);
 
+  const getCurrentReadableText = useCallback(() => {
+    if (!book) return "";
+
+    if (book.format === "epub") {
+      return epubReaderRef.current?.getCurrentText()?.trim() || "";
+    }
+
+    if (book.format === "txt") {
+      const txtNode = document.querySelector("[data-reader-txt-page='true']");
+      return txtNode?.textContent?.trim() || "";
+    }
+
+    if (book.format === "pdf") {
+      const spans = document.querySelectorAll(
+        ".react-pdf__Page__textContent span"
+      );
+      const text = Array.from(spans)
+        .map((span) => span.textContent || "")
+        .join(" ")
+        .trim();
+      return text;
+    }
+
+    return "";
+  }, [book]);
+
+  const handleLegadoImport = useCallback(async () => {
+    const raw = legadoImportText.trim();
+    if (!raw) {
+      toast.error("请先粘贴配置JSON");
+      return;
+    }
+
+    let payload: unknown;
+    try {
+      payload = JSON.parse(raw);
+    } catch {
+      toast.error("JSON格式不正确");
+      return;
+    }
+
+    try {
+      setLegadoImporting(true);
+      const res = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data?.error || "导入失败");
+        return;
+      }
+      toast.success(data?.message || "导入成功");
+      setLegadoImportText("");
+      await loadLegadoConfigs();
+    } catch {
+      toast.error("导入失败");
+    } finally {
+      setLegadoImporting(false);
+    }
+  }, [legadoImportText, loadLegadoConfigs]);
+
+  const speakWithBrowserParagraphs = useCallback(
+    async (paragraphs: string[], sessionId: number) => {
+      if (!("speechSynthesis" in window)) {
+        toast.error("当前浏览器不支持语音朗读");
+        return;
+      }
+
+      const voices = window.speechSynthesis.getVoices();
+      const voice = voices.find((item) => item.voiceURI === selectedBrowserVoiceId);
+
+      const queue = paragraphs.filter((item) => item.trim().length > 0);
+      if (queue.length === 0) {
+        toast.error("当前页面没有可朗读段落");
+        return;
+      }
+
+      setIsSpeaking(true);
+
+      for (const paragraph of queue) {
+        if (ttsSessionRef.current !== sessionId) {
+          return;
+        }
+
+        setActiveTtsParagraph(paragraph);
+
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise<void>((resolve, reject) => {
+          const utterance = new SpeechSynthesisUtterance(paragraph);
+          utterance.rate = ttsRate;
+          utterance.pitch = ttsPitch;
+          utterance.volume = ttsVolume;
+
+          if (voice) {
+            utterance.voice = voice;
+          }
+
+          utterance.onend = () => {
+            currentUtteranceRef.current = null;
+            resolve();
+          };
+          utterance.onerror = () => {
+            currentUtteranceRef.current = null;
+            reject(new Error("speech_error"));
+          };
+
+          currentUtteranceRef.current = utterance;
+          window.speechSynthesis.speak(utterance);
+        }).catch(() => {
+          if (ttsSessionRef.current === sessionId) {
+            toast.error("朗读失败");
+          }
+          throw new Error("speech_failed");
+        });
+      }
+
+      if (ttsSessionRef.current === sessionId) {
+        setActiveTtsParagraph("");
+        setIsSpeaking(false);
+      }
+    },
+    [selectedBrowserVoiceId, ttsPitch, ttsRate, ttsVolume]
+  );
+
+  type PreparedLegadoSpeech =
+    | { kind: "blob"; objectUrl: string }
+    | { kind: "url"; audioUrl: string }
+    | { kind: "text"; text: string };
+
+  const requestLegadoSpeech = useCallback(
+    async (text: string): Promise<PreparedLegadoSpeech> => {
+      const res = await fetch("/api/tts/speak", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          configId: selectedLegadoConfigId,
+          text,
+          speakSpeed: ttsRate,
+        }),
+      });
+
+      const contentType = res.headers.get("content-type") || "";
+
+      if (res.ok && contentType.startsWith("audio/")) {
+        const audioBlob = await res.blob();
+        return { kind: "blob", objectUrl: URL.createObjectURL(audioBlob) };
+      }
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || "朗读失败");
+      }
+
+      const audioUrl = typeof data?.audioUrl === "string" ? data.audioUrl : "";
+      const speechText = typeof data?.text === "string" ? data.text.trim() : "";
+
+      if (audioUrl) {
+        return { kind: "url", audioUrl };
+      }
+
+      if (speechText) {
+        return { kind: "text", text: speechText };
+      }
+
+      throw new Error("未获取到可朗读内容");
+    },
+    [selectedLegadoConfigId, ttsRate]
+  );
+
+  const playLegadoPreparedSpeech = useCallback(
+    async (
+      prepared: PreparedLegadoSpeech,
+      paragraph: string,
+      sessionId: number
+    ) => {
+      if (ttsSessionRef.current !== sessionId) return;
+
+      setActiveTtsParagraph(paragraph);
+      setIsSpeaking(true);
+
+      if (prepared.kind === "text") {
+        await speakWithBrowserParagraphs([prepared.text], sessionId);
+        return;
+      }
+
+      const source = prepared.kind === "blob" ? prepared.objectUrl : prepared.audioUrl;
+      const audio = new Audio(source);
+      currentAudioRef.current = audio;
+
+      await new Promise<void>((resolve, reject) => {
+        audio.onended = () => {
+          if (prepared.kind === "blob") {
+            URL.revokeObjectURL(prepared.objectUrl);
+          }
+          currentAudioRef.current = null;
+          resolve();
+        };
+        audio.onerror = () => {
+          if (prepared.kind === "blob") {
+            URL.revokeObjectURL(prepared.objectUrl);
+          }
+          currentAudioRef.current = null;
+          reject(new Error("audio_play_error"));
+        };
+        audio.play().catch(() => {
+          if (prepared.kind === "blob") {
+            URL.revokeObjectURL(prepared.objectUrl);
+          }
+          currentAudioRef.current = null;
+          reject(new Error("audio_play_error"));
+        });
+      });
+    },
+    [speakWithBrowserParagraphs]
+  );
+
+  const speakWithLegadoParagraphs = useCallback(
+    async (paragraphs: string[], sessionId: number) => {
+      if (!selectedLegadoConfigId) {
+        toast.error("请先选择 Legado 配置");
+        return;
+      }
+
+      const queue = paragraphs.filter((item) => item.trim().length > 0);
+      if (queue.length === 0) {
+        toast.error("当前页面没有可朗读段落");
+        return;
+      }
+
+      const preparedTaskMap = new Map<number, Promise<PreparedLegadoSpeech>>();
+
+      const ensurePreloadWindow = (startIndex: number) => {
+        for (
+          let cursor = startIndex;
+          cursor < Math.min(queue.length, startIndex + legadoPreloadCount);
+          cursor += 1
+        ) {
+          if (!preparedTaskMap.has(cursor)) {
+            preparedTaskMap.set(cursor, requestLegadoSpeech(queue[cursor]));
+          }
+        }
+      };
+
+      ensurePreloadWindow(0);
+
+      for (let index = 0; index < queue.length; index += 1) {
+        if (ttsSessionRef.current !== sessionId) {
+          return;
+        }
+
+        const paragraph = queue[index];
+        ensurePreloadWindow(index + 1);
+        const currentPreparedPromise =
+          preparedTaskMap.get(index) ?? requestLegadoSpeech(paragraph);
+
+        let prepared: PreparedLegadoSpeech;
+        try {
+          // eslint-disable-next-line no-await-in-loop
+          prepared = await currentPreparedPromise;
+        } catch {
+          if (ttsSessionRef.current === sessionId) {
+            setActiveTtsParagraph("");
+            setIsSpeaking(false);
+            toast.error("朗读失败");
+          }
+          return;
+        }
+
+        try {
+          // eslint-disable-next-line no-await-in-loop
+          await playLegadoPreparedSpeech(prepared, paragraph, sessionId);
+        } catch {
+          if (ttsSessionRef.current === sessionId) {
+            setActiveTtsParagraph("");
+            setIsSpeaking(false);
+            toast.error("音频播放失败");
+          }
+          return;
+        }
+      }
+
+      if (ttsSessionRef.current === sessionId) {
+        setActiveTtsParagraph("");
+        setIsSpeaking(false);
+      }
+    },
+    [
+      legadoPreloadCount,
+      playLegadoPreparedSpeech,
+      requestLegadoSpeech,
+      selectedLegadoConfigId,
+    ]
+  );
+
+  const getReadableParagraphs = useCallback(() => {
+    if (!book) return [] as string[];
+
+    if (book.format === "epub") {
+      const paragraphs = epubReaderRef.current?.getCurrentParagraphs?.() || [];
+      return paragraphs;
+    }
+
+    if (book.format === "txt") {
+      const txtNode = document.querySelector("[data-reader-txt-page='true']");
+      const text = txtNode?.textContent?.trim() || "";
+      return text
+        .split(/\n\s*\n+/)
+        .map((item) => item.trim())
+        .filter((item) => item.length > 0);
+    }
+
+    if (book.format === "pdf") {
+      const spans = document.querySelectorAll(
+        ".react-pdf__Page__textContent span"
+      );
+      const text = Array.from(spans)
+        .map((span) => span.textContent || "")
+        .join(" ")
+        .trim();
+      if (!text) return [];
+      const chunks = text
+        .split(/(?<=[。！？.!?])\s+/)
+        .map((item) => item.trim())
+        .filter((item) => item.length > 0);
+      return chunks.length > 0 ? chunks : [text];
+    }
+
+    return [] as string[];
+  }, [book]);
+
+  const getPageIdentity = useCallback(() => {
+    if (!book) return "";
+
+    if (book.format === "epub") {
+      return currentLocationRef.current || "";
+    }
+
+    if (book.format === "txt" || book.format === "pdf") {
+      return `${currentPage || 0}/${totalPages || 0}`;
+    }
+
+    return "";
+  }, [book, currentPage, totalPages]);
+
+  const waitForPageChange = useCallback(
+    async (previousIdentity: string, sessionId: number) => {
+      const startedAt = Date.now();
+      while (Date.now() - startedAt < 5000) {
+        if (ttsSessionRef.current !== sessionId) {
+          return false;
+        }
+
+        if (getPageIdentity() !== previousIdentity) {
+          return true;
+        }
+
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise((resolve) => setTimeout(resolve, 120));
+      }
+      return false;
+    },
+    [getPageIdentity]
+  );
+
+  const tryAutoTurnPage = useCallback(
+    async (sessionId: number) => {
+      if (!book) return false;
+
+      const previousIdentity = getPageIdentity();
+
+      if (book.format === "epub") {
+        if (progressRef.current >= 0.999) {
+          return false;
+        }
+        epubReaderRef.current?.nextPage();
+      } else if (book.format === "txt" || book.format === "pdf") {
+        if (!currentPage || !totalPages || currentPage >= totalPages) {
+          return false;
+        }
+
+        if (book.format === "txt") {
+          const moved = txtReaderControllerRef.current?.nextPage();
+          if (!moved) return false;
+        } else {
+          const moved = pdfReaderControllerRef.current?.nextPage();
+          if (!moved) return false;
+        }
+      } else {
+        return false;
+      }
+
+      return waitForPageChange(previousIdentity, sessionId);
+    },
+    [book, currentPage, getPageIdentity, totalPages, waitForPageChange]
+  );
+
+  const handleToggleTts = useCallback(async () => {
+    if (isSpeaking) {
+      stopSpeaking();
+      return;
+    }
+
+    ttsSessionRef.current += 1;
+    const sessionId = ttsSessionRef.current;
+
+    while (ttsSessionRef.current === sessionId) {
+      let paragraphs = getReadableParagraphs();
+      if (paragraphs.length === 0) {
+        await new Promise((resolve) => setTimeout(resolve, 220));
+        paragraphs = getReadableParagraphs();
+      }
+
+      if (paragraphs.length === 0) {
+        toast.error("当前页面没有可朗读段落");
+        break;
+      }
+
+      if (ttsEngine === "browser") {
+        try {
+          // eslint-disable-next-line no-await-in-loop
+          await speakWithBrowserParagraphs(paragraphs, sessionId);
+        } catch {
+          break;
+        }
+
+        if (ttsSessionRef.current !== sessionId) {
+          break;
+        }
+      } else {
+        // eslint-disable-next-line no-await-in-loop
+        await speakWithLegadoParagraphs(paragraphs, sessionId);
+
+        if (ttsSessionRef.current !== sessionId) {
+          break;
+        }
+      }
+
+      // eslint-disable-next-line no-await-in-loop
+      const moved = await tryAutoTurnPage(sessionId);
+      if (!moved) {
+        break;
+      }
+    }
+
+    if (ttsSessionRef.current === sessionId) {
+      setActiveTtsParagraph("");
+      setIsSpeaking(false);
+    }
+  }, [
+    getReadableParagraphs,
+    isSpeaking,
+    speakWithBrowserParagraphs,
+    speakWithLegadoParagraphs,
+    stopSpeaking,
+    tryAutoTurnPage,
+    ttsEngine,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      stopSpeaking();
+    };
+  }, [stopSpeaking]);
+
   // ---- Navigation handlers ----
   const handleTocItemClick = useCallback((href: string) => {
     epubReaderRef.current?.goToHref(href);
@@ -607,6 +1227,8 @@ function ReaderContent() {
             onCenterClick={handleToggleToolbar}
             toolbarVisible={toolbarVisible}
             highlights={highlights}
+            activeTtsParagraph={activeTtsParagraph}
+            ttsImmersiveMode={ttsImmersiveMode}
           />
         )}
 
@@ -615,6 +1237,9 @@ function ReaderContent() {
             <PdfReader
               url={`/api/books/${book.id}/file`}
               initialPage={currentPage}
+              onRegisterController={(controller) => {
+                pdfReaderControllerRef.current = controller;
+              }}
               onPageChange={(page, total) => {
                 setCurrentPage(page);
                 setTotalPages(total);
@@ -634,6 +1259,11 @@ function ReaderContent() {
               initialPage={currentPage}
               fontSize={fontSize}
               theme={readerTheme}
+              activeTtsParagraph={activeTtsParagraph}
+              ttsImmersiveMode={ttsImmersiveMode}
+              onRegisterController={(controller) => {
+                txtReaderControllerRef.current = controller;
+              }}
               onPageChange={(page, total) => {
                 setCurrentPage(page);
                 setTotalPages(total);
@@ -718,6 +1348,8 @@ function ReaderContent() {
           setSidePanelOpen(true);
           setActiveTab("notes");
         }}
+        onToggleTts={handleToggleTts}
+        isSpeaking={isSpeaking}
         onToggleSettings={() => setSettingsOpen(true)}
         onProgressChange={handleProgressChange}
       />
@@ -762,6 +1394,28 @@ function ReaderContent() {
         onFontSizeChange={handleFontSizeChange}
         theme={readerTheme}
         onThemeChange={handleThemeChange}
+        ttsEngine={ttsEngine}
+        onTtsEngineChange={setTtsEngine}
+        browserVoices={browserVoices}
+        selectedBrowserVoiceId={selectedBrowserVoiceId}
+        onSelectedBrowserVoiceIdChange={setSelectedBrowserVoiceId}
+        ttsRate={ttsRate}
+        onTtsRateChange={setTtsRate}
+        ttsPitch={ttsPitch}
+        onTtsPitchChange={setTtsPitch}
+        ttsVolume={ttsVolume}
+        onTtsVolumeChange={setTtsVolume}
+        legadoConfigs={legadoConfigs}
+        selectedLegadoConfigId={selectedLegadoConfigId}
+        onSelectedLegadoConfigIdChange={setSelectedLegadoConfigId}
+        legadoImportText={legadoImportText}
+        onLegadoImportTextChange={setLegadoImportText}
+        onLegadoImport={handleLegadoImport}
+        legadoImporting={legadoImporting}
+        legadoPreloadCount={legadoPreloadCount}
+        onLegadoPreloadCountChange={setLegadoPreloadCount}
+        ttsImmersiveMode={ttsImmersiveMode}
+        onTtsImmersiveModeChange={setTtsImmersiveMode}
       />
 
       {/* Text selection menu */}
