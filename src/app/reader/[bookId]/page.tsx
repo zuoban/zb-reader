@@ -11,6 +11,7 @@ import { SidePanel } from "@/components/reader/SidePanel";
 import { ReadingSettings } from "@/components/reader/ReadingSettings";
 import { TextSelectionMenu } from "@/components/reader/TextSelectionMenu";
 import { NoteEditor } from "@/components/reader/NoteEditor";
+import { TtsFloatingControl } from "@/components/reader/TtsFloatingControl";
 import { Loader2, ChevronLeft, ChevronRight, Menu } from "lucide-react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
@@ -63,6 +64,7 @@ const TxtReader = dynamic<{
 });
 
 const DEFAULT_LEGADO_PRELOAD_COUNT = 3;
+const DEFAULT_MICROSOFT_PRELOAD_COUNT = 3;
 
 interface TocItem {
   label: string;
@@ -98,6 +100,10 @@ function ReaderContent() {
   const [ttsRate, setTtsRate] = useState(1);
   const [ttsPitch, setTtsPitch] = useState(1);
   const [ttsVolume, setTtsVolume] = useState(1);
+  const [microsoftPreloadCount, setMicrosoftPreloadCount] = useState(
+    DEFAULT_MICROSOFT_PRELOAD_COUNT
+  );
+  const [legadoRate, setLegadoRate] = useState(50);
   const [legadoConfigs, setLegadoConfigs] = useState<TtsConfigApiItem[]>([]);
   const [selectedLegadoConfigId, setSelectedLegadoConfigId] = useState("");
   const [legadoImportText, setLegadoImportText] = useState("");
@@ -148,12 +154,13 @@ function ReaderContent() {
   const currentLocationRef = useRef<string | null>(null);
   const progressRef = useRef(0);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const currentUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const txtReaderControllerRef = useRef<{ nextPage: () => boolean } | null>(null);
   const pdfReaderControllerRef = useRef<{ nextPage: () => boolean } | null>(null);
   const ttsSessionRef = useRef(0);
   const [activeTtsParagraph, setActiveTtsParagraph] = useState("");
+  const currentParagraphIndexRef = useRef(0);
+  const allParagraphsRef = useRef<string[]>([]);
 
   // ---- Load book data ----
   useEffect(() => {
@@ -216,6 +223,9 @@ function ReaderContent() {
     const savedTtsRate = localStorage.getItem("reader-tts-rate");
     const savedTtsPitch = localStorage.getItem("reader-tts-pitch");
     const savedTtsVolume = localStorage.getItem("reader-tts-volume");
+    const savedMicrosoftPreloadCount = localStorage.getItem(
+      "reader-tts-microsoft-preload-count"
+    );
     const savedLegadoConfigId = localStorage.getItem("reader-tts-legado-config-id");
     const savedLegadoPreloadCount = localStorage.getItem(
       "reader-tts-legado-preload-count"
@@ -236,6 +246,12 @@ function ReaderContent() {
     }
     if (savedTtsPitch) setTtsPitch(Number(savedTtsPitch));
     if (savedTtsVolume) setTtsVolume(Number(savedTtsVolume));
+    if (savedMicrosoftPreloadCount) {
+      const count = Number(savedMicrosoftPreloadCount);
+      if ([1, 2, 3, 5].includes(count)) {
+        setMicrosoftPreloadCount(count);
+      }
+    }
     if (savedLegadoConfigId) setSelectedLegadoConfigId(savedLegadoConfigId);
     if (savedLegadoPreloadCount) {
       const count = Number(savedLegadoPreloadCount);
@@ -269,6 +285,13 @@ function ReaderContent() {
   }, [ttsVolume]);
 
   useEffect(() => {
+    localStorage.setItem(
+      "reader-tts-microsoft-preload-count",
+      String(microsoftPreloadCount)
+    );
+  }, [microsoftPreloadCount]);
+
+  useEffect(() => {
     localStorage.setItem("reader-tts-legado-config-id", selectedLegadoConfigId);
   }, [selectedLegadoConfigId]);
 
@@ -285,15 +308,11 @@ function ReaderContent() {
 
   const stopSpeaking = useCallback(() => {
     ttsSessionRef.current += 1;
-    if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-    }
     if (currentAudioRef.current) {
       currentAudioRef.current.pause();
       currentAudioRef.current.currentTime = 0;
       currentAudioRef.current = null;
     }
-    currentUtteranceRef.current = null;
     setActiveTtsParagraph("");
     setIsSpeaking(false);
   }, []);
@@ -317,29 +336,25 @@ function ReaderContent() {
   }, [loadLegadoConfigs]);
 
   useEffect(() => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
-
-    const loadVoices = () => {
-      const voices = window.speechSynthesis.getVoices();
-      const mapped = voices.map((voice) => ({
-        id: voice.voiceURI,
-        name: voice.name,
-        lang: voice.lang,
-      }));
-      setBrowserVoices(mapped);
-
-      if (mapped.length > 0 && !mapped.some((voice) => voice.id === selectedBrowserVoiceId)) {
-        setSelectedBrowserVoiceId(mapped[0].id);
+    const loadVoices = async () => {
+      try {
+        const res = await fetch("/api/tts/microsoft/voices");
+        if (!res.ok) return;
+        const data = (await res.json()) as { voices?: BrowserVoiceOption[] };
+        const mapped = data.voices || [];
+        setBrowserVoices(mapped);
+        setSelectedBrowserVoiceId((prev) => {
+          if (mapped.length === 0) return prev;
+          if (prev && mapped.some((voice) => voice.id === prev)) return prev;
+          return mapped[0].id;
+        });
+      } catch {
+        // ignore
       }
     };
 
     loadVoices();
-    window.speechSynthesis.onvoiceschanged = loadVoices;
-
-    return () => {
-      window.speechSynthesis.onvoiceschanged = null;
-    };
-  }, [selectedBrowserVoiceId]);
+  }, []);
 
   // ---- Save progress ----
   const saveProgress = useCallback(async () => {
@@ -756,16 +771,39 @@ function ReaderContent() {
     }
   }, [legadoImportText, loadLegadoConfigs]);
 
-  const speakWithBrowserParagraphs = useCallback(
-    async (paragraphs: string[], sessionId: number) => {
-      if (!("speechSynthesis" in window)) {
-        toast.error("当前浏览器不支持语音朗读");
-        return;
+  const requestMicrosoftSpeech = useCallback(
+    async (text: string) => {
+      const ratePercent = Math.round((ttsRate - 1) * 100);
+      const pitchPercent = Math.round((ttsPitch - 1) * 100);
+      const volumePercent = Math.round(ttsVolume * 100);
+
+      const res = await fetch("/api/tts/microsoft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text,
+          voiceName: selectedBrowserVoiceId,
+          rate: ratePercent,
+          pitch: pitchPercent,
+          volume: volumePercent,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as
+          | { error?: string }
+          | null;
+        throw new Error(data?.error || "朗读失败");
       }
 
-      const voices = window.speechSynthesis.getVoices();
-      const voice = voices.find((item) => item.voiceURI === selectedBrowserVoiceId);
+      const audioBlob = await res.blob();
+      return URL.createObjectURL(audioBlob);
+    },
+    [selectedBrowserVoiceId, ttsPitch, ttsRate, ttsVolume]
+  );
 
+  const speakWithBrowserParagraphs = useCallback(
+    async (paragraphs: string[], sessionId: number, startIndex = 0) => {
       const queue = paragraphs.filter((item) => item.trim().length > 0);
       if (queue.length === 0) {
         toast.error("当前页面没有可朗读段落");
@@ -774,41 +812,89 @@ function ReaderContent() {
 
       setIsSpeaking(true);
 
-      for (const paragraph of queue) {
+      const preparedTaskMap = new Map<number, Promise<string>>();
+
+      const ensurePreloadWindow = (windowStart: number) => {
+        for (
+          let cursor = windowStart;
+          cursor < Math.min(queue.length, windowStart + microsoftPreloadCount);
+          cursor += 1
+        ) {
+          if (!preparedTaskMap.has(cursor)) {
+            preparedTaskMap.set(cursor, requestMicrosoftSpeech(queue[cursor]));
+          }
+        }
+      };
+
+      ensurePreloadWindow(0);
+
+      for (let i = 0; i < queue.length; i += 1) {
         if (ttsSessionRef.current !== sessionId) {
           return;
         }
 
+        currentParagraphIndexRef.current = startIndex + i;
+        const paragraph = queue[i];
         setActiveTtsParagraph(paragraph);
 
-        // eslint-disable-next-line no-await-in-loop
-        await new Promise<void>((resolve, reject) => {
-          const utterance = new SpeechSynthesisUtterance(paragraph);
-          utterance.rate = ttsRate;
-          utterance.pitch = ttsPitch;
-          utterance.volume = ttsVolume;
+        ensurePreloadWindow(i + 1);
 
-          if (voice) {
-            utterance.voice = voice;
-          }
-
-          utterance.onend = () => {
-            currentUtteranceRef.current = null;
-            resolve();
-          };
-          utterance.onerror = () => {
-            currentUtteranceRef.current = null;
-            reject(new Error("speech_error"));
-          };
-
-          currentUtteranceRef.current = utterance;
-          window.speechSynthesis.speak(utterance);
-        }).catch(() => {
+        const objectUrl = await (
+          preparedTaskMap.get(i) ?? requestMicrosoftSpeech(paragraph)
+        ).catch(() => {
           if (ttsSessionRef.current === sessionId) {
+            setActiveTtsParagraph("");
+            setIsSpeaking(false);
             toast.error("朗读失败");
           }
           throw new Error("speech_failed");
         });
+
+        await new Promise<void>((resolve, reject) => {
+          if (ttsSessionRef.current !== sessionId) {
+            URL.revokeObjectURL(objectUrl);
+            resolve();
+            return;
+          }
+
+          const audio = new Audio(objectUrl);
+          currentAudioRef.current = audio;
+
+          audio.onended = () => {
+            URL.revokeObjectURL(objectUrl);
+            currentAudioRef.current = null;
+            resolve();
+          };
+
+          audio.onerror = () => {
+            URL.revokeObjectURL(objectUrl);
+            currentAudioRef.current = null;
+            reject(new Error("audio_play_error"));
+          };
+
+          audio.play().catch(() => {
+            URL.revokeObjectURL(objectUrl);
+            currentAudioRef.current = null;
+            reject(new Error("audio_play_error"));
+          });
+        }).catch(() => {
+          if (ttsSessionRef.current === sessionId) {
+            setActiveTtsParagraph("");
+            setIsSpeaking(false);
+            toast.error("朗读失败");
+          }
+          throw new Error("speech_failed");
+        });
+      }
+
+      for (const [, task] of preparedTaskMap) {
+        task
+          .then((objectUrl) => {
+            URL.revokeObjectURL(objectUrl);
+          })
+          .catch(() => {
+            // ignore preload cleanup errors
+          });
       }
 
       if (ttsSessionRef.current === sessionId) {
@@ -816,7 +902,7 @@ function ReaderContent() {
         setIsSpeaking(false);
       }
     },
-    [selectedBrowserVoiceId, ttsPitch, ttsRate, ttsVolume]
+    [microsoftPreloadCount, requestMicrosoftSpeech]
   );
 
   type PreparedLegadoSpeech =
@@ -832,7 +918,7 @@ function ReaderContent() {
         body: JSON.stringify({
           configId: selectedLegadoConfigId,
           text,
-          speakSpeed: ttsRate,
+          speakSpeed: legadoRate,
         }),
       });
 
@@ -861,7 +947,7 @@ function ReaderContent() {
 
       throw new Error("未获取到可朗读内容");
     },
-    [selectedLegadoConfigId, ttsRate]
+    [selectedLegadoConfigId, legadoRate]
   );
 
   const playLegadoPreparedSpeech = useCallback(
@@ -912,7 +998,7 @@ function ReaderContent() {
   );
 
   const speakWithLegadoParagraphs = useCallback(
-    async (paragraphs: string[], sessionId: number) => {
+    async (paragraphs: string[], sessionId: number, startIndex = 0) => {
       if (!selectedLegadoConfigId) {
         toast.error("请先选择 Legado 配置");
         return;
@@ -926,10 +1012,10 @@ function ReaderContent() {
 
       const preparedTaskMap = new Map<number, Promise<PreparedLegadoSpeech>>();
 
-      const ensurePreloadWindow = (startIndex: number) => {
+      const ensurePreloadWindow = (windowStart: number) => {
         for (
-          let cursor = startIndex;
-          cursor < Math.min(queue.length, startIndex + legadoPreloadCount);
+          let cursor = windowStart;
+          cursor < Math.min(queue.length, windowStart + legadoPreloadCount);
           cursor += 1
         ) {
           if (!preparedTaskMap.has(cursor)) {
@@ -945,6 +1031,7 @@ function ReaderContent() {
           return;
         }
 
+        currentParagraphIndexRef.current = startIndex + index;
         const paragraph = queue[index];
         ensurePreloadWindow(index + 1);
         const currentPreparedPromise =
@@ -1099,44 +1186,95 @@ function ReaderContent() {
 
     ttsSessionRef.current += 1;
     const sessionId = ttsSessionRef.current;
+    
+    // 如果已经有缓存的段落，从记录的索引开始；否则从头开始
+    // 这意味着如果暂停过，currentParagraphIndexRef 应该保留了上次的位置
+    // 但如果翻页了，getReadableParagraphs 会重新获取，我们需要重置还是保留？
+    // 简单起见，如果 allParagraphsRef 为空或者页面变了，通常需要重新获取。
+    // 这里我们先获取当前页面的段落
+    let paragraphs = getReadableParagraphs();
+    
+    // 如果获取不到，稍作等待重试（可能页面刚加载）
+    if (paragraphs.length === 0) {
+      await new Promise((resolve) => setTimeout(resolve, 220));
+      paragraphs = getReadableParagraphs();
+    }
 
+    if (paragraphs.length === 0) {
+      toast.error("当前页面没有可朗读段落");
+      return;
+    }
+
+    // 更新段落引用
+    allParagraphsRef.current = paragraphs;
+
+    // 确定起始索引：
+    // 如果 currentParagraphIndexRef 在有效范围内，就从那里开始
+    // 否则重置为 0
+    if (currentParagraphIndexRef.current >= paragraphs.length || currentParagraphIndexRef.current < 0) {
+      currentParagraphIndexRef.current = 0;
+    }
+    
+    // 如果没有在朗读，设置状态为朗读
+    setIsSpeaking(true);
+
+    // 开始朗读循环
     while (ttsSessionRef.current === sessionId) {
-      let paragraphs = getReadableParagraphs();
+      // 在循环开始时再次检查段落（因为翻页后会变）
       if (paragraphs.length === 0) {
-        await new Promise((resolve) => setTimeout(resolve, 220));
-        paragraphs = getReadableParagraphs();
+          paragraphs = getReadableParagraphs();
+          if (paragraphs.length === 0) {
+            // 再次尝试等待
+             await new Promise((resolve) => setTimeout(resolve, 220));
+             paragraphs = getReadableParagraphs();
+          }
+          if (paragraphs.length === 0) {
+             toast.error("没有更多可朗读内容");
+             break;
+          }
+          // 翻页后，从头开始读新的一页
+          currentParagraphIndexRef.current = 0;
+          allParagraphsRef.current = paragraphs;
       }
 
-      if (paragraphs.length === 0) {
-        toast.error("当前页面没有可朗读段落");
-        break;
+      // 从当前索引开始切片
+      const startIndex = currentParagraphIndexRef.current;
+      const paragraphsToRead = paragraphs.slice(startIndex);
+
+      if (paragraphsToRead.length === 0) {
+          // 当前页读完了，尝试翻页
+          const moved = await tryAutoTurnPage(sessionId);
+          if (!moved) break;
+          // 翻页后清空当前段落，以便下一次循环重新获取
+          paragraphs = []; 
+          continue; 
       }
 
       if (ttsEngine === "browser") {
         try {
-          // eslint-disable-next-line no-await-in-loop
-          await speakWithBrowserParagraphs(paragraphs, sessionId);
+          await speakWithBrowserParagraphs(paragraphsToRead, sessionId, startIndex);
         } catch {
           break;
         }
-
-        if (ttsSessionRef.current !== sessionId) {
-          break;
-        }
       } else {
-        // eslint-disable-next-line no-await-in-loop
-        await speakWithLegadoParagraphs(paragraphs, sessionId);
-
-        if (ttsSessionRef.current !== sessionId) {
+        try {
+          await speakWithLegadoParagraphs(paragraphsToRead, sessionId, startIndex);
+        } catch {
           break;
         }
       }
 
-      // eslint-disable-next-line no-await-in-loop
+      if (ttsSessionRef.current !== sessionId) {
+        break;
+      }
+      
+      // 当前页读完（speak 函数返回意味着这一批读完了），准备翻页
       const moved = await tryAutoTurnPage(sessionId);
       if (!moved) {
         break;
       }
+      // 翻页成功，清空段落缓存，下一轮循环会重新获取
+      paragraphs = [];
     }
 
     if (ttsSessionRef.current === sessionId) {
@@ -1158,6 +1296,114 @@ function ReaderContent() {
       stopSpeaking();
     };
   }, [stopSpeaking]);
+
+  const handleTtsPrevParagraph = useCallback(() => {
+    // 如果没有可读段落，尝试获取一下（首次未开始朗读时可能为空）
+    let paragraphs = allParagraphsRef.current;
+    if (paragraphs.length === 0) {
+      paragraphs = getReadableParagraphs();
+      allParagraphsRef.current = paragraphs;
+    }
+    
+    if (paragraphs.length === 0) return;
+
+    const newIndex = Math.max(0, currentParagraphIndexRef.current - 1);
+    
+    // 如果已经在最前，或者没有变化，则不处理
+    if (newIndex === currentParagraphIndexRef.current && currentParagraphIndexRef.current === 0) return;
+
+    // 1. 停止当前的朗读
+    ttsSessionRef.current += 1;
+    const sessionId = ttsSessionRef.current;
+    
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current = null;
+    }
+
+    // 2. 更新位置
+    currentParagraphIndexRef.current = newIndex;
+    
+      // 3. 仅更新高亮，不自动播放。
+    // 但是这里有个问题：如果之前正在播放，用户期望的是切歌（切段）继续播？
+    // 还是仅仅移动光标？
+    // 通常 "上一首/下一首" 意味着切歌并播放。
+    // 但用户说 "控制开始阅读的位置"，可能意味着 "调整位置" 而非 "立即播放"。
+    // 不过考虑到这是 TTS，如果正在读，切段通常期望继续读。
+    // 如果没在读，切段只是移动光标。
+    
+    const wasSpeaking = isSpeaking;
+    setActiveTtsParagraph(paragraphs[newIndex]);
+
+    if (wasSpeaking) {
+       // 如果之前在读，则继续读
+        const startParagraphs = paragraphs.slice(newIndex);
+        
+        setTimeout(() => {
+          if (ttsSessionRef.current !== sessionId) return;
+
+          // 确保设置 isSpeaking 为 true，否则 speak 函数可能会因为状态不对而退出或者 UI 状态不对
+          setIsSpeaking(true);
+
+          if (ttsEngine === "browser") {
+            speakWithBrowserParagraphs(startParagraphs, sessionId, newIndex);
+          } else {
+            speakWithLegadoParagraphs(startParagraphs, sessionId, newIndex);
+          }
+        }, 10);
+    } else {
+        // 如果之前没在读，就只停留在那里，高亮已经更新
+        // 不需要做额外操作，只需要保证 session ID 变了阻止之前的逻辑即可
+        // 但这里 activeTtsParagraph 是状态，可能会被之前的逻辑清空？
+        // 不会，因为 session ID 变了。
+    }
+  }, [getReadableParagraphs, isSpeaking, ttsEngine, speakWithBrowserParagraphs, speakWithLegadoParagraphs]);
+
+  const handleTtsNextParagraph = useCallback(() => {
+    let paragraphs = allParagraphsRef.current;
+    if (paragraphs.length === 0) {
+      paragraphs = getReadableParagraphs();
+      allParagraphsRef.current = paragraphs;
+    }
+
+    if (paragraphs.length === 0) return;
+
+    const newIndex = Math.min(
+      paragraphs.length - 1,
+      currentParagraphIndexRef.current + 1
+    );
+    
+    if (newIndex === currentParagraphIndexRef.current && currentParagraphIndexRef.current === paragraphs.length - 1) return;
+
+    ttsSessionRef.current += 1;
+    const sessionId = ttsSessionRef.current;
+    
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current = null;
+    }
+
+    currentParagraphIndexRef.current = newIndex;
+    
+    const wasSpeaking = isSpeaking;
+    setActiveTtsParagraph(paragraphs[newIndex]);
+
+    if (wasSpeaking) {
+        const startParagraphs = paragraphs.slice(newIndex);
+        
+        setTimeout(() => {
+          if (ttsSessionRef.current !== sessionId) return;
+          
+          setIsSpeaking(true);
+
+          if (ttsEngine === "browser") {
+            speakWithBrowserParagraphs(startParagraphs, sessionId, newIndex);
+          } else {
+            speakWithLegadoParagraphs(startParagraphs, sessionId, newIndex);
+          }
+        }, 10);
+    }
+  }, [getReadableParagraphs, isSpeaking, ttsEngine, speakWithBrowserParagraphs, speakWithLegadoParagraphs]);
 
   // ---- Navigation handlers ----
   const handleTocItemClick = useCallback((href: string) => {
@@ -1405,6 +1651,10 @@ function ReaderContent() {
         onTtsPitchChange={setTtsPitch}
         ttsVolume={ttsVolume}
         onTtsVolumeChange={setTtsVolume}
+        microsoftPreloadCount={microsoftPreloadCount}
+        onMicrosoftPreloadCountChange={setMicrosoftPreloadCount}
+        legadoRate={legadoRate}
+        onLegadoRateChange={setLegadoRate}
         legadoConfigs={legadoConfigs}
         selectedLegadoConfigId={selectedLegadoConfigId}
         onSelectedLegadoConfigIdChange={setSelectedLegadoConfigId}
@@ -1439,6 +1689,14 @@ function ReaderContent() {
         initialContent={noteEditor.initialContent}
         initialColor={noteEditor.initialColor}
         onSave={handleSaveNote}
+      />
+
+      <TtsFloatingControl
+        isSpeaking={isSpeaking}
+        onToggle={handleToggleTts}
+        onStop={stopSpeaking}
+        onPrev={handleTtsPrevParagraph}
+        onNext={handleTtsNextParagraph}
       />
 
       <Toaster />

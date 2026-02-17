@@ -37,6 +37,10 @@ interface ReadingSettingsProps {
   onTtsPitchChange: (value: number) => void;
   ttsVolume: number;
   onTtsVolumeChange: (value: number) => void;
+  microsoftPreloadCount: number;
+  onMicrosoftPreloadCountChange: (value: number) => void;
+  legadoRate: number;
+  onLegadoRateChange: (value: number) => void;
   legadoConfigs: TtsConfigApiItem[];
   selectedLegadoConfigId: string;
   onSelectedLegadoConfigIdChange: (configId: string) => void;
@@ -89,6 +93,10 @@ export function ReadingSettings({
   onTtsPitchChange,
   ttsVolume,
   onTtsVolumeChange,
+  microsoftPreloadCount,
+  onMicrosoftPreloadCountChange,
+  legadoRate,
+  onLegadoRateChange,
   legadoConfigs,
   selectedLegadoConfigId,
   onSelectedLegadoConfigIdChange,
@@ -217,7 +225,7 @@ export function ReadingSettings({
                 <SelectValue placeholder="选择朗读引擎" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="browser">浏览器内置语音</SelectItem>
+                <SelectItem value="browser">微软在线语音</SelectItem>
                 <SelectItem value="legado">Legado 规则</SelectItem>
               </SelectContent>
             </Select>
@@ -271,8 +279,8 @@ export function ReadingSettings({
                 </label>
                 <Input
                   type="range"
-                  min={1}
-                  max={5}
+                  min={0.5}
+                  max={2}
                   step={0.1}
                   value={ttsRate}
                   className="cursor-pointer"
@@ -315,6 +323,28 @@ export function ReadingSettings({
                   }
                 />
               </div>
+
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-muted-foreground">
+                  预加载段数
+                </label>
+                <Select
+                  value={String(microsoftPreloadCount)}
+                  onValueChange={(value) =>
+                    onMicrosoftPreloadCountChange(Number(value))
+                  }
+                >
+                  <SelectTrigger className="w-full cursor-pointer">
+                    <SelectValue placeholder="选择预加载段数" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 段</SelectItem>
+                    <SelectItem value="2">2 段</SelectItem>
+                    <SelectItem value="3">3 段</SelectItem>
+                    <SelectItem value="5">5 段</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </>
           )}
 
@@ -322,17 +352,17 @@ export function ReadingSettings({
             <>
               <div className="space-y-3">
                 <label className="text-sm font-medium text-muted-foreground">
-                  朗读速度 ({ttsRate.toFixed(1)})
+                  朗读速度 ({Math.round(legadoRate)})
                 </label>
                 <Input
                   type="range"
-                  min={1}
-                  max={5}
-                  step={0.1}
-                  value={ttsRate}
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={legadoRate}
                   className="cursor-pointer"
                   onChange={(event) =>
-                    onTtsRateChange(Number(event.currentTarget.value))
+                    onLegadoRateChange(Number(event.currentTarget.value))
                   }
                 />
               </div>
