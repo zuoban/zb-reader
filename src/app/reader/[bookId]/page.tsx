@@ -68,6 +68,7 @@ const DEFAULT_LEGADO_PRELOAD_COUNT = 3;
 const DEFAULT_MICROSOFT_PRELOAD_COUNT = 3;
 const MAX_TTS_RETRY_COUNT = 5;
 const TTS_RETRY_DELAY_MS = 450;
+const IS_DEV = process.env.NODE_ENV !== "production";
 
 interface TocItem {
   label: string;
@@ -176,7 +177,12 @@ function ReaderContent() {
 
   const isRetryableTtsError = useCallback((error: unknown) => {
     if (!(error instanceof Error)) return true;
-    return error.message !== "audio_play_error";
+
+    if (!error.message.startsWith("audio_play_error")) {
+      return true;
+    }
+
+    return !error.message.includes("NotAllowedError");
   }, []);
 
   // ---- Load book data ----
@@ -965,12 +971,33 @@ function ReaderContent() {
 
               audio.onerror = () => {
                 cleanup();
-                reject(new Error("audio_play_error"));
+                if (IS_DEV) {
+                  console.warn("[TTS] browser audio.onerror", {
+                    engine: "microsoft",
+                    sessionId,
+                    paragraphIndex: startIndex + i,
+                  });
+                }
+                reject(new Error("audio_play_error:MediaError"));
               };
 
-              audio.play().catch(() => {
+              audio.play().catch((error) => {
                 cleanup();
-                reject(new Error("audio_play_error"));
+                const reason =
+                  error instanceof DOMException
+                    ? error.name
+                    : error instanceof Error
+                      ? error.name || "UnknownError"
+                      : "UnknownError";
+                if (IS_DEV) {
+                  console.warn("[TTS] browser audio.play rejected", {
+                    engine: "microsoft",
+                    sessionId,
+                    paragraphIndex: startIndex + i,
+                    reason,
+                  });
+                }
+                reject(new Error(`audio_play_error:${reason}`));
               });
             });
 
@@ -1116,14 +1143,35 @@ function ReaderContent() {
             URL.revokeObjectURL(prepared.objectUrl);
           }
           currentAudioRef.current = null;
-          reject(new Error("audio_play_error"));
+          if (IS_DEV) {
+            console.warn("[TTS] legado audio.onerror", {
+              sessionId,
+              paragraph: paragraph.slice(0, 48),
+              preparedKind: prepared.kind,
+            });
+          }
+          reject(new Error("audio_play_error:MediaError"));
         };
-        audio.play().catch(() => {
+        audio.play().catch((error) => {
           if (prepared.kind === "blob") {
             URL.revokeObjectURL(prepared.objectUrl);
           }
           currentAudioRef.current = null;
-          reject(new Error("audio_play_error"));
+          const reason =
+            error instanceof DOMException
+              ? error.name
+              : error instanceof Error
+                ? error.name || "UnknownError"
+                : "UnknownError";
+          if (IS_DEV) {
+            console.warn("[TTS] legado audio.play rejected", {
+              sessionId,
+              paragraph: paragraph.slice(0, 48),
+              preparedKind: prepared.kind,
+              reason,
+            });
+          }
+          reject(new Error(`audio_play_error:${reason}`));
         });
       });
     },
