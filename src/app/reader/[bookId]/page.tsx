@@ -165,6 +165,7 @@ function ReaderContent() {
   const ttsSessionRef = useRef(0);
   const settingsLoadedRef = useRef(false);
   const settingsSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const ttsResumeRef = useRef<(() => void) | null>(null);
   const [activeTtsParagraph, setActiveTtsParagraph] = useState("");
   const currentParagraphIndexRef = useRef(0);
   const allParagraphsRef = useRef<string[]>([]);
@@ -380,6 +381,7 @@ function ReaderContent() {
 
   const stopSpeaking = useCallback(() => {
     ttsSessionRef.current += 1;
+    ttsResumeRef.current = null;
     if (currentAudioRef.current) {
       currentAudioRef.current.pause();
       currentAudioRef.current.currentTime = 0;
@@ -878,6 +880,92 @@ function ReaderContent() {
     [selectedBrowserVoiceId, ttsPitch, ttsRate, ttsVolume]
   );
 
+  const playAudioSource = useCallback(
+    async (
+      source: string,
+      sessionId: number,
+      options?: {
+        onEnd?: () => void;
+        onCleanup?: () => void;
+        debugMeta?: { engine: "microsoft" | "legado"; paragraphIndex?: number; paragraph?: string };
+      }
+    ) => {
+      if (ttsSessionRef.current !== sessionId) return;
+
+      if (!currentAudioRef.current) {
+        currentAudioRef.current = new Audio();
+      }
+
+      const audio = currentAudioRef.current;
+
+      const dispose = () => {
+        audio.ontimeupdate = null;
+        audio.onended = null;
+        audio.onerror = null;
+      };
+
+      await new Promise<void>((resolve, reject) => {
+        audio.pause();
+        audio.currentTime = 0;
+        audio.src = source;
+
+        audio.ontimeupdate = () => {
+          if (!Number.isFinite(audio.duration) || audio.duration <= 0) return;
+          setTtsPlaybackProgress(
+            Math.min(1, Math.max(0, audio.currentTime / audio.duration))
+          );
+        };
+
+        audio.onended = () => {
+          dispose();
+          setTtsPlaybackProgress(1);
+          options?.onEnd?.();
+          resolve();
+        };
+
+        audio.onerror = () => {
+          dispose();
+          options?.onCleanup?.();
+          if (IS_DEV) {
+            console.warn("[TTS] audio element onerror", options?.debugMeta);
+          }
+          reject(new Error("audio_play_error:MediaError"));
+        };
+
+        audio.play().catch((error) => {
+          const reason =
+            error instanceof DOMException
+              ? error.name
+              : error instanceof Error
+                ? error.name || "UnknownError"
+                : "UnknownError";
+
+          dispose();
+
+          if (reason === "NotAllowedError") {
+            ttsResumeRef.current = () => {
+              if (ttsSessionRef.current !== sessionId) return;
+              audio.play().catch(() => {
+                // user can click again to retry resume
+              });
+            };
+            toast.error("播放被浏览器拦截，点击朗读按钮继续");
+          }
+
+          if (IS_DEV) {
+            console.warn("[TTS] audio.play rejected", {
+              ...options?.debugMeta,
+              reason,
+            });
+          }
+
+          reject(new Error(`audio_play_error:${reason}`));
+        });
+      });
+    },
+    []
+  );
+
   const speakWithBrowserParagraphs = useCallback(
     async (paragraphs: string[], sessionId: number, startIndex = 0) => {
       const queue = paragraphs.filter((item) => item.trim().length > 0);
@@ -942,63 +1030,26 @@ function ReaderContent() {
                 return;
               }
 
-              const audio = new Audio(objectUrl as string);
-              currentAudioRef.current = audio;
-              let cleaned = false;
-
-              const cleanup = () => {
-                if (cleaned) return;
-                cleaned = true;
-                if (objectUrl) {
-                  URL.revokeObjectURL(objectUrl);
-                  objectUrl = null;
-                }
-                currentAudioRef.current = null;
-              };
-
-              audio.ontimeupdate = () => {
-                if (!Number.isFinite(audio.duration) || audio.duration <= 0) return;
-                setTtsPlaybackProgress(
-                  Math.min(1, Math.max(0, audio.currentTime / audio.duration))
-                );
-              };
-
-              audio.onended = () => {
-                cleanup();
-                setTtsPlaybackProgress(1);
-                resolve();
-              };
-
-              audio.onerror = () => {
-                cleanup();
-                if (IS_DEV) {
-                  console.warn("[TTS] browser audio.onerror", {
-                    engine: "microsoft",
-                    sessionId,
-                    paragraphIndex: startIndex + i,
-                  });
-                }
-                reject(new Error("audio_play_error:MediaError"));
-              };
-
-              audio.play().catch((error) => {
-                cleanup();
-                const reason =
-                  error instanceof DOMException
-                    ? error.name
-                    : error instanceof Error
-                      ? error.name || "UnknownError"
-                      : "UnknownError";
-                if (IS_DEV) {
-                  console.warn("[TTS] browser audio.play rejected", {
-                    engine: "microsoft",
-                    sessionId,
-                    paragraphIndex: startIndex + i,
-                    reason,
-                  });
-                }
-                reject(new Error(`audio_play_error:${reason}`));
-              });
+              void playAudioSource(objectUrl as string, sessionId, {
+                onCleanup: () => {
+                  if (objectUrl) {
+                    URL.revokeObjectURL(objectUrl);
+                    objectUrl = null;
+                  }
+                },
+                onEnd: () => {
+                  if (objectUrl) {
+                    URL.revokeObjectURL(objectUrl);
+                    objectUrl = null;
+                  }
+                },
+                debugMeta: {
+                  engine: "microsoft",
+                  paragraphIndex: startIndex + i,
+                },
+              })
+                .then(resolve)
+                .catch(reject);
             });
 
             paragraphSucceeded = true;
@@ -1008,7 +1059,10 @@ function ReaderContent() {
             if (objectUrl) {
               URL.revokeObjectURL(objectUrl);
             }
-            currentAudioRef.current = null;
+            if (currentAudioRef.current) {
+              currentAudioRef.current.pause();
+              currentAudioRef.current.currentTime = 0;
+            }
 
             const canRetry = isRetryableTtsError(error);
 
@@ -1054,7 +1108,13 @@ function ReaderContent() {
         setIsSpeaking(false);
       }
     },
-    [isRetryableTtsError, microsoftPreloadCount, requestMicrosoftSpeech, wait]
+    [
+      isRetryableTtsError,
+      microsoftPreloadCount,
+      playAudioSource,
+      requestMicrosoftSpeech,
+      wait,
+    ]
   );
 
   type PreparedLegadoSpeech =
@@ -1119,63 +1179,25 @@ function ReaderContent() {
       }
 
       const source = prepared.kind === "blob" ? prepared.objectUrl : prepared.audioUrl;
-      const audio = new Audio(source);
-      currentAudioRef.current = audio;
 
-      await new Promise<void>((resolve, reject) => {
-        audio.ontimeupdate = () => {
-          if (!Number.isFinite(audio.duration) || audio.duration <= 0) return;
-          setTtsPlaybackProgress(
-            Math.min(1, Math.max(0, audio.currentTime / audio.duration))
-          );
-        };
-
-        audio.onended = () => {
+      await playAudioSource(source, sessionId, {
+        onCleanup: () => {
           if (prepared.kind === "blob") {
             URL.revokeObjectURL(prepared.objectUrl);
           }
-          currentAudioRef.current = null;
-          setTtsPlaybackProgress(1);
-          resolve();
-        };
-        audio.onerror = () => {
+        },
+        onEnd: () => {
           if (prepared.kind === "blob") {
             URL.revokeObjectURL(prepared.objectUrl);
           }
-          currentAudioRef.current = null;
-          if (IS_DEV) {
-            console.warn("[TTS] legado audio.onerror", {
-              sessionId,
-              paragraph: paragraph.slice(0, 48),
-              preparedKind: prepared.kind,
-            });
-          }
-          reject(new Error("audio_play_error:MediaError"));
-        };
-        audio.play().catch((error) => {
-          if (prepared.kind === "blob") {
-            URL.revokeObjectURL(prepared.objectUrl);
-          }
-          currentAudioRef.current = null;
-          const reason =
-            error instanceof DOMException
-              ? error.name
-              : error instanceof Error
-                ? error.name || "UnknownError"
-                : "UnknownError";
-          if (IS_DEV) {
-            console.warn("[TTS] legado audio.play rejected", {
-              sessionId,
-              paragraph: paragraph.slice(0, 48),
-              preparedKind: prepared.kind,
-              reason,
-            });
-          }
-          reject(new Error(`audio_play_error:${reason}`));
-        });
+        },
+        debugMeta: {
+          engine: "legado",
+          paragraph: paragraph.slice(0, 48),
+        },
       });
     },
-    [speakWithBrowserParagraphs]
+    [playAudioSource, speakWithBrowserParagraphs]
   );
 
   const speakWithLegadoParagraphs = useCallback(
@@ -1394,6 +1416,14 @@ function ReaderContent() {
       return;
     }
 
+    if (ttsResumeRef.current) {
+      setIsSpeaking(true);
+      const resume = ttsResumeRef.current;
+      ttsResumeRef.current = null;
+      resume();
+      return;
+    }
+
     ttsSessionRef.current += 1;
     const sessionId = ttsSessionRef.current;
     
@@ -1528,7 +1558,7 @@ function ReaderContent() {
     
     if (currentAudioRef.current) {
       currentAudioRef.current.pause();
-      currentAudioRef.current = null;
+      currentAudioRef.current.currentTime = 0;
     }
 
     // 2. 更新位置
@@ -1590,7 +1620,7 @@ function ReaderContent() {
     
     if (currentAudioRef.current) {
       currentAudioRef.current.pause();
-      currentAudioRef.current = null;
+      currentAudioRef.current.currentTime = 0;
     }
 
     currentParagraphIndexRef.current = newIndex;
