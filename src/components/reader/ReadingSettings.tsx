@@ -119,24 +119,37 @@ function SliderWithPreview({
   displayValue?: string;
 }) {
   const percentage = ((value - min) / (max - min)) * 100;
+  const thumbSize = 20;
+  const offset = (thumbSize / 2) - (thumbSize * percentage / 100);
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-muted-foreground">{label}</label>
-        <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+        <label className="text-sm font-semibold text-foreground">{label}</label>
+        <span className="text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full min-w-[3rem] text-center">
           {displayValue ?? value.toFixed(1)}
         </span>
       </div>
-      <div className="relative h-6 flex items-center">
+      <div className="relative h-7 flex items-center group/slider">
         {/* 背景轨道 */}
-        <div className="absolute inset-0 h-2 bg-muted rounded-full overflow-hidden">
-          {/* 填充层 */}
+        <div className="absolute inset-x-0 h-2 bg-muted rounded-full overflow-hidden shadow-inner">
+          {/* 填充层 - 渐变效果 */}
           <div
-            className="h-full bg-gradient-to-r from-primary/60 via-primary to-primary/60 transition-all duration-150"
+            className="h-full bg-gradient-to-r from-primary via-primary to-primary/80 transition-all duration-100 ease-out relative"
             style={{ width: `${percentage}%` }}
-          />
+          >
+            {/* 填充层高光效果 */}
+            <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent" />
+          </div>
         </div>
+
+        {/* 刻度标记（可选，仅在少量刻度时显示） */}
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-0 pointer-events-none">
+          <div className="w-0.5 h-1.5 bg-muted-foreground/30 rounded-full" />
+          <div className="w-0.5 h-1.5 bg-muted-foreground/30 rounded-full" />
+          <div className="w-0.5 h-1.5 bg-muted-foreground/30 rounded-full" />
+        </div>
+
         <Input
           type="range"
           min={min}
@@ -146,11 +159,27 @@ function SliderWithPreview({
           className="relative z-10 w-full h-full opacity-0 cursor-pointer"
           onChange={(e) => onChange(Number(e.currentTarget.value))}
         />
+
         {/* 自定义滑块 */}
         <div
-          className="absolute w-5 h-5 rounded-full bg-primary shadow-lg border-2 border-background pointer-events-none transition-all duration-150"
-          style={{ left: `calc(${percentage}% + 8px)` }}
-        />
+          className="absolute top-1/2 -translate-y-1/2 rounded-full bg-primary shadow-xl border-2 border-background pointer-events-none transition-all duration-100 ease-out group-hover/slider:scale-110 group-active/slider:scale-95"
+          style={{
+            width: thumbSize,
+            height: thumbSize,
+            left: `calc(${percentage}% - ${thumbSize / 2}px)`,
+          }}
+        >
+          {/* 滑块高光 */}
+          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/30 to-transparent" />
+          {/* 滑块内阴影 */}
+          <div className="absolute inset-[2px] rounded-full bg-primary shadow-inner" />
+        </div>
+      </div>
+
+      {/* 最小/最大值标签 */}
+      <div className="flex justify-between text-xs text-muted-foreground/60 px-0.5">
+        <span>{min}</span>
+        <span>{max}</span>
       </div>
     </div>
   );
