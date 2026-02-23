@@ -170,6 +170,9 @@ function ReaderContent() {
   const currentParagraphIndexRef = useRef(0);
   const allParagraphsRef = useRef<string[]>([]);
 
+  // 跟踪 TTS 设置的上次值，用于检测设置变化
+  const prevTtsSettingsRef = useRef({ rate: ttsRate, pitch: ttsPitch, volume: ttsVolume });
+
   const wait = useCallback((ms: number) => {
     return new Promise<void>((resolve) => {
       setTimeout(resolve, ms);
@@ -965,6 +968,54 @@ function ReaderContent() {
     },
     []
   );
+
+  // 当 TTS 设置变化时，如果正在播放，重新播放当前段落
+  useEffect(() => {
+    const prev = prevTtsSettingsRef.current;
+    const current = { rate: ttsRate, pitch: ttsPitch, volume: ttsVolume };
+
+    // 检查是否有变化
+    const hasChanged =
+      prev.rate !== current.rate ||
+      prev.pitch !== current.pitch ||
+      prev.volume !== current.volume;
+
+    if (hasChanged && isSpeaking && activeTtsParagraph && ttsEngine === "browser") {
+      // 更新 ref
+      prevTtsSettingsRef.current = current;
+
+      // 重新播放当前段落
+      const sessionId = ttsSessionRef.current;
+      const currentIndex = currentParagraphIndexRef.current;
+
+      // 停止当前音频
+      if (currentAudioRef.current) {
+        currentAudioRef.current.pause();
+        currentAudioRef.current.currentTime = 0;
+      }
+
+      // 重新播放当前段落
+      const replayParagraph = async () => {
+        try {
+          const objectUrl = await requestMicrosoftSpeech(activeTtsParagraph);
+          if (ttsSessionRef.current !== sessionId) return;
+
+          await playAudioSource(objectUrl, sessionId, {
+            onCleanup: () => URL.revokeObjectURL(objectUrl),
+            onEnd: () => URL.revokeObjectURL(objectUrl),
+            debugMeta: { engine: "microsoft", paragraphIndex: currentIndex },
+          });
+        } catch {
+          // 忽略错误，让循环继续
+        }
+      };
+
+      void replayParagraph();
+    } else {
+      // 只更新 ref，不重新播放
+      prevTtsSettingsRef.current = current;
+    }
+  }, [ttsRate, ttsPitch, ttsVolume, isSpeaking, activeTtsParagraph, ttsEngine]);
 
   const speakWithBrowserParagraphs = useCallback(
     async (paragraphs: string[], sessionId: number, startIndex = 0) => {
