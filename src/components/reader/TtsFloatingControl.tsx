@@ -134,9 +134,10 @@ export function TtsFloatingControl({
       className={cn(
         "fixed z-50 flex items-center gap-2",
         isDragging ? "" : "transition-all duration-300 ease-out",
+        !isSpeaking && "pointer-events-none opacity-0",
         isAutoTransparent && isSpeaking && !isExpanded && !isDragging
           ? "opacity-40 scale-95"
-          : "opacity-90 scale-100 hover:opacity-100"
+          : isSpeaking && "opacity-90 scale-100 hover:opacity-100"
       )}
       style={{
         left: position.x,
