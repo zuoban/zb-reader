@@ -132,12 +132,11 @@ export function TtsFloatingControl({
     <div
       ref={containerRef}
       className={cn(
-        "fixed z-50 flex items-center gap-2 transition-shadow transition-opacity",
-        isDragging ? "" : "transition-all duration-200"
-        ,
+        "fixed z-50 flex items-center gap-2",
+        isDragging ? "" : "transition-all duration-300 ease-out",
         isAutoTransparent && isSpeaking && !isExpanded && !isDragging
-          ? "opacity-45"
-          : "opacity-60"
+          ? "opacity-40 scale-95"
+          : "opacity-90 scale-100 hover:opacity-100"
       )}
       style={{
         left: position.x,
@@ -151,38 +150,39 @@ export function TtsFloatingControl({
       {isExpanded && (
         <div
           className={cn(
-            "flex items-center gap-1 rounded-full bg-primary px-2 py-1.5 shadow-lg",
-            "animate-in slide-in-from-right-2 duration-200"
+            "flex items-center gap-1.5 rounded-2xl bg-gradient-to-br from-primary to-primary/90 px-3 py-2 shadow-2xl",
+            "animate-in slide-in-from-right-2 fade-in duration-300",
+            "border border-primary-foreground/20"
           )}
         >
           {onPrev && (
             <button
               type="button"
               onClick={onPrev}
-              className="flex size-7 items-center justify-center rounded-full text-primary-foreground hover:bg-primary-foreground/20 transition-colors cursor-pointer"
+              className="flex size-8 items-center justify-center rounded-xl bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/20 transition-all duration-200 cursor-pointer hover:scale-110 active:scale-95"
               title="上一段"
             >
-              <SkipBack className="size-3.5" />
+              <SkipBack className="size-4" />
             </button>
           )}
 
           <button
             type="button"
             onClick={onToggle}
-            className="flex size-7 items-center justify-center rounded-full text-primary-foreground hover:bg-primary-foreground/20 transition-colors cursor-pointer"
+            className="flex size-9 items-center justify-center rounded-xl bg-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/30 transition-all duration-200 cursor-pointer hover:scale-110 active:scale-95 shadow-lg"
             title={isSpeaking ? "暂停" : "播放"}
           >
             {isSpeaking ? (
-              <Pause className="size-3.5" />
+              <Pause className="size-4" />
             ) : (
-              <Play className="size-3.5" />
+              <Play className="size-4 ml-0.5" />
             )}
           </button>
 
           <button
             type="button"
             onClick={onStop}
-            className="flex size-7 items-center justify-center rounded-full text-primary-foreground hover:bg-primary-foreground/20 transition-colors cursor-pointer"
+            className="flex size-8 items-center justify-center rounded-xl bg-destructive/20 text-destructive-foreground hover:bg-destructive/30 transition-all duration-200 cursor-pointer hover:scale-110 active:scale-95"
             title="停止"
           >
             <Square className="size-3.5" />
@@ -192,10 +192,10 @@ export function TtsFloatingControl({
             <button
               type="button"
               onClick={onNext}
-              className="flex size-7 items-center justify-center rounded-full text-primary-foreground hover:bg-primary-foreground/20 transition-colors cursor-pointer"
+              className="flex size-8 items-center justify-center rounded-xl bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/20 transition-all duration-200 cursor-pointer hover:scale-110 active:scale-95"
               title="下一段"
             >
-              <SkipForward className="size-3.5" />
+              <SkipForward className="size-4" />
             </button>
           )}
         </div>
@@ -206,17 +206,21 @@ export function TtsFloatingControl({
         onPointerDown={handlePointerDown}
         onClick={handleMainClick}
         className={cn(
-          "flex size-10 items-center justify-center rounded-full shadow-lg transition-all cursor-pointer",
-          "bg-primary text-primary-foreground",
-          isDragging && "scale-110 shadow-xl",
-          isSpeaking && "ring-2 ring-primary-foreground/30 ring-offset-2 ring-offset-primary"
+          "flex size-11 items-center justify-center rounded-2xl shadow-2xl transition-all duration-300 ease-out cursor-pointer",
+          "bg-gradient-to-br from-primary to-primary/90 text-primary-foreground",
+          "border border-primary-foreground/20",
+          isDragging && "scale-110 shadow-3xl",
+          isSpeaking && "ring-3 ring-primary/40 ring-offset-3 ring-offset-background animate-pulse-subtle"
         )}
+        style={{
+          animation: isSpeaking ? "pulse-glow 2s ease-in-out infinite" : undefined,
+        }}
         title="朗读控制"
       >
         {isSpeaking ? (
-          <Pause className="size-4" />
+          <Pause className="size-4.5" />
         ) : (
-          <Play className="size-4" />
+          <Play className="size-4.5 ml-0.5" />
         )}
       </button>
     </div>

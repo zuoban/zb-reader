@@ -1782,40 +1782,54 @@ function ReaderContent() {
            transparent div inside EpubReader that sits above the iframe. */}
         {toolbarVisible && !isSpeaking && (
           <div
-            className="fixed inset-0 z-40 pointer-events-none bg-black/40 backdrop-blur-[2px] transition-opacity duration-300"
-            style={{ top: 56, bottom: 64 }}
+            className="fixed inset-0 z-40 pointer-events-none transition-all duration-300"
+            style={{
+              top: 56,
+              bottom: 64,
+              background: "radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.35) 100%)",
+              backdropFilter: "blur(4px)",
+              WebkitBackdropFilter: "blur(4px)",
+            }}
           >
           {book.format === "epub" ? (
             /* EPUB: three tap zones */
             <div className="flex h-full w-full">
               {/* Left zone: previous page */}
-              <div className="flex items-center justify-center w-[30%] border-r border-dashed border-white/25">
-                <div className="flex flex-col items-center gap-2 text-white/80">
-                  <ChevronLeft className="size-8" />
-                  <span className="text-sm font-medium">上一页</span>
+              <div className="flex items-center justify-center w-[30%] border-r border-dashed border-white/30 relative">
+                <div className="flex flex-col items-center gap-3 text-white transition-all duration-300 animate-fade-in">
+                  <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 shadow-xl">
+                    <ChevronLeft className="size-8" />
+                  </div>
+                  <span className="text-sm font-medium tracking-wide drop-shadow-lg">上一页</span>
                 </div>
               </div>
               {/* Center zone: toggle menu */}
               <div className="flex items-center justify-center w-[40%]">
-                <div className="flex flex-col items-center gap-2 text-white/80">
-                  <Menu className="size-8" />
-                  <span className="text-sm font-medium">显示/隐藏菜单</span>
+                <div className="flex flex-col items-center gap-3 text-white transition-all duration-300 animate-fade-in">
+                  <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 shadow-xl">
+                    <Menu className="size-8" />
+                  </div>
+                  <span className="text-sm font-medium tracking-wide drop-shadow-lg">显示/隐藏菜单</span>
                 </div>
               </div>
               {/* Right zone: next page */}
-              <div className="flex items-center justify-center w-[30%] border-l border-dashed border-white/25">
-                <div className="flex flex-col items-center gap-2 text-white/80">
-                  <ChevronRight className="size-8" />
-                  <span className="text-sm font-medium">下一页</span>
+              <div className="flex items-center justify-center w-[30%] border-l border-dashed border-white/30">
+                <div className="flex flex-col items-center gap-3 text-white transition-all duration-300 animate-fade-in">
+                  <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 shadow-xl">
+                    <ChevronRight className="size-8" />
+                  </div>
+                  <span className="text-sm font-medium tracking-wide drop-shadow-lg">下一页</span>
                 </div>
               </div>
             </div>
           ) : (
             /* PDF / TXT: single tap zone */
             <div className="flex items-center justify-center h-full w-full">
-              <div className="flex flex-col items-center gap-2 text-white/80">
-                <Menu className="size-8" />
-                <span className="text-sm font-medium">点击任意位置 显示/隐藏菜单</span>
+              <div className="flex flex-col items-center gap-3 text-white transition-all duration-300 animate-fade-in">
+                <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 shadow-xl">
+                  <Menu className="size-8" />
+                </div>
+                <span className="text-sm font-medium tracking-wide drop-shadow-lg">点击任意位置 显示/隐藏菜单</span>
               </div>
             </div>
           )}

@@ -247,12 +247,14 @@ function TxtReader({
                 <p
                   key={paragraphKey}
                   data-tts-active={isActive ? "1" : undefined}
-                  className={`whitespace-pre-wrap transition-all ${
+                  className={`whitespace-pre-wrap transition-all duration-300 rounded-lg ${
                     isImmersiveActive
                       ? "text-[1.25em] leading-[1.95]"
-                      : "leading-8 rounded-sm"
+                      : "leading-8"
                   } ${
-                    isActive ? "px-0 py-0 max-h-[76vh] overflow-y-auto" : ""
+                    isActive
+                      ? "px-0 py-0 max-h-[76vh] overflow-y-auto"
+                      : "hover:bg-muted/30 -mx-2 px-2"
                   }`}
                 >
                   {paragraph}
@@ -269,16 +271,17 @@ function TxtReader({
 
       {/* Navigation */}
       {pages.length > 1 && (
-        <div className="fixed bottom-16 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-background/95 backdrop-blur border rounded-full px-4 py-2 shadow-lg">
+        <div className="fixed bottom-16 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-card/95 backdrop-blur-md border rounded-2xl px-4 py-2.5 shadow-xl transition-all duration-200 hover:shadow-2xl">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => goToPage(currentPage - 1)}
             disabled={currentPage <= 1}
+            className="hover:bg-primary/10 hover:scale-110 transition-all duration-200"
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="text-sm text-muted-foreground min-w-[5rem] text-center">
+          <span className="text-sm font-semibold text-foreground min-w-[5rem] text-center">
             {currentPage} / {pages.length}
           </span>
           <Button
@@ -286,6 +289,7 @@ function TxtReader({
             size="icon"
             onClick={() => goToPage(currentPage + 1)}
             disabled={currentPage >= pages.length}
+            className="hover:bg-primary/10 hover:scale-110 transition-all duration-200"
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
