@@ -112,7 +112,7 @@ export default function ProfilePage() {
     setSaving(true);
 
     try {
-      const updates: Record<string, any> = {
+      const updates: Record<string, string> = {
         username,
         email,
       };

@@ -565,7 +565,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         if (book) book.destroy();
       };
       // Only re-init when the url changes
-      // eslint-disable-next-line react-hooks/exhaustive-deps
+      // Only re-init when the url changes
     }, [url]);
 
     // ---- Theme updates ----

@@ -47,7 +47,7 @@ export async function PATCH(req: NextRequest) {
   try {
     const { username, email, password, avatar } = await req.json();
 
-    const updates: Record<string, any> = {
+    const updates: Record<string, unknown> = {
       updatedAt: sql`(datetime('now'))`,
     };
 
