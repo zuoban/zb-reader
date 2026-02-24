@@ -97,7 +97,7 @@ export function Navbar({ onUploadClick }: NavbarProps) {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="cursor-pointer">
-                  <Link href="/bookshelf" className="flex items-center gap-2">
+                  <Link href="/profile" className="flex items-center gap-2">
                     <User className="h-4 w-4" />
                     <span>个人资料</span>
                   </Link>
