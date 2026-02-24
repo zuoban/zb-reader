@@ -9,6 +9,8 @@ import {
   StickyNote,
   Volume2,
   Pause,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -203,7 +205,7 @@ export function ReaderToolbar({
             : "none",
         }}
       >
-        <div className="flex items-center gap-4 px-4 py-4">
+        <div className="flex items-center gap-4 px-4 py-3">
           <div className="text-xs font-semibold text-foreground whitespace-nowrap min-w-[3.5rem] text-center px-2.5 py-1 rounded-md bg-primary/10">
             {Math.round(progress * 100)}%
           </div>
@@ -230,6 +232,28 @@ export function ReaderToolbar({
               ? `${currentPage} / ${totalPages}`
               : ""}
           </span>
+        </div>
+
+        {/* Keyboard shortcuts hint */}
+        <div className="flex items-center justify-center gap-6 pb-2 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1.5">
+            <kbd className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-medium rounded border bg-muted">
+              <ChevronLeft className="h-3 w-3" />
+            </kbd>
+            <span>上一页</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <kbd className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-medium rounded border bg-muted">
+              <ChevronRight className="h-3 w-3" />
+            </kbd>
+            <span>下一页</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <kbd className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-medium rounded border bg-muted">
+              Esc
+            </kbd>
+            <span>返回</span>
+          </div>
         </div>
       </div>
     </TooltipProvider>

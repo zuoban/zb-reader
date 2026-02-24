@@ -6,6 +6,7 @@ import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import dynamic from "next/dynamic";
+import { ReaderErrorBoundary } from "@/components/reader/ReaderErrorBoundary";
 import { ReaderToolbar } from "@/components/reader/ReaderToolbar";
 import { SidePanel } from "@/components/reader/SidePanel";
 import { ReadingSettings } from "@/components/reader/ReadingSettings";
@@ -18,6 +19,11 @@ import { Toaster } from "@/components/ui/sonner";
 import type { EpubReaderRef } from "@/components/reader/EpubReader";
 import type { Book, Bookmark, Note } from "@/lib/db/schema";
 import type { BrowserVoiceOption, TtsConfigApiItem } from "@/lib/tts";
+import {
+  cacheBook,
+  getCachedBook,
+  hasCachedBook,
+} from "@/lib/book-cache";
 
 // Dynamic import for EpubReader (client-only, depends on browser APIs)
 const EpubReader = dynamic(() => import("@/components/reader/EpubReader"), {
@@ -87,6 +93,8 @@ function ReaderContent() {
   // Book data
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(true);
+  const [bookUrl, setBookUrl] = useState<string | null>(null);
+  const bookUrlRef = useRef<string | null>(null);
 
   // Reader state
   const [toolbarVisible, setToolbarVisible] = useState(false);
@@ -219,7 +227,28 @@ function ReaderContent() {
         const notesRes = await fetch(`/api/notes?bookId=${bookId}`);
         const notesData = await notesRes.json();
         setNotes(notesData.notes || []);
+
+        // Load or cache book file
+        const cached = await getCachedBook(bookId);
+        let fileUrl: string;
+
+        if (cached) {
+          fileUrl = URL.createObjectURL(new Blob([cached]));
+          toast.success("使用缓存书籍");
+        } else {
+          const fileRes = await fetch(`/api/books/${bookId}/file`);
+          if (!fileRes.ok) {
+            throw new Error("Failed to load book file");
+          }
+          const fileBuffer = await fileRes.arrayBuffer();
+          fileUrl = URL.createObjectURL(new Blob([fileBuffer]));
+          await cacheBook(bookId, fileBuffer);
+        }
+
+        setBookUrl(fileUrl);
+        bookUrlRef.current = fileUrl;
       } catch (error) {
+        console.error("Failed to load book:", error);
         toast.error("加载失败");
       } finally {
         setLoading(false);
@@ -227,6 +256,12 @@ function ReaderContent() {
     }
 
     loadBook();
+
+    return () => {
+      if (bookUrlRef.current) {
+        URL.revokeObjectURL(bookUrlRef.current);
+      }
+    };
   }, [bookId, router]);
 
   // ---- Build highlights from notes ----
@@ -1731,7 +1766,7 @@ function ReaderContent() {
     sepia: "bg-[#f4ecd8]",
   };
 
-  if (loading) {
+  if (loading || !book || !bookUrl) {
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -1749,12 +1784,12 @@ function ReaderContent() {
 
   return (
     <div className={`h-screen w-screen ${bgColors[readerTheme] || "bg-white"}`}>
-      {/* Reader content area */}
+       {/* Reader content area */}
       <div className="h-full w-full">
         {book.format === "epub" && (
           <EpubReader
             ref={epubReaderRef}
-            url={`/api/books/${book.id}/file`}
+            url={bookUrl}
             initialLocation={initialLocation}
             fontSize={fontSize}
             theme={readerTheme}
@@ -1774,7 +1809,7 @@ function ReaderContent() {
         {book.format === "pdf" && (
           <div onClick={isSpeaking ? undefined : handleToggleToolbar}>
             <PdfReader
-              url={`/api/books/${book.id}/file`}
+              url={bookUrl}
               initialPage={currentPage}
               onRegisterController={(controller) => {
                 pdfReaderControllerRef.current = controller;
@@ -1797,7 +1832,7 @@ function ReaderContent() {
             onClick={isSpeaking ? undefined : handleToggleToolbar}
           >
             <TxtReader
-              url={`/api/books/${book.id}/file`}
+              url={bookUrl}
               initialPage={currentPage}
               fontSize={fontSize}
               theme={readerTheme}
@@ -2025,7 +2060,9 @@ export default function ReaderPage() {
         disableTransitionOnChange
       >
         <TooltipProvider>
-          <ReaderContent />
+          <ReaderErrorBoundary>
+            <ReaderContent />
+          </ReaderErrorBoundary>
         </TooltipProvider>
       </ThemeProvider>
     </SessionProvider>

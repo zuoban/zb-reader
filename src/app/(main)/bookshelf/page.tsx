@@ -3,11 +3,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { BookGrid } from "@/components/bookshelf/BookGrid";
+import { BookCardSkeleton } from "@/components/bookshelf/BookCardSkeleton";
 import { SearchBar } from "@/components/bookshelf/SearchBar";
 import { UploadDialog } from "@/components/bookshelf/UploadDialog";
 import { Book } from "@/lib/db/schema";
-import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+
+const SKELETON_COUNT = 8;
 
 export default function BookshelfPage() {
   const [books, setBooks] = useState<Book[]>([]);
@@ -19,6 +21,7 @@ export default function BookshelfPage() {
   const fetchBooks = useCallback(async () => {
     try {
       const params = new URLSearchParams();
+      params.set("withProgress", "true");
       if (search) params.set("search", search);
 
       const res = await fetch(`/api/books?${params}`);
@@ -26,24 +29,7 @@ export default function BookshelfPage() {
 
       if (res.ok) {
         setBooks(data.books);
-
-        // Fetch progress for each book
-        const progressPromises = data.books.map(async (book: Book) => {
-          try {
-            const pRes = await fetch(`/api/progress?bookId=${book.id}`);
-            const pData = await pRes.json();
-            return { bookId: book.id, progress: pData.progress?.progress || 0 };
-          } catch {
-            return { bookId: book.id, progress: 0 };
-          }
-        });
-
-        const progressResults = await Promise.all(progressPromises);
-        const map: Record<string, number> = {};
-        progressResults.forEach((r) => {
-          map[r.bookId] = r.progress;
-        });
-        setProgressMap(map);
+        setProgressMap(data.progressMap || {});
       }
     } catch (error) {
       toast.error("获取书籍失败");
@@ -92,9 +78,10 @@ export default function BookshelfPage() {
         </div>
 
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-24">
-            <Loader2 className="h-10 w-10 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground mt-4">加载中...</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
+              <BookCardSkeleton key={i} />
+            ))}
           </div>
         ) : (
           <BookGrid

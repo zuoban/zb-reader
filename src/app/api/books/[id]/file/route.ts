@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { books } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getBookFilePath, bookFileExists } from "@/lib/storage";
+import { logger } from "@/lib/logger";
 import fs from "fs";
 
 export async function GET(
@@ -45,10 +46,11 @@ export async function GET(
         "Content-Type": contentTypeMap[book.format] || "application/octet-stream",
         "Content-Disposition": `inline; filename="${encodeURIComponent(book.title)}.${book.format}"`,
         "Content-Length": fileBuffer.length.toString(),
+        "Cache-Control": "private, max-age=31536000, immutable",
       },
     });
   } catch (error) {
-    console.error("Get book file error:", error);
+    logger.error("book-file", "Failed to get book file", error);
     return NextResponse.json({ error: "获取文件失败" }, { status: 500 });
   }
 }

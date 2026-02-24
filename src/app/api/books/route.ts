@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { books } from "@/lib/db/schema";
-import { eq, and, like, or, desc } from "drizzle-orm";
+import { books, readingProgress } from "@/lib/db/schema";
+import { eq, and, like, or, desc, inArray, count } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { saveBookFile, saveCoverImage } from "@/lib/storage";
+import { logger } from "@/lib/logger";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -16,6 +17,7 @@ export async function GET(req: NextRequest) {
   const search = searchParams.get("search") || "";
   const page = parseInt(searchParams.get("page") || "1");
   const limit = parseInt(searchParams.get("limit") || "20");
+  const withProgress = searchParams.get("withProgress") === "true";
   const offset = (page - 1) * limit;
 
   try {
@@ -31,17 +33,45 @@ export async function GET(req: NextRequest) {
       )!;
     }
 
-    const result = await db
-      .select()
-      .from(books)
-      .where(whereClause)
-      .orderBy(desc(books.updatedAt))
-      .limit(limit)
-      .offset(offset);
+    const [result, totalResult] = await Promise.all([
+      db
+        .select()
+        .from(books)
+        .where(whereClause)
+        .orderBy(desc(books.updatedAt))
+        .limit(limit)
+        .offset(offset),
+      db
+        .select({ count: count() })
+        .from(books)
+        .where(whereClause),
+    ]);
 
-    return NextResponse.json({ books: result });
+    const total = totalResult[0]?.count ?? 0;
+
+    if (!withProgress || result.length === 0) {
+      return NextResponse.json({ books: result, total, page, limit });
+    }
+
+    const bookIds = result.map((b) => b.id);
+    const progressRecords = await db
+      .select()
+      .from(readingProgress)
+      .where(
+        and(
+          eq(readingProgress.userId, session.user.id),
+          inArray(readingProgress.bookId, bookIds)
+        )
+      );
+
+    const progressMap: Record<string, number> = {};
+    progressRecords.forEach((p) => {
+      progressMap[p.bookId] = p.progress;
+    });
+
+    return NextResponse.json({ books: result, progressMap, total, page, limit });
   } catch (error) {
-    console.error("Get books error:", error);
+    logger.error("books", "Failed to get books", error);
     return NextResponse.json({ error: "获取书籍失败" }, { status: 500 });
   }
 }
@@ -75,7 +105,6 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer());
     const savedFileName = saveBookFile(buffer, bookId, ext);
 
-    // Extract metadata from EPUB
     let title = fileName.replace(`.${ext}`, "");
     let author = "未知作者";
     let coverFileName: string | null = null;
@@ -87,11 +116,10 @@ export async function POST(req: NextRequest) {
         author = metadata.author || author;
         coverFileName = metadata.coverFileName || null;
       } catch (e) {
-        console.error("Failed to extract EPUB metadata:", e);
+        logger.warn("books", "Failed to extract EPUB metadata", e);
       }
     }
 
-    // Allow manual title/author override from form data
     const manualTitle = formData.get("title") as string | null;
     const manualAuthor = formData.get("author") as string | null;
     if (manualTitle) title = manualTitle;
@@ -114,7 +142,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ book }, { status: 201 });
   } catch (error) {
-    console.error("Upload book error:", error);
+    logger.error("books", "Failed to upload book", error);
     return NextResponse.json({ error: "上传失败" }, { status: 500 });
   }
 }
@@ -127,11 +155,9 @@ async function extractEpubMetadata(
   author?: string;
   coverFileName?: string;
 }> {
-  // Use a simple XML parser approach for server-side EPUB metadata extraction
   const JSZip = (await import("jszip")).default;
   const zip = await JSZip.loadAsync(buffer);
 
-  // Find and parse container.xml
   const containerXml = await zip
     .file("META-INF/container.xml")
     ?.async("string");
@@ -144,22 +170,18 @@ async function extractEpubMetadata(
   const opfContent = await zip.file(opfPath)?.async("string");
   if (!opfContent) return {};
 
-  // Extract title
   const titleMatch = opfContent.match(
     /<dc:title[^>]*>([^<]+)<\/dc:title>/i
   );
   const title = titleMatch ? titleMatch[1].trim() : undefined;
 
-  // Extract author
   const authorMatch = opfContent.match(
     /<dc:creator[^>]*>([^<]+)<\/dc:creator>/i
   );
   const author = authorMatch ? authorMatch[1].trim() : undefined;
 
-  // Extract cover image
   let coverFileName: string | undefined;
   try {
-    // Try to find cover meta tag
     const coverMetaMatch = opfContent.match(
       /meta[^>]*name="cover"[^>]*content="([^"]+)"/i
     );
@@ -175,7 +197,6 @@ async function extractEpubMetadata(
       }
     }
 
-    // Fallback: look for item with properties="cover-image"
     if (!coverItemHref) {
       const coverPropMatch = opfContent.match(
         /item[^>]*properties="cover-image"[^>]*href="([^"]+)"/i
@@ -186,7 +207,6 @@ async function extractEpubMetadata(
     }
 
     if (coverItemHref) {
-      // Resolve path relative to OPF file
       const opfDir = opfPath.substring(0, opfPath.lastIndexOf("/") + 1);
       const coverPath = coverItemHref.startsWith("/")
         ? coverItemHref.substring(1)
@@ -198,7 +218,7 @@ async function extractEpubMetadata(
       }
     }
   } catch (e) {
-    console.error("Failed to extract cover:", e);
+    logger.warn("books", "Failed to extract cover", e);
   }
 
   return { title, author, coverFileName };

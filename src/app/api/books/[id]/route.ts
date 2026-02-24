@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { books } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { deleteBookFile, deleteCoverImage } from "@/lib/storage";
+import { logger } from "@/lib/logger";
 
 export async function GET(
   _req: NextRequest,
@@ -27,7 +28,7 @@ export async function GET(
 
     return NextResponse.json({ book });
   } catch (error) {
-    console.error("Get book error:", error);
+    logger.error("book", "Failed to get book", error);
     return NextResponse.json({ error: "获取书籍失败" }, { status: 500 });
   }
 }
@@ -52,18 +53,16 @@ export async function DELETE(
       return NextResponse.json({ error: "书籍不存在" }, { status: 404 });
     }
 
-    // Delete file
     deleteBookFile(book.filePath);
     if (book.cover) {
       deleteCoverImage(book.cover);
     }
 
-    // Delete from database
     await db.delete(books).where(eq(books.id, id));
 
     return NextResponse.json({ message: "删除成功" });
   } catch (error) {
-    console.error("Delete book error:", error);
+    logger.error("book", "Failed to delete book", error);
     return NextResponse.json({ error: "删除失败" }, { status: 500 });
   }
 }

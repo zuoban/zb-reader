@@ -22,7 +22,7 @@ interface EpubReaderProps {
     totalPages?: number;
     href?: string;
   }) => void;
-  onTocLoaded?: (toc: { label: string; href: string; id?: string }[]) => void;
+  onTocLoaded?: (toc: TocItem[]) => void;
   onTextSelected?: (cfiRange: string, text: string) => void;
   onReady?: () => void;
   onCenterClick?: () => void;
@@ -43,6 +43,20 @@ export interface EpubReaderRef {
   getProgress: () => number;
   getCurrentText: () => string | null;
   getCurrentParagraphs: () => string[];
+}
+
+export interface TocItem {
+  label: string;
+  href: string;
+  id?: string;
+  subitems?: TocItem[];
+}
+
+interface RawTocItem {
+  label: string;
+  href: string;
+  id?: string;
+  subitems?: RawTocItem[];
 }
 
 const THEME_STYLES: Record<
@@ -510,8 +524,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
 
           // ---- TOC parsing (with nested subitems support) ----
           book.loaded.navigation.then((nav) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            function parseTocItems(items: any[]): { label: string; href: string; id?: string; subitems?: { label: string; href: string; id?: string; subitems?: any[] }[] }[] {
+            function parseTocItems(items: RawTocItem[]): TocItem[] {
               return items.map((item) => ({
                 label: item.label.trim(),
                 href: item.href,
@@ -521,7 +534,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
                   : {}),
               }));
             }
-            onTocLoaded?.(parseTocItems(nav.toc));
+            onTocLoaded?.(parseTocItems(nav.toc as RawTocItem[]));
           });
 
           // ---- Ready callback ----

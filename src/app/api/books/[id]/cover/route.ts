@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { books } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getCoverFilePath, coverExists } from "@/lib/storage";
+import { logger } from "@/lib/logger";
 import fs from "fs";
 
 export async function GET(
@@ -36,11 +37,11 @@ export async function GET(
     return new NextResponse(coverBuffer, {
       headers: {
         "Content-Type": "image/jpeg",
-        "Cache-Control": "public, max-age=86400",
+        "Cache-Control": "private, max-age=31536000, immutable",
       },
     });
   } catch (error) {
-    console.error("Get cover error:", error);
+    logger.error("book-cover", "Failed to get cover", error);
     return NextResponse.json({ error: "获取封面失败" }, { status: 500 });
   }
 }

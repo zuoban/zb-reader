@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pause, Play, Square, SkipBack, SkipForward } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTtsFloatingStore } from "@/stores/tts-floating";
 
 interface TtsFloatingControlProps {
   isSpeaking: boolean;
@@ -19,15 +20,8 @@ export function TtsFloatingControl({
   onPrev,
   onNext,
 }: TtsFloatingControlProps) {
-  const [position, setPosition] = useState(() => {
-    if (typeof window === "undefined") return { x: 20, y: 100 };
-    const savedX = localStorage.getItem("tts-floating-x");
-    const savedY = localStorage.getItem("tts-floating-y");
-    if (savedX && savedY) {
-      return { x: Number(savedX), y: Number(savedY) };
-    }
-    return { x: 20, y: 100 };
-  });
+  const storePosition = useTtsFloatingStore((s) => s.position);
+  const setStorePosition = useTtsFloatingStore((s) => s.setPosition);
   const [isDragging, setIsDragging] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isAutoTransparent, setIsAutoTransparent] = useState(false);
@@ -35,11 +29,6 @@ export function TtsFloatingControl({
   const containerRef = useRef<HTMLDivElement>(null);
   const hasMovedRef = useRef(false);
   const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    localStorage.setItem("tts-floating-x", String(position.x));
-    localStorage.setItem("tts-floating-y", String(position.y));
-  }, [position.x, position.y]);
 
   const clearFadeTimer = useCallback(() => {
     if (!fadeTimerRef.current) return;
@@ -82,11 +71,11 @@ export function TtsFloatingControl({
     dragStartRef.current = {
       x: e.clientX,
       y: e.clientY,
-      posX: position.x,
-      posY: position.y,
+      posX: storePosition.x,
+      posY: storePosition.y,
     };
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
-  }, [handleInteraction, position]);
+  }, [handleInteraction, storePosition]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (!isDragging) return;
@@ -106,12 +95,12 @@ export function TtsFloatingControl({
     if (container) {
       const maxX = window.innerWidth - container.offsetWidth;
       const maxY = window.innerHeight - container.offsetHeight;
-      setPosition({
+      setStorePosition({
         x: Math.max(0, Math.min(newX, maxX)),
         y: Math.max(0, Math.min(newY, maxY)),
       });
     }
-  }, [handleInteraction, isDragging]);
+  }, [handleInteraction, isDragging, setStorePosition]);
 
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
     handleInteraction();
@@ -140,8 +129,8 @@ export function TtsFloatingControl({
           : isSpeaking && "opacity-90 scale-100 hover:opacity-100"
       )}
       style={{
-        left: position.x,
-        top: position.y,
+        left: storePosition.x,
+        top: storePosition.y,
       }}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
