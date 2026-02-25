@@ -1,4 +1,3 @@
-export { useTtsFloatingStore } from "./tts-floating";
 export {
   useReaderSettingsStore,
   useDebouncedSettingsSave,

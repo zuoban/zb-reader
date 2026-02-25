@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pause, Play, Square, SkipBack, SkipForward, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useTtsFloatingStore } from "@/stores/tts-floating";
 
 interface TtsFloatingControlProps {
   isSpeaking: boolean;
@@ -24,20 +23,9 @@ export function TtsFloatingControl({
   ttsImmersiveMode = false,
   onToggleImmersiveMode,
 }: TtsFloatingControlProps) {
-  const storePosition = useTtsFloatingStore((s) => s.position);
-  const setStorePosition = useTtsFloatingStore((s) => s.setPosition);
-  const initializePosition = useTtsFloatingStore((s) => s.initializePosition);
-  const [isDragging, setIsDragging] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isAutoTransparent, setIsAutoTransparent] = useState(false);
-  const dragStartRef = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
-  const containerRef = useRef<HTMLDivElement>(null);
-  const hasMovedRef = useRef(false);
   const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    initializePosition();
-  }, [initializePosition]);
 
   const clearFadeTimer = useCallback(() => {
     if (!fadeTimerRef.current) return;
@@ -48,7 +36,7 @@ export function TtsFloatingControl({
   const scheduleAutoTransparent = useCallback(() => {
     clearFadeTimer();
 
-    if (!isSpeaking || isExpanded || isDragging) {
+    if (!isSpeaking || isExpanded) {
       setTimeout(() => {
         setIsAutoTransparent(false);
       }, 0);
@@ -58,7 +46,7 @@ export function TtsFloatingControl({
     fadeTimerRef.current = setTimeout(() => {
       setIsAutoTransparent(true);
     }, 1800);
-  }, [clearFadeTimer, isDragging, isExpanded, isSpeaking]);
+  }, [clearFadeTimer, isExpanded, isSpeaking]);
 
   const handleInteraction = useCallback(() => {
     if (isAutoTransparent) {
@@ -72,78 +60,22 @@ export function TtsFloatingControl({
     return () => clearFadeTimer();
   }, [clearFadeTimer, scheduleAutoTransparent]);
 
-  const handlePointerDown = useCallback((e: React.PointerEvent) => {
-    if (e.button !== 0) return;
-    handleInteraction();
-    hasMovedRef.current = false;
-    setIsDragging(true);
-    dragStartRef.current = {
-      x: e.clientX,
-      y: e.clientY,
-      posX: storePosition.x,
-      posY: storePosition.y,
-    };
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-  }, [handleInteraction, storePosition]);
-
-  const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    if (!isDragging) return;
-    handleInteraction();
-
-    const deltaX = e.clientX - dragStartRef.current.x;
-    const deltaY = e.clientY - dragStartRef.current.y;
-
-    if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
-      hasMovedRef.current = true;
-    }
-
-    const newX = dragStartRef.current.posX + deltaX;
-    const newY = dragStartRef.current.posY + deltaY;
-
-    const container = containerRef.current;
-    if (container) {
-      const maxX = window.innerWidth - container.offsetWidth;
-      const maxY = window.innerHeight - container.offsetHeight;
-      setStorePosition({
-        x: Math.max(0, Math.min(newX, maxX)),
-        y: Math.max(0, Math.min(newY, maxY)),
-      });
-    }
-  }, [handleInteraction, isDragging, setStorePosition]);
-
-  const handlePointerUp = useCallback((e: React.PointerEvent) => {
-    handleInteraction();
-    if (isDragging) {
-      setIsDragging(false);
-      (e.target as HTMLElement).releasePointerCapture(e.pointerId);
-    }
-  }, [handleInteraction, isDragging]);
-
   const handleMainClick = useCallback(() => {
     handleInteraction();
-    if (!hasMovedRef.current) {
-      setIsExpanded((prev) => !prev);
-    }
+    setIsExpanded((prev) => !prev);
   }, [handleInteraction]);
 
   return (
     <div
-      ref={containerRef}
       className={cn(
-        "fixed z-50 flex items-center gap-2",
-        isDragging ? "" : "transition-all duration-300 ease-out",
+        "fixed z-50 left-1/2 top-4 -translate-x-1/2",
+        "flex items-center gap-2",
+        "transition-all duration-300 ease-out",
         !isSpeaking && "pointer-events-none opacity-0",
-        isAutoTransparent && isSpeaking && !isExpanded && !isDragging
+        isAutoTransparent && isSpeaking && !isExpanded
           ? "opacity-40 scale-95"
           : isSpeaking && "opacity-90 scale-100 hover:opacity-100"
       )}
-      style={{
-        left: storePosition.x,
-        top: storePosition.y,
-      }}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerUp}
       onPointerEnter={handleInteraction}
     >
       {isExpanded && (
@@ -222,13 +154,11 @@ export function TtsFloatingControl({
 
       <button
         type="button"
-        onPointerDown={handlePointerDown}
         onClick={handleMainClick}
         className={cn(
           "flex size-11 items-center justify-center rounded-2xl shadow-2xl transition-all duration-300 ease-out cursor-pointer",
           "bg-gradient-to-br from-primary to-primary/90 text-primary-foreground",
           "border border-primary-foreground/20",
-          isDragging && "scale-110 shadow-3xl",
           isSpeaking && "ring-3 ring-primary/40 ring-offset-3 ring-offset-background animate-pulse-subtle"
         )}
         style={{
