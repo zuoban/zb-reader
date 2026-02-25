@@ -42,6 +42,7 @@ export interface EpubReaderRef {
   getProgress: () => number;
   getCurrentText: () => string | null;
   getCurrentParagraphs: () => string[];
+  isFirstVisibleParagraphComplete: () => boolean;
 }
 
 export interface TocItem {
@@ -293,6 +294,77 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         }
 
         return [];
+      },
+
+      isFirstVisibleParagraphComplete() {
+        const contents = renditionRef.current?.getContents?.() as
+          | Array<{ document?: Document; window?: Window }>
+          | undefined;
+        const content = contents?.[0];
+        const doc = content?.document;
+        if (!doc?.body) return true;
+
+        const nodes = doc.body.querySelectorAll(
+          "p, li, blockquote, h1, h2, h3, h4, h5, h6"
+        );
+
+        const elementArray = Array.from(nodes) as HTMLElement[];
+        const viewportWidth = doc.body.clientWidth || content?.window?.innerWidth || window.innerWidth;
+        const viewportHeight = content?.window?.innerHeight || window.innerHeight;
+
+        const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
+        const containerScrollLeft = epubContainer?.scrollLeft ?? 0;
+
+        const visibleLeft = containerScrollLeft;
+        const visibleRight = containerScrollLeft + viewportWidth;
+
+        const isRectOnCurrentPage = (rect: DOMRect) =>
+          rect.right > visibleLeft &&
+          rect.left < visibleRight &&
+          rect.bottom > 0 &&
+          rect.top < viewportHeight;
+
+        const isElementOnCurrentViewport = (element: HTMLElement) => {
+          const rects = Array.from(element.getClientRects());
+
+          for (const rect of rects) {
+            if (!isRectOnCurrentPage(rect)) continue;
+
+            const viewportX = rect.left - containerScrollLeft;
+            const hitX = Math.min(
+              viewportWidth - 1,
+              Math.max(1, Math.floor(viewportX + Math.min(rect.width / 2, 24)))
+            );
+            const hitY = Math.min(
+              viewportHeight - 1,
+              Math.max(1, Math.floor(rect.top + Math.min(rect.height / 2, 12)))
+            );
+            const hit = doc.elementFromPoint(hitX, hitY) as HTMLElement | null;
+            if (!hit) continue;
+
+            if (element === hit || element.contains(hit)) {
+              return true;
+            }
+          }
+
+          return false;
+        };
+
+        for (const element of elementArray) {
+          if (isElementOnCurrentViewport(element)) {
+            const rects = Array.from(element.getClientRects());
+            for (const rect of rects) {
+              if (rect.right > visibleLeft && rect.left < visibleRight) {
+                if (rect.left < visibleLeft - 5) {
+                  return false;
+                }
+                return true;
+              }
+            }
+          }
+        }
+
+        return true;
       },
     }));
 

@@ -1541,6 +1541,15 @@ function ReaderContent() {
     readParagraphsHashRef.current.clear();
     const sessionId = ttsSessionRef.current;
 
+    // 对于 EPUB，如果第一个段落不完整（跨页），先翻回上一页
+    if (book?.format === "epub") {
+      const isComplete = epubReaderRef.current?.isFirstVisibleParagraphComplete?.();
+      if (isComplete === false) {
+        epubReaderRef.current?.prevPage();
+        await new Promise((resolve) => setTimeout(resolve, 300));
+      }
+    }
+
     // 获取当前页面的段落
     let paragraphs = getReadableParagraphs();
     
