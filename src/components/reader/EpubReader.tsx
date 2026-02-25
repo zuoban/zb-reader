@@ -162,9 +162,10 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       },
       getCurrentParagraphs() {
         const contents = renditionRef.current?.getContents?.() as
-          | Array<{ document?: Document }>
+          | Array<{ document?: Document; window?: Window }>
           | undefined;
-        const doc = contents?.[0]?.document;
+        const content = contents?.[0];
+        const doc = content?.document;
         if (!doc?.body) return [];
 
         const nodes = doc.body.querySelectorAll(
@@ -172,14 +173,59 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         );
 
         const elementArray = Array.from(nodes) as HTMLElement[];
-        
+        const viewportWidth = content?.window?.innerWidth || window.innerWidth;
+        const viewportHeight = content?.window?.innerHeight || window.innerHeight;
+
+        const normalizeParagraph = (text: string) => text.replace(/\s+/g, " ").trim();
+        const semanticTags = new Set([
+          "p",
+          "li",
+          "blockquote",
+          "h1",
+          "h2",
+          "h3",
+          "h4",
+          "h5",
+          "h6",
+          "pre",
+        ]);
+
         const visibleParagraphs: string[] = [];
 
+        const isRectVisible = (rect: DOMRect) =>
+          rect.right > 0 &&
+          rect.left < viewportWidth &&
+          rect.bottom > 0 &&
+          rect.top < viewportHeight;
+
+        const isElementOnCurrentViewport = (element: HTMLElement) => {
+          const rects = Array.from(element.getClientRects());
+
+          for (const rect of rects) {
+            if (!isRectVisible(rect)) continue;
+
+            const hitX = Math.min(
+              viewportWidth - 1,
+              Math.max(1, Math.floor(rect.left + Math.min(rect.width / 2, 24)))
+            );
+            const hitY = Math.min(
+              viewportHeight - 1,
+              Math.max(1, Math.floor(rect.top + Math.min(rect.height / 2, 12)))
+            );
+            const hit = doc.elementFromPoint(hitX, hitY) as HTMLElement | null;
+            if (!hit) continue;
+
+            if (element === hit || element.contains(hit)) {
+              return true;
+            }
+          }
+
+          return false;
+        };
+
         for (const element of elementArray) {
-          const rect = element.getBoundingClientRect();
-          
-          if (rect.top >= 0 && rect.bottom <= window.innerHeight) {
-            const text = element.textContent?.trim() || "";
+          if (isElementOnCurrentViewport(element)) {
+            const text = normalizeParagraph(element.textContent || "");
             if (text.length > 0) {
               visibleParagraphs.push(text);
             }
@@ -190,18 +236,33 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
           return visibleParagraphs;
         }
 
-        const paragraphs = elementArray
-          .map((node) => node.textContent?.trim() || "")
-          .filter((text) => text.length > 0);
+        // Fallback: when no node intersects viewport (timing/layout edge case),
+        // pick nodes closest to current page center instead of falling back to
+        // the whole chapter.
+        const viewportCenterX = viewportWidth / 2;
+        const nearestParagraphs = elementArray
+          .map((element) => {
+            const rects = Array.from(element.getClientRects());
+            const centerX =
+              rects.length > 0
+                ? rects.reduce((sum, rect) => sum + (rect.left + rect.width / 2), 0) /
+                  rects.length
+                : viewportCenterX;
+            return {
+              distance: Math.abs(centerX - viewportCenterX),
+              text: normalizeParagraph(element.textContent || ""),
+            };
+          })
+          .filter((item) => item.text.length > 0 && item.text.length <= 800)
+          .sort((a, b) => a.distance - b.distance)
+          .slice(0, 24)
+          .map((item) => item.text);
 
-        if (paragraphs.length > 0) {
-          return paragraphs;
+        if (nearestParagraphs.length > 0) {
+          return nearestParagraphs;
         }
 
-        return (doc.body.innerText || "")
-          .split(/\n\s*\n+/)
-          .map((text) => text.trim())
-          .filter((text) => text.length > 0);
+        return [];
       },
     }));
 
