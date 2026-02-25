@@ -636,26 +636,16 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       const elementRect = activeElement.getBoundingClientRect();
       const containerRect = epubContainer.getBoundingClientRect();
 
-      const progressOffset = elementRect.height * ttsPlaybackProgress;
-      const currentPlayPosition = elementRect.top + progressOffset;
-      const viewportCenter = containerRect.height / 2;
-      const distanceFromCenter = currentPlayPosition - viewportCenter;
+      // 段落相对于容器视口的位置
+      const elementTop = elementRect.top - containerRect.top;
 
-      if (Math.abs(distanceFromCenter) < containerRect.height * 0.15) {
-        return;
-      }
+      // 只在段落切换时做一次性定位：将段落顶部置于视口 10% 处
+      // 不依赖 ttsPlaybackProgress，避免随音频进度持续滚动
+      const topMargin = containerRect.height * 0.1;
+      const targetScrollTop = epubContainer.scrollTop + elementTop - topMargin;
 
-      const targetScrollTop =
-        epubContainer.scrollTop +
-        (elementRect.top - containerRect.top) -
-        viewportCenter +
-        progressOffset;
-
-      const delta = targetScrollTop - epubContainer.scrollTop;
-      const nextScrollTop = epubContainer.scrollTop + delta * TELEPROMPTER_FOLLOW_FACTOR;
-
-      epubContainer.scrollTop = Math.max(0, nextScrollTop);
-    }, [activeTtsParagraph, ttsImmersiveMode, ttsPlaybackProgress]);
+      epubContainer.scrollTop = Math.max(0, targetScrollTop);
+    }, [activeTtsParagraph, ttsImmersiveMode]);
 
     // ---- Initialize book & rendition ----
     useEffect(() => {
