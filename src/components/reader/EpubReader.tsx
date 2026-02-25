@@ -616,6 +616,47 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       ttsPlaybackProgress,
     ]);
 
+    useEffect(() => {
+      if (!activeTtsParagraph || ttsImmersiveMode) return;
+
+      const contents = renditionRef.current?.getContents?.() as
+        | Array<{ document?: Document }>
+        | undefined;
+      const doc = contents?.[0]?.document;
+      if (!doc?.body) return;
+
+      const activeElement = doc.body.querySelector("[data-tts-active='1']") as
+        | HTMLElement
+        | null;
+      if (!activeElement) return;
+
+      const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
+      if (!epubContainer) return;
+
+      const elementRect = activeElement.getBoundingClientRect();
+      const containerRect = epubContainer.getBoundingClientRect();
+
+      const progressOffset = elementRect.height * ttsPlaybackProgress;
+      const currentPlayPosition = elementRect.top + progressOffset;
+      const viewportCenter = containerRect.height / 2;
+      const distanceFromCenter = currentPlayPosition - viewportCenter;
+
+      if (Math.abs(distanceFromCenter) < containerRect.height * 0.15) {
+        return;
+      }
+
+      const targetScrollTop =
+        epubContainer.scrollTop +
+        (elementRect.top - containerRect.top) -
+        viewportCenter +
+        progressOffset;
+
+      const delta = targetScrollTop - epubContainer.scrollTop;
+      const nextScrollTop = epubContainer.scrollTop + delta * TELEPROMPTER_FOLLOW_FACTOR;
+
+      epubContainer.scrollTop = Math.max(0, nextScrollTop);
+    }, [activeTtsParagraph, ttsImmersiveMode, ttsPlaybackProgress]);
+
     // ---- Initialize book & rendition ----
     useEffect(() => {
       if (!viewerRef.current) return;
