@@ -13,12 +13,15 @@ interface TtsFloatingStore {
   initializePosition: () => void;
 }
 
+/** 浮动按钮尺寸 size-11 = 2.75rem = 44px */
+const BUTTON_SIZE = 44;
+
 const getDefaultPosition = (): TtsFloatingPosition => {
   if (typeof window === "undefined") {
     return { x: 16, y: 80 };
   }
   return {
-    x: Math.max(16, Math.floor(window.innerWidth * 0.5)),
+    x: Math.max(16, Math.floor((window.innerWidth - BUTTON_SIZE) / 2)),
     y: Math.max(80, Math.floor(window.innerHeight * 0.7)),
   };
 };
