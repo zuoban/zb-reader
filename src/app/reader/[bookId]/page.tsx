@@ -1111,6 +1111,14 @@ function ReaderContent() {
         const paragraph = queue[i];
         setActiveTtsParagraph(paragraph);
 
+        // 跳过已读的段落（避免跨页重复朗读）
+        const hash = paragraph.slice(0, 50);
+        if (readParagraphsHashRef.current.has(hash)) {
+          // 跳过后，仍然需要预加载，因为 i 在继续递增
+          ensurePreloadWindow(i + 1);
+          continue;
+        }
+
         ensurePreloadWindow(i + 1);
 
         let paragraphSucceeded = false;
@@ -1341,6 +1349,14 @@ function ReaderContent() {
 
         currentParagraphIndexRef.current = startIndex + index;
         const paragraph = queue[index];
+
+        // 跳过已读的段落（避免跨页重复朗读）
+        const hash = paragraph.slice(0, 50);
+        if (readParagraphsHashRef.current.has(hash)) {
+          ensurePreloadWindow(index + 1);
+          continue;
+        }
+
         ensurePreloadWindow(index + 1);
         const currentPreparedPromise =
           preparedTaskMap.get(index) ?? requestLegadoSpeech(paragraph);
@@ -1577,15 +1593,6 @@ function ReaderContent() {
              toast.error("没有更多可朗读内容");
              break;
           }
-          // 翻页后，过滤掉已读的段落（避免跨页段落重复朗读）
-          paragraphs = paragraphs.filter(p => {
-            const hash = p.slice(0, 50);
-            if (readParagraphsHashRef.current.has(hash)) {
-              return false;
-            }
-            readParagraphsHashRef.current.add(hash);
-            return true;
-          });
           // 翻页后，从头开始读新的一页
           currentParagraphIndexRef.current = 0;
           allParagraphsRef.current = paragraphs;
