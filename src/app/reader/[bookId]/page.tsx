@@ -176,6 +176,7 @@ function ReaderContent() {
   const [activeTtsParagraph, setActiveTtsParagraph] = useState("");
   const currentParagraphIndexRef = useRef(0);
   const allParagraphsRef = useRef<string[]>([]);
+  const readParagraphsHashRef = useRef<Set<string>>(new Set());
 
   // 跟踪 TTS 设置的上次值，用于检测设置变化
   const prevTtsSettingsRef = useRef({ rate: ttsRate, pitch: ttsPitch, volume: ttsVolume });
@@ -1521,8 +1522,9 @@ function ReaderContent() {
 
     ttsSessionRef.current += 1;
     currentParagraphIndexRef.current = 0;
+    readParagraphsHashRef.current.clear();
     const sessionId = ttsSessionRef.current;
-    
+
     // 获取当前页面的段落
     let paragraphs = getReadableParagraphs();
     
@@ -1540,13 +1542,24 @@ function ReaderContent() {
     // 更新段落引用
     allParagraphsRef.current = paragraphs;
 
+    // 过滤掉已读的段落（避免重复朗读）
+    const filteredParagraphs = paragraphs.filter(p => {
+      const hash = p.slice(0, 50);
+      if (readParagraphsHashRef.current.has(hash)) {
+        return false;
+      }
+      readParagraphsHashRef.current.add(hash);
+      return true;
+    });
+    paragraphs = filteredParagraphs;
+
     // 确定起始索引：
     // 如果 currentParagraphIndexRef 在有效范围内，就从那里开始
     // 否则重置为 0
     if (currentParagraphIndexRef.current >= paragraphs.length || currentParagraphIndexRef.current < 0) {
       currentParagraphIndexRef.current = 0;
     }
-    
+
     // 如果没有在朗读，设置状态为朗读
     setIsSpeaking(true);
 
@@ -1564,6 +1577,15 @@ function ReaderContent() {
              toast.error("没有更多可朗读内容");
              break;
           }
+          // 翻页后，过滤掉已读的段落（避免跨页段落重复朗读）
+          paragraphs = paragraphs.filter(p => {
+            const hash = p.slice(0, 50);
+            if (readParagraphsHashRef.current.has(hash)) {
+              return false;
+            }
+            readParagraphsHashRef.current.add(hash);
+            return true;
+          });
           // 翻页后，从头开始读新的一页
           currentParagraphIndexRef.current = 0;
           allParagraphsRef.current = paragraphs;
@@ -1585,12 +1607,20 @@ function ReaderContent() {
       if (ttsEngine === "browser") {
         try {
           await speakWithBrowserParagraphs(paragraphsToRead, sessionId, startIndex);
+          // 朗读成功后，记录这些段落的哈希
+          paragraphsToRead.forEach(p => {
+            readParagraphsHashRef.current.add(p.slice(0, 50));
+          });
         } catch {
           break;
         }
       } else {
         try {
           await speakWithLegadoParagraphs(paragraphsToRead, sessionId, startIndex);
+          // 朗读成功后，记录这些段落的哈希
+          paragraphsToRead.forEach(p => {
+            readParagraphsHashRef.current.add(p.slice(0, 50));
+          });
         } catch {
           break;
         }
