@@ -1558,17 +1558,6 @@ function ReaderContent() {
     // 更新段落引用
     allParagraphsRef.current = paragraphs;
 
-    // 过滤掉已读的段落（避免重复朗读）
-    const filteredParagraphs = paragraphs.filter(p => {
-      const hash = p.slice(0, 50);
-      if (readParagraphsHashRef.current.has(hash)) {
-        return false;
-      }
-      readParagraphsHashRef.current.add(hash);
-      return true;
-    });
-    paragraphs = filteredParagraphs;
-
     // 确定起始索引：
     // 如果 currentParagraphIndexRef 在有效范围内，就从那里开始
     // 否则重置为 0
