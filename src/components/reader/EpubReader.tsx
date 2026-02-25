@@ -173,28 +173,36 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         );
 
         const elementArray = Array.from(nodes) as HTMLElement[];
-        const viewportWidth = content?.window?.innerWidth || window.innerWidth;
+        // Use body.clientWidth for the column (page) width — content?.window?.innerWidth
+        // returns the full multi-column document width (all columns combined), not the
+        // width of a single visible column. body.clientWidth correctly returns the
+        // single-column width that epubjs sets via CSS column-width.
+        const viewportWidth = doc.body.clientWidth || content?.window?.innerWidth || window.innerWidth;
         const viewportHeight = content?.window?.innerHeight || window.innerHeight;
 
         const normalizeParagraph = (text: string) => text.replace(/\s+/g, " ").trim();
-        const semanticTags = new Set([
-          "p",
-          "li",
-          "blockquote",
-          "h1",
-          "h2",
-          "h3",
-          "h4",
-          "h5",
-          "h6",
-          "pre",
-        ]);
 
-        const visibleParagraphs: string[] = [];
+        // epubjs paginates via CSS multi-column layout: all content in a chapter
+        // lives in one iframe, laid out as horizontal columns. Navigation between
+        // pages is achieved by scrolling the *outer* epub-container div
+        // (not the iframe itself). Therefore getClientRects() coordinates inside
+        // the iframe are document-relative (column 1 starts at x=0, column 2
+        // starts at x=columnWidth, etc.) and do NOT account for the outer
+        // container's scrollLeft.
+        //
+        // We read the epub-container scrollLeft to determine which column (page)
+        // is currently visible, then only include elements whose rects fall
+        // within [containerScrollLeft, containerScrollLeft + viewportWidth].
+        const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
+        const containerScrollLeft = epubContainer?.scrollLeft ?? 0;
 
-        const isRectVisible = (rect: DOMRect) =>
-          rect.right > 0 &&
-          rect.left < viewportWidth &&
+        // Visible x range in iframe document coordinates:
+        const visibleLeft = containerScrollLeft;
+        const visibleRight = containerScrollLeft + viewportWidth;
+
+        const isRectOnCurrentPage = (rect: DOMRect) =>
+          rect.right > visibleLeft &&
+          rect.left < visibleRight &&
           rect.bottom > 0 &&
           rect.top < viewportHeight;
 
@@ -202,11 +210,14 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
           const rects = Array.from(element.getClientRects());
 
           for (const rect of rects) {
-            if (!isRectVisible(rect)) continue;
+            if (!isRectOnCurrentPage(rect)) continue;
 
+            // Translate rect coordinates to iframe-viewport coordinates for
+            // elementFromPoint (which works in viewport space).
+            const viewportX = rect.left - containerScrollLeft;
             const hitX = Math.min(
               viewportWidth - 1,
-              Math.max(1, Math.floor(rect.left + Math.min(rect.width / 2, 24)))
+              Math.max(1, Math.floor(viewportX + Math.min(rect.width / 2, 24)))
             );
             const hitY = Math.min(
               viewportHeight - 1,
@@ -223,6 +234,8 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
           return false;
         };
 
+        const visibleParagraphs: string[] = [];
+
         for (const element of elementArray) {
           if (isElementOnCurrentViewport(element)) {
             const text = normalizeParagraph(element.textContent || "");
@@ -237,23 +250,29 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         }
 
         // Fallback: when no node intersects viewport (timing/layout edge case),
-        // pick nodes closest to current page center instead of falling back to
-        // the whole chapter.
-        const viewportCenterX = viewportWidth / 2;
+        // pick nodes closest to the center of the current visible page.
+        // We still use document coordinates for the center so that the fallback
+        // correctly targets the same column that is currently scrolled into view.
+        const pageCenterX = containerScrollLeft + viewportWidth / 2;
         const nearestParagraphs = elementArray
           .map((element) => {
             const rects = Array.from(element.getClientRects());
-            const centerX =
-              rects.length > 0
-                ? rects.reduce((sum, rect) => sum + (rect.left + rect.width / 2), 0) /
-                  rects.length
-                : viewportCenterX;
+            if (rects.length === 0) {
+              return { distance: Infinity, text: normalizeParagraph(element.textContent || "") };
+            }
+            // Use the rect closest to the current page center.
+            const minDistance = rects.reduce((best, rect) => {
+              const rectCenterX = rect.left + rect.width / 2;
+              return Math.min(best, Math.abs(rectCenterX - pageCenterX));
+            }, Infinity);
             return {
-              distance: Math.abs(centerX - viewportCenterX),
+              distance: minDistance,
               text: normalizeParagraph(element.textContent || ""),
             };
           })
-          .filter((item) => item.text.length > 0 && item.text.length <= 800)
+          // Only include elements that are within one viewport width from the
+          // current page center (avoids grabbing content from distant columns).
+          .filter((item) => item.text.length > 0 && item.text.length <= 800 && item.distance < viewportWidth)
           .sort((a, b) => a.distance - b.distance)
           .slice(0, 24)
           .map((item) => item.text);
