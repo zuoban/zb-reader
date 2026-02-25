@@ -59,7 +59,6 @@ const TxtReader = dynamic<{
   ttsPlaybackProgress?: number;
   onPageChange?: (page: number, totalPages: number) => void;
   onRegisterController?: (controller: { nextPage: () => boolean; prevPage: () => boolean; scrollDown: (amount?: number) => void; scrollUp: (amount?: number) => void }) => void;
-  ttsImmersiveMode?: boolean;
 }>(() => import("@/components/reader/TxtReader"), {
   ssr: false,
   loading: () => (
@@ -122,7 +121,6 @@ function ReaderContent() {
   const [legadoPreloadCount, setLegadoPreloadCount] = useState(
     DEFAULT_LEGADO_PRELOAD_COUNT
   );
-  const [ttsImmersiveMode, setTtsImmersiveMode] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [ttsPlaybackProgress, setTtsPlaybackProgress] = useState(0);
 
@@ -298,7 +296,6 @@ function ReaderContent() {
             legadoRate?: number;
             legadoConfigId?: string;
             legadoPreloadCount?: number;
-            ttsImmersiveMode?: boolean;
           };
         };
 
@@ -348,9 +345,6 @@ function ReaderContent() {
         ) {
           setLegadoPreloadCount(settings.legadoPreloadCount);
         }
-        if (typeof settings.ttsImmersiveMode === "boolean") {
-          setTtsImmersiveMode(settings.ttsImmersiveMode);
-        }
       } catch {
         // ignore
       } finally {
@@ -393,7 +387,6 @@ function ReaderContent() {
             legadoRate,
             legadoConfigId: selectedLegadoConfigId,
             legadoPreloadCount,
-            ttsImmersiveMode,
           }),
         });
       } catch {
@@ -409,7 +402,6 @@ function ReaderContent() {
     selectedBrowserVoiceId,
     selectedLegadoConfigId,
     ttsEngine,
-    ttsImmersiveMode,
     ttsPitch,
     ttsRate,
     ttsVolume,
@@ -1862,7 +1854,6 @@ function ReaderContent() {
             highlights={highlights}
             activeTtsParagraph={activeTtsParagraph}
             ttsPlaybackProgress={ttsPlaybackProgress}
-            ttsImmersiveMode={ttsImmersiveMode}
           />
         )}
 
@@ -1898,7 +1889,6 @@ function ReaderContent() {
               theme={readerTheme}
               activeTtsParagraph={activeTtsParagraph}
               ttsPlaybackProgress={ttsPlaybackProgress}
-              ttsImmersiveMode={ttsImmersiveMode}
               onRegisterController={(controller) => {
                 txtReaderControllerRef.current = controller;
               }}
@@ -2013,8 +2003,6 @@ function ReaderContent() {
         legadoImporting={legadoImporting}
         legadoPreloadCount={legadoPreloadCount}
         onLegadoPreloadCountChange={setLegadoPreloadCount}
-        ttsImmersiveMode={ttsImmersiveMode}
-        onTtsImmersiveModeChange={setTtsImmersiveMode}
       />
 
       {/* Text selection menu */}
@@ -2046,8 +2034,6 @@ function ReaderContent() {
         onStop={stopSpeaking}
         onPrev={handleTtsPrevParagraph}
         onNext={handleTtsNextParagraph}
-        ttsImmersiveMode={ttsImmersiveMode}
-        onToggleImmersiveMode={() => setTtsImmersiveMode((prev) => !prev)}
         currentParagraphIndex={ttsCurrentIndex}
         totalParagraphs={ttsTotalParagraphs}
         paragraphProgress={ttsPlaybackProgress}

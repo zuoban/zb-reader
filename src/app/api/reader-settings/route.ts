@@ -17,7 +17,6 @@ interface ReaderSettingsPayload {
   legadoRate?: number;
   legadoConfigId?: string;
   legadoPreloadCount?: number;
-  ttsImmersiveMode?: boolean;
 }
 
 const DEFAULTS = {
@@ -32,7 +31,6 @@ const DEFAULTS = {
   legadoRate: 50,
   legadoConfigId: "",
   legadoPreloadCount: 3,
-  ttsImmersiveMode: false,
 };
 
 function toResponseShape(settings: typeof readerSettings.$inferSelect | null | undefined) {
@@ -52,7 +50,6 @@ function toResponseShape(settings: typeof readerSettings.$inferSelect | null | u
     legadoRate: settings.legadoRate,
     legadoConfigId: settings.legadoConfigId || "",
     legadoPreloadCount: settings.legadoPreloadCount,
-    ttsImmersiveMode: settings.ttsImmersiveMode === 1,
   };
 }
 
@@ -116,12 +113,6 @@ export async function PUT(req: NextRequest) {
       legadoPreloadCount: [1, 2, 3, 5].includes(Number(payload.legadoPreloadCount))
         ? Number(payload.legadoPreloadCount)
         : existing?.legadoPreloadCount ?? DEFAULTS.legadoPreloadCount,
-      ttsImmersiveMode:
-        typeof payload.ttsImmersiveMode === "boolean"
-          ? payload.ttsImmersiveMode
-            ? 1
-            : 0
-          : existing?.ttsImmersiveMode ?? (DEFAULTS.ttsImmersiveMode ? 1 : 0),
       updatedAt: now,
     };
 

@@ -12,7 +12,6 @@ interface TxtReaderProps {
   activeTtsParagraph?: string;
   ttsPlaybackProgress?: number;
   onRegisterController?: (controller: { nextPage: () => boolean; prevPage: () => boolean; scrollDown: (amount?: number) => void; scrollUp: (amount?: number) => void }) => void;
-  ttsImmersiveMode?: boolean;
 }
 
 const themeStyles: Record<string, { bg: string; text: string }> = {
@@ -33,7 +32,6 @@ function TxtReader({
   activeTtsParagraph,
   ttsPlaybackProgress = 0,
   onRegisterController,
-  ttsImmersiveMode = false,
 }: TxtReaderProps) {
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(true);
@@ -107,7 +105,6 @@ function TxtReader({
 
   const normalizeText = (value: string) => value.replace(/\s+/g, "").trim();
   const activeNeedle = normalizeText(activeTtsParagraph || "").slice(0, 80);
-  const isImmersiveActive = ttsImmersiveMode && !!activeNeedle;
 
   const getTeleprompterScrollTop = useCallback((element: HTMLElement, progress: number) => {
     const scrollRange = Math.max(0, element.scrollHeight - element.clientHeight);
@@ -148,27 +145,6 @@ function TxtReader({
     container.scrollTop = Math.max(0, targetScrollTop);
   }, [activeNeedle]);
 
-  useEffect(() => {
-    if (!isImmersiveActive) return;
-
-    const container = containerRef.current;
-    if (!container) return;
-
-    const activeElement = container.querySelector("[data-tts-active='1']") as
-      | HTMLElement
-      | null;
-    if (!activeElement) return;
-
-    const targetTop = getTeleprompterScrollTop(activeElement, ttsPlaybackProgress);
-    const currentTop = activeElement.scrollTop;
-    const delta = targetTop - currentTop;
-    const nextTop =
-      Math.abs(delta) < 0.5
-        ? targetTop
-        : currentTop + delta * TELEPROMPTER_FOLLOW_FACTOR;
-    activeElement.scrollTop = nextTop;
-  }, [activeNeedle, getTeleprompterScrollTop, isImmersiveActive, ttsPlaybackProgress]);
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -185,9 +161,7 @@ function TxtReader({
     <div className={`flex flex-col h-full ${style.bg}`}>
       <div
         ref={containerRef}
-        className={`flex-1 overflow-auto px-6 py-6 w-full ${style.text} ${
-          isImmersiveActive ? "flex items-center justify-center" : "max-w-3xl mx-auto"
-        }`}
+        className={`flex-1 overflow-auto px-6 py-6 w-full ${style.text} max-w-3xl mx-auto`}
         style={{
           fontSize: `${fontSize}px`,
           lineHeight: 1.8,
@@ -196,11 +170,7 @@ function TxtReader({
         {paragraphs.length > 0 ? (
           <div
             data-reader-txt-page="true"
-            className={`${
-              isImmersiveActive
-                ? "w-full max-w-3xl"
-                : "space-y-4"
-            }`}
+            className="space-y-4"
           >
             {paragraphs.map((paragraph, index) => {
               const paragraphKey = `${index}-${paragraph.slice(0, 12)}`;
@@ -208,19 +178,11 @@ function TxtReader({
                 !!activeNeedle &&
                 normalizeText(paragraph).includes(activeNeedle);
 
-              if (ttsImmersiveMode && activeNeedle && !isActive) {
-                return null;
-              }
-
               return (
                 <p
                   key={paragraphKey}
                   data-tts-active={isActive ? "1" : undefined}
-                  className={`whitespace-pre-wrap transition-all duration-300 rounded-lg relative ${
-                    isImmersiveActive
-                      ? "text-[1.25em] leading-[1.95]"
-                      : "leading-8"
-                  } ${
+                  className={`whitespace-pre-wrap transition-all duration-300 rounded-lg relative leading-8 ${
                     isActive
                       ? ""
                       : "hover:bg-muted/30 -mx-2 px-2"

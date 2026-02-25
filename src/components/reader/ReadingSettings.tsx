@@ -51,8 +51,6 @@ interface ReadingSettingsProps {
   legadoImporting: boolean;
   legadoPreloadCount: number;
   onLegadoPreloadCountChange: (value: number) => void;
-  ttsImmersiveMode: boolean;
-  onTtsImmersiveModeChange: (value: boolean) => void;
 }
 
 const themeOptions = [
@@ -243,8 +241,6 @@ export function ReadingSettings({
   legadoImporting,
   legadoPreloadCount,
   onLegadoPreloadCountChange,
-  ttsImmersiveMode,
-  onTtsImmersiveModeChange,
 }: ReadingSettingsProps) {
   const handleDecrease = () => {
     if (fontSize > 12) {
@@ -392,22 +388,6 @@ export function ReadingSettings({
                   <SelectItem value="legado">Legado 规则</SelectItem>
                 </SelectContent>
               </Select>
-            </SettingCard>
-
-            {/* 沉浸模式开关 */}
-            <SettingCard
-              title="朗读沉浸模式"
-              description="只显示当前朗读段落，专注阅读"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
-                  {ttsImmersiveMode ? "已开启" : "已关闭"}
-                </span>
-                <Switch
-                  checked={ttsImmersiveMode}
-                  onCheckedChange={onTtsImmersiveModeChange}
-                />
-              </div>
             </SettingCard>
 
             {ttsEngine === "browser" && (

@@ -29,7 +29,6 @@ interface EpubReaderProps {
   highlights?: Array<{ cfiRange: string; color: string; id: string }>;
   activeTtsParagraph?: string;
   ttsPlaybackProgress?: number;
-  ttsImmersiveMode?: boolean;
 }
 
 export interface EpubReaderRef {
@@ -133,7 +132,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       highlights,
       activeTtsParagraph,
       ttsPlaybackProgress = 0,
-      ttsImmersiveMode = false,
     },
     ref
   ) => {
@@ -147,7 +145,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     const [isRenditionReady, setIsRenditionReady] = useState(false);
     const pendingHighlightsRef = useRef<Array<{ cfiRange: string; color: string; id: string }>>([]);
     const justSelectedRef = useRef(false);
-    const wasImmersiveModeRef = useRef(false);
 
     // ---- Expose API via ref ----
     useImperativeHandle(ref, () => ({
@@ -443,18 +440,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       });
 
       doc.body.removeAttribute("data-tts-immersive");
-      
-      // Only clear immersive mode styles if we were previously in immersive mode
-      if (wasImmersiveModeRef.current) {
-        doc.body.style.display = "";
-        doc.body.style.alignItems = "";
-        doc.body.style.justifyContent = "";
-        doc.body.style.minHeight = "";
-        doc.body.style.boxSizing = "";
-        doc.body.style.padding = "";
-        doc.body.style.margin = "";
-        wasImmersiveModeRef.current = false;
-      }
 
       if (!activeTtsParagraph) return;
 
@@ -530,40 +515,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       activeElement.style.opacity = "1";
       activeElement.style.position = "relative";
       activeElement.style.setProperty("--tts-indicator-color", "var(--primary, #3b82f6)");
-
-      if (ttsImmersiveMode) {
-        wasImmersiveModeRef.current = true;
-        doc.body.setAttribute("data-tts-immersive", "1");
-        doc.body.style.display = "flex";
-        doc.body.style.alignItems = "center";
-        doc.body.style.justifyContent = "center";
-        doc.body.style.minHeight = "100vh";
-        doc.body.style.boxSizing = "border-box";
-        doc.body.style.padding = "min(12vh, 96px) 24px";
-        doc.body.style.margin = "0";
-
-        candidates.forEach((element) => {
-          if (element === matchedElement) return;
-          (element as HTMLElement).style.display = "none";
-        });
-
-        activeElement.style.display = "block";
-        activeElement.style.maxWidth = "48rem";
-        activeElement.style.width = "100%";
-        activeElement.style.padding = "0";
-        activeElement.style.borderRadius = "0";
-        activeElement.style.maxHeight = "76vh";
-        activeElement.style.overflowY = "auto";
-        activeElement.style.border = "0";
-        activeElement.style.boxShadow = "none";
-        activeElement.style.fontSize = "1.24em";
-        activeElement.style.lineHeight = "1.95";
-        activeElement.style.margin = "0";
-
-      } else {
-        // Non-immersive mode: no automatic scrolling
-      }
-    }, [activeTtsParagraph, normalizeText, theme, ttsImmersiveMode]);
+    }, [activeTtsParagraph, normalizeText, theme]);
 
     useEffect(() => {
       if (!activeTtsParagraph) return;
@@ -598,26 +550,14 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       const trackHeight = activeElement.offsetHeight - parseFloat(getComputedStyle(activeElement).fontSize) * 0.4;
       const fillHeight = trackHeight * (progressPercent / 100);
       progressFill.style.height = `${Math.max(0, fillHeight)}px`;
-
-      if (!ttsImmersiveMode) return;
-
-      const targetTop = getTeleprompterScrollTop(activeElement, ttsPlaybackProgress);
-      const currentTop = activeElement.scrollTop;
-      const delta = targetTop - currentTop;
-      const nextTop =
-        Math.abs(delta) < 0.5
-          ? targetTop
-          : currentTop + delta * TELEPROMPTER_FOLLOW_FACTOR;
-      activeElement.scrollTop = nextTop;
     }, [
       activeTtsParagraph,
       getTeleprompterScrollTop,
-      ttsImmersiveMode,
       ttsPlaybackProgress,
     ]);
 
     useEffect(() => {
-      if (!activeTtsParagraph || ttsImmersiveMode) return;
+      if (!activeTtsParagraph) return;
 
       const contents = renditionRef.current?.getContents?.() as
         | Array<{ document?: Document }>
@@ -645,7 +585,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       const targetScrollTop = epubContainer.scrollTop + elementTop - topMargin;
 
       epubContainer.scrollTop = Math.max(0, targetScrollTop);
-    }, [activeTtsParagraph, ttsImmersiveMode]);
+    }, [activeTtsParagraph]);
 
     // ---- Initialize book & rendition ----
     useEffect(() => {

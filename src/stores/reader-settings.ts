@@ -13,7 +13,6 @@ interface ReaderSettingsState {
   legadoRate: number;
   legadoConfigId: string;
   legadoPreloadCount: number;
-  ttsImmersiveMode: boolean;
   loaded: boolean;
 }
 
@@ -29,7 +28,6 @@ interface ReaderSettingsActions {
   setLegadoRate: (rate: number) => void;
   setLegadoConfigId: (id: string) => void;
   setLegadoPreloadCount: (count: number) => void;
-  setTtsImmersiveMode: (mode: boolean) => void;
   loadFromServer: () => Promise<void>;
   saveToServer: () => Promise<void>;
 }
@@ -46,7 +44,6 @@ const DEFAULT_STATE: ReaderSettingsState = {
   legadoRate: 50,
   legadoConfigId: "",
   legadoPreloadCount: 3,
-  ttsImmersiveMode: false,
   loaded: false,
 };
 
@@ -71,7 +68,6 @@ export const useReaderSettingsStore = create<
       setLegadoConfigId: (legadoConfigId) => set({ legadoConfigId }),
       setLegadoPreloadCount: (count) =>
         set({ legadoPreloadCount: [1, 2, 3, 5].includes(count) ? count : 3 }),
-      setTtsImmersiveMode: (ttsImmersiveMode) => set({ ttsImmersiveMode }),
 
       loadFromServer: async () => {
         try {
@@ -120,7 +116,6 @@ export const useReaderSettingsStore = create<
             )
               ? (settings.legadoPreloadCount as number)
               : DEFAULT_STATE.legadoPreloadCount,
-            ttsImmersiveMode: settings.ttsImmersiveMode ?? DEFAULT_STATE.ttsImmersiveMode,
             loaded: true,
           });
         } catch {
@@ -148,7 +143,6 @@ export const useReaderSettingsStore = create<
               legadoRate: state.legadoRate,
               legadoConfigId: state.legadoConfigId,
               legadoPreloadCount: state.legadoPreloadCount,
-              ttsImmersiveMode: state.ttsImmersiveMode,
             }),
           });
         } catch {

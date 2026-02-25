@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Pause, Play, Square, SkipBack, SkipForward, Eye, EyeOff } from "lucide-react";
+import { Pause, Play, Square, SkipBack, SkipForward } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TtsFloatingControlProps {
@@ -10,8 +10,6 @@ interface TtsFloatingControlProps {
   onStop: () => void;
   onPrev?: () => void;
   onNext?: () => void;
-  ttsImmersiveMode?: boolean;
-  onToggleImmersiveMode?: () => void;
   currentParagraphIndex?: number;
   totalParagraphs?: number;
   paragraphProgress?: number;
@@ -40,8 +38,6 @@ export function TtsFloatingControl({
   onStop,
   onPrev,
   onNext,
-  ttsImmersiveMode = false,
-  onToggleImmersiveMode,
   currentParagraphIndex = 0,
   totalParagraphs = 0,
   paragraphProgress = 0,
@@ -169,28 +165,6 @@ export function TtsFloatingControl({
                 />
               </div>
             </div>
-          )}
-
-          <div className="w-px h-4 bg-slate-200 dark:bg-slate-600 mx-0.5" />
-
-          {onToggleImmersiveMode && (
-            <button
-              type="button"
-              onClick={onToggleImmersiveMode}
-              className={cn(
-                "group flex size-7 items-center justify-center rounded-full transition-all duration-150 cursor-pointer active:scale-90",
-                ttsImmersiveMode
-                  ? "text-emerald-500 bg-emerald-50 dark:bg-emerald-900/30"
-                  : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
-              )}
-              title={ttsImmersiveMode ? "关闭沉浸模式" : "开启沉浸模式"}
-            >
-              {ttsImmersiveMode ? (
-                <EyeOff className="size-3.5" />
-              ) : (
-                <Eye className="size-3.5" />
-              )}
-            </button>
           )}
         </div>
       )}

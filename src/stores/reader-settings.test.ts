@@ -23,7 +23,6 @@ describe("useReaderSettingsStore", () => {
       legadoRate: 50,
       legadoConfigId: "",
       legadoPreloadCount: 3,
-      ttsImmersiveMode: false,
       loaded: false,
     });
     mockFetch.mockReset();
