@@ -35,6 +35,7 @@ interface EpubReaderProps {
 export interface EpubReaderRef {
   goToLocation: (cfi: string) => void;
   goToHref: (href: string) => void;
+  goToPercentage: (percentage: number) => void;
   nextPage: () => void;
   prevPage: () => void;
   getCurrentLocation: () => string | null;
@@ -140,6 +141,16 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       },
       goToHref(href: string) {
         renditionRef.current?.display(href);
+      },
+      goToPercentage(percentage: number) {
+        const book = bookRef.current;
+        if (!book || !renditionRef.current) return;
+        // locations.cfiFromPercentage requires locations to be generated first
+        // (book.locations.generate() is called during initialization)
+        const cfi = book.locations.cfiFromPercentage(percentage);
+        if (cfi) {
+          renditionRef.current.display(cfi);
+        }
       },
       nextPage() {
         renditionRef.current?.next();

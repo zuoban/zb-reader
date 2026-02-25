@@ -1731,15 +1731,7 @@ function ReaderContent() {
 
   const handleProgressChange = useCallback(
     (newProgress: number) => {
-      // For EPUB, we generate locations and use CFI-based navigation
-      // Use rendition.display with a percentage
-      const cfi = epubReaderRef.current?.getCurrentLocation();
-      if (cfi) {
-        // Simple approach: go to percentage
-        epubReaderRef.current?.goToLocation(
-          `epubcfi(/6/${Math.max(2, Math.round(newProgress * 100))}!)`
-        );
-      }
+      epubReaderRef.current?.goToPercentage(newProgress);
     },
     []
   );
