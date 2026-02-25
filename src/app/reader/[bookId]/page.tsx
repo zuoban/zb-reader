@@ -588,6 +588,17 @@ function ReaderContent() {
     router.push("/bookshelf");
   }, [saveProgress, router]);
 
+  // ---- Esc key to go back ----
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        handleBack();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [handleBack]);
+
   // ---- Bookmark handlers ----
   const handleToggleBookmark = useCallback(async () => {
     const currentCfi = currentLocationRef.current;

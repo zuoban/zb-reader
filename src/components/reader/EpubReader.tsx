@@ -788,7 +788,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     // Also bind keyboard events inside the rendition iframe
     useEffect(() => {
       const rendition = renditionRef.current;
-      if (!rendition) return;
+      if (!rendition || !isRenditionReady) return;
 
       const onKeyDown = (e: KeyboardEvent) => {
         // Only handle if arrow keys and not inside an input
@@ -808,7 +808,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       return () => {
         rendition.off("keydown", onKeyDown);
       };
-    }, [url]);
+    }, [isRenditionReady]);
 
     return (
       <div className="relative h-full w-full">
