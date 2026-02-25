@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Loader2 } from "lucide-react";
 
 interface TxtReaderProps {
   url: string;
@@ -12,7 +11,7 @@ interface TxtReaderProps {
   onPageChange?: (page: number, totalPages: number) => void;
   activeTtsParagraph?: string;
   ttsPlaybackProgress?: number;
-  onRegisterController?: (controller: { nextPage: () => boolean; prevPage: () => boolean }) => void;
+  onRegisterController?: (controller: { nextPage: () => boolean; prevPage: () => boolean; scrollDown: (amount?: number) => void; scrollUp: (amount?: number) => void }) => void;
   ttsImmersiveMode?: boolean;
 }
 
@@ -27,7 +26,7 @@ const TELEPROMPTER_VIEWPORT_ANCHOR = 0.42;
 
 function TxtReader({
   url,
-  initialPage = 1,
+  initialPage: _initialPage,
   fontSize = 16,
   theme = "light",
   onPageChange,
@@ -38,11 +37,8 @@ function TxtReader({
 }: TxtReaderProps) {
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(true);
-  const [pages, setPages] = useState<string[]>([]);
-  const [currentPage, setCurrentPage] = useState(initialPage);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Load text content
   useEffect(() => {
     async function loadContent() {
       try {
@@ -58,94 +54,53 @@ function TxtReader({
     loadContent();
   }, [url]);
 
-  // Paginate content
-  const paginatedPages = useMemo(() => {
-    if (!content) return [];
-
-    // Approximate characters per page based on typical screen size
-    const charsPerLine = Math.floor(40 * (16 / fontSize));
-    const linesPerPage = Math.floor(35 * (16 / fontSize));
-    const charsPerPage = charsPerLine * linesPerPage;
-
-    const lines = content.split("\n");
-    const result: string[] = [];
-    let currentPageContent = "";
-    let currentLineCount = 0;
-
-    for (const line of lines) {
-      const wrappedLines = Math.max(1, Math.ceil(line.length / charsPerLine));
-
-      if (currentLineCount + wrappedLines > linesPerPage && currentPageContent) {
-        result.push(currentPageContent);
-        currentPageContent = "";
-        currentLineCount = 0;
-      }
-
-      currentPageContent += line + "\n";
-      currentLineCount += wrappedLines;
+  const scrollDown = useCallback((amount = 300) => {
+    if (containerRef.current) {
+      containerRef.current.scrollBy({ top: amount, behavior: "smooth" });
     }
+  }, []);
 
-    if (currentPageContent.trim()) {
-      result.push(currentPageContent);
+  const scrollUp = useCallback((amount = 300) => {
+    if (containerRef.current) {
+      containerRef.current.scrollBy({ top: -amount, behavior: "smooth" });
     }
-
-    return result;
-  }, [content, fontSize]);
-
-  useEffect(() => {
-    setPages(paginatedPages);
-    if (paginatedPages.length > 0) {
-      const page = Math.min(currentPage, paginatedPages.length);
-      setCurrentPage(page);
-      onPageChange?.(page, paginatedPages.length);
-    }
-  }, [paginatedPages]);
-
-  const goToPage = useCallback(
-    (page: number) => {
-      if (page >= 1 && page <= pages.length) {
-        setCurrentPage(page);
-        onPageChange?.(page, pages.length);
-      }
-    },
-    [pages.length, onPageChange]
-  );
+  }, []);
 
   useEffect(() => {
     onRegisterController?.({
       nextPage: () => {
-        if (currentPage >= pages.length) {
-          return false;
-        }
-        goToPage(currentPage + 1);
+        scrollDown();
         return true;
       },
       prevPage: () => {
-        if (currentPage <= 1) {
-          return false;
-        }
-        goToPage(currentPage - 1);
+        scrollUp();
         return true;
       },
+      scrollDown,
+      scrollUp,
     });
-  }, [currentPage, goToPage, onRegisterController, pages.length]);
+  }, [scrollDown, scrollUp, onRegisterController]);
 
-  // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
-        goToPage(currentPage - 1);
-      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
-        goToPage(currentPage + 1);
+      if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+        scrollUp(100);
+      } else if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+        scrollDown(100);
       }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [currentPage, goToPage]);
+  }, [scrollDown, scrollUp]);
+
+  useEffect(() => {
+    if (!loading && content && onPageChange) {
+      onPageChange(1, 1);
+    }
+  }, [loading, content, onPageChange]);
 
   const style = themeStyles[theme] || themeStyles.light;
-  const pageText = pages[currentPage - 1] || "";
-  const pageParagraphs = pageText
+  const paragraphs = content
     .split(/\n\s*\n+/)
     .map((item) => item.trim())
     .filter((item) => item.length > 0);
@@ -191,7 +146,7 @@ function TxtReader({
       container.clientHeight / 2 +
       elementRect.height / 2;
     container.scrollTop = Math.max(0, targetScrollTop);
-  }, [activeNeedle, currentPage]);
+  }, [activeNeedle]);
 
   useEffect(() => {
     if (!isImmersiveActive) return;
@@ -222,6 +177,10 @@ function TxtReader({
     );
   }
 
+  
+  const progressPercent = Math.min(100, Math.max(0, ttsPlaybackProgress * 100));
+
+  
   return (
     <div className={`flex flex-col h-full ${style.bg}`}>
       <div
@@ -234,7 +193,7 @@ function TxtReader({
           lineHeight: 1.8,
         }}
       >
-        {pageParagraphs.length > 0 ? (
+        {paragraphs.length > 0 ? (
           <div
             data-reader-txt-page="true"
             className={`${
@@ -243,7 +202,7 @@ function TxtReader({
                 : "space-y-4"
             }`}
           >
-            {pageParagraphs.map((paragraph, index) => {
+            {paragraphs.map((paragraph, index) => {
               const paragraphKey = `${index}-${paragraph.slice(0, 12)}`;
               const isActive =
                 !!activeNeedle &&
@@ -263,10 +222,32 @@ function TxtReader({
                       : "leading-8"
                   } ${
                     isActive
-                      ? "before:content-[''] before:absolute before:-left-2 before:top-[0.2em] before:bottom-[0.2em] before:w-[3px] before:rounded-[2px] before:bg-primary before:animate-pulse"
+                      ? ""
                       : "hover:bg-muted/30 -mx-2 px-2"
                   }`}
                 >
+                  {isActive && (
+                    <>
+                      <span
+                        className="absolute -left-2 top-[0.2em] bottom-[0.2em] w-1 rounded-[2px]"
+                        style={{ backgroundColor: "rgba(148, 163, 184, 0.3)" }}
+                      />
+                      <span
+                        className="absolute -left-2 top-[0.2em] w-1 rounded-[2px] bg-primary transition-all duration-100"
+                        style={{
+                          height: `${progressPercent}%`,
+                          boxShadow: "0 0 4px var(--primary, #3b82f6)",
+                        }}
+                      />
+                      <span
+                        className="absolute -left-2 w-1 h-1 rounded-full bg-primary animate-pulse"
+                        style={{
+                          top: `calc(0.2em + ${progressPercent}% - 0.4em)`,
+                          boxShadow: "0 0 4px var(--primary, #3b82f6)",
+                        }}
+                      />
+                    </>
+                  )}
                   {paragraph}
                 </p>
               );
@@ -274,37 +255,10 @@ function TxtReader({
           </div>
         ) : (
           <pre data-reader-txt-page="true" className="whitespace-pre-wrap font-[inherit] m-0">
-            {pageText}
+            {content}
           </pre>
         )}
       </div>
-
-      {/* Navigation */}
-      {pages.length > 1 && (
-        <div className="fixed bottom-16 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-card/95 backdrop-blur-md border rounded-2xl px-4 py-2.5 shadow-xl transition-all duration-200 hover:shadow-2xl">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => goToPage(currentPage - 1)}
-            disabled={currentPage <= 1}
-            className="hover:bg-primary/10 hover:scale-110 transition-all duration-200"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="text-sm font-semibold text-foreground min-w-[5rem] text-center">
-            {currentPage} / {pages.length}
-          </span>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => goToPage(currentPage + 1)}
-            disabled={currentPage >= pages.length}
-            className="hover:bg-primary/10 hover:scale-110 transition-all duration-200"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      )}
     </div>
   );
 }

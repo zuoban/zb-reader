@@ -38,6 +38,8 @@ export interface EpubReaderRef {
   goToPercentage: (percentage: number) => void;
   nextPage: () => void;
   prevPage: () => void;
+  scrollDown: (amount?: number) => void;
+  scrollUp: (amount?: number) => void;
   getCurrentLocation: () => string | null;
   getProgress: () => number;
   getCurrentText: () => string | null;
@@ -87,20 +89,32 @@ const TELEPROMPTER_FOLLOW_FACTOR = 0.16;
 const TELEPROMPTER_VIEWPORT_ANCHOR = 0.42;
 
 const TTS_INDICATOR_CSS = `
-[data-tts-active='1']::before {
-  content: '';
+[data-tts-active='1'] {
+  position: relative;
+}
+[data-tts-active='1'] .tts-progress-track {
   position: absolute;
   left: -8px;
   top: 0.2em;
   bottom: 0.2em;
-  width: 3px;
+  width: 4px;
+  border-radius: 2px;
+  background: rgba(148, 163, 184, 0.3);
+}
+[data-tts-active='1'] .tts-progress-fill {
+  position: absolute;
+  left: -8px;
+  top: 0.2em;
+  width: 4px;
   border-radius: 2px;
   background: var(--tts-indicator-color, #3b82f6);
   animation: tts-pulse 1.5s ease-in-out infinite;
+  box-shadow: 0 0 4px var(--tts-indicator-color, #3b82f6);
+  transition: height 0.1s ease-out;
 }
 @keyframes tts-pulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  50% { opacity: 0.7; }
 }
 `;
 
@@ -159,6 +173,18 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       prevPage() {
         renditionRef.current?.prev();
       },
+      scrollDown(amount = 300) {
+        const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
+        if (epubContainer) {
+          epubContainer.scrollBy({ top: amount, behavior: "smooth" });
+        }
+      },
+      scrollUp(amount = 300) {
+        const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
+        if (epubContainer) {
+          epubContainer.scrollBy({ top: -amount, behavior: "smooth" });
+        }
+      },
       getCurrentLocation() {
         return currentLocationRef.current;
       },
@@ -185,57 +211,38 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         );
 
         const elementArray = Array.from(nodes) as HTMLElement[];
-        // Use body.clientWidth for the column (page) width — content?.window?.innerWidth
-        // returns the full multi-column document width (all columns combined), not the
-        // width of a single visible column. body.clientWidth correctly returns the
-        // single-column width that epubjs sets via CSS column-width.
         const viewportWidth = doc.body.clientWidth || content?.window?.innerWidth || window.innerWidth;
         const viewportHeight = content?.window?.innerHeight || window.innerHeight;
 
         const normalizeParagraph = (text: string) => text.replace(/\s+/g, " ").trim();
 
-        // epubjs paginates via CSS multi-column layout: all content in a chapter
-        // lives in one iframe, laid out as horizontal columns. Navigation between
-        // pages is achieved by scrolling the *outer* epub-container div
-        // (not the iframe itself). Therefore getClientRects() coordinates inside
-        // the iframe are document-relative (column 1 starts at x=0, column 2
-        // starts at x=columnWidth, etc.) and do NOT account for the outer
-        // container's scrollLeft.
-        //
-        // We read the epub-container scrollLeft to determine which column (page)
-        // is currently visible, then only include elements whose rects fall
-        // within [containerScrollLeft, containerScrollLeft + viewportWidth].
         const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
-        const containerScrollLeft = epubContainer?.scrollLeft ?? 0;
+        const containerScrollTop = epubContainer?.scrollTop ?? 0;
 
-        // Visible x range in iframe document coordinates:
-        const visibleLeft = containerScrollLeft;
-        const visibleRight = containerScrollLeft + viewportWidth;
+        const visibleTop = containerScrollTop;
+        const visibleBottom = containerScrollTop + viewportHeight;
 
-        const isRectOnCurrentPage = (rect: DOMRect) =>
-          rect.right > visibleLeft &&
-          rect.left < visibleRight &&
-          rect.bottom > 0 &&
-          rect.top < viewportHeight;
+        const isRectVisible = (rect: DOMRect) =>
+          rect.bottom > visibleTop &&
+          rect.top < visibleBottom &&
+          rect.right > 0 &&
+          rect.left < viewportWidth;
 
         const isElementOnCurrentViewport = (element: HTMLElement) => {
           const rects = Array.from(element.getClientRects());
 
           for (const rect of rects) {
-            if (!isRectOnCurrentPage(rect)) continue;
+            if (!isRectVisible(rect)) continue;
 
-            // Translate rect coordinates to iframe-viewport coordinates for
-            // elementFromPoint (which works in viewport space).
-            const viewportX = rect.left - containerScrollLeft;
-            const hitX = Math.min(
+            const viewportX = Math.min(
               viewportWidth - 1,
-              Math.max(1, Math.floor(viewportX + Math.min(rect.width / 2, 24)))
+              Math.max(1, Math.floor(rect.left + Math.min(rect.width / 2, 24)))
             );
-            const hitY = Math.min(
+            const viewportY = Math.min(
               viewportHeight - 1,
               Math.max(1, Math.floor(rect.top + Math.min(rect.height / 2, 12)))
             );
-            const hit = doc.elementFromPoint(hitX, hitY) as HTMLElement | null;
+            const hit = doc.elementFromPoint(viewportX, viewportY) as HTMLElement | null;
             if (!hit) continue;
 
             if (element === hit || element.contains(hit)) {
@@ -261,30 +268,23 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
           return visibleParagraphs;
         }
 
-        // Fallback: when no node intersects viewport (timing/layout edge case),
-        // pick nodes closest to the center of the current visible page.
-        // We still use document coordinates for the center so that the fallback
-        // correctly targets the same column that is currently scrolled into view.
-        const pageCenterX = containerScrollLeft + viewportWidth / 2;
+        const pageCenterY = containerScrollTop + viewportHeight / 2;
         const nearestParagraphs = elementArray
           .map((element) => {
             const rects = Array.from(element.getClientRects());
             if (rects.length === 0) {
               return { distance: Infinity, text: normalizeParagraph(element.textContent || "") };
             }
-            // Use the rect closest to the current page center.
             const minDistance = rects.reduce((best, rect) => {
-              const rectCenterX = rect.left + rect.width / 2;
-              return Math.min(best, Math.abs(rectCenterX - pageCenterX));
+              const rectCenterY = rect.top + rect.height / 2;
+              return Math.min(best, Math.abs(rectCenterY - pageCenterY));
             }, Infinity);
             return {
               distance: minDistance,
               text: normalizeParagraph(element.textContent || ""),
             };
           })
-          // Only include elements that are within one viewport width from the
-          // current page center (avoids grabbing content from distant columns).
-          .filter((item) => item.text.length > 0 && item.text.length <= 800 && item.distance < viewportWidth)
+          .filter((item) => item.text.length > 0 && item.text.length <= 800 && item.distance < viewportHeight)
           .sort((a, b) => a.distance - b.distance)
           .slice(0, 24)
           .map((item) => item.text);
@@ -313,33 +313,32 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         const viewportHeight = content?.window?.innerHeight || window.innerHeight;
 
         const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
-        const containerScrollLeft = epubContainer?.scrollLeft ?? 0;
+        const containerScrollTop = epubContainer?.scrollTop ?? 0;
 
-        const visibleLeft = containerScrollLeft;
-        const visibleRight = containerScrollLeft + viewportWidth;
+        const visibleTop = containerScrollTop;
+        const visibleBottom = containerScrollTop + viewportHeight;
 
-        const isRectOnCurrentPage = (rect: DOMRect) =>
-          rect.right > visibleLeft &&
-          rect.left < visibleRight &&
-          rect.bottom > 0 &&
-          rect.top < viewportHeight;
+        const isRectVisible = (rect: DOMRect) =>
+          rect.bottom > visibleTop &&
+          rect.top < visibleBottom &&
+          rect.right > 0 &&
+          rect.left < viewportWidth;
 
         const isElementOnCurrentViewport = (element: HTMLElement) => {
           const rects = Array.from(element.getClientRects());
 
           for (const rect of rects) {
-            if (!isRectOnCurrentPage(rect)) continue;
+            if (!isRectVisible(rect)) continue;
 
-            const viewportX = rect.left - containerScrollLeft;
-            const hitX = Math.min(
+            const viewportX = Math.min(
               viewportWidth - 1,
-              Math.max(1, Math.floor(viewportX + Math.min(rect.width / 2, 24)))
+              Math.max(1, Math.floor(rect.left + Math.min(rect.width / 2, 24)))
             );
-            const hitY = Math.min(
+            const viewportY = Math.min(
               viewportHeight - 1,
               Math.max(1, Math.floor(rect.top + Math.min(rect.height / 2, 12)))
             );
-            const hit = doc.elementFromPoint(hitX, hitY) as HTMLElement | null;
+            const hit = doc.elementFromPoint(viewportX, viewportY) as HTMLElement | null;
             if (!hit) continue;
 
             if (element === hit || element.contains(hit)) {
@@ -354,8 +353,8 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
           if (isElementOnCurrentViewport(element)) {
             const rects = Array.from(element.getClientRects());
             for (const rect of rects) {
-              if (rect.right > visibleLeft && rect.left < visibleRight) {
-                if (rect.left < visibleLeft - 5) {
+              if (rect.bottom > visibleTop && rect.top < visibleBottom) {
+                if (rect.top < visibleTop - 5) {
                   return false;
                 }
                 return true;
@@ -436,6 +435,11 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         element.style.margin = "";
         element.style.position = "";
         element.style.removeProperty("--tts-indicator-color");
+
+        const progressTrack = element.querySelector(".tts-progress-track");
+        const progressFill = element.querySelector(".tts-progress-fill");
+        if (progressTrack) progressTrack.remove();
+        if (progressFill) progressFill.remove();
       });
 
       doc.body.removeAttribute("data-tts-immersive");
@@ -562,7 +566,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     }, [activeTtsParagraph, normalizeText, theme, ttsImmersiveMode]);
 
     useEffect(() => {
-      if (!ttsImmersiveMode || !activeTtsParagraph) return;
+      if (!activeTtsParagraph) return;
 
       const contents = renditionRef.current?.getContents?.() as
         | Array<{ document?: Document }>
@@ -574,6 +578,28 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         | HTMLElement
         | null;
       if (!activeElement) return;
+
+      let progressFill = activeElement.querySelector(".tts-progress-fill") as HTMLElement | null;
+      let progressTrack = activeElement.querySelector(".tts-progress-track") as HTMLElement | null;
+
+      if (!progressTrack) {
+        progressTrack = doc.createElement("div");
+        progressTrack.className = "tts-progress-track";
+        activeElement.appendChild(progressTrack);
+      }
+
+      if (!progressFill) {
+        progressFill = doc.createElement("div");
+        progressFill.className = "tts-progress-fill";
+        activeElement.appendChild(progressFill);
+      }
+
+      const progressPercent = Math.min(100, Math.max(0, ttsPlaybackProgress * 100));
+      const trackHeight = activeElement.offsetHeight - parseFloat(getComputedStyle(activeElement).fontSize) * 0.4;
+      const fillHeight = trackHeight * (progressPercent / 100);
+      progressFill.style.height = `${Math.max(0, fillHeight)}px`;
+
+      if (!ttsImmersiveMode) return;
 
       const targetTop = getTeleprompterScrollTop(activeElement, ttsPlaybackProgress);
       const currentTop = activeElement.scrollTop;
@@ -627,6 +653,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
             width: "100%",
             height: "100%",
             spread: "none",
+            flow: "scrolled-doc",
             allowScriptedContent: true,
           });
           renditionRef.current = rendition;
@@ -835,18 +862,17 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
 
     // ---- Keyboard navigation ----
     const handleKeyDown = useCallback((e: KeyboardEvent) => {
-      const rendition = renditionRef.current;
-      if (!rendition) return;
+      const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
+      if (!epubContainer) return;
 
-      // Only handle if arrow keys and not inside an input
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
       }
 
-      if (e.key === "ArrowLeft") {
-        rendition.prev();
-      } else if (e.key === "ArrowRight") {
-        rendition.next();
+      if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+        epubContainer.scrollBy({ top: -100, behavior: "smooth" });
+      } else if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+        epubContainer.scrollBy({ top: 100, behavior: "smooth" });
       }
     }, []);
 
@@ -863,15 +889,17 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       if (!rendition || !isRenditionReady) return;
 
       const onKeyDown = (e: KeyboardEvent) => {
-        // Only handle if arrow keys and not inside an input
         if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
           return;
         }
 
-        if (e.key === "ArrowLeft") {
-          rendition.prev();
-        } else if (e.key === "ArrowRight") {
-          rendition.next();
+        const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
+        if (!epubContainer) return;
+
+        if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+          epubContainer.scrollBy({ top: -100, behavior: "smooth" });
+        } else if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+          epubContainer.scrollBy({ top: 100, behavior: "smooth" });
         }
       };
 

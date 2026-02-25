@@ -9,8 +9,8 @@ import {
   StickyNote,
   Volume2,
   Pause,
-  ChevronLeft,
-  ChevronRight,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -223,10 +223,10 @@ export function ReaderToolbar({
                   onClick={onPrevPage}
                   className="cursor-pointer h-8 w-8"
                 >
-                  <ChevronLeft className="h-4 w-4" />
+                  <ArrowUp className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>上一页</TooltipContent>
+              <TooltipContent>向上滚动</TooltipContent>
             </Tooltip>
           )}
 
@@ -256,10 +256,10 @@ export function ReaderToolbar({
                   onClick={onNextPage}
                   className="cursor-pointer h-8 w-8"
                 >
-                  <ChevronRight className="h-4 w-4" />
+                  <ArrowDown className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>下一页</TooltipContent>
+              <TooltipContent>向下滚动</TooltipContent>
             </Tooltip>
           )}
 
@@ -274,15 +274,15 @@ export function ReaderToolbar({
         <div className="flex items-center justify-center gap-6 pb-2 text-xs text-muted-foreground">
           <div className="flex items-center gap-1.5">
             <kbd className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-medium rounded border bg-muted">
-              <ChevronLeft className="h-3 w-3" />
+              <ArrowUp className="h-3 w-3" />
             </kbd>
-            <span>上一页</span>
+            <span>向上滚动</span>
           </div>
           <div className="flex items-center gap-1.5">
             <kbd className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-medium rounded border bg-muted">
-              <ChevronRight className="h-3 w-3" />
+              <ArrowDown className="h-3 w-3" />
             </kbd>
-            <span>下一页</span>
+            <span>向下滚动</span>
           </div>
           <div className="flex items-center gap-1.5">
             <kbd className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-medium rounded border bg-muted">

@@ -12,6 +12,9 @@ interface TtsFloatingControlProps {
   onNext?: () => void;
   ttsImmersiveMode?: boolean;
   onToggleImmersiveMode?: () => void;
+  currentParagraphIndex?: number;
+  totalParagraphs?: number;
+  paragraphProgress?: number;
 }
 
 function AudioWaveIndicator() {
@@ -39,6 +42,9 @@ export function TtsFloatingControl({
   onNext,
   ttsImmersiveMode = false,
   onToggleImmersiveMode,
+  currentParagraphIndex = 0,
+  totalParagraphs = 0,
+  paragraphProgress = 0,
 }: TtsFloatingControlProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isAutoTransparent, setIsAutoTransparent] = useState(false);
@@ -147,6 +153,22 @@ export function TtsFloatingControl({
             >
               <SkipForward className="size-3.5 transition-transform duration-150 group-hover:translate-x-0.5" />
             </button>
+          )}
+
+          <div className="w-px h-4 bg-slate-200 dark:bg-slate-600 mx-0.5" />
+
+          {totalParagraphs > 0 && (
+            <div className="flex items-center gap-1.5 px-2">
+              <span className="text-xs font-medium text-slate-600 dark:text-slate-300 min-w-[3rem] text-center">
+                {currentParagraphIndex + 1}/{totalParagraphs}
+              </span>
+              <div className="w-12 h-1 bg-slate-200 dark:bg-slate-600 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-emerald-500 transition-all duration-150 rounded-full"
+                  style={{ width: `${Math.min(100, Math.max(0, paragraphProgress * 100))}%` }}
+                />
+              </div>
+            </div>
           )}
 
           <div className="w-px h-4 bg-slate-200 dark:bg-slate-600 mx-0.5" />

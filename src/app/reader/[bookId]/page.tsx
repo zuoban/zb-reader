@@ -58,7 +58,7 @@ const TxtReader = dynamic<{
   activeTtsParagraph?: string;
   ttsPlaybackProgress?: number;
   onPageChange?: (page: number, totalPages: number) => void;
-  onRegisterController?: (controller: { nextPage: () => boolean; prevPage: () => boolean }) => void;
+  onRegisterController?: (controller: { nextPage: () => boolean; prevPage: () => boolean; scrollDown: (amount?: number) => void; scrollUp: (amount?: number) => void }) => void;
   ttsImmersiveMode?: boolean;
 }>(() => import("@/components/reader/TxtReader"), {
   ssr: false,
@@ -167,7 +167,7 @@ function ReaderContent() {
   const progressRef = useRef(0);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
-  const txtReaderControllerRef = useRef<{ nextPage: () => boolean; prevPage: () => boolean } | null>(null);
+  const txtReaderControllerRef = useRef<{ nextPage: () => boolean; prevPage: () => boolean; scrollDown: (amount?: number) => void; scrollUp: (amount?: number) => void } | null>(null);
   const pdfReaderControllerRef = useRef<{ nextPage: () => boolean; prevPage: () => boolean } | null>(null);
   const ttsSessionRef = useRef(0);
   const settingsLoadedRef = useRef(false);
@@ -177,6 +177,8 @@ function ReaderContent() {
   const currentParagraphIndexRef = useRef(0);
   const allParagraphsRef = useRef<string[]>([]);
   const readParagraphsHashRef = useRef<Set<string>>(new Set());
+  const [ttsCurrentIndex, setTtsCurrentIndex] = useState(0);
+  const [ttsTotalParagraphs, setTtsTotalParagraphs] = useState(0);
 
   // 跟踪 TTS 设置的上次值，用于检测设置变化
   const prevTtsSettingsRef = useRef({ rate: ttsRate, pitch: ttsPitch, volume: ttsVolume });
@@ -1108,6 +1110,7 @@ function ReaderContent() {
         }
 
         currentParagraphIndexRef.current = startIndex + i;
+        setTtsCurrentIndex(startIndex + i);
         const paragraph = queue[i];
         setActiveTtsParagraph(paragraph);
 
@@ -1348,6 +1351,7 @@ function ReaderContent() {
         }
 
         currentParagraphIndexRef.current = startIndex + index;
+        setTtsCurrentIndex(startIndex + index);
         const paragraph = queue[index];
 
         // 跳过已读的段落（避免跨页重复朗读）
@@ -1500,19 +1504,15 @@ function ReaderContent() {
         if (progressRef.current >= 0.999) {
           return false;
         }
-        epubReaderRef.current?.nextPage();
-      } else if (book.format === "txt" || book.format === "pdf") {
+        epubReaderRef.current?.scrollDown();
+      } else if (book.format === "txt") {
+        txtReaderControllerRef.current?.scrollDown?.();
+      } else if (book.format === "pdf") {
         if (!currentPage || !totalPages || currentPage >= totalPages) {
           return false;
         }
-
-        if (book.format === "txt") {
-          const moved = txtReaderControllerRef.current?.nextPage();
-          if (!moved) return false;
-        } else {
-          const moved = pdfReaderControllerRef.current?.nextPage();
-          if (!moved) return false;
-        }
+        const moved = pdfReaderControllerRef.current?.nextPage();
+        if (!moved) return false;
       } else {
         return false;
       }
@@ -1566,6 +1566,7 @@ function ReaderContent() {
 
     // 更新段落引用
     allParagraphsRef.current = paragraphs;
+    setTtsTotalParagraphs(paragraphs.length);
 
     // 确定起始索引：
     // 如果 currentParagraphIndexRef 在有效范围内，就从那里开始
@@ -1573,6 +1574,7 @@ function ReaderContent() {
     if (currentParagraphIndexRef.current >= paragraphs.length || currentParagraphIndexRef.current < 0) {
       currentParagraphIndexRef.current = 0;
     }
+    setTtsCurrentIndex(currentParagraphIndexRef.current);
 
     // 如果没有在朗读，设置状态为朗读
     setIsSpeaking(true);
@@ -1593,7 +1595,9 @@ function ReaderContent() {
           }
           // 翻页后，从头开始读新的一页
           currentParagraphIndexRef.current = 0;
+          setTtsCurrentIndex(0);
           allParagraphsRef.current = paragraphs;
+          setTtsTotalParagraphs(paragraphs.length);
       }
 
       // 从当前索引开始切片
@@ -1793,9 +1797,9 @@ function ReaderContent() {
 
   const handlePrevPage = useCallback(() => {
     if (book?.format === "epub") {
-      epubReaderRef.current?.prevPage();
+      epubReaderRef.current?.scrollUp();
     } else if (book?.format === "txt") {
-      txtReaderControllerRef.current?.prevPage();
+      txtReaderControllerRef.current?.scrollUp?.();
     } else if (book?.format === "pdf") {
       pdfReaderControllerRef.current?.prevPage();
     }
@@ -1803,9 +1807,9 @@ function ReaderContent() {
 
   const handleNextPage = useCallback(() => {
     if (book?.format === "epub") {
-      epubReaderRef.current?.nextPage();
+      epubReaderRef.current?.scrollDown();
     } else if (book?.format === "txt") {
-      txtReaderControllerRef.current?.nextPage();
+      txtReaderControllerRef.current?.scrollDown?.();
     } else if (book?.format === "pdf") {
       pdfReaderControllerRef.current?.nextPage();
     }
@@ -2044,6 +2048,9 @@ function ReaderContent() {
         onNext={handleTtsNextParagraph}
         ttsImmersiveMode={ttsImmersiveMode}
         onToggleImmersiveMode={() => setTtsImmersiveMode((prev) => !prev)}
+        currentParagraphIndex={ttsCurrentIndex}
+        totalParagraphs={ttsTotalParagraphs}
+        paragraphProgress={ttsPlaybackProgress}
       />
 
       <Toaster />
