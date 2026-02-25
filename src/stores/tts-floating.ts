@@ -18,8 +18,8 @@ const getDefaultPosition = (): TtsFloatingPosition => {
     return { x: 16, y: 80 };
   }
   return {
-    x: Math.max(16, window.innerWidth - 80),
-    y: Math.max(80, window.innerHeight - 120),
+    x: Math.max(16, Math.floor(window.innerWidth * 0.5)),
+    y: Math.max(80, Math.floor(window.innerHeight * 0.7)),
   };
 };
 
