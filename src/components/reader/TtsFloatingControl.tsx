@@ -14,6 +14,23 @@ interface TtsFloatingControlProps {
   onToggleImmersiveMode?: () => void;
 }
 
+function AudioWaveIndicator() {
+  return (
+    <div className="flex items-center justify-center gap-0.5 h-4">
+      {[1, 2, 3, 4].map((i) => (
+        <div
+          key={i}
+          className="w-0.5 bg-current rounded-full animate-audio-wave"
+          style={{
+            animationDelay: `${i * 100}ms`,
+            height: "100%",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function TtsFloatingControl({
   isSpeaking,
   onToggle,
@@ -69,83 +86,87 @@ export function TtsFloatingControl({
     <div
       className={cn(
         "fixed z-50 left-1/2 top-4 -translate-x-1/2",
-        "flex items-center gap-2",
+        "flex items-center",
         "transition-all duration-300 ease-out",
-        !isSpeaking && "pointer-events-none opacity-0",
-        isAutoTransparent && isSpeaking && !isExpanded
-          ? "opacity-40 scale-95"
-          : isSpeaking && "opacity-90 scale-100 hover:opacity-100"
+        !isSpeaking && "pointer-events-none opacity-0 -translate-y-2",
+        isSpeaking && "opacity-100 translate-y-0",
+        isAutoTransparent && isSpeaking && !isExpanded && "opacity-30 scale-95"
       )}
       onPointerEnter={handleInteraction}
     >
       {isExpanded && (
         <div
           className={cn(
-            "flex items-center gap-1.5 rounded-2xl bg-gradient-to-br from-primary to-primary/90 px-3 py-2 shadow-2xl",
-            "animate-in slide-in-from-right-2 fade-in duration-300",
-            "border border-primary-foreground/20"
+            "flex items-center gap-0.5 px-1.5 py-1 mr-1",
+            "rounded-full",
+            "bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl",
+            "border border-slate-200/60 dark:border-slate-600/60",
+            "shadow-md",
+            "animate-in slide-in-from-right-4 fade-in duration-200 ease-out"
           )}
         >
           {onPrev && (
             <button
               type="button"
               onClick={onPrev}
-              className="flex size-8 items-center justify-center rounded-xl bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/20 transition-all duration-200 cursor-pointer hover:scale-110 active:scale-95"
+              className="group flex size-7 items-center justify-center rounded-full text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-150 cursor-pointer active:scale-90"
               title="上一段"
             >
-              <SkipBack className="size-4" />
+              <SkipBack className="size-3.5 transition-transform duration-150 group-hover:-translate-x-0.5" />
             </button>
           )}
 
           <button
             type="button"
             onClick={onToggle}
-            className="flex size-9 items-center justify-center rounded-xl bg-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/30 transition-all duration-200 cursor-pointer hover:scale-110 active:scale-95 shadow-lg"
+            className="group flex size-7 items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-all duration-150 cursor-pointer active:scale-90"
             title={isSpeaking ? "暂停" : "播放"}
           >
             {isSpeaking ? (
-              <Pause className="size-4" />
+              <Pause className="size-3.5" />
             ) : (
-              <Play className="size-4 ml-0.5" />
+              <Play className="size-3.5 ml-0.5" />
             )}
           </button>
 
           <button
             type="button"
             onClick={onStop}
-            className="flex size-8 items-center justify-center rounded-xl bg-destructive/20 text-destructive-foreground hover:bg-destructive/30 transition-all duration-200 cursor-pointer hover:scale-110 active:scale-95"
+            className="group flex size-7 items-center justify-center rounded-full text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-all duration-150 cursor-pointer active:scale-90"
             title="停止"
           >
-            <Square className="size-3.5" />
+            <Square className="size-3" />
           </button>
 
           {onNext && (
             <button
               type="button"
               onClick={onNext}
-              className="flex size-8 items-center justify-center rounded-xl bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/20 transition-all duration-200 cursor-pointer hover:scale-110 active:scale-95"
+              className="group flex size-7 items-center justify-center rounded-full text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-150 cursor-pointer active:scale-90"
               title="下一段"
             >
-              <SkipForward className="size-4" />
+              <SkipForward className="size-3.5 transition-transform duration-150 group-hover:translate-x-0.5" />
             </button>
           )}
+
+          <div className="w-px h-4 bg-slate-200 dark:bg-slate-600 mx-0.5" />
 
           {onToggleImmersiveMode && (
             <button
               type="button"
               onClick={onToggleImmersiveMode}
               className={cn(
-                "flex size-8 items-center justify-center rounded-xl transition-all duration-200 cursor-pointer hover:scale-110 active:scale-95",
+                "group flex size-7 items-center justify-center rounded-full transition-all duration-150 cursor-pointer active:scale-90",
                 ttsImmersiveMode
-                  ? "bg-primary-foreground/30 text-primary-foreground"
-                  : "bg-primary-foreground/10 text-primary-foreground/70 hover:bg-primary-foreground/20 hover:text-primary-foreground"
+                  ? "text-emerald-500 bg-emerald-50 dark:bg-emerald-900/30"
+                  : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
               )}
               title={ttsImmersiveMode ? "关闭沉浸模式" : "开启沉浸模式"}
             >
               {ttsImmersiveMode ? (
-                <EyeOff className="size-4" />
+                <EyeOff className="size-3.5" />
               ) : (
-                <Eye className="size-4" />
+                <Eye className="size-3.5" />
               )}
             </button>
           )}
@@ -156,20 +177,44 @@ export function TtsFloatingControl({
         type="button"
         onClick={handleMainClick}
         className={cn(
-          "flex size-11 items-center justify-center rounded-2xl shadow-2xl transition-all duration-300 ease-out cursor-pointer",
-          "bg-gradient-to-br from-primary to-primary/90 text-primary-foreground",
-          "border border-primary-foreground/20",
-          isSpeaking && "ring-3 ring-primary/40 ring-offset-3 ring-offset-background animate-pulse-subtle"
+          "group relative flex size-10 items-center justify-center rounded-full cursor-pointer",
+          "transition-all duration-200 ease-out",
+          "bg-emerald-500 text-white",
+          "shadow-md shadow-emerald-500/25",
+          "hover:shadow-lg hover:shadow-emerald-500/30 hover:bg-emerald-600",
+          "active:scale-95",
+          isExpanded && "rotate-180"
         )}
-        style={{
-          animation: isSpeaking ? "pulse-glow 2s ease-in-out infinite" : undefined,
-        }}
         title="朗读控制"
       >
-        {isSpeaking ? (
-          <Pause className="size-4.5" />
-        ) : (
-          <Play className="size-4.5 ml-0.5" />
+        <div
+          className={cn(
+            "absolute inset-0 rounded-full transition-opacity duration-300",
+            "bg-gradient-to-br from-white/20 to-transparent",
+            "opacity-0 group-hover:opacity-100"
+          )}
+        />
+        
+        {isSpeaking && !isExpanded && (
+          <AudioWaveIndicator />
+        )}
+        
+        {isSpeaking && isExpanded && (
+          <Pause className="size-4 relative z-10" />
+        )}
+        
+        {!isSpeaking && (
+          <Play className="size-4 ml-0.5 relative z-10" />
+        )}
+
+        {isSpeaking && (
+          <span
+            className={cn(
+              "absolute -bottom-0.5 left-1/2 -translate-x-1/2",
+              "w-1.5 h-1.5 rounded-full bg-white/80",
+              "animate-pulse"
+            )}
+          />
         )}
       </button>
     </div>
