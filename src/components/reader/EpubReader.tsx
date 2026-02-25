@@ -86,6 +86,24 @@ const THEME_STYLES: Record<
 const TELEPROMPTER_FOLLOW_FACTOR = 0.16;
 const TELEPROMPTER_VIEWPORT_ANCHOR = 0.42;
 
+const TTS_INDICATOR_CSS = `
+[data-tts-active='1']::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 0.2em;
+  bottom: 0.2em;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--tts-indicator-color, #3b82f6);
+  animation: tts-pulse 1.5s ease-in-out infinite;
+}
+@keyframes tts-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+`;
+
 const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
   (
     {
@@ -118,6 +136,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     const pendingHighlightsRef = useRef<Array<{ cfiRange: string; color: string; id: string }>>([]);
     const toolbarVisibleRef = useRef(toolbarVisible);
     const disableTouchNavigationRef = useRef(disableTouchNavigation);
+    const wasImmersiveModeRef = useRef(false);
 
     // Keep ref in sync with prop so the iframe click handler can read the latest value
     useEffect(() => {
@@ -206,6 +225,23 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       []
     );
 
+    // Inject TTS indicator CSS into iframe
+    useEffect(() => {
+      const contents = renditionRef.current?.getContents?.() as
+        | Array<{ document?: Document }>
+        | undefined;
+      const doc = contents?.[0]?.document;
+      if (!doc) return;
+
+      let styleEl = doc.getElementById("tts-indicator-style");
+      if (!styleEl) {
+        styleEl = doc.createElement("style");
+        styleEl.id = "tts-indicator-style";
+        styleEl.textContent = TTS_INDICATOR_CSS;
+        doc.head.appendChild(styleEl);
+      }
+    }, [isRenditionReady, activeTtsParagraph]);
+
     useEffect(() => {
       const contents = renditionRef.current?.getContents?.() as
         | Array<{ document?: Document }>
@@ -230,16 +266,23 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         element.style.fontSize = "";
         element.style.lineHeight = "";
         element.style.margin = "";
+        element.style.position = "";
+        element.style.removeProperty("--tts-indicator-color");
       });
 
       doc.body.removeAttribute("data-tts-immersive");
-      doc.body.style.display = "";
-      doc.body.style.alignItems = "";
-      doc.body.style.justifyContent = "";
-      doc.body.style.minHeight = "";
-      doc.body.style.boxSizing = "";
-      doc.body.style.padding = "";
-      doc.body.style.margin = "";
+      
+      // Only clear immersive mode styles if we were previously in immersive mode
+      if (wasImmersiveModeRef.current) {
+        doc.body.style.display = "";
+        doc.body.style.alignItems = "";
+        doc.body.style.justifyContent = "";
+        doc.body.style.minHeight = "";
+        doc.body.style.boxSizing = "";
+        doc.body.style.padding = "";
+        doc.body.style.margin = "";
+        wasImmersiveModeRef.current = false;
+      }
 
       if (!activeTtsParagraph) return;
 
@@ -313,8 +356,11 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       activeElement.style.backgroundColor = "";
       activeElement.style.transition = "all 220ms ease";
       activeElement.style.opacity = "1";
+      activeElement.style.position = "relative";
+      activeElement.style.setProperty("--tts-indicator-color", "var(--primary, #3b82f6)");
 
       if (ttsImmersiveMode) {
+        wasImmersiveModeRef.current = true;
         doc.body.setAttribute("data-tts-immersive", "1");
         doc.body.style.display = "flex";
         doc.body.style.alignItems = "center";
@@ -343,11 +389,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         activeElement.style.margin = "0";
 
       } else {
-        activeElement.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-          inline: "nearest",
-        });
+        // Non-immersive mode: no automatic scrolling
       }
     }, [activeTtsParagraph, normalizeText, theme, ttsImmersiveMode]);
 

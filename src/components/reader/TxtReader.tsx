@@ -176,11 +176,14 @@ function TxtReader({
       | null;
     if (!activeElement) return;
 
-    activeElement.scrollIntoView({
-      behavior: "smooth",
-      block: "center",
-      inline: "nearest",
-    });
+    const elementRect = activeElement.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    const targetScrollTop =
+      container.scrollTop +
+      (elementRect.top - containerRect.top) -
+      container.clientHeight / 2 +
+      elementRect.height / 2;
+    container.scrollTop = Math.max(0, targetScrollTop);
   }, [activeNeedle, currentPage]);
 
   useEffect(() => {
@@ -247,13 +250,13 @@ function TxtReader({
                 <p
                   key={paragraphKey}
                   data-tts-active={isActive ? "1" : undefined}
-                  className={`whitespace-pre-wrap transition-all duration-300 rounded-lg ${
+                  className={`whitespace-pre-wrap transition-all duration-300 rounded-lg relative ${
                     isImmersiveActive
                       ? "text-[1.25em] leading-[1.95]"
                       : "leading-8"
                   } ${
                     isActive
-                      ? "px-0 py-0 max-h-[76vh] overflow-y-auto"
+                      ? "before:content-[''] before:absolute before:-left-2 before:top-[0.2em] before:bottom-[0.2em] before:w-[3px] before:rounded-[2px] before:bg-primary before:animate-pulse"
                       : "hover:bg-muted/30 -mx-2 px-2"
                   }`}
                 >

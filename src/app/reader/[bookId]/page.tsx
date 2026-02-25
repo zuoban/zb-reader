@@ -1785,7 +1785,13 @@ function ReaderContent() {
   return (
     <div className={`h-screen w-screen ${bgColors[readerTheme] || "bg-white"}`}>
        {/* Reader content area */}
-      <div className="h-full w-full">
+      <div
+        className="h-full w-full box-border"
+        style={{
+          paddingTop: 56,
+          paddingBottom: 72,
+        }}
+      >
         {book.format === "epub" && (
           <EpubReader
             ref={epubReaderRef}
@@ -1924,7 +1930,7 @@ function ReaderContent() {
 
       {/* Toolbar */}
       <ReaderToolbar
-        visible={toolbarVisible}
+        visible={toolbarVisible && !isSpeaking}
         title={book.title}
         currentPage={currentPage}
         totalPages={totalPages}
@@ -2043,6 +2049,8 @@ function ReaderContent() {
         onStop={stopSpeaking}
         onPrev={handleTtsPrevParagraph}
         onNext={handleTtsNextParagraph}
+        ttsImmersiveMode={ttsImmersiveMode}
+        onToggleImmersiveMode={() => setTtsImmersiveMode((prev) => !prev)}
       />
 
       <Toaster />
