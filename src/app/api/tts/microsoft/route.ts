@@ -51,8 +51,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const arrayBuffer = await response.arrayBuffer();
+
+    if (arrayBuffer.byteLength === 0) {
+      return new NextResponse(null, { status: 204 });
+    }
+
     const contentType = response.headers.get("content-type") || "audio/mpeg";
-    return new NextResponse(response.body, {
+    return new NextResponse(Buffer.from(arrayBuffer), {
       status: 200,
       headers: {
         "Content-Type": contentType,

@@ -913,6 +913,10 @@ function ReaderContent() {
         }),
       });
 
+      if (res.status === 204) {
+        return "";
+      }
+
       if (!res.ok) {
         const data = (await res.json().catch(() => null)) as
           | { error?: string; details?: string }
@@ -939,6 +943,11 @@ function ReaderContent() {
       }
     ) => {
       if (ttsSessionRef.current !== sessionId) return;
+
+      if (source === "") {
+        options?.onEnd?.();
+        return;
+      }
 
       if (!currentAudioRef.current) {
         currentAudioRef.current = new Audio();
