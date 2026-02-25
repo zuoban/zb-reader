@@ -26,6 +26,7 @@ export function TtsFloatingControl({
 }: TtsFloatingControlProps) {
   const storePosition = useTtsFloatingStore((s) => s.position);
   const setStorePosition = useTtsFloatingStore((s) => s.setPosition);
+  const initializePosition = useTtsFloatingStore((s) => s.initializePosition);
   const [isDragging, setIsDragging] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isAutoTransparent, setIsAutoTransparent] = useState(false);
@@ -33,6 +34,10 @@ export function TtsFloatingControl({
   const containerRef = useRef<HTMLDivElement>(null);
   const hasMovedRef = useRef(false);
   const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    initializePosition();
+  }, [initializePosition]);
 
   const clearFadeTimer = useCallback(() => {
     if (!fadeTimerRef.current) return;
