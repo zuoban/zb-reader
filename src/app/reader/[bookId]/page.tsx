@@ -13,7 +13,7 @@ import { ReadingSettings } from "@/components/reader/ReadingSettings";
 import { TextSelectionMenu } from "@/components/reader/TextSelectionMenu";
 import { NoteEditor } from "@/components/reader/NoteEditor";
 import { TtsFloatingControl } from "@/components/reader/TtsFloatingControl";
-import { Loader2, ChevronLeft, ChevronRight, Menu } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import type { EpubReaderRef } from "@/components/reader/EpubReader";
@@ -22,7 +22,6 @@ import type { BrowserVoiceOption, TtsConfigApiItem } from "@/lib/tts";
 import {
   cacheBook,
   getCachedBook,
-  hasCachedBook,
 } from "@/lib/book-cache";
 
 // Dynamic import for EpubReader (client-only, depends on browser APIs)
@@ -40,7 +39,7 @@ const PdfReader = dynamic<{
   url: string;
   initialPage?: number;
   onPageChange?: (page: number, totalPages: number) => void;
-  onRegisterController?: (controller: { nextPage: () => boolean }) => void;
+  onRegisterController?: (controller: { nextPage: () => boolean; prevPage: () => boolean }) => void;
 }>(() => import("@/components/reader/PdfReader"), {
   ssr: false,
   loading: () => (
@@ -59,7 +58,7 @@ const TxtReader = dynamic<{
   activeTtsParagraph?: string;
   ttsPlaybackProgress?: number;
   onPageChange?: (page: number, totalPages: number) => void;
-  onRegisterController?: (controller: { nextPage: () => boolean }) => void;
+  onRegisterController?: (controller: { nextPage: () => boolean; prevPage: () => boolean }) => void;
   ttsImmersiveMode?: boolean;
 }>(() => import("@/components/reader/TxtReader"), {
   ssr: false,
@@ -168,8 +167,8 @@ function ReaderContent() {
   const progressRef = useRef(0);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
-  const txtReaderControllerRef = useRef<{ nextPage: () => boolean } | null>(null);
-  const pdfReaderControllerRef = useRef<{ nextPage: () => boolean } | null>(null);
+  const txtReaderControllerRef = useRef<{ nextPage: () => boolean; prevPage: () => boolean } | null>(null);
+  const pdfReaderControllerRef = useRef<{ nextPage: () => boolean; prevPage: () => boolean } | null>(null);
   const ttsSessionRef = useRef(0);
   const settingsLoadedRef = useRef(false);
   const settingsSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1188,11 +1187,6 @@ function ReaderContent() {
             // ignore preload cleanup errors
           });
       }
-
-      if (ttsSessionRef.current === sessionId) {
-        setActiveTtsParagraph("");
-        setIsSpeaking(false);
-      }
     },
     [
       isRetryableTtsError,
@@ -1378,11 +1372,6 @@ function ReaderContent() {
           return;
         }
       }
-
-      if (ttsSessionRef.current === sessionId) {
-        setActiveTtsParagraph("");
-        setIsSpeaking(false);
-      }
     },
     [
       legadoPreloadCount,
@@ -1511,13 +1500,10 @@ function ReaderContent() {
     }
 
     ttsSessionRef.current += 1;
+    currentParagraphIndexRef.current = 0;
     const sessionId = ttsSessionRef.current;
     
-    // 如果已经有缓存的段落，从记录的索引开始；否则从头开始
-    // 这意味着如果暂停过，currentParagraphIndexRef 应该保留了上次的位置
-    // 但如果翻页了，getReadableParagraphs 会重新获取，我们需要重置还是保留？
-    // 简单起见，如果 allParagraphsRef 为空或者页面变了，通常需要重新获取。
-    // 这里我们先获取当前页面的段落
+    // 获取当前页面的段落
     let paragraphs = getReadableParagraphs();
     
     // 如果获取不到，稍作等待重试（可能页面刚加载）
@@ -1609,7 +1595,6 @@ function ReaderContent() {
     }
   }, [
     getReadableParagraphs,
-    isSpeaking,
     speakWithBrowserParagraphs,
     speakWithLegadoParagraphs,
     stopSpeaking,
@@ -1759,6 +1744,26 @@ function ReaderContent() {
     []
   );
 
+  const handlePrevPage = useCallback(() => {
+    if (book?.format === "epub") {
+      epubReaderRef.current?.prevPage();
+    } else if (book?.format === "txt") {
+      txtReaderControllerRef.current?.prevPage();
+    } else if (book?.format === "pdf") {
+      pdfReaderControllerRef.current?.prevPage();
+    }
+  }, [book?.format]);
+
+  const handleNextPage = useCallback(() => {
+    if (book?.format === "epub") {
+      epubReaderRef.current?.nextPage();
+    } else if (book?.format === "txt") {
+      txtReaderControllerRef.current?.nextPage();
+    } else if (book?.format === "pdf") {
+      pdfReaderControllerRef.current?.nextPage();
+    }
+  }, [book?.format]);
+
   // ---- Background color based on theme ----
   const bgColors: Record<string, string> = {
     light: "bg-white",
@@ -1802,9 +1807,7 @@ function ReaderContent() {
             onLocationChange={handleLocationChange}
             onTocLoaded={handleTocLoaded}
             onTextSelected={handleTextSelected}
-            onCenterClick={handleToggleToolbar}
-            toolbarVisible={toolbarVisible}
-            disableTouchNavigation={isSpeaking}
+            onClick={isSpeaking ? undefined : handleToggleToolbar}
             highlights={highlights}
             activeTtsParagraph={activeTtsParagraph}
             ttsPlaybackProgress={ttsPlaybackProgress}
@@ -1869,65 +1872,6 @@ function ReaderContent() {
         )}
       </div>
 
-      {/* Tap zone hints overlay — shown when toolbar is visible.
-           This is purely visual; click interception is handled by a
-           transparent div inside EpubReader that sits above the iframe. */}
-        {toolbarVisible && !isSpeaking && (
-          <div
-            className="fixed inset-0 z-40 pointer-events-none transition-all duration-300"
-            style={{
-              top: 56,
-              bottom: 64,
-              background: "radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.35) 100%)",
-              backdropFilter: "blur(4px)",
-              WebkitBackdropFilter: "blur(4px)",
-            }}
-          >
-          {book.format === "epub" ? (
-            /* EPUB: three tap zones */
-            <div className="flex h-full w-full">
-              {/* Left zone: previous page */}
-              <div className="flex items-center justify-center w-[30%] border-r border-dashed border-white/30 relative">
-                <div className="flex flex-col items-center gap-3 text-white transition-all duration-300 animate-fade-in">
-                  <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 shadow-xl">
-                    <ChevronLeft className="size-8" />
-                  </div>
-                  <span className="text-sm font-medium tracking-wide drop-shadow-lg">上一页</span>
-                </div>
-              </div>
-              {/* Center zone: toggle menu */}
-              <div className="flex items-center justify-center w-[40%]">
-                <div className="flex flex-col items-center gap-3 text-white transition-all duration-300 animate-fade-in">
-                  <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 shadow-xl">
-                    <Menu className="size-8" />
-                  </div>
-                  <span className="text-sm font-medium tracking-wide drop-shadow-lg">显示/隐藏菜单</span>
-                </div>
-              </div>
-              {/* Right zone: next page */}
-              <div className="flex items-center justify-center w-[30%] border-l border-dashed border-white/30">
-                <div className="flex flex-col items-center gap-3 text-white transition-all duration-300 animate-fade-in">
-                  <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 shadow-xl">
-                    <ChevronRight className="size-8" />
-                  </div>
-                  <span className="text-sm font-medium tracking-wide drop-shadow-lg">下一页</span>
-                </div>
-              </div>
-            </div>
-          ) : (
-            /* PDF / TXT: single tap zone */
-            <div className="flex items-center justify-center h-full w-full">
-              <div className="flex flex-col items-center gap-3 text-white transition-all duration-300 animate-fade-in">
-                <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 shadow-xl">
-                  <Menu className="size-8" />
-                </div>
-                <span className="text-sm font-medium tracking-wide drop-shadow-lg">点击任意位置 显示/隐藏菜单</span>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Toolbar */}
       <ReaderToolbar
         visible={toolbarVisible && !isSpeaking}
@@ -1950,6 +1894,8 @@ function ReaderContent() {
         isSpeaking={isSpeaking}
         onToggleSettings={() => setSettingsOpen(true)}
         onProgressChange={handleProgressChange}
+        onPrevPage={handlePrevPage}
+        onNextPage={handleNextPage}
       />
 
       {/* Side panel (TOC / Bookmarks / Notes) */}

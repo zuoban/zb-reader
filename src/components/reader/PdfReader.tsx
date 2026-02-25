@@ -14,7 +14,7 @@ interface PdfReaderProps {
   url: string;
   initialPage?: number;
   onPageChange?: (page: number, totalPages: number) => void;
-  onRegisterController?: (controller: { nextPage: () => boolean }) => void;
+  onRegisterController?: (controller: { nextPage: () => boolean; prevPage: () => boolean }) => void;
 }
 
 function PdfReader({
@@ -65,6 +65,13 @@ function PdfReader({
           return false;
         }
         goToPage(pageNumber + 1);
+        return true;
+      },
+      prevPage: () => {
+        if (pageNumber <= 1) {
+          return false;
+        }
+        goToPage(pageNumber - 1);
         return true;
       },
     });

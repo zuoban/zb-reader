@@ -25,9 +25,7 @@ interface EpubReaderProps {
   onTocLoaded?: (toc: TocItem[]) => void;
   onTextSelected?: (cfiRange: string, text: string) => void;
   onReady?: () => void;
-  onCenterClick?: () => void;
-  toolbarVisible?: boolean;
-  disableTouchNavigation?: boolean;
+  onClick?: () => void;
   highlights?: Array<{ cfiRange: string; color: string; id: string }>;
   activeTtsParagraph?: string;
   ttsPlaybackProgress?: number;
@@ -115,9 +113,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       onTocLoaded,
       onTextSelected,
       onReady,
-      onCenterClick,
-      toolbarVisible,
-      disableTouchNavigation = false,
+      onClick,
       highlights,
       activeTtsParagraph,
       ttsPlaybackProgress = 0,
@@ -134,18 +130,8 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     const [isReady, setIsReady] = useState(false);
     const [isRenditionReady, setIsRenditionReady] = useState(false);
     const pendingHighlightsRef = useRef<Array<{ cfiRange: string; color: string; id: string }>>([]);
-    const toolbarVisibleRef = useRef(toolbarVisible);
-    const disableTouchNavigationRef = useRef(disableTouchNavigation);
+    const justSelectedRef = useRef(false);
     const wasImmersiveModeRef = useRef(false);
-
-    // Keep ref in sync with prop so the iframe click handler can read the latest value
-    useEffect(() => {
-      toolbarVisibleRef.current = toolbarVisible;
-    }, [toolbarVisible]);
-
-    useEffect(() => {
-      disableTouchNavigationRef.current = disableTouchNavigation;
-    }, [disableTouchNavigation]);
 
     // ---- Expose API via ref ----
     useImperativeHandle(ref, () => ({
@@ -185,7 +171,26 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
           "p, li, blockquote, h1, h2, h3, h4, h5, h6"
         );
 
-        const paragraphs = Array.from(nodes)
+        const elementArray = Array.from(nodes) as HTMLElement[];
+        
+        const visibleParagraphs: string[] = [];
+
+        for (const element of elementArray) {
+          const rect = element.getBoundingClientRect();
+          
+          if (rect.top >= 0 && rect.bottom <= window.innerHeight) {
+            const text = element.textContent?.trim() || "";
+            if (text.length > 0) {
+              visibleParagraphs.push(text);
+            }
+          }
+        }
+
+        if (visibleParagraphs.length > 0) {
+          return visibleParagraphs;
+        }
+
+        const paragraphs = elementArray
           .map((node) => node.textContent?.trim() || "")
           .filter((text) => text.length > 0);
 
@@ -520,48 +525,15 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
                 }
               });
             }
-          );
+           );
 
-          // ---- Click-based page navigation + center click ----
-          rendition.on("click", (e: MouseEvent) => {
-            if (disableTouchNavigationRef.current) return;
-
-            // Ignore clicks while selecting text
-            const selection = (e.view as Window)?.getSelection();
-            if (selection && selection.toString().length > 0) return;
-
-            // When toolbar (and its overlay) is visible, ignore iframe
-            // clicks entirely — the overlay on top handles dismissal.
-            if (toolbarVisibleRef.current) return;
-
-            // Use the viewer container for dimensions since e.currentTarget
-            // inside the epubjs iframe may not be a standard DOM element
-            const container = viewerRef.current;
-            if (!container) return;
-
-            // Check if user clicked a link - let default behavior handle navigation
-            if (e.target && (e.target as Element).closest("a")) {
+          // ---- Click handler for toolbar toggle ----
+          rendition.on("click", () => {
+            if (justSelectedRef.current) {
+              justSelectedRef.current = false;
               return;
             }
-
-            const rect = container.getBoundingClientRect();
-
-            // Check if the event source is the iframe window
-            const isIframe = e.view && e.view !== window;
-            // If iframe, clientX is relative to the iframe viewport, so we don't subtract rect.left
-            const relX = isIframe ? e.clientX : e.clientX - rect.left;
-
-            if (relX < rect.width * 0.3) {
-              // e.preventDefault(); // Commenting out to avoid passive listener issues
-              rendition.prev();
-            } else if (relX > rect.width * 0.7) {
-              // e.preventDefault(); // Commenting out to avoid passive listener issues
-              rendition.next();
-            } else {
-              // Center area click — toggle toolbar
-              // e.preventDefault(); // Commenting out to avoid passive listener issues
-              onCenterClick?.();
-            }
+            onClick?.();
           });
 
           // ---- TOC parsing (with nested subitems support) ----
@@ -750,15 +722,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     return (
       <div className="relative h-full w-full">
         <div ref={viewerRef} id="epub-viewer" className="h-full w-full" />
-        {/* When toolbar is visible, cover the iframe to intercept all clicks.
-            The iframe has its own event system that ignores DOM z-index,
-            so we must block pointer events from ever reaching it. */}
-        {toolbarVisible && (
-          <div
-            className="absolute inset-0 z-10"
-            onClick={() => onCenterClick?.()}
-          />
-        )}
       </div>
     );
   }

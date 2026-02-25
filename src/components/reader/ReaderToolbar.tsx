@@ -36,6 +36,8 @@ interface ReaderToolbarProps {
   onToggleTts: () => void;
   isSpeaking: boolean;
   onProgressChange: (progress: number) => void;
+  onPrevPage?: () => void;
+  onNextPage?: () => void;
 }
 
 export function ReaderToolbar({
@@ -53,6 +55,8 @@ export function ReaderToolbar({
   onToggleTts,
   isSpeaking,
   onProgressChange,
+  onPrevPage,
+  onNextPage,
 }: ReaderToolbarProps) {
   return (
     <TooltipProvider>
@@ -210,6 +214,22 @@ export function ReaderToolbar({
             {Math.round(progress * 100)}%
           </div>
 
+          {onPrevPage && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onPrevPage}
+                  className="cursor-pointer h-8 w-8"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>上一页</TooltipContent>
+            </Tooltip>
+          )}
+
           <div className="flex-1 relative group/slider">
             <div className="absolute inset-0 h-full bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-full overflow-hidden">
               <div
@@ -226,6 +246,22 @@ export function ReaderToolbar({
               onValueChange={(value) => onProgressChange(value[0] / 100)}
             />
           </div>
+
+          {onNextPage && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onNextPage}
+                  className="cursor-pointer h-8 w-8"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>下一页</TooltipContent>
+            </Tooltip>
+          )}
 
           <span className="text-xs font-medium text-muted-foreground whitespace-nowrap min-w-[5rem] text-right">
             {currentPage !== undefined && totalPages !== undefined

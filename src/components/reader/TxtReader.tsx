@@ -12,7 +12,7 @@ interface TxtReaderProps {
   onPageChange?: (page: number, totalPages: number) => void;
   activeTtsParagraph?: string;
   ttsPlaybackProgress?: number;
-  onRegisterController?: (controller: { nextPage: () => boolean }) => void;
+  onRegisterController?: (controller: { nextPage: () => boolean; prevPage: () => boolean }) => void;
   ttsImmersiveMode?: boolean;
 }
 
@@ -118,6 +118,13 @@ function TxtReader({
           return false;
         }
         goToPage(currentPage + 1);
+        return true;
+      },
+      prevPage: () => {
+        if (currentPage <= 1) {
+          return false;
+        }
+        goToPage(currentPage - 1);
         return true;
       },
     });
