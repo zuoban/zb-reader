@@ -515,6 +515,39 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       activeElement.style.opacity = "1";
       activeElement.style.position = "relative";
       activeElement.style.setProperty("--tts-indicator-color", "var(--primary, #3b82f6)");
+
+      const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
+      if (epubContainer) {
+        // In scrolled-doc mode the iframe height = content height and the outer
+        // epubContainer is the actual scrollable element. getBoundingClientRect()
+        // inside the iframe returns coordinates relative to the iframe viewport
+        // (which equals the document since the iframe doesn't scroll), NOT to the
+        // outer epubContainer. We must therefore compute the element's absolute Y
+        // position within the iframe document via offsetTop accumulation, then add
+        // the iframe's own offsetTop relative to epubContainer.
+        let elementOffsetTop = 0;
+        let node: HTMLElement | null = activeElement;
+        while (node) {
+          elementOffsetTop += node.offsetTop;
+          node = node.offsetParent as HTMLElement | null;
+        }
+
+        // The iframe element itself sits inside epubContainer; get its top offset.
+        const iframeEl = epubContainer.querySelector("iframe") as HTMLElement | null;
+        let iframeOffsetTop = 0;
+        if (iframeEl) {
+          let n: HTMLElement | null = iframeEl;
+          while (n && n !== epubContainer) {
+            iframeOffsetTop += n.offsetTop;
+            n = n.offsetParent as HTMLElement | null;
+          }
+        }
+
+        const absoluteTop = iframeOffsetTop + elementOffsetTop;
+        // Place the active element roughly 25% from the top of the visible area
+        const targetScrollTop = absoluteTop - epubContainer.clientHeight * 0.25;
+        epubContainer.scrollTop = Math.max(0, targetScrollTop);
+      }
     }, [activeTtsParagraph, normalizeText, theme]);
 
     useEffect(() => {
@@ -524,11 +557,9 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         | Array<{ document?: Document }>
         | undefined;
       const doc = contents?.[0]?.document;
-      if (!doc?.body) return;
+      if (!doc) return;
 
-      const activeElement = doc.body.querySelector("[data-tts-active='1']") as
-        | HTMLElement
-        | null;
+      const activeElement = doc.querySelector("[data-tts-active='1']") as HTMLElement | null;
       if (!activeElement) return;
 
       let progressFill = activeElement.querySelector(".tts-progress-fill") as HTMLElement | null;
@@ -550,42 +581,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       const trackHeight = activeElement.offsetHeight - parseFloat(getComputedStyle(activeElement).fontSize) * 0.4;
       const fillHeight = trackHeight * (progressPercent / 100);
       progressFill.style.height = `${Math.max(0, fillHeight)}px`;
-    }, [
-      activeTtsParagraph,
-      getTeleprompterScrollTop,
-      ttsPlaybackProgress,
-    ]);
-
-    useEffect(() => {
-      if (!activeTtsParagraph) return;
-
-      const contents = renditionRef.current?.getContents?.() as
-        | Array<{ document?: Document }>
-        | undefined;
-      const doc = contents?.[0]?.document;
-      if (!doc?.body) return;
-
-      const activeElement = doc.body.querySelector("[data-tts-active='1']") as
-        | HTMLElement
-        | null;
-      if (!activeElement) return;
-
-      const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
-      if (!epubContainer) return;
-
-      const elementRect = activeElement.getBoundingClientRect();
-      const containerRect = epubContainer.getBoundingClientRect();
-
-      // 段落相对于容器视口的位置
-      const elementTop = elementRect.top - containerRect.top;
-
-      // 只在段落切换时做一次性定位：将段落顶部置于视口 10% 处
-      // 不依赖 ttsPlaybackProgress，避免随音频进度持续滚动
-      const topMargin = containerRect.height * 0.1;
-      const targetScrollTop = epubContainer.scrollTop + elementTop - topMargin;
-
-      epubContainer.scrollTop = Math.max(0, targetScrollTop);
-    }, [activeTtsParagraph]);
+    }, [activeTtsParagraph, ttsPlaybackProgress]);
 
     // ---- Initialize book & rendition ----
     useEffect(() => {
