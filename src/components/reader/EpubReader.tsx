@@ -145,6 +145,9 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     const [isRenditionReady, setIsRenditionReady] = useState(false);
     const pendingHighlightsRef = useRef<Array<{ cfiRange: string; color: string; id: string }>>([]);
     const justSelectedRef = useRef(false);
+    // Cache the active paragraph's absolute top position (relative to epubContainer)
+    // so the progress-scroll effect doesn't need to recompute offsetTop on every tick.
+    const activeParagraphAbsTopRef = useRef<number | null>(null);
 
     // ---- Expose API via ref ----
     useImperativeHandle(ref, () => ({
@@ -441,7 +444,10 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
 
       doc.body.removeAttribute("data-tts-immersive");
 
-      if (!activeTtsParagraph) return;
+      if (!activeTtsParagraph) {
+        activeParagraphAbsTopRef.current = null;
+        return;
+      }
 
       const needle = normalizeText(activeTtsParagraph).slice(0, 80);
       if (!needle) return;
@@ -544,6 +550,8 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         }
 
         const absoluteTop = iframeOffsetTop + elementOffsetTop;
+        // Cache for use by the progress-based scrolling effect
+        activeParagraphAbsTopRef.current = absoluteTop;
         // Place the active element roughly 25% from the top of the visible area
         const targetScrollTop = absoluteTop - epubContainer.clientHeight * 0.25;
         epubContainer.scrollTop = Math.max(0, targetScrollTop);
@@ -581,6 +589,22 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       const trackHeight = activeElement.offsetHeight - parseFloat(getComputedStyle(activeElement).fontSize) * 0.4;
       const fillHeight = trackHeight * (progressPercent / 100);
       progressFill.style.height = `${Math.max(0, fillHeight)}px`;
+
+      // Scroll epubContainer so the currently-spoken position stays visible.
+      // Only scroll when the paragraph is taller than the visible viewport
+      // (i.e. it spans multiple "pages"), otherwise the initial positioning is enough.
+      const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
+      if (epubContainer && activeParagraphAbsTopRef.current !== null) {
+        const paragraphHeight = activeElement.offsetHeight;
+        if (paragraphHeight > epubContainer.clientHeight * 0.8) {
+          // Estimate the Y position within the paragraph that is currently being read.
+          const progressY = paragraphHeight * ttsPlaybackProgress;
+          // Keep that position at ~35% from the top of the visible viewport.
+          const targetScrollTop =
+            activeParagraphAbsTopRef.current + progressY - epubContainer.clientHeight * 0.35;
+          epubContainer.scrollTop = Math.max(0, targetScrollTop);
+        }
+      }
     }, [activeTtsParagraph, ttsPlaybackProgress]);
 
     // ---- Initialize book & rendition ----

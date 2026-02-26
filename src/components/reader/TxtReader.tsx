@@ -145,6 +145,33 @@ function TxtReader({
     container.scrollTop = Math.max(0, targetScrollTop);
   }, [activeNeedle]);
 
+  // Scroll within long paragraphs as playback progresses
+  useEffect(() => {
+    if (!activeNeedle) return;
+
+    const container = containerRef.current;
+    if (!container) return;
+
+    const activeElement = container.querySelector("[data-tts-active='1']") as HTMLElement | null;
+    if (!activeElement) return;
+
+    const paragraphHeight = activeElement.offsetHeight;
+    // Only scroll if the paragraph is taller than 80% of the visible container
+    if (paragraphHeight <= container.clientHeight * 0.8) return;
+
+    // Compute the element's absolute top within the scrollable container
+    let elementAbsTop = 0;
+    let node: HTMLElement | null = activeElement;
+    while (node && node !== container) {
+      elementAbsTop += node.offsetTop;
+      node = node.offsetParent as HTMLElement | null;
+    }
+
+    const progressY = paragraphHeight * ttsPlaybackProgress;
+    const targetScrollTop = elementAbsTop + progressY - container.clientHeight * 0.35;
+    container.scrollTop = Math.max(0, targetScrollTop);
+  }, [activeNeedle, ttsPlaybackProgress]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
