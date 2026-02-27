@@ -23,6 +23,7 @@ import {
   cacheBook,
   getCachedBook,
 } from "@/lib/book-cache";
+import { ttsAudioCache, TtsAudioLruCache } from "@/lib/ttsAudioCache";
 
 // Dynamic import for EpubReader (client-only, depends on browser APIs)
 const EpubReader = dynamic(() => import("@/components/reader/EpubReader"), {
@@ -99,6 +100,9 @@ function ReaderContent() {
   const [progress, setProgress] = useState(0);
   const [currentPage, setCurrentPage] = useState<number | undefined>();
   const [totalPages, setTotalPages] = useState<number | undefined>();
+  // Refs for saveProgress to read without adding state to useCallback deps
+  const currentPageRef = useRef<number | undefined>(undefined);
+  const totalPagesRef = useRef<number | undefined>(undefined);
   const [initialLocation, setInitialLocation] = useState<string | undefined>();
 
   // Settings
@@ -475,14 +479,14 @@ function ReaderContent() {
           bookId,
           progress: progressRef.current,
           location: currentLocationRef.current,
-          currentPage: currentPage,
-          totalPages: totalPages,
+          currentPage: currentPageRef.current,
+          totalPages: totalPagesRef.current,
         }),
       });
     } catch (error) {
       // Silently fail
     }
-  }, [bookId, currentPage, totalPages]);
+  }, [bookId]);
 
   const debouncedSaveProgress = useCallback(() => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
@@ -499,19 +503,23 @@ function ReaderContent() {
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (currentLocationRef.current && bookId) {
-        navigator.sendBeacon(
-          "/api/progress",
-          new Blob(
-            [
-              JSON.stringify({
-                bookId,
-                progress: progressRef.current,
-                location: currentLocationRef.current,
-              }),
-            ],
-            { type: "application/json" }
-          )
-        );
+        // 使用 keepalive fetch 替代 sendBeacon：
+        // sendBeacon 固定发 POST，但 API 只接受 PUT，会导致 405 静默失败。
+        // keepalive: true 允许请求在页面卸载后继续发送，且方法正确。
+        fetch("/api/progress", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          keepalive: true,
+          body: JSON.stringify({
+            bookId,
+            progress: progressRef.current,
+            location: currentLocationRef.current,
+            currentPage: currentPageRef.current,
+            totalPages: totalPagesRef.current,
+          }),
+        }).catch(() => {
+          // fire-and-forget，页面卸载时无法处理响应
+        });
       }
     };
 
@@ -542,6 +550,8 @@ function ReaderContent() {
     }) => {
       currentLocationRef.current = location.cfi;
       progressRef.current = location.progress;
+      currentPageRef.current = location.currentPage;
+      totalPagesRef.current = location.totalPages;
       setProgress(location.progress);
       setCurrentPage(location.currentPage);
       setTotalPages(location.totalPages);
@@ -896,6 +906,20 @@ function ReaderContent() {
       const pitchPercent = Math.round((ttsPitch - 1) * 100);
       const volumePercent = Math.round(ttsVolume * 100);
 
+      // 检查缓存
+      const cacheKey = TtsAudioLruCache.hashKey({
+        engine: "microsoft",
+        text,
+        voiceName: selectedBrowserVoiceId,
+        rate: ratePercent,
+        pitch: pitchPercent,
+        volume: volumePercent,
+      });
+      const cached = ttsAudioCache.get(cacheKey);
+      if (cached?.kind === "blob") {
+        return URL.createObjectURL(cached.blob);
+      }
+
       const res = await fetch("/api/tts/microsoft", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -922,6 +946,8 @@ function ReaderContent() {
       }
 
       const audioBlob = await res.blob();
+      // 写入缓存（存储 Blob，不存储 blob URL）
+      ttsAudioCache.set(cacheKey, { kind: "blob", blob: audioBlob });
       return URL.createObjectURL(audioBlob);
     },
     [selectedBrowserVoiceId, ttsPitch, ttsRate, ttsVolume]
@@ -1228,6 +1254,21 @@ function ReaderContent() {
 
   const requestLegadoSpeech = useCallback(
     async (text: string): Promise<PreparedLegadoSpeech> => {
+      // 检查缓存
+      const cacheKey = TtsAudioLruCache.hashKey({
+        engine: "legado",
+        text,
+        configId: selectedLegadoConfigId,
+        speakSpeed: legadoRate,
+      });
+      const cached = ttsAudioCache.get(cacheKey);
+      if (cached?.kind === "blob") {
+        return { kind: "blob", objectUrl: URL.createObjectURL(cached.blob) };
+      }
+      if (cached?.kind === "url") {
+        return { kind: "url", audioUrl: cached.audioUrl };
+      }
+
       const res = await fetch("/api/tts/speak", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1242,6 +1283,8 @@ function ReaderContent() {
 
       if (res.ok && contentType.startsWith("audio/")) {
         const audioBlob = await res.blob();
+        // 写入缓存
+        ttsAudioCache.set(cacheKey, { kind: "blob", blob: audioBlob });
         return { kind: "blob", objectUrl: URL.createObjectURL(audioBlob) };
       }
 
@@ -1254,6 +1297,8 @@ function ReaderContent() {
       const speechText = typeof data?.text === "string" ? data.text.trim() : "";
 
       if (audioUrl) {
+        // 写入缓存（直接缓存 URL）
+        ttsAudioCache.set(cacheKey, { kind: "url", audioUrl });
         return { kind: "url", audioUrl };
       }
 

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { readingProgress } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 
 export async function GET(req: NextRequest) {
@@ -52,46 +52,44 @@ export async function PUT(req: NextRequest) {
 
     const now = new Date().toISOString().replace("T", " ").replace("Z", "");
 
-    const existing = await db.query.readingProgress.findFirst({
-      where: and(
-        eq(readingProgress.userId, session.user.id),
-        eq(readingProgress.bookId, bookId)
-      ),
-    });
-
-    if (existing) {
-      await db
-        .update(readingProgress)
-        .set({
-          progress: progress ?? existing.progress,
-          location: location ?? existing.location,
-          currentPage: currentPage ?? existing.currentPage,
-          totalPages: totalPages ?? existing.totalPages,
-          lastReadAt: now,
-          updatedAt: now,
-        })
-        .where(eq(readingProgress.id, existing.id));
-    } else {
-      await db.insert(readingProgress).values({
+    // 原子 upsert：INSERT ... ON CONFLICT(user_id, book_id) DO UPDATE SET ...
+    // 避免先查后写的竞态，同时减少一次 DB 操作
+    await db
+      .insert(readingProgress)
+      .values({
         id: uuidv4(),
         userId: session.user.id,
         bookId,
         progress: progress ?? 0,
-        location,
-        currentPage,
-        totalPages,
+        location: location ?? null,
+        currentPage: currentPage ?? null,
+        totalPages: totalPages ?? null,
         lastReadAt: now,
+      })
+      .onConflictDoUpdate({
+        target: [readingProgress.userId, readingProgress.bookId],
+        set: {
+          progress: sql`COALESCE(${progress}, progress)`,
+          location: sql`COALESCE(${location}, location)`,
+          currentPage: sql`COALESCE(${currentPage}, current_page)`,
+          totalPages: sql`COALESCE(${totalPages}, total_pages)`,
+          lastReadAt: now,
+          updatedAt: now,
+        },
       });
-    }
 
-    const updated = await db.query.readingProgress.findFirst({
-      where: and(
-        eq(readingProgress.userId, session.user.id),
-        eq(readingProgress.bookId, bookId)
-      ),
+    // 直接返回请求参数，无需再查一次 DB
+    return NextResponse.json({
+      progress: {
+        userId: session.user.id,
+        bookId,
+        progress: progress ?? 0,
+        location: location ?? null,
+        currentPage: currentPage ?? null,
+        totalPages: totalPages ?? null,
+        lastReadAt: now,
+      },
     });
-
-    return NextResponse.json({ progress: updated });
   } catch (error) {
     console.error("Update progress error:", error);
     return NextResponse.json({ error: "更新进度失败" }, { status: 500 });
