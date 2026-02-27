@@ -58,7 +58,7 @@ const TxtReader = dynamic<{
   activeTtsParagraph?: string;
   ttsPlaybackProgress?: number;
   onPageChange?: (page: number, totalPages: number) => void;
-  onRegisterController?: (controller: { nextPage: () => boolean; prevPage: () => boolean; scrollDown: (amount?: number) => void; scrollUp: (amount?: number) => void }) => void;
+  onRegisterController?: (controller: { nextPage: () => boolean; prevPage: () => boolean; scrollDown: (amount?: number) => void; scrollUp: (amount?: number) => void; scrollToActiveParagraph: () => void }) => void;
 }>(() => import("@/components/reader/TxtReader"), {
   ssr: false,
   loading: () => (
@@ -165,7 +165,7 @@ function ReaderContent() {
   const progressRef = useRef(0);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
-  const txtReaderControllerRef = useRef<{ nextPage: () => boolean; prevPage: () => boolean; scrollDown: (amount?: number) => void; scrollUp: (amount?: number) => void } | null>(null);
+  const txtReaderControllerRef = useRef<{ nextPage: () => boolean; prevPage: () => boolean; scrollDown: (amount?: number) => void; scrollUp: (amount?: number) => void; scrollToActiveParagraph: () => void } | null>(null);
   const pdfReaderControllerRef = useRef<{ nextPage: () => boolean; prevPage: () => boolean } | null>(null);
   const ttsSessionRef = useRef(0);
   const settingsLoadedRef = useRef(false);
@@ -1853,6 +1853,14 @@ function ReaderContent() {
     }
   }, [book?.format]);
 
+  const handleJumpToReading = useCallback(() => {
+    if (book?.format === "epub") {
+      epubReaderRef.current?.scrollToActiveParagraph();
+    } else if (book?.format === "txt") {
+      txtReaderControllerRef.current?.scrollToActiveParagraph?.();
+    }
+  }, [book?.format]);
+
   // ---- Background color based on theme ----
   const bgColors: Record<string, string> = {
     light: "bg-white",
@@ -2080,6 +2088,7 @@ function ReaderContent() {
         onStop={stopSpeaking}
         onPrev={handleTtsPrevParagraph}
         onNext={handleTtsNextParagraph}
+        onJumpToPosition={isSpeaking ? handleJumpToReading : undefined}
         currentParagraphIndex={ttsCurrentIndex}
         totalParagraphs={ttsTotalParagraphs}
         paragraphProgress={ttsPlaybackProgress}

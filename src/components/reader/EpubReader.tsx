@@ -44,6 +44,7 @@ export interface EpubReaderRef {
   getCurrentText: () => string | null;
   getCurrentParagraphs: () => string[];
   isFirstVisibleParagraphComplete: () => boolean;
+  scrollToActiveParagraph: () => void;
 }
 
 export interface TocItem {
@@ -364,6 +365,40 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         }
 
         return true;
+      },
+      scrollToActiveParagraph() {
+        const contents = renditionRef.current?.getContents?.() as
+          | Array<{ document?: Document }>
+          | undefined;
+        const doc = contents?.[0]?.document;
+        if (!doc) return;
+
+        const activeElement = doc.querySelector("[data-tts-active='1']") as HTMLElement | null;
+        if (!activeElement) return;
+
+        const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
+        if (!epubContainer) return;
+
+        let elementOffsetTop = 0;
+        let node: HTMLElement | null = activeElement;
+        while (node) {
+          elementOffsetTop += node.offsetTop;
+          node = node.offsetParent as HTMLElement | null;
+        }
+
+        const iframeEl = epubContainer.querySelector("iframe") as HTMLElement | null;
+        let iframeOffsetTop = 0;
+        if (iframeEl) {
+          let n: HTMLElement | null = iframeEl;
+          while (n && n !== epubContainer) {
+            iframeOffsetTop += n.offsetTop;
+            n = n.offsetParent as HTMLElement | null;
+          }
+        }
+
+        const absoluteTop = iframeOffsetTop + elementOffsetTop;
+        const targetScrollTop = absoluteTop - epubContainer.clientHeight * 0.25;
+        epubContainer.scrollTo({ top: Math.max(0, targetScrollTop), behavior: "smooth" });
       },
     }));
 

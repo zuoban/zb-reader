@@ -11,7 +11,7 @@ interface TxtReaderProps {
   onPageChange?: (page: number, totalPages: number) => void;
   activeTtsParagraph?: string;
   ttsPlaybackProgress?: number;
-  onRegisterController?: (controller: { nextPage: () => boolean; prevPage: () => boolean; scrollDown: (amount?: number) => void; scrollUp: (amount?: number) => void }) => void;
+  onRegisterController?: (controller: { nextPage: () => boolean; prevPage: () => boolean; scrollDown: (amount?: number) => void; scrollUp: (amount?: number) => void; scrollToActiveParagraph: () => void }) => void;
 }
 
 const themeStyles: Record<string, { bg: string; text: string }> = {
@@ -64,6 +64,21 @@ function TxtReader({
     }
   }, []);
 
+  const scrollToActiveParagraph = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const activeElement = container.querySelector("[data-tts-active='1']") as HTMLElement | null;
+    if (!activeElement) return;
+    const elementRect = activeElement.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    const targetScrollTop =
+      container.scrollTop +
+      (elementRect.top - containerRect.top) -
+      container.clientHeight / 2 +
+      elementRect.height / 2;
+    container.scrollTo({ top: Math.max(0, targetScrollTop), behavior: "smooth" });
+  }, []);
+
   useEffect(() => {
     onRegisterController?.({
       nextPage: () => {
@@ -76,8 +91,9 @@ function TxtReader({
       },
       scrollDown,
       scrollUp,
+      scrollToActiveParagraph,
     });
-  }, [scrollDown, scrollUp, onRegisterController]);
+  }, [scrollDown, scrollUp, scrollToActiveParagraph, onRegisterController]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

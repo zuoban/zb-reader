@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Pause, Play, Square, SkipBack, SkipForward } from "lucide-react";
+import { Pause, Play, Square, SkipBack, SkipForward, LocateFixed } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TtsFloatingControlProps {
@@ -10,6 +10,7 @@ interface TtsFloatingControlProps {
   onStop: () => void;
   onPrev?: () => void;
   onNext?: () => void;
+  onJumpToPosition?: () => void;
   currentParagraphIndex?: number;
   totalParagraphs?: number;
   paragraphProgress?: number;
@@ -38,6 +39,7 @@ export function TtsFloatingControl({
   onStop,
   onPrev,
   onNext,
+  onJumpToPosition,
   currentParagraphIndex = 0,
   totalParagraphs = 0,
   paragraphProgress = 0,
@@ -165,6 +167,20 @@ export function TtsFloatingControl({
                 />
               </div>
             </div>
+          )}
+
+          {onJumpToPosition && (
+            <>
+              <div className="w-px h-4 bg-slate-200 dark:bg-slate-600 mx-0.5" />
+              <button
+                type="button"
+                onClick={onJumpToPosition}
+                className="group flex size-7 items-center justify-center rounded-full text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-all duration-150 cursor-pointer active:scale-90"
+                title="跳转到朗读位置"
+              >
+                <LocateFixed className="size-3.5" />
+              </button>
+            </>
           )}
         </div>
       )}
