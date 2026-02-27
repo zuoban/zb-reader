@@ -69,10 +69,10 @@ export async function PUT(req: NextRequest) {
       .onConflictDoUpdate({
         target: [readingProgress.userId, readingProgress.bookId],
         set: {
-          progress: sql`COALESCE(${progress}, progress)`,
-          location: sql`COALESCE(${location}, location)`,
-          currentPage: sql`COALESCE(${currentPage}, current_page)`,
-          totalPages: sql`COALESCE(${totalPages}, total_pages)`,
+          progress: sql`COALESCE(${progress ?? null}, ${readingProgress.progress})`,
+          location: sql`COALESCE(${location ?? null}, ${readingProgress.location})`,
+          currentPage: sql`COALESCE(${currentPage ?? null}, ${readingProgress.currentPage})`,
+          totalPages: sql`COALESCE(${totalPages ?? null}, ${readingProgress.totalPages})`,
           lastReadAt: now,
           updatedAt: now,
         },

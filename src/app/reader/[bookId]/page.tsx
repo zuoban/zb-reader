@@ -165,7 +165,8 @@ function ReaderContent() {
   }>({ open: false, selectedText: "", cfiRange: "" });
 
   // Progress saving
-  const currentLocationRef = useRef<string | null>(null);
+  const currentLocationRef = useRef<string | null>(null); // may include "#scroll=<ratio>" suffix
+  const currentCfiRef = useRef<string | null>(null); // pure CFI without scroll suffix
   const progressRef = useRef(0);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -547,8 +548,19 @@ function ReaderContent() {
       currentPage?: number;
       totalPages?: number;
       href?: string;
+      scrollRatio?: number;
     }) => {
-      currentLocationRef.current = location.cfi;
+      // Encode the scroll ratio into the location string so we can restore the
+      // exact scroll position (not just the chapter/CFI) on the next open.
+      // Format: "<cfi>#scroll=<ratio>" where ratio is a float in [0, 1].
+      // If scrollRatio is undefined (e.g. no scroll info), we strip any previous
+      // suffix to keep the stored value clean.
+      let locationToSave = location.cfi;
+      if (typeof location.scrollRatio === "number" && location.scrollRatio > 0) {
+        locationToSave = `${location.cfi}#scroll=${location.scrollRatio.toFixed(4)}`;
+      }
+      currentLocationRef.current = locationToSave;
+      currentCfiRef.current = location.cfi;
       progressRef.current = location.progress;
       currentPageRef.current = location.currentPage;
       totalPagesRef.current = location.totalPages;
@@ -606,7 +618,7 @@ function ReaderContent() {
 
   // ---- Bookmark handlers ----
   const handleToggleBookmark = useCallback(async () => {
-    const currentCfi = currentLocationRef.current;
+    const currentCfi = currentCfiRef.current;
     if (!currentCfi) return;
 
     const existing = bookmarks.find((b) => b.location === currentCfi);
@@ -1549,7 +1561,9 @@ function ReaderContent() {
     if (!book) return "";
 
     if (book.format === "epub") {
-      return currentLocationRef.current || "";
+      // Use pure CFI (without scroll suffix) so TTS page-change detection
+      // only triggers on actual chapter/section navigation, not scroll movement.
+      return currentCfiRef.current || "";
     }
 
     if (book.format === "txt" || book.format === "pdf") {

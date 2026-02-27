@@ -21,6 +21,7 @@ interface EpubReaderProps {
     currentPage?: number;
     totalPages?: number;
     href?: string;
+    scrollRatio?: number;
   }) => void;
   onTocLoaded?: (toc: TocItem[]) => void;
   onTextSelected?: (cfiRange: string, text: string) => void;
@@ -141,6 +142,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     const renditionRef = useRef<Rendition | null>(null);
     const currentLocationRef = useRef<string | null>(null);
     const progressRef = useRef<number>(0);
+    const scrollRatioRef = useRef<number>(0);
     const highlightIdsRef = useRef<Set<string>>(new Set());
     const [isReady, setIsReady] = useState(false);
     const [isRenditionReady, setIsRenditionReady] = useState(false);
@@ -737,13 +739,50 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
           rendition.themes.override("font-size", `${fontSize}px`);
 
           // Display the book at initial location or beginning
-          rendition.display(initialLocation || undefined);
+          // initialLocation may carry a "#scroll=<ratio>" suffix for scroll restoration
+          let displayCfi: string | undefined;
+          let initialScrollRatio: number | null = null;
+          if (initialLocation) {
+            const scrollSepIdx = initialLocation.indexOf("#scroll=");
+            if (scrollSepIdx !== -1) {
+              displayCfi = initialLocation.slice(0, scrollSepIdx);
+              const ratioStr = initialLocation.slice(scrollSepIdx + 8);
+              const parsed = parseFloat(ratioStr);
+              if (Number.isFinite(parsed) && parsed >= 0 && parsed <= 1) {
+                initialScrollRatio = parsed;
+              }
+            } else {
+              displayCfi = initialLocation;
+            }
+          }
+          // Wait for book metadata (including displayOptions) to be fully loaded
+          // before calling rendition.display(). Calling display() before book.ready
+          // resolves causes rendition.start() to access book.displayOptions while it
+          // is still undefined, resulting in a TypeError at runtime.
+          await book.ready;
+
+          if (cancelled) return;
+
+          rendition.display(displayCfi || undefined);
 
           // Mark rendition as ready once the first section is displayed,
           // so highlights can be applied immediately without waiting for
           // the expensive locations.generate() call.
           rendition.once("displayed", () => {
             setIsRenditionReady(true);
+            // Restore scroll position after the section renders
+            if (initialScrollRatio !== null) {
+              // Use a small delay to let the iframe content fully lay out
+              setTimeout(() => {
+                const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
+                if (epubContainer) {
+                  const scrollRange = epubContainer.scrollHeight - epubContainer.clientHeight;
+                  if (scrollRange > 0) {
+                    epubContainer.scrollTop = Math.round(initialScrollRatio! * scrollRange);
+                  }
+                }
+              }, 120);
+            }
           });
 
           // ---- Location change handler ----
@@ -762,12 +801,27 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
               currentLocationRef.current = cfi;
               progressRef.current = progress;
 
+              // Capture current scroll ratio so the exact position within a
+              // chapter can be restored on the next open.
+              // scrollRatioRef is kept up-to-date by the scroll listener below;
+              // fall back to reading epubContainer directly if the ref is stale.
+              let scrollRatio: number | undefined;
+              const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
+              if (epubContainer) {
+                const scrollRange = epubContainer.scrollHeight - epubContainer.clientHeight;
+                if (scrollRange > 0) {
+                  scrollRatio = Math.min(1, Math.max(0, epubContainer.scrollTop / scrollRange));
+                  scrollRatioRef.current = scrollRatio;
+                }
+              }
+
               onLocationChange?.({
                 cfi,
                 progress,
                 currentPage: location.start.displayed?.page,
                 totalPages: location.start.displayed?.total,
                 href: location.start.href,
+                scrollRatio,
               });
             }
           );
@@ -977,6 +1031,53 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       return () => {
         rendition.off("keydown", onKeyDown);
       };
+    }, [isRenditionReady]);
+
+    // ---- Track scroll position for precise progress restoration ----
+    // In scrolled-doc mode the epubContainer is the actual scrollable element.
+    // We listen to its scroll event to keep scrollRatioRef up-to-date and fire
+    // onLocationChange with the latest scrollRatio after the user stops scrolling.
+    useEffect(() => {
+      if (!isRenditionReady) return;
+      const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
+      if (!epubContainer) return;
+
+      let scrollTimer: ReturnType<typeof setTimeout> | null = null;
+
+      const handleScroll = () => {
+        const scrollRange = epubContainer.scrollHeight - epubContainer.clientHeight;
+        if (scrollRange > 0) {
+          scrollRatioRef.current = Math.min(1, Math.max(0, epubContainer.scrollTop / scrollRange));
+        }
+
+        // Debounce: fire onLocationChange ~300ms after the user stops scrolling
+        if (scrollTimer !== null) clearTimeout(scrollTimer);
+        scrollTimer = setTimeout(() => {
+          scrollTimer = null;
+          if (!currentLocationRef.current) return;
+          const scrollRange2 = epubContainer.scrollHeight - epubContainer.clientHeight;
+          let ratio: number | undefined;
+          if (scrollRange2 > 0) {
+            ratio = Math.min(1, Math.max(0, epubContainer.scrollTop / scrollRange2));
+            scrollRatioRef.current = ratio;
+          }
+          onLocationChange?.({
+            cfi: currentLocationRef.current,
+            progress: progressRef.current,
+            scrollRatio: ratio,
+          });
+        }, 300);
+      };
+
+      epubContainer.addEventListener("scroll", handleScroll, { passive: true });
+
+      return () => {
+        epubContainer.removeEventListener("scroll", handleScroll);
+        if (scrollTimer !== null) clearTimeout(scrollTimer);
+      };
+    // onLocationChange is intentionally omitted from deps to avoid re-binding on every render;
+    // it is accessed via closure and is stable in practice (wrapped in useCallback in parent).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isRenditionReady]);
 
     return (
