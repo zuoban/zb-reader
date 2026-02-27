@@ -1426,7 +1426,15 @@ function ReaderContent() {
 
     if (book.format === "txt") {
       const txtNode = document.querySelector("[data-reader-txt-page='true']");
-      const text = txtNode?.textContent?.trim() || "";
+      if (!txtNode) return [];
+      const pElements = Array.from(txtNode.querySelectorAll("p"));
+      if (pElements.length > 0) {
+        return pElements
+          .map((p) => p.textContent?.trim() || "")
+          .filter((text) => text.length > 0);
+      }
+      // fallback：直接按空行分段
+      const text = txtNode.textContent?.trim() || "";
       return text
         .split(/\n\s*\n+/)
         .map((item) => item.trim())
@@ -1450,6 +1458,46 @@ function ReaderContent() {
     }
 
     return [] as string[];
+  }, [book]);
+
+  /**
+   * 获取朗读起始段落的索引：找到当前视口内第一个可见段落在段落列表中的位置。
+   * - EPUB：getCurrentParagraphs 已经只返回视口内段落，始终从 0 开始
+   * - TXT：遍历 <p> 元素，找到第一个出现在视口内的，返回其索引
+   * - PDF/其他：始终从 0 开始
+   */
+  const getInitialParagraphIndex = useCallback((paragraphs: string[]): number => {
+    if (!book || paragraphs.length === 0) return 0;
+
+    if (book.format === "epub") {
+      // EPUB 已经只返回视口内段落，始终从头开始
+      return 0;
+    }
+
+    if (book.format === "txt") {
+      const txtNode = document.querySelector("[data-reader-txt-page='true']");
+      if (!txtNode) return 0;
+      const pElements = Array.from(txtNode.querySelectorAll("p"));
+      const container = txtNode.closest(".overflow-auto") as HTMLElement | null;
+      const containerRect = container?.getBoundingClientRect();
+      const viewportTop = containerRect?.top ?? 0;
+      const viewportBottom = containerRect ? containerRect.top + containerRect.height : window.innerHeight;
+
+      for (let i = 0; i < pElements.length; i++) {
+        const rect = pElements[i].getBoundingClientRect();
+        // 找到第一个底部在视口内（或与视口相交）的段落
+        if (rect.bottom > viewportTop && rect.top < viewportBottom) {
+          // 在 paragraphs 数组中找到对应索引（按文本匹配）
+          const pText = pElements[i].textContent?.trim() || "";
+          const idx = paragraphs.findIndex((p) => p === pText);
+          return idx >= 0 ? idx : i;
+        }
+      }
+      return 0;
+    }
+
+    // PDF 及其他格式从头开始
+    return 0;
   }, [book]);
 
   const getPageIdentity = useCallback(() => {
@@ -1529,7 +1577,6 @@ function ReaderContent() {
     }
 
     ttsSessionRef.current += 1;
-    currentParagraphIndexRef.current = 0;
     readParagraphsHashRef.current.clear();
     const sessionId = ttsSessionRef.current;
 
@@ -1560,12 +1607,8 @@ function ReaderContent() {
     allParagraphsRef.current = paragraphs;
     setTtsTotalParagraphs(paragraphs.length);
 
-    // 确定起始索引：
-    // 如果 currentParagraphIndexRef 在有效范围内，就从那里开始
-    // 否则重置为 0
-    if (currentParagraphIndexRef.current >= paragraphs.length || currentParagraphIndexRef.current < 0) {
-      currentParagraphIndexRef.current = 0;
-    }
+    // 确定起始索引：从当前视口内第一个可见段落开始
+    currentParagraphIndexRef.current = getInitialParagraphIndex(paragraphs);
     setTtsCurrentIndex(currentParagraphIndexRef.current);
 
     // 如果没有在朗读，设置状态为朗读
@@ -1645,7 +1688,10 @@ function ReaderContent() {
       setIsSpeaking(false);
     }
   }, [
+    book,
+    getInitialParagraphIndex,
     getReadableParagraphs,
+    isSpeaking,
     speakWithBrowserParagraphs,
     speakWithLegadoParagraphs,
     stopSpeaking,
