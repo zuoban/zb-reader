@@ -149,6 +149,10 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     // Cache the active paragraph's absolute top position (relative to epubContainer)
     // so the progress-scroll effect doesn't need to recompute offsetTop on every tick.
     const activeParagraphAbsTopRef = useRef<number | null>(null);
+    // rAF handle for lerp-based intra-paragraph scrolling
+    const lerpRafIdRef = useRef<number | null>(null);
+    // Timer handle: delay lerp start until smooth-scroll settles after paragraph switch
+    const smoothScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // ---- Expose API via ref ----
     useImperativeHandle(ref, () => ({
@@ -587,9 +591,20 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         const absoluteTop = iframeOffsetTop + elementOffsetTop;
         // Cache for use by the progress-based scrolling effect
         activeParagraphAbsTopRef.current = absoluteTop;
+
+        // Cancel any ongoing lerp animation before the paragraph-switch smooth scroll
+        if (lerpRafIdRef.current !== null) {
+          cancelAnimationFrame(lerpRafIdRef.current);
+          lerpRafIdRef.current = null;
+        }
+        if (smoothScrollTimerRef.current !== null) {
+          clearTimeout(smoothScrollTimerRef.current);
+          smoothScrollTimerRef.current = null;
+        }
+
         // Place the active element roughly 25% from the top of the visible area
         const targetScrollTop = absoluteTop - epubContainer.clientHeight * 0.25;
-        epubContainer.scrollTop = Math.max(0, targetScrollTop);
+        epubContainer.scrollTo({ top: Math.max(0, targetScrollTop), behavior: "smooth" });
       }
     }, [activeTtsParagraph, normalizeText, theme]);
 
@@ -637,7 +652,35 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
           // Keep that position at ~35% from the top of the visible viewport.
           const targetScrollTop =
             activeParagraphAbsTopRef.current + progressY - epubContainer.clientHeight * 0.35;
-          epubContainer.scrollTop = Math.max(0, targetScrollTop);
+          const clampedTarget = Math.max(0, targetScrollTop);
+
+          // Cancel any previous lerp loop before starting a new one
+          if (lerpRafIdRef.current !== null) {
+            cancelAnimationFrame(lerpRafIdRef.current);
+            lerpRafIdRef.current = null;
+          }
+
+          // Delay lerp start by 400 ms to let the paragraph-switch smooth scroll settle
+          if (smoothScrollTimerRef.current !== null) {
+            clearTimeout(smoothScrollTimerRef.current);
+          }
+          smoothScrollTimerRef.current = setTimeout(() => {
+            smoothScrollTimerRef.current = null;
+            const LERP_FACTOR = 0.1;
+            const step = () => {
+              if (!epubContainer) return;
+              const current = epubContainer.scrollTop;
+              const diff = clampedTarget - current;
+              if (Math.abs(diff) < 0.5) {
+                epubContainer.scrollTop = clampedTarget;
+                lerpRafIdRef.current = null;
+                return;
+              }
+              epubContainer.scrollTop = current + diff * LERP_FACTOR;
+              lerpRafIdRef.current = requestAnimationFrame(step);
+            };
+            lerpRafIdRef.current = requestAnimationFrame(step);
+          }, 400);
         }
       }
     }, [activeTtsParagraph, ttsPlaybackProgress]);

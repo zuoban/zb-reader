@@ -36,6 +36,10 @@ function TxtReader({
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
+  // rAF handle for lerp-based intra-paragraph scrolling
+  const lerpRafIdRef = useRef<number | null>(null);
+  // Timer handle: delay lerp start until smooth-scroll settles after paragraph switch
+  const smoothScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     async function loadContent() {
@@ -151,6 +155,16 @@ function TxtReader({
       | null;
     if (!activeElement) return;
 
+    // Cancel any ongoing lerp animation before the paragraph-switch smooth scroll
+    if (lerpRafIdRef.current !== null) {
+      cancelAnimationFrame(lerpRafIdRef.current);
+      lerpRafIdRef.current = null;
+    }
+    if (smoothScrollTimerRef.current !== null) {
+      clearTimeout(smoothScrollTimerRef.current);
+      smoothScrollTimerRef.current = null;
+    }
+
     const elementRect = activeElement.getBoundingClientRect();
     const containerRect = container.getBoundingClientRect();
     const targetScrollTop =
@@ -158,7 +172,7 @@ function TxtReader({
       (elementRect.top - containerRect.top) -
       container.clientHeight / 2 +
       elementRect.height / 2;
-    container.scrollTop = Math.max(0, targetScrollTop);
+    container.scrollTo({ top: Math.max(0, targetScrollTop), behavior: "smooth" });
   }, [activeNeedle]);
 
   // Scroll within long paragraphs as playback progresses
@@ -185,7 +199,35 @@ function TxtReader({
 
     const progressY = paragraphHeight * ttsPlaybackProgress;
     const targetScrollTop = elementAbsTop + progressY - container.clientHeight * 0.35;
-    container.scrollTop = Math.max(0, targetScrollTop);
+    const clampedTarget = Math.max(0, targetScrollTop);
+
+    // Cancel any previous lerp loop before starting a new one
+    if (lerpRafIdRef.current !== null) {
+      cancelAnimationFrame(lerpRafIdRef.current);
+      lerpRafIdRef.current = null;
+    }
+
+    // Delay lerp start by 400 ms to let the paragraph-switch smooth scroll settle
+    if (smoothScrollTimerRef.current !== null) {
+      clearTimeout(smoothScrollTimerRef.current);
+    }
+    smoothScrollTimerRef.current = setTimeout(() => {
+      smoothScrollTimerRef.current = null;
+      const LERP_FACTOR = 0.1;
+      const step = () => {
+        if (!container) return;
+        const current = container.scrollTop;
+        const diff = clampedTarget - current;
+        if (Math.abs(diff) < 0.5) {
+          container.scrollTop = clampedTarget;
+          lerpRafIdRef.current = null;
+          return;
+        }
+        container.scrollTop = current + diff * LERP_FACTOR;
+        lerpRafIdRef.current = requestAnimationFrame(step);
+      };
+      lerpRafIdRef.current = requestAnimationFrame(step);
+    }, 400);
   }, [activeNeedle, ttsPlaybackProgress]);
 
   if (loading) {
