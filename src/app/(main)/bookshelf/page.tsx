@@ -6,6 +6,7 @@ import { BookGrid } from "@/components/bookshelf/BookGrid";
 import { BookCardSkeleton } from "@/components/bookshelf/BookCardSkeleton";
 import { SearchBar } from "@/components/bookshelf/SearchBar";
 import { UploadDialog } from "@/components/bookshelf/UploadDialog";
+import { useTheme } from "next-themes";
 import { Book } from "@/lib/db/schema";
 import { toast } from "sonner";
 
@@ -17,6 +18,7 @@ export default function BookshelfPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const { setTheme } = useTheme();
 
   // Sync theme with reader settings on mount
   useEffect(() => {
@@ -30,17 +32,14 @@ export default function BookshelfPage() {
         if (settings?.theme) {
           // Map reader theme to next-themes theme
           const globalTheme = settings.theme === "dark" ? "dark" : "light";
-          document.documentElement.classList.remove("light", "dark");
-          document.documentElement.classList.add(globalTheme);
-          document.documentElement.setAttribute("data-theme", globalTheme);
-          localStorage.setItem("theme", globalTheme);
+          setTheme(globalTheme);
         }
       } catch {
         // ignore
       }
     }
     syncTheme();
-  }, []);
+  }, [setTheme]);
 
   const fetchBooks = useCallback(async () => {
     try {

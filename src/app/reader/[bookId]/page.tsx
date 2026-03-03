@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
+import { useTheme } from "next-themes";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import dynamic from "next/dynamic";
 import { ReaderErrorBoundary } from "@/components/reader/ReaderErrorBoundary";
@@ -845,17 +846,21 @@ function ReaderContent() {
     setFontSize(size);
   }, []);
 
-  const handleThemeChange = useCallback((theme: "light" | "dark" | "sepia") => {
+  const handleThemeChange = useCallback(async (theme: "light" | "dark" | "sepia") => {
     setReaderTheme(theme);
     
-    // Sync with next-themes for consistent dark/light mode across the app
-    // sepia is treated as light mode for the global theme
+    // Sync with next-themes and API
     const globalTheme = theme === "dark" ? "dark" : "light";
-    document.documentElement.classList.remove("light", "dark");
-    document.documentElement.classList.add(globalTheme);
-    document.documentElement.setAttribute("data-theme", globalTheme);
-    // Also update next-themes internal state
-    localStorage.setItem("theme", globalTheme);
+    
+    try {
+      await fetch("/api/reader-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ theme }),
+      });
+    } catch {
+      // ignore
+    }
   }, []);
 
   const getCurrentReadableText = useCallback(() => {

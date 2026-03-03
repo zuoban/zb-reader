@@ -22,6 +22,25 @@ export function Navbar({ onUploadClick }: NavbarProps) {
   const { data: session } = useSession();
   const { theme, setTheme } = useTheme();
 
+  // Sync theme change with reader settings API
+  const handleThemeToggle = async () => {
+    const newTheme = theme === "dark" ? "light" : "dark";
+    setTheme(newTheme);
+    
+    // Sync with reader settings
+    try {
+      await fetch("/api/reader-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          theme: newTheme === "dark" ? "dark" : "light",
+        }),
+      });
+    } catch {
+      // ignore
+    }
+  };
+
   return (
     <header className="sticky top-4 z-50 mx-4 lg:mx-auto max-w-7xl">
       <div className="flex h-16 items-center justify-between px-6 rounded-2xl border border-border/40 bg-card/80 backdrop-blur-xl shadow-lg">
@@ -53,7 +72,7 @@ export function Navbar({ onUploadClick }: NavbarProps) {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            onClick={handleThemeToggle}
             className="relative cursor-pointer transition-all duration-200 hover:shadow-md"
           >
             <Sun className="h-5 w-5 rotate-0 scale-100 transition-all duration-300 dark:-rotate-90 dark:scale-0" />
