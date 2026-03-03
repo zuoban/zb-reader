@@ -4,6 +4,7 @@ import { useState, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,7 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { BookOpen, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 export default function LoginPage() {
   return (
@@ -63,11 +64,9 @@ function LoginForm() {
     <Card className="border-border/50 shadow-2xl backdrop-blur-sm">
       <CardHeader className="text-center pb-2">
         <div className="flex justify-center mb-4">
-          <div className="p-3 rounded-xl bg-primary/10">
-            <BookOpen className="h-12 w-12 text-primary" />
-          </div>
+          <Image src="/logo.svg" alt="ZB Reader" width={64} height={64} />
         </div>
-        <CardTitle className="text-3xl font-bold">ZB Reader</CardTitle>
+        <CardTitle className="text-2xl font-bold">ZB Reader</CardTitle>
         <CardDescription className="text-base mt-2">
           登录你的阅读账户
         </CardDescription>
