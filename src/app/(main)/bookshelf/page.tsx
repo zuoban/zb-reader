@@ -89,15 +89,17 @@ export default function BookshelfPage() {
     <div className="min-h-screen bg-background">
       <Navbar onUploadClick={() => setUploadOpen(true)} />
 
-      <main className="container mx-auto max-w-7xl px-4 py-8">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">我的书架</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              {books.length > 0 ? `共 ${books.length} 本书` : "开始你的阅读之旅"}
-            </p>
+      <main className="container mx-auto max-w-7xl px-3 sm:px-4 py-6 sm:py-8">
+        <div className="flex flex-col gap-4 mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">我的书架</h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                {books.length > 0 ? `共 ${books.length} 本书` : "开始你的阅读之旅"}
+              </p>
+            </div>
+            <SearchBar value={search} onChange={setSearch} />
           </div>
-          <SearchBar value={search} onChange={setSearch} />
         </div>
 
         {loading ? (

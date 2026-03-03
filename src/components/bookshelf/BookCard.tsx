@@ -38,7 +38,7 @@ export function BookCard({ book, progress = 0, onDelete }: BookCardProps) {
   };
 
   return (
-    <Card className="group relative overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-xl hover:-translate-y-1 border-border/50">
+    <Card className="group relative overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-xl hover:-translate-y-1 border-border/50 active:scale-98">
       <Link href={`/reader/${book.id}`} className="block">
         <div className="aspect-[3/4] bg-muted relative overflow-hidden">
           {book.cover ? (
@@ -46,11 +46,12 @@ export function BookCard({ book, progress = 0, onDelete }: BookCardProps) {
               src={`/api/books/${book.id}/cover`}
               alt={book.title}
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              loading="lazy"
             />
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-primary/5 to-secondary/20 transition-all duration-300 group-hover:from-primary/10 group-hover:to-secondary/30">
-              <FileText className="h-16 w-16 text-primary/30 transition-all duration-300 group-hover:scale-110 group-hover:text-primary/50" />
-              <span className="text-sm text-primary/50 font-medium px-3 text-center line-clamp-2 transition-colors duration-300 group-hover:text-primary/70">
+            <div className="w-full h-full flex flex-col items-center justify-center gap-2 sm:gap-3 bg-gradient-to-br from-primary/5 to-secondary/20 transition-all duration-300 group-hover:from-primary/10 group-hover:to-secondary/30">
+              <FileText className="h-12 w-12 sm:h-16 sm:w-16 text-primary/30 transition-all duration-300 group-hover:scale-110 group-hover:text-primary/50" />
+              <span className="text-xs sm:text-sm text-primary/50 font-medium px-2 sm:px-3 text-center line-clamp-2 transition-colors duration-300 group-hover:text-primary/70">
                 {book.title}
               </span>
             </div>
@@ -59,7 +60,7 @@ export function BookCard({ book, progress = 0, onDelete }: BookCardProps) {
           {/* Format badge */}
           <Badge
             variant="secondary"
-            className={`absolute top-3 left-3 text-xs uppercase font-semibold px-2.5 py-1 ${formatBadgeColor(book.format)}`}
+            className={`absolute top-2 left-2 sm:top-3 sm:left-3 text-[10px] sm:text-xs uppercase font-semibold px-2 py-0.5 sm:px-2.5 sm:py-1 ${formatBadgeColor(book.format)}`}
           >
             {book.format}
           </Badge>
@@ -68,9 +69,9 @@ export function BookCard({ book, progress = 0, onDelete }: BookCardProps) {
           {progress > 0 && (
             <div className="absolute bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm px-3 py-2 border-t border-border/50">
               <div className="flex items-center gap-2">
-                <Progress value={progress * 100} className="h-1.5 flex-1" />
-                <span className="text-xs font-medium text-foreground">
-                  {(progress * 100).toFixed(2)}%
+                <Progress value={progress * 100} className="h-1.5 sm:h-2 flex-1" />
+                <span className="text-xs font-medium text-foreground shrink-0">
+                  {Math.round(progress * 100)}%
                 </span>
               </div>
             </div>
@@ -78,16 +79,16 @@ export function BookCard({ book, progress = 0, onDelete }: BookCardProps) {
         </div>
       </Link>
 
-      <div className="p-4">
-        <div className="flex items-start justify-between gap-2">
+      <div className="p-3 sm:p-4">
+        <div className="flex items-start justify-between gap-1 sm:gap-2">
           <div className="min-w-0 flex-1">
-            <h3 className="font-semibold text-sm line-clamp-1 text-foreground" title={book.title}>
+            <h3 className="font-semibold text-sm line-clamp-2 sm:line-clamp-1 text-foreground" title={book.title}>
               {book.title}
             </h3>
             <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
               {book.author}
             </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5 hidden sm:block">
               {formatSize(book.fileSize)}
             </p>
           </div>
@@ -97,7 +98,7 @@ export function BookCard({ book, progress = 0, onDelete }: BookCardProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer hover:bg-primary/10"
+                className="h-8 w-8 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 cursor-pointer hover:bg-primary/10 active:bg-primary/20 -mr-2"
               >
                 <MoreVertical className="h-4 w-4" />
               </Button>
