@@ -899,6 +899,11 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     useEffect(() => {
       const rendition = renditionRef.current;
       if (!rendition) return;
+      
+      // Re-register theme to ensure it takes effect
+      Object.entries(THEME_STYLES).forEach(([name, styles]) => {
+        rendition.themes.register(name, styles);
+      });
       rendition.themes.select(theme);
     }, [theme]);
 
