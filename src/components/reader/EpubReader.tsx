@@ -31,6 +31,8 @@ interface EpubReaderProps {
   highlights?: Array<{ cfiRange: string; color: string; id: string }>;
   activeTtsParagraph?: string;
   ttsPlaybackProgress?: number;
+  ttsHighlightStyle?: "background" | "indicator";
+  ttsHighlightColor?: string;
 }
 
 export interface EpubReaderRef {
@@ -134,6 +136,8 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       highlights,
       activeTtsParagraph,
       ttsPlaybackProgress = 0,
+      ttsHighlightStyle = "indicator",
+      ttsHighlightColor = "#3b82f6",
     },
     ref
   ) => {
@@ -468,6 +472,11 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         element.style.margin = "";
         element.style.position = "";
         element.style.removeProperty("--tts-indicator-color");
+        element.style.backgroundImage = "";
+        element.style.backgroundPosition = "";
+        element.style.backgroundSize = "";
+        element.style.backgroundRepeat = "";
+        element.style.paddingBottom = "";
 
         const progressTrack = element.querySelector(".tts-progress-track");
         const progressFill = element.querySelector(".tts-progress-fill");
@@ -549,11 +558,29 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
 
       matchedElement.setAttribute("data-tts-active", "1");
       const activeElement = matchedElement as HTMLElement;
-      activeElement.style.backgroundColor = "";
       activeElement.style.transition = "all 220ms ease";
       activeElement.style.opacity = "1";
       activeElement.style.position = "relative";
-      activeElement.style.setProperty("--tts-indicator-color", "var(--primary, #3b82f6)");
+      
+      const progressPercent = Math.min(100, Math.max(0, ttsPlaybackProgress * 100));
+      
+      if (ttsHighlightStyle === "background") {
+        activeElement.style.background = `linear-gradient(180deg, ${ttsHighlightColor}33 ${progressPercent}%, transparent ${progressPercent}%)`;
+        activeElement.style.borderRadius = "4px";
+        activeElement.style.padding = "2px 4px";
+        activeElement.style.boxShadow = `0 0 0 2px ${ttsHighlightColor}40`;
+      } else {
+        activeElement.style.backgroundColor = "";
+        activeElement.style.borderRadius = "";
+        activeElement.style.padding = "";
+        activeElement.style.boxShadow = "";
+        activeElement.style.backgroundImage = "";
+        activeElement.style.backgroundPosition = "";
+        activeElement.style.backgroundSize = "";
+        activeElement.style.backgroundRepeat = "";
+        activeElement.style.paddingBottom = "";
+        activeElement.style.setProperty("--tts-indicator-color", ttsHighlightColor);
+      }
 
       const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
       if (epubContainer) {
@@ -589,7 +616,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         const targetScrollTop = absoluteTop - epubContainer.clientHeight * 0.25;
         epubContainer.scrollTo({ top: Math.max(0, targetScrollTop), behavior: "smooth" });
       }
-    }, [activeTtsParagraph, normalizeText, theme]);
+    }, [activeTtsParagraph, normalizeText, theme, ttsHighlightStyle, ttsHighlightColor, ttsPlaybackProgress]);
 
     useEffect(() => {
       if (!activeTtsParagraph) return;
@@ -603,25 +630,33 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       const activeElement = doc.querySelector("[data-tts-active='1']") as HTMLElement | null;
       if (!activeElement) return;
 
-      let progressFill = activeElement.querySelector(".tts-progress-fill") as HTMLElement | null;
-      let progressTrack = activeElement.querySelector(".tts-progress-track") as HTMLElement | null;
+      if (ttsHighlightStyle === "indicator") {
+        let progressFill = activeElement.querySelector(".tts-progress-fill") as HTMLElement | null;
+        let progressTrack = activeElement.querySelector(".tts-progress-track") as HTMLElement | null;
 
-      if (!progressTrack) {
-        progressTrack = doc.createElement("div");
-        progressTrack.className = "tts-progress-track";
-        activeElement.appendChild(progressTrack);
+        if (!progressTrack) {
+          progressTrack = doc.createElement("div");
+          progressTrack.className = "tts-progress-track";
+          activeElement.appendChild(progressTrack);
+        }
+
+        if (!progressFill) {
+          progressFill = doc.createElement("div");
+          progressFill.className = "tts-progress-fill";
+          activeElement.appendChild(progressFill);
+        }
+
+        const progressPercent = Math.min(100, Math.max(0, ttsPlaybackProgress * 100));
+        const trackHeight = activeElement.offsetHeight - parseFloat(getComputedStyle(activeElement).fontSize) * 0.4;
+        const fillHeight = trackHeight * (progressPercent / 100);
+        progressFill.style.height = `${Math.max(0, fillHeight)}px`;
+        progressFill.style.setProperty("--tts-indicator-color", ttsHighlightColor);
+      } else {
+        const progressTrack = activeElement.querySelector(".tts-progress-track");
+        const progressFill = activeElement.querySelector(".tts-progress-fill");
+        if (progressTrack) progressTrack.remove();
+        if (progressFill) progressFill.remove();
       }
-
-      if (!progressFill) {
-        progressFill = doc.createElement("div");
-        progressFill.className = "tts-progress-fill";
-        activeElement.appendChild(progressFill);
-      }
-
-      const progressPercent = Math.min(100, Math.max(0, ttsPlaybackProgress * 100));
-      const trackHeight = activeElement.offsetHeight - parseFloat(getComputedStyle(activeElement).fontSize) * 0.4;
-      const fillHeight = trackHeight * (progressPercent / 100);
-      progressFill.style.height = `${Math.max(0, fillHeight)}px`;
 
       const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
       if (epubContainer && activeParagraphAbsTopRef.current !== null) {
@@ -659,7 +694,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
           }, 400);
         }
       }
-    }, [activeTtsParagraph, ttsPlaybackProgress]);
+    }, [activeTtsParagraph, ttsPlaybackProgress, ttsHighlightStyle, ttsHighlightColor]);
 
     useEffect(() => {
       if (!viewerRef.current) return;

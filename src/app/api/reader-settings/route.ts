@@ -18,6 +18,9 @@ interface ReaderSettingsPayload {
   legadoRate?: number;
   legadoConfigId?: string;
   legadoPreloadCount?: number;
+  ttsAutoNextChapter?: boolean;
+  ttsHighlightStyle?: "background" | "indicator";
+  ttsHighlightColor?: string;
 }
 
 const DEFAULTS = {
@@ -32,6 +35,9 @@ const DEFAULTS = {
   legadoRate: 50,
   legadoConfigId: "",
   legadoPreloadCount: 3,
+  ttsAutoNextChapter: false,
+  ttsHighlightStyle: "indicator" as const,
+  ttsHighlightColor: "#3b82f6",
 };
 
 function toResponseShape(settings: typeof readerSettings.$inferSelect | null | undefined) {
@@ -51,6 +57,9 @@ function toResponseShape(settings: typeof readerSettings.$inferSelect | null | u
     legadoRate: settings.legadoRate,
     legadoConfigId: settings.legadoConfigId || "",
     legadoPreloadCount: settings.legadoPreloadCount,
+    ttsAutoNextChapter: settings.ttsAutoNextChapter,
+    ttsHighlightStyle: settings.ttsHighlightStyle || "indicator",
+    ttsHighlightColor: settings.ttsHighlightColor || "#3b82f6",
   };
 }
 
@@ -114,6 +123,18 @@ export async function PUT(req: NextRequest) {
       legadoPreloadCount: [1, 2, 3, 5].includes(Number(payload.legadoPreloadCount))
         ? Number(payload.legadoPreloadCount)
         : existing?.legadoPreloadCount ?? DEFAULTS.legadoPreloadCount,
+      ttsAutoNextChapter:
+        typeof payload.ttsAutoNextChapter === "boolean"
+          ? payload.ttsAutoNextChapter
+          : existing?.ttsAutoNextChapter ?? DEFAULTS.ttsAutoNextChapter,
+      ttsHighlightStyle:
+        payload.ttsHighlightStyle === "background" || payload.ttsHighlightStyle === "indicator"
+          ? payload.ttsHighlightStyle
+          : existing?.ttsHighlightStyle ?? DEFAULTS.ttsHighlightStyle,
+      ttsHighlightColor:
+        typeof payload.ttsHighlightColor === "string"
+          ? payload.ttsHighlightColor
+          : existing?.ttsHighlightColor ?? DEFAULTS.ttsHighlightColor,
       updatedAt: now,
     };
 

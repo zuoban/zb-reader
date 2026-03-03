@@ -3,6 +3,37 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Loader2 } from "lucide-react";
 
+function BackgroundHighlightLines({ progress, color }: { progress: number; color: string }) {
+  const estimatedLines = 6;
+  const filledLines = Math.floor((progress / 100) * estimatedLines);
+  const partialLineProgress = ((progress / 100) * estimatedLines) - filledLines;
+  
+  const lines = [];
+  for (let i = 0; i < estimatedLines; i++) {
+    let bgColor = "transparent";
+    if (i < filledLines) {
+      bgColor = `${color}33`;
+    } else if (i === filledLines && partialLineProgress > 0) {
+      const lineProgressPercent = partialLineProgress * 100;
+      bgColor = `linear-gradient(180deg, ${color}33 ${lineProgressPercent}%, transparent ${lineProgressPercent}%)`;
+    }
+    
+    lines.push(
+      <span
+        key={i}
+        className="absolute left-0 right-0 h-[1.8em]"
+        style={{
+          top: `calc(0.1em + ${i * 1.8}em)`,
+          background: bgColor,
+          borderRadius: i === 0 ? "4px 4px 0 0" : i === estimatedLines - 1 ? "0 0 4px 4px" : "0",
+        }}
+      />
+    );
+  }
+  
+  return <>{lines}</>;
+}
+
 interface TxtReaderProps {
   url: string;
   initialPage?: number;
@@ -12,6 +43,8 @@ interface TxtReaderProps {
   activeTtsParagraph?: string;
   ttsPlaybackProgress?: number;
   onRegisterController?: (controller: { nextPage: () => boolean; prevPage: () => boolean; scrollDown: (amount?: number) => void; scrollUp: (amount?: number) => void; scrollToActiveParagraph: () => void }) => void;
+  ttsHighlightStyle?: "background" | "indicator";
+  ttsHighlightColor?: string;
 }
 
 const themeStyles: Record<string, { bg: string; text: string }> = {
@@ -31,6 +64,8 @@ function TxtReader({
   activeTtsParagraph,
   ttsPlaybackProgress = 0,
   onRegisterController,
+  ttsHighlightStyle = "indicator",
+  ttsHighlightColor = "#3b82f6",
 }: TxtReaderProps) {
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(true);
@@ -305,29 +340,37 @@ function TxtReader({
                       : "hover:bg-muted/30 -mx-2 px-2"
                   }`}
                 >
-                  {isActive && (
+                  {isActive && ttsHighlightStyle === "background" && (
+                    <BackgroundHighlightLines
+                      progress={progressPercent}
+                      color={ttsHighlightColor}
+                    />
+                  )}
+                  {isActive && ttsHighlightStyle === "indicator" && (
                     <>
                       <span
                         className="absolute -left-2 top-[0.2em] bottom-[0.2em] w-1 rounded-[2px]"
-                        style={{ backgroundColor: "rgba(148, 163, 184, 0.3)" }}
+                        style={{ backgroundColor: `${ttsHighlightColor}4d` }}
                       />
                       <span
-                        className="absolute -left-2 top-[0.2em] w-1 rounded-[2px] bg-primary transition-all duration-100"
+                        className="absolute -left-2 top-[0.2em] w-1 rounded-[2px] transition-all duration-100"
                         style={{
                           height: `${progressPercent}%`,
-                          boxShadow: "0 0 4px var(--primary, #3b82f6)",
+                          backgroundColor: ttsHighlightColor,
+                          boxShadow: `0 0 4px ${ttsHighlightColor}`,
                         }}
                       />
                       <span
                         className="absolute -left-2 w-1 h-1 rounded-full bg-primary animate-pulse"
                         style={{
                           top: `calc(0.2em + ${progressPercent}% - 0.4em)`,
-                          boxShadow: "0 0 4px var(--primary, #3b82f6)",
+                          backgroundColor: ttsHighlightColor,
+                          boxShadow: `0 0 4px ${ttsHighlightColor}`,
                         }}
                       />
                     </>
                   )}
-                  {paragraph}
+                  <span className="relative z-10">{paragraph}</span>
                 </p>
               );
             })}

@@ -52,6 +52,10 @@ interface ReadingSettingsProps {
   onLegadoPreloadCountChange: (value: number) => void;
   ttsAutoNextChapter: boolean;
   onTtsAutoNextChapterChange: (value: boolean) => void;
+  ttsHighlightStyle: "background" | "indicator";
+  onTtsHighlightStyleChange: (style: "background" | "indicator") => void;
+  ttsHighlightColor: string;
+  onTtsHighlightColorChange: (color: string) => void;
 }
 
 const themeOptions = [
@@ -287,6 +291,10 @@ export function ReadingSettings({
   onLegadoPreloadCountChange,
   ttsAutoNextChapter,
   onTtsAutoNextChapterChange,
+  ttsHighlightStyle,
+  onTtsHighlightStyleChange,
+  ttsHighlightColor,
+  onTtsHighlightColorChange,
 }: ReadingSettingsProps) {
   const themeBg = theme === "light" ? "#ffffff" : theme === "dark" ? "#1e293b" : "#f4ecd8";
 
@@ -557,6 +565,59 @@ export function ReadingSettings({
                       />
                     </button>
                   </SettingRow>
+
+                  <SettingRow label="高亮样式">
+                    <div className="flex gap-1.5">
+                      {(["indicator", "background"] as const).map((style) => {
+                        const isActive = ttsHighlightStyle === style;
+                        const labels: Record<typeof style, string> = {
+                          indicator: "指示条",
+                          background: "背景",
+                        };
+                        return (
+                          <button
+                            key={style}
+                            onClick={() => onTtsHighlightStyleChange(style)}
+                            className={cn(
+                              "px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-[12px] font-medium transition-all cursor-pointer",
+                              isActive
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-muted text-muted-foreground hover:bg-muted/80"
+                            )}
+                          >
+                            {labels[style]}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </SettingRow>
+
+                  <SettingRow label="高亮颜色" noBorder>
+                    <div className="flex gap-1.5">
+                      {["#3b82f6", "#ef4444", "#22c55e", "#eab308", "#a855f7", "#ec4899"].map((color) => {
+                        const isActive = ttsHighlightColor === color;
+                        return (
+                          <button
+                            key={color}
+                            onClick={() => onTtsHighlightColorChange(color)}
+                            className={cn(
+                              "w-7 h-7 sm:w-8 sm:h-8 rounded-full transition-all cursor-pointer",
+                              isActive
+                                ? "ring-2 ring-offset-2 ring-primary scale-110"
+                                : "hover:scale-105"
+                            )}
+                            style={{ backgroundColor: color }}
+                          />
+                        );
+                      })}
+                      <input
+                        type="color"
+                        value={ttsHighlightColor}
+                        onChange={(e) => onTtsHighlightColorChange(e.target.value)}
+                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full cursor-pointer border-0 p-0"
+                      />
+                    </div>
+                  </SettingRow>
                 </>
               )}
 
@@ -612,6 +673,59 @@ export function ReadingSettings({
                         )}
                       />
                     </button>
+                  </SettingRow>
+
+                  <SettingRow label="高亮样式">
+                    <div className="flex gap-1.5">
+                      {(["indicator", "background"] as const).map((style) => {
+                        const isActive = ttsHighlightStyle === style;
+                        const labels: Record<typeof style, string> = {
+                          indicator: "指示条",
+                          background: "背景",
+                        };
+                        return (
+                          <button
+                            key={style}
+                            onClick={() => onTtsHighlightStyleChange(style)}
+                            className={cn(
+                              "px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-[12px] font-medium transition-all cursor-pointer",
+                              isActive
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-muted text-muted-foreground hover:bg-muted/80"
+                            )}
+                          >
+                            {labels[style]}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </SettingRow>
+
+                  <SettingRow label="高亮颜色" noBorder>
+                    <div className="flex gap-1.5">
+                      {["#3b82f6", "#ef4444", "#22c55e", "#eab308", "#a855f7", "#ec4899"].map((color) => {
+                        const isActive = ttsHighlightColor === color;
+                        return (
+                          <button
+                            key={color}
+                            onClick={() => onTtsHighlightColorChange(color)}
+                            className={cn(
+                              "w-7 h-7 sm:w-8 sm:h-8 rounded-full transition-all cursor-pointer",
+                              isActive
+                                ? "ring-2 ring-offset-2 ring-primary scale-110"
+                                : "hover:scale-105"
+                            )}
+                            style={{ backgroundColor: color }}
+                          />
+                        );
+                      })}
+                      <input
+                        type="color"
+                        value={ttsHighlightColor}
+                        onChange={(e) => onTtsHighlightColorChange(e.target.value)}
+                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full cursor-pointer border-0 p-0"
+                      />
+                    </div>
                   </SettingRow>
 
                   {/* Import config */}

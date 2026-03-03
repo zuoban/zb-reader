@@ -13,6 +13,8 @@ interface ReaderSettingsState {
   legadoRate: number;
   legadoConfigId: string;
   legadoPreloadCount: number;
+  ttsHighlightStyle: "background" | "indicator";
+  ttsHighlightColor: string;
   loaded: boolean;
 }
 
@@ -28,6 +30,8 @@ interface ReaderSettingsActions {
   setLegadoRate: (rate: number) => void;
   setLegadoConfigId: (id: string) => void;
   setLegadoPreloadCount: (count: number) => void;
+  setTtsHighlightStyle: (style: "background" | "underline" | "indicator") => void;
+  setTtsHighlightColor: (color: string) => void;
   loadFromServer: () => Promise<void>;
   saveToServer: () => Promise<void>;
 }
@@ -44,6 +48,8 @@ const DEFAULT_STATE: ReaderSettingsState = {
   legadoRate: 50,
   legadoConfigId: "",
   legadoPreloadCount: 3,
+  ttsHighlightStyle: "indicator",
+  ttsHighlightColor: "#3b82f6",
   loaded: false,
 };
 
@@ -68,6 +74,8 @@ export const useReaderSettingsStore = create<
       setLegadoConfigId: (legadoConfigId) => set({ legadoConfigId }),
       setLegadoPreloadCount: (count) =>
         set({ legadoPreloadCount: [1, 2, 3, 5].includes(count) ? count : 3 }),
+      setTtsHighlightStyle: (style: "background" | "indicator") => set({ ttsHighlightStyle: style }),
+      setTtsHighlightColor: (color) => set({ ttsHighlightColor: color }),
 
       loadFromServer: async () => {
         try {
@@ -116,6 +124,8 @@ export const useReaderSettingsStore = create<
             )
               ? (settings.legadoPreloadCount as number)
               : DEFAULT_STATE.legadoPreloadCount,
+            ttsHighlightStyle: settings.ttsHighlightStyle || DEFAULT_STATE.ttsHighlightStyle,
+            ttsHighlightColor: settings.ttsHighlightColor || DEFAULT_STATE.ttsHighlightColor,
             loaded: true,
           });
         } catch {
@@ -143,6 +153,8 @@ export const useReaderSettingsStore = create<
               legadoRate: state.legadoRate,
               legadoConfigId: state.legadoConfigId,
               legadoPreloadCount: state.legadoPreloadCount,
+              ttsHighlightStyle: state.ttsHighlightStyle,
+              ttsHighlightColor: state.ttsHighlightColor,
             }),
           });
         } catch {
