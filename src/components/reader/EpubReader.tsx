@@ -148,13 +148,10 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     const [isRenditionReady, setIsRenditionReady] = useState(false);
     const pendingHighlightsRef = useRef<Array<{ cfiRange: string; color: string; id: string }>>([]);
     const justSelectedRef = useRef(false);
-    const totalChaptersRef = useRef<number>(0);
-    const currentChapterIndexRef = useRef<number>(0);
     const activeParagraphAbsTopRef = useRef<number | null>(null);
     const lerpRafIdRef = useRef<number | null>(null);
     const smoothScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    // ---- Expose API via ref ----
     useImperativeHandle(ref, () => ({
       goToLocation(cfi: string) {
         renditionRef.current?.display(cfi);
@@ -165,8 +162,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       goToPercentage(percentage: number) {
         const book = bookRef.current;
         if (!book || !renditionRef.current) return;
-        // locations.cfiFromPercentage requires locations to be generated first
-        // (book.locations.generate() is called during initialization)
         const cfi = book.locations.cfiFromPercentage(percentage);
         if (cfi) {
           renditionRef.current.display(cfi);
@@ -431,7 +426,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       []
     );
 
-    // Inject TTS indicator CSS into iframe
     useEffect(() => {
       const contents = renditionRef.current?.getContents?.() as
         | Array<{ document?: Document }>
@@ -563,13 +557,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
 
       const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
       if (epubContainer) {
-        // In scrolled-doc mode the iframe height = content height and the outer
-        // epubContainer is the actual scrollable element. getBoundingClientRect()
-        // inside the iframe returns coordinates relative to the iframe viewport
-        // (which equals the document since the iframe doesn't scroll), NOT to the
-        // outer epubContainer. We must therefore compute the element's absolute Y
-        // position within the iframe document via offsetTop accumulation, then add
-        // the iframe's own offsetTop relative to epubContainer.
         let elementOffsetTop = 0;
         let node: HTMLElement | null = activeElement;
         while (node) {
@@ -577,7 +564,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
           node = node.offsetParent as HTMLElement | null;
         }
 
-        // The iframe element itself sits inside epubContainer; get its top offset.
         const iframeEl = epubContainer.querySelector("iframe") as HTMLElement | null;
         let iframeOffsetTop = 0;
         if (iframeEl) {
@@ -589,10 +575,8 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         }
 
         const absoluteTop = iframeOffsetTop + elementOffsetTop;
-        // Cache for use by the progress-based scrolling effect
         activeParagraphAbsTopRef.current = absoluteTop;
 
-        // Cancel any ongoing lerp animation before the paragraph-switch smooth scroll
         if (lerpRafIdRef.current !== null) {
           cancelAnimationFrame(lerpRafIdRef.current);
           lerpRafIdRef.current = null;
@@ -602,7 +586,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
           smoothScrollTimerRef.current = null;
         }
 
-        // Place the active element roughly 25% from the top of the visible area
         const targetScrollTop = absoluteTop - epubContainer.clientHeight * 0.25;
         epubContainer.scrollTo({ top: Math.max(0, targetScrollTop), behavior: "smooth" });
       }
@@ -640,27 +623,20 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       const fillHeight = trackHeight * (progressPercent / 100);
       progressFill.style.height = `${Math.max(0, fillHeight)}px`;
 
-      // Scroll epubContainer so the currently-spoken position stays visible.
-      // Only scroll when the paragraph is taller than the visible viewport
-      // (i.e. it spans multiple "pages"), otherwise the initial positioning is enough.
       const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
       if (epubContainer && activeParagraphAbsTopRef.current !== null) {
         const paragraphHeight = activeElement.offsetHeight;
         if (paragraphHeight > epubContainer.clientHeight * 0.8) {
-          // Estimate the Y position within the paragraph that is currently being read.
           const progressY = paragraphHeight * ttsPlaybackProgress;
-          // Keep that position at ~35% from the top of the visible viewport.
           const targetScrollTop =
             activeParagraphAbsTopRef.current + progressY - epubContainer.clientHeight * 0.35;
           const clampedTarget = Math.max(0, targetScrollTop);
 
-          // Cancel any previous lerp loop before starting a new one
           if (lerpRafIdRef.current !== null) {
             cancelAnimationFrame(lerpRafIdRef.current);
             lerpRafIdRef.current = null;
           }
 
-          // Delay lerp start by 400 ms to let the paragraph-switch smooth scroll settle
           if (smoothScrollTimerRef.current !== null) {
             clearTimeout(smoothScrollTimerRef.current);
           }
@@ -685,15 +661,12 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       }
     }, [activeTtsParagraph, ttsPlaybackProgress]);
 
-    // ---- Initialize book & rendition ----
     useEffect(() => {
       if (!viewerRef.current) return;
 
       let cancelled = false;
       let book: Book | null = null;
 
-      // Fetch the EPUB as ArrayBuffer first, then pass to epubjs
-      // This prevents epubjs from treating the URL as a directory base path
       async function init() {
         try {
           const response = await fetch(url);
@@ -705,10 +678,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
           book = ePub(arrayBuffer as unknown as string);
           bookRef.current = book;
 
-          // Strip file:// references BEFORE content is injected into iframe
-          // Some EPUBs (e.g. from Kindle) contain file:///mnt/us/... font paths
-          // that browsers block. We intercept the serialized HTML string and
-          // remove all url() values pointing to file:// resources.
           book.spine.hooks.serialize.register(
             (output: string, section: { output: string }) => {
               section.output = output.replace(
@@ -727,17 +696,13 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
           });
           renditionRef.current = rendition;
 
-          // Register all themes
           Object.entries(THEME_STYLES).forEach(([name, styles]) => {
             rendition.themes.register(name, styles);
           });
 
-          // Apply initial theme and font size
           rendition.themes.select(theme);
           rendition.themes.override("font-size", `${fontSize}px`);
 
-          // Display the book at initial location or beginning
-          // initialLocation may carry a "#scroll=<ratio>" suffix for scroll restoration
           let displayCfi: string | undefined;
           let initialScrollRatio: number | null = null;
           if (initialLocation) {
@@ -753,24 +718,15 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
               displayCfi = initialLocation;
             }
           }
-          // Wait for book metadata (including displayOptions) to be fully loaded
-          // before calling rendition.display(). Calling display() before book.ready
-          // resolves causes rendition.start() to access book.displayOptions while it
-          // is still undefined, resulting in a TypeError at runtime.
           await book.ready;
 
           if (cancelled) return;
 
           rendition.display(displayCfi || undefined);
 
-          // Mark rendition as ready once the first section is displayed,
-          // so highlights can be applied immediately without waiting for
-          // the expensive locations.generate() call.
           rendition.once("displayed", () => {
             setIsRenditionReady(true);
-            // Restore scroll position after the section renders
             if (initialScrollRatio !== null) {
-              // Use a small delay to let the iframe content fully lay out
               setTimeout(() => {
                 const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
                 if (epubContainer) {
@@ -781,27 +737,8 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
                 }
               }, 120);
             }
-            
-            // 初始显示时手动触发 relocated 事件，确保 progress 被正确设置
-            const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
-            if (epubContainer && currentLocationRef.current) {
-              const scrollRange = epubContainer.scrollHeight - epubContainer.clientHeight;
-              let progress = 0;
-              if (scrollRange > 0) {
-                progress = Math.min(1, Math.max(0, epubContainer.scrollTop / scrollRange));
-                progressRef.current = progress;
-              }
-              console.log("[EpubReader displayed] initial progress:", progress);
-              onLocationChange?.({
-                cfi: currentLocationRef.current,
-                progress,
-                scrollRatio: progress,
-                href: undefined,
-              });
-            }
           });
 
-          // ---- Location change handler ----
           rendition.on(
             "relocated",
             (location: {
@@ -819,54 +756,56 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
               const cfi = location.start.cfi;
               const href = location.start.href;
               
-              // 获取当前章节在 spine 中的索引
               const book = bookRef.current;
-              let currentChapterIndex = 0;
-              let totalChapters = 1;
+              let overallProgress = 0;
               
-              if (href) {
-                // 从 href 中提取章节索引（例如 Section0207.xhtml -> 207）
-                const match = href.match(/Section0*(\d+)\.xhtml/i);
-                if (match) {
-                  currentChapterIndex = parseInt(match[1], 10) - 1;
-                  // 估算总章节数（假设最大编号 +20）
-                  totalChapters = currentChapterIndex + 20;
+              if (book && book.spine && href) {
+                const spineItems = (book.spine as any).items || [];
+                const totalSpineItems = spineItems.length;
+                
+                console.log('[EpubReader] Spine info:', {
+                  totalSpineItems,
+                  currentHref: href,
+                  spineItemsSample: spineItems.slice(0, 5).map((item: any) => ({
+                    index: item.index,
+                    href: item.href,
+                  })),
+                });
+                
+                if (totalSpineItems > 0) {
+                  const currentItem = spineItems.find((item: any) => item.href === href);
+                  if (currentItem) {
+                    const currentIndex = currentItem.index;
+                    
+                    const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
+                    let chapterProgress = 0;
+                    if (epubContainer) {
+                      const scrollRange = epubContainer.scrollHeight - epubContainer.clientHeight;
+                      if (scrollRange > 0) {
+                        chapterProgress = Math.min(1, Math.max(0, epubContainer.scrollTop / scrollRange));
+                      }
+                    }
+                    
+                    overallProgress = (currentIndex + chapterProgress) / totalSpineItems;
+                    console.log('[EpubReader] Progress calculation:', {
+                      currentIndex,
+                      chapterProgress,
+                      totalSpineItems,
+                      overallProgress,
+                    });
+                  } else {
+                    console.log('[EpubReader] Could not find current item in spine');
+                  }
                 }
               }
-              
-              currentChapterIndexRef.current = currentChapterIndex;
-              totalChaptersRef.current = totalChapters;
-              
-              // 计算整本书的进度 = 已完成的章节 + 当前章节内的进度
-              const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
-              let chapterProgress = 0;
-              if (epubContainer) {
-                const scrollRange = epubContainer.scrollHeight - epubContainer.clientHeight;
-                if (scrollRange > 0) {
-                  chapterProgress = Math.min(1, Math.max(0, epubContainer.scrollTop / scrollRange));
-                }
-              }
-              
-              // 整本书的进度
-              const overallProgress = totalChapters > 1
-                ? (currentChapterIndex + chapterProgress) / totalChapters
-                : chapterProgress;
               
               const clampedProgress = Math.min(1, Math.max(0, overallProgress));
               
               currentLocationRef.current = cfi;
               progressRef.current = clampedProgress;
-              
-              console.log("[EpubReader relocated]", {
-                cfi: cfi.slice(0, 50) + "...",
-                href,
-                currentChapterIndex,
-                totalChapters,
-                chapterProgress,
-                overallProgress: clampedProgress,
-              });
 
               let scrollRatio: number | undefined;
+              const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
               if (epubContainer) {
                 const scrollRange = epubContainer.scrollHeight - epubContainer.clientHeight;
                 if (scrollRange > 0) {
@@ -874,6 +813,13 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
                   scrollRatioRef.current = scrollRatio;
                 }
               }
+
+              console.log('[EpubReader relocated]', {
+                cfi: cfi.slice(0, 50) + '...',
+                href,
+                percentage: location.start.percentage,
+                calculatedProgress: clampedProgress,
+              });
 
               onLocationChange?.({
                 cfi,
@@ -886,7 +832,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
             }
           );
 
-          // ---- Text selection handler ----
           rendition.on(
             "selected",
             (cfiRange: string, contents: { window: Window }) => {
@@ -900,7 +845,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
             }
            );
 
-          // ---- Click handler for toolbar toggle ----
           rendition.on("click", () => {
             if (justSelectedRef.current) {
               justSelectedRef.current = false;
@@ -909,7 +853,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
             onClick?.();
           });
 
-          // ---- TOC parsing (with nested subitems support) ----
           book.loaded.navigation.then((nav) => {
             function parseTocItems(items: RawTocItem[]): TocItem[] {
               return items.map((item) => ({
@@ -924,9 +867,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
             onTocLoaded?.(parseTocItems(nav.toc as RawTocItem[]));
           });
 
-          // ---- Ready callback ----
           book.ready.then(() => {
-            // Generate locations for progress tracking
             book!.locations.generate(1024).then(() => {
               setIsReady(true);
               onReady?.();
@@ -939,7 +880,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
 
       init();
 
-      // ---- Cleanup ----
       return () => {
         cancelled = true;
         setIsReady(false);
@@ -951,50 +891,36 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         bookRef.current = null;
         if (book) book.destroy();
       };
-      // Only re-init when the url changes
-      // Only re-init when the url changes
     }, [url]);
 
-    // ---- Theme updates ----
     useEffect(() => {
       const rendition = renditionRef.current;
       if (!rendition) return;
       
-      // Get current theme styles
       const themeStyle = THEME_STYLES[theme];
       
-      // Directly override body styles instead of using themes.select
       rendition.themes.override("background", themeStyle.body.background);
       rendition.themes.override("color", themeStyle.body.color);
     }, [theme]);
 
-    // ---- Font size updates ----
     useEffect(() => {
       const rendition = renditionRef.current;
       if (!rendition) return;
       rendition.themes.override("font-size", `${fontSize}px`);
     }, [fontSize]);
 
-    // ---- Highlights ----
-    // We store a map of id -> cfiRange so we can remove by cfiRange (which is
-    // what epubjs annotations.remove() actually requires).
     const highlightMapRef = useRef<Map<string, string>>(new Map());
 
-    // Apply highlights function – always re-applies all highlights because
-    // epubjs loses SVG annotations when re-rendering a section (chapter switch).
     const applyHighlights = useCallback(() => {
       const rendition = renditionRef.current;
       if (!rendition || !isRenditionReady) return;
 
       const currentHighlights = pendingHighlightsRef.current;
 
-      // Remove all previously applied highlights first – epubjs requires the
-      // cfiRange (not a custom id) as the first argument to annotations.remove().
       highlightMapRef.current.forEach((cfiRange, _id) => {
         try {
           rendition.annotations.remove(cfiRange, "highlight");
         } catch {
-          // ignore – may already be gone after section switch
         }
       });
       highlightMapRef.current.clear();
@@ -1002,7 +928,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
 
       if (!currentHighlights || currentHighlights.length === 0) return;
 
-      // Add all highlights fresh
       currentHighlights.forEach((h) => {
         try {
           rendition.annotations.highlight(
@@ -1015,25 +940,21 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
           highlightIdsRef.current.add(h.id);
           highlightMapRef.current.set(h.id, h.cfiRange);
         } catch {
-          // CFI may not be in current section – this is expected
         }
       });
     }, [isRenditionReady]);
 
-    // Update pending highlights when props change (including when cleared)
     useEffect(() => {
       pendingHighlightsRef.current = highlights || [];
       applyHighlights();
     }, [highlights, applyHighlights]);
 
-    // Apply highlights when rendition becomes ready
     useEffect(() => {
       if (isRenditionReady) {
         applyHighlights();
       }
     }, [isRenditionReady, applyHighlights]);
 
-    // Re-apply highlights after each section is rendered
     useEffect(() => {
       const rendition = renditionRef.current;
       if (!rendition) return;
@@ -1049,7 +970,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       };
     }, [applyHighlights]);
 
-    // ---- Keyboard navigation ----
     const handleKeyDown = useCallback((e: KeyboardEvent) => {
       const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
       if (!epubContainer) return;
@@ -1072,7 +992,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       };
     }, [handleKeyDown]);
 
-    // Also bind keyboard events inside the rendition iframe
     useEffect(() => {
       const rendition = renditionRef.current;
       if (!rendition || !isRenditionReady) return;
@@ -1099,10 +1018,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       };
     }, [isRenditionReady]);
 
-          // ---- Track scroll position for precise progress restoration ----
-          // In scrolled-doc mode the epubContainer is the actual scrollable element.
-          // We listen to its scroll event to keep scrollRatioRef up-to-date and fire
-          // onLocationChange with the latest scrollRatio after the user stops scrolling.
           useEffect(() => {
             if (!isRenditionReady) return;
             const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
@@ -1116,11 +1031,8 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
               if (scrollRange > 0) {
                 ratio = Math.min(1, Math.max(0, epubContainer.scrollTop / scrollRange));
                 scrollRatioRef.current = ratio;
-                // 在 scrolled-doc 模式下，使用 scroll ratio 作为 progress 的近似值
-                progressRef.current = ratio;
               }
 
-              // Debounce: fire onLocationChange ~300ms after the user stops scrolling
               if (scrollTimer !== null) clearTimeout(scrollTimer);
               scrollTimer = setTimeout(() => {
                 scrollTimer = null;

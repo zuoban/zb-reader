@@ -43,6 +43,13 @@ export async function PUT(req: NextRequest) {
     const { bookId, progress, location, currentPage, totalPages } =
       await req.json();
 
+    console.log('[Progress API PUT]', {
+      userId: session.user.id,
+      bookId,
+      progress,
+      location: location?.slice(0, 50) + '...',
+    });
+
     if (!bookId) {
       return NextResponse.json(
         { error: "缺少 bookId 参数" },

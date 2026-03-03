@@ -480,6 +480,12 @@ function ReaderContent() {
   const saveProgress = useCallback(async () => {
     if (!bookId || !currentLocationRef.current) return;
 
+    console.log('[Reader saveProgress]', {
+      bookId,
+      progress: progressRef.current,
+      location: currentLocationRef.current,
+    });
+
     try {
       await fetch("/api/progress", {
         method: "PUT",
@@ -558,6 +564,13 @@ function ReaderContent() {
       href?: string;
       scrollRatio?: number;
     }) => {
+      console.log('[Reader handleLocationChange]', {
+        progress: location.progress,
+        cfi: location.cfi.slice(0, 50) + '...',
+        currentPage: location.currentPage,
+        totalPages: location.totalPages,
+      });
+
       // Encode the scroll ratio into the location string so we can restore the
       // exact scroll position (not just the chapter/CFI) on the next open.
       // Format: "<cfi>#scroll=<ratio>" where ratio is a float in [0, 1].
@@ -2027,31 +2040,31 @@ function ReaderContent() {
   }, [book?.format, currentHref, toc]);
 
   // 计算是否有上一章/下一章
-  // 优先使用 currentHref 和 TOC 来判断
+  // 使用 TOC（目录）来判断章节边界
   let hasPrevChapter = false;
   let hasNextChapter = false;
   
-  if (book?.format === "epub" && currentHref) {
-    // 从 href 提取章节编号（例如 Section0207.xhtml -> 207）
-    const match = currentHref.match(/Section0*(\d+)\.xhtml/i);
-    if (match) {
-      const chapterNum = parseInt(match[1], 10);
-      hasPrevChapter = chapterNum > 1;
-      hasNextChapter = chapterNum < 500; // 假设最多 500 章
+  if (book?.format === "epub" && toc.length > 0) {
+    // 找到当前章节在 TOC 中的索引
+    const currentIdx = toc.findIndex(item => 
+      item.href === currentHref || 
+      currentHref?.includes(item.href) ||
+      item.href?.includes(currentHref || '')
+    );
+    
+    if (currentIdx !== -1) {
+      hasPrevChapter = currentIdx > 0;
+      hasNextChapter = currentIdx < toc.length - 1;
     } else {
-      // 回退到 TOC 判断
-      if (toc.length > 0) {
-        const idx = toc.findIndex(item => item.href === currentHref || item.href.includes(currentHref));
-        hasPrevChapter = idx > 0;
-        hasNextChapter = idx !== -1 && idx < toc.length - 1;
-      }
+      // 如果在 TOC 中找不到，但有 currentHref，说明可能在子章节
+      // 这种情况下假设可以前后翻页
+      hasPrevChapter = true;
+      hasNextChapter = true;
     }
-  }
-  
-  // 最终回退：使用 progress
-  if (!currentHref) {
-    hasPrevChapter = progress > 0.05;
-    hasNextChapter = progress < 0.95;
+  } else if (book?.format === "pdf" || book?.format === "txt") {
+    // PDF 和 TXT 使用进度判断
+    hasPrevChapter = progress > 0.01;
+    hasNextChapter = progress < 0.99;
   }
   
   // 调试信息
@@ -2207,12 +2220,11 @@ function ReaderContent() {
               onRegisterController={(controller) => {
                 txtReaderControllerRef.current = controller;
               }}
-              onPageChange={(page, total) => {
-                setCurrentPage(page);
-                setTotalPages(total);
-                setProgress(total > 0 ? page / total : 0);
-                progressRef.current = total > 0 ? page / total : 0;
-                currentLocationRef.current = JSON.stringify({ page });
+              onPageChange={(progressRatio, _total) => {
+                const progress = Math.min(1, Math.max(0, progressRatio));
+                setProgress(progress);
+                progressRef.current = progress;
+                currentLocationRef.current = JSON.stringify({ progress });
                 debouncedSaveProgress();
               }}
             />

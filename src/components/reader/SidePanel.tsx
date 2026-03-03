@@ -410,7 +410,7 @@ export function SidePanel({
                               className="text-xs"
                               style={{ color: "var(--reader-muted-text)" }}
                             >
-                              {Math.round(bookmark.progress * 100)}%
+                              {(bookmark.progress * 100).toFixed(2)}%
                             </span>
                             <span
                               className="text-xs"

@@ -70,7 +70,7 @@ export function BookCard({ book, progress = 0, onDelete }: BookCardProps) {
               <div className="flex items-center gap-2">
                 <Progress value={progress * 100} className="h-1.5 flex-1" />
                 <span className="text-xs font-medium text-foreground">
-                  {Math.round(progress * 100)}%
+                  {(progress * 100).toFixed(2)}%
                 </span>
               </div>
             </div>

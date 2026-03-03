@@ -206,7 +206,7 @@ export function ReaderToolbar({
                 color: "var(--reader-primary, #0891B2)",
               }}
             >
-              {Math.round(progress * 100)}%
+              {(progress * 100).toFixed(2)}%
             </div>
 
             {onPrevPage && (
@@ -237,9 +237,9 @@ export function ReaderToolbar({
               </Button>
             )}
 
-            <div className="flex-1 relative">
+            <div className="flex-1 relative h-6 flex items-center">
               <div
-                className="absolute inset-0 h-2 top-1/2 -translate-y-1/2 rounded-full overflow-hidden"
+                className="absolute inset-x-0 h-2 top-1/2 -translate-y-1/2 rounded-full overflow-hidden pointer-events-none"
                 style={{ background: "var(--reader-border)" }}
               >
                 <div
@@ -252,7 +252,7 @@ export function ReaderToolbar({
                 />
               </div>
               <Slider
-                className="relative z-10"
+                className="relative z-10 w-full"
                 value={[progress * 100]}
                 min={0}
                 max={100}
