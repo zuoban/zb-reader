@@ -23,7 +23,7 @@ vi.mock("@/lib/db", () => ({
     insert: () => mockInsert(),
     query: {
       bookmarks: {
-        findFirst: vi.fn(),
+        findFirst: vi.fn().mockResolvedValue(null),
       },
     },
   },
@@ -158,7 +158,7 @@ describe("Bookmarks API", () => {
         updatedAt: "2024-01-01 00:00:00",
       };
 
-      mockDb.query.bookmarks.findFirst.mockResolvedValue(mockBookmark);
+      (mockDb.query.bookmarks.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue(mockBookmark);
 
       const { POST } = await import("./route");
       const req = createRequest("/api/bookmarks", {
