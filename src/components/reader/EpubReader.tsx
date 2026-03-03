@@ -900,11 +900,12 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       const rendition = renditionRef.current;
       if (!rendition) return;
       
-      // Re-register theme to ensure it takes effect
-      Object.entries(THEME_STYLES).forEach(([name, styles]) => {
-        rendition.themes.register(name, styles);
-      });
-      rendition.themes.select(theme);
+      // Get current theme styles
+      const themeStyle = THEME_STYLES[theme];
+      
+      // Directly override body styles instead of using themes.select
+      rendition.themes.override("background", themeStyle.body.background);
+      rendition.themes.override("color", themeStyle.body.color);
     }, [theme]);
 
     // ---- Font size updates ----
