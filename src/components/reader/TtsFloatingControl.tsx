@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Pause, Play, Square, SkipBack, SkipForward, LocateFixed } from "lucide-react";
+import { Pause, Play, Square, SkipBack, SkipForward, LocateFixed, ListEnd } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TtsFloatingControlProps {
@@ -14,6 +14,8 @@ interface TtsFloatingControlProps {
   currentParagraphIndex?: number;
   totalParagraphs?: number;
   paragraphProgress?: number;
+  ttsAutoNextChapter?: boolean;
+  onTtsAutoNextChapterChange?: (value: boolean) => void;
 }
 
 function AudioWaveIndicator() {
@@ -43,6 +45,8 @@ export function TtsFloatingControl({
   currentParagraphIndex = 0,
   totalParagraphs = 0,
   paragraphProgress = 0,
+  ttsAutoNextChapter = false,
+  onTtsAutoNextChapterChange,
 }: TtsFloatingControlProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isAutoTransparent, setIsAutoTransparent] = useState(false);
@@ -206,6 +210,33 @@ export function TtsFloatingControl({
                 title="跳转到朗读位置"
               >
                 <LocateFixed className="size-3.5" />
+              </button>
+            </>
+          )}
+
+          {onTtsAutoNextChapterChange && (
+            <>
+              <div
+                className="w-px h-4 mx-0.5"
+                style={{ background: "var(--reader-border)" }}
+              />
+              <button
+                type="button"
+                onClick={() => onTtsAutoNextChapterChange(!ttsAutoNextChapter)}
+                className="group flex size-7 items-center justify-center rounded-lg transition-all duration-150 cursor-pointer active:scale-90"
+                style={{ 
+                  color: ttsAutoNextChapter 
+                    ? "var(--reader-primary, #0891B2)" 
+                    : "var(--reader-muted-text)" 
+                }}
+                title={ttsAutoNextChapter ? "关闭自动续章" : "开启自动续章"}
+              >
+                <ListEnd 
+                  className={cn(
+                    "size-3.5 transition-all duration-200",
+                    ttsAutoNextChapter && "scale-110"
+                  )} 
+                />
               </button>
             </>
           )}

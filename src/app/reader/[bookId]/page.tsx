@@ -2333,6 +2333,8 @@ function ReaderContent() {
         currentParagraphIndex={ttsCurrentIndex}
         totalParagraphs={ttsTotalParagraphs}
         paragraphProgress={ttsPlaybackProgress}
+        ttsAutoNextChapter={ttsAutoNextChapter}
+        onTtsAutoNextChapterChange={setTtsAutoNextChapter}
       />
 
       <Toaster />
