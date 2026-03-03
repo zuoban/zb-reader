@@ -1920,12 +1920,38 @@ function ReaderContent() {
     }
   }, [book?.format]);
 
-  // ---- Background color based on theme ----
-  const bgColors: Record<string, string> = {
-    light: "bg-white",
-    dark: "bg-[#1a1a2e]",
-    sepia: "bg-[#f4ecd8]",
+  // ---- Theme styles ----
+  const themeStyles: Record<string, { bg: string; solidBg: string; cardBg: string; text: string; mutedText: string; border: string; shadow: string }> = {
+    light: {
+      bg: "bg-white",
+      solidBg: "#ffffff",
+      cardBg: "rgba(255, 255, 255, 0.95)",
+      text: "#0f172a",
+      mutedText: "#64748b",
+      border: "rgba(226, 232, 240, 0.8)",
+      shadow: "rgba(0, 0, 0, 0.05)",
+    },
+    dark: {
+      bg: "bg-[#1a1a2e]",
+      solidBg: "#1e293b",
+      cardBg: "rgba(30, 41, 59, 0.95)",
+      text: "#f1f5f9",
+      mutedText: "#94a3b8",
+      border: "rgba(51, 65, 85, 0.8)",
+      shadow: "rgba(0, 0, 0, 0.3)",
+    },
+    sepia: {
+      bg: "bg-[#f4ecd8]",
+      solidBg: "#f4ecd8",
+      cardBg: "rgba(244, 236, 216, 0.95)",
+      text: "#5b4636",
+      mutedText: "#8b7355",
+      border: "rgba(214, 201, 168, 0.8)",
+      shadow: "rgba(91, 70, 54, 0.08)",
+    },
   };
+
+  const currentTheme = themeStyles[readerTheme] || themeStyles.light;
 
   if (loading || !book || !bookUrl) {
     return (
@@ -1944,7 +1970,18 @@ function ReaderContent() {
   }
 
   return (
-    <div className={`h-screen w-screen ${bgColors[readerTheme] || "bg-white"}`}>
+    <div
+      className={`h-screen w-screen ${currentTheme.bg}`}
+      data-reader-theme={readerTheme}
+      style={{
+        "--reader-bg": currentTheme.solidBg,
+        "--reader-card-bg": currentTheme.cardBg,
+        "--reader-text": currentTheme.text,
+        "--reader-muted-text": currentTheme.mutedText,
+        "--reader-border": currentTheme.border,
+        "--reader-shadow": currentTheme.shadow,
+      } as React.CSSProperties}
+    >
        {/* Reader content area */}
       <div
         className="h-full w-full box-border"

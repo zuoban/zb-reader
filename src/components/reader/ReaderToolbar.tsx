@@ -20,13 +20,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 interface ReaderToolbarProps {
   visible: boolean;
   title: string;
   currentPage?: number;
   totalPages?: number;
-  progress: number; // 0-1
+  progress: number;
   isBookmarked: boolean;
   onBack: () => void;
   onToggleToc: () => void;
@@ -38,6 +39,45 @@ interface ReaderToolbarProps {
   onProgressChange: (progress: number) => void;
   onPrevPage?: () => void;
   onNextPage?: () => void;
+}
+
+function ToolbarButton({
+  children,
+  onClick,
+  tooltip,
+  isActive = false,
+  className,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  tooltip: string;
+  isActive?: boolean;
+  className?: string;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onClick}
+          className={cn(
+            "cursor-pointer h-9 w-9 rounded-lg transition-all duration-200",
+            "hover:bg-[var(--reader-primary-light,_rgba(8,145,178,0.1))]",
+            "active:scale-95",
+            isActive && "bg-[var(--reader-primary-light,_rgba(8,145,178,0.15))] text-[var(--reader-primary,_#0891B2)]",
+            className
+          )}
+          style={{ color: "var(--reader-text)" }}
+        >
+          {children}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="bottom" className="text-xs">
+        {tooltip}
+      </TooltipContent>
+    </Tooltip>
+  );
 }
 
 export function ReaderToolbar({
@@ -60,235 +100,203 @@ export function ReaderToolbar({
 }: ReaderToolbarProps) {
   return (
     <TooltipProvider>
-      {/* Top toolbar */}
       <div
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out ${
-          visible
-            ? "translate-y-0 opacity-100"
-            : "-translate-y-full opacity-0"
-        }`}
-        style={{
-          background: "rgba(var(--card-bg-rgb, 255, 255, 255), 0.92)",
-          backdropFilter: "blur(20px) saturate(180%)",
-          WebkitBackdropFilter: "blur(20px) saturate(180%)",
-          borderBottom: "1px solid rgba(var(--border-rgb, 226, 232, 240), 0.6)",
-          boxShadow: visible
-            ? "0 4px 24px -2px rgba(0, 0, 0, 0.08), 0 2px 8px -1px rgba(0, 0, 0, 0.04)"
-            : "none",
-        }}
+        className={cn(
+          "fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out",
+          visible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
+        )}
       >
-        <div className="flex items-center justify-between h-14 px-2">
-          <div className="flex items-center gap-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onBack}
-                  className="cursor-pointer relative overflow-hidden group transition-all duration-200 hover:scale-105 active:scale-95"
-                >
-                  <span className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/0 to-primary/0 group-hover:from-primary/10 group-hover:via-primary/5 group-hover:to-primary/0 transition-all duration-300" />
-                  <ArrowLeft className="size-5 relative z-10 transition-transform duration-200 group-hover:-translate-x-0.5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>返回书架</TooltipContent>
-            </Tooltip>
+        <div
+          className={cn(
+            "mx-3 mt-2 rounded-2xl",
+            "border backdrop-blur-xl"
+          )}
+          style={{
+            background: "var(--reader-card-bg)",
+            borderColor: "var(--reader-border)",
+            boxShadow: "0 4px 24px var(--reader-shadow)",
+          }}
+        >
+          <div className="flex items-center justify-between h-12 px-1">
+            <div className="flex items-center gap-0.5">
+              <ToolbarButton onClick={onBack} tooltip="返回书架">
+                <ArrowLeft className="size-5" />
+              </ToolbarButton>
+              <ToolbarButton onClick={onToggleToc} tooltip="目录">
+                <List className="size-5" />
+              </ToolbarButton>
+            </div>
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onToggleToc}
-                  className="cursor-pointer relative overflow-hidden group transition-all duration-200 hover:scale-105 active:scale-95"
-                >
-                  <span className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/0 to-primary/0 group-hover:from-primary/10 group-hover:via-primary/5 group-hover:to-primary/0 transition-all duration-300" />
-                  <List className="size-5 relative z-10 transition-transform duration-200 group-hover:scale-110" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>目录</TooltipContent>
-            </Tooltip>
-          </div>
+            <h1
+              className="flex-1 mx-2 text-sm font-medium text-center truncate"
+              style={{ color: "var(--reader-text)" }}
+            >
+              {title}
+            </h1>
 
-          <h1 className="flex-1 mx-3 text-sm font-semibold text-center truncate text-foreground px-4 py-1 rounded-lg bg-muted/30">
-            {title}
-          </h1>
+            <div className="flex items-center gap-0.5">
+              <ToolbarButton
+                onClick={onToggleBookmark}
+                tooltip={isBookmarked ? "取消书签" : "添加书签"}
+                isActive={isBookmarked}
+              >
+                {isBookmarked ? (
+                  <BookmarkCheck className="size-5" />
+                ) : (
+                  <Bookmark className="size-5" />
+                )}
+              </ToolbarButton>
 
-          <div className="flex items-center gap-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onToggleBookmark}
-                  className={`cursor-pointer relative overflow-hidden group transition-all duration-200 hover:scale-105 active:scale-95 ${
-                    isBookmarked ? "text-primary" : ""
-                  }`}
-                >
-                  <span className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/0 to-primary/0 group-hover:from-primary/10 group-hover:via-primary/5 group-hover:to-primary/0 transition-all duration-300" />
-                  {isBookmarked ? (
-                    <BookmarkCheck className="size-5 relative z-10 transition-all duration-300 group-hover:scale-110" />
-                  ) : (
-                    <Bookmark className="size-5 relative z-10 transition-all duration-300 group-hover:scale-110" />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {isBookmarked ? "取消书签" : "添加书签"}
-              </TooltipContent>
-            </Tooltip>
+              <ToolbarButton onClick={onToggleNotes} tooltip="笔记">
+                <StickyNote className="size-5" />
+              </ToolbarButton>
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onToggleNotes}
-                  className="cursor-pointer relative overflow-hidden group transition-all duration-200 hover:scale-105 active:scale-95"
-                >
-                  <span className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/0 to-primary/0 group-hover:from-primary/10 group-hover:via-primary/5 group-hover:to-primary/0 transition-all duration-300" />
-                  <StickyNote className="size-5 relative z-10 transition-all duration-300 group-hover:rotate-3" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>笔记</TooltipContent>
-            </Tooltip>
+              <ToolbarButton
+                onClick={onToggleTts}
+                tooltip={isSpeaking ? "暂停朗读" : "开始朗读"}
+                isActive={isSpeaking}
+              >
+                {isSpeaking ? (
+                  <Pause className="size-5" />
+                ) : (
+                  <Volume2 className="size-5" />
+                )}
+              </ToolbarButton>
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onToggleTts}
-                  className={`cursor-pointer relative overflow-hidden group transition-all duration-200 hover:scale-105 active:scale-95 ${
-                    isSpeaking ? "text-primary" : ""
-                  }`}
-                >
-                  <span className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/0 to-primary/0 group-hover:from-primary/10 group-hover:via-primary/5 group-hover:to-primary/0 transition-all duration-300" />
-                  {isSpeaking ? (
-                    <Pause className="size-5 relative z-10 transition-all duration-300 group-hover:scale-110" />
-                  ) : (
-                    <Volume2 className="size-5 relative z-10 transition-all duration-300 group-hover:scale-110" />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{isSpeaking ? "暂停朗读" : "开始朗读"}</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onToggleSettings}
-                  className="cursor-pointer relative overflow-hidden group transition-all duration-200 hover:scale-105 active:scale-95"
-                >
-                  <span className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/0 to-primary/0 group-hover:from-primary/10 group-hover:via-primary/5 group-hover:to-primary/0 transition-all duration-300" />
-                  <Settings className="size-5 relative z-10 transition-all duration-300 group-hover:rotate-45" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>设置</TooltipContent>
-            </Tooltip>
+              <ToolbarButton onClick={onToggleSettings} tooltip="设置">
+                <Settings className="size-5" />
+              </ToolbarButton>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Bottom toolbar */}
       <div
-        className={`fixed bottom-0 left-0 right-0 z-50 transition-all duration-300 ease-out ${
-          visible
-            ? "translate-y-0 opacity-100"
-            : "translate-y-full opacity-0"
-        }`}
-        style={{
-          background: "rgba(var(--card-bg-rgb, 255, 255, 255), 0.92)",
-          backdropFilter: "blur(20px) saturate(180%)",
-          WebkitBackdropFilter: "blur(20px) saturate(180%)",
-          borderTop: "1px solid rgba(var(--border-rgb, 226, 232, 240), 0.6)",
-          boxShadow: visible
-            ? "0 -4px 24px -2px rgba(0, 0, 0, 0.08), 0 -2px 8px -1px rgba(0, 0, 0, 0.04)"
-            : "none",
-        }}
+        className={cn(
+          "fixed bottom-0 left-0 right-0 z-50 transition-all duration-300 ease-out",
+          visible ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
+        )}
       >
-        <div className="flex items-center gap-4 px-4 py-3">
-          <div className="text-xs font-semibold text-foreground whitespace-nowrap min-w-[3.5rem] text-center px-2.5 py-1 rounded-md bg-primary/10">
-            {Math.round(progress * 100)}%
-          </div>
-
-          {onPrevPage && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onPrevPage}
-                  className="cursor-pointer h-8 w-8"
-                >
-                  <ArrowUp className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>向上滚动</TooltipContent>
-            </Tooltip>
+        <div
+          className={cn(
+            "mx-3 mb-2 rounded-2xl",
+            "border backdrop-blur-xl"
           )}
+          style={{
+            background: "var(--reader-card-bg)",
+            borderColor: "var(--reader-border)",
+            boxShadow: "0 -4px 24px var(--reader-shadow)",
+          }}
+        >
+          <div className="flex items-center gap-3 px-4 py-3">
+            <div
+              className="text-xs font-semibold whitespace-nowrap min-w-[3rem] text-center px-2 py-1 rounded-md"
+              style={{
+                background: "var(--reader-primary-light, rgba(8,145,178,0.1))",
+                color: "var(--reader-primary, #0891B2)",
+              }}
+            >
+              {Math.round(progress * 100)}%
+            </div>
 
-          <div className="flex-1 relative group/slider">
-            <div className="absolute inset-0 h-full bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-full overflow-hidden">
+            {onPrevPage && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onPrevPage}
+                className="cursor-pointer h-8 w-8 rounded-lg transition-colors"
+                style={{ color: "var(--reader-muted-text)" }}
+              >
+                <ArrowUp className="h-4 w-4" />
+              </Button>
+            )}
+
+            <div className="flex-1 relative">
               <div
-                className="h-full bg-gradient-to-r from-primary/40 via-primary/60 to-primary/40 transition-all duration-150"
-                style={{ width: `${progress * 100}%` }}
+                className="absolute inset-0 h-2 top-1/2 -translate-y-1/2 rounded-full overflow-hidden"
+                style={{ background: "var(--reader-border)" }}
+              >
+                <div
+                  className="h-full rounded-full transition-all duration-150"
+                  style={{
+                    width: `${progress * 100}%`,
+                    background: "var(--reader-primary, #0891B2)",
+                    opacity: 0.6,
+                  }}
+                />
+              </div>
+              <Slider
+                className="relative z-10"
+                value={[progress * 100]}
+                min={0}
+                max={100}
+                step={0.1}
+                onValueChange={(value) => onProgressChange(value[0] / 100)}
               />
             </div>
-            <Slider
-              className="relative z-10"
-              value={[progress * 100]}
-              min={0}
-              max={100}
-              step={0.1}
-              onValueChange={(value) => onProgressChange(value[0] / 100)}
-            />
+
+            {onNextPage && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onNextPage}
+                className="cursor-pointer h-8 w-8 rounded-lg transition-colors"
+                style={{ color: "var(--reader-muted-text)" }}
+              >
+                <ArrowDown className="h-4 w-4" />
+              </Button>
+            )}
+
+            <span
+              className="text-xs font-medium whitespace-nowrap min-w-[4rem] text-right"
+              style={{ color: "var(--reader-muted-text)" }}
+            >
+              {currentPage !== undefined && totalPages !== undefined
+                ? `${currentPage} / ${totalPages}`
+                : ""}
+            </span>
           </div>
 
-          {onNextPage && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onNextPage}
-                  className="cursor-pointer h-8 w-8"
-                >
-                  <ArrowDown className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>向下滚动</TooltipContent>
-            </Tooltip>
-          )}
-
-          <span className="text-xs font-medium text-muted-foreground whitespace-nowrap min-w-[5rem] text-right">
-            {currentPage !== undefined && totalPages !== undefined
-              ? `${currentPage} / ${totalPages}`
-              : ""}
-          </span>
-        </div>
-
-        {/* Keyboard shortcuts hint */}
-        <div className="flex items-center justify-center gap-6 pb-2 text-xs text-muted-foreground">
-          <div className="flex items-center gap-1.5">
-            <kbd className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-medium rounded border bg-muted">
-              <ArrowUp className="h-3 w-3" />
-            </kbd>
-            <span>向上滚动</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <kbd className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-medium rounded border bg-muted">
-              <ArrowDown className="h-3 w-3" />
-            </kbd>
-            <span>向下滚动</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <kbd className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-medium rounded border bg-muted">
-              Esc
-            </kbd>
-            <span>返回</span>
+          <div
+            className="flex items-center justify-center gap-6 pb-2 text-xs"
+            style={{ color: "var(--reader-muted-text)" }}
+          >
+            <div className="flex items-center gap-1.5">
+              <kbd
+                className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-medium rounded border"
+                style={{
+                  background: "var(--reader-card-bg)",
+                  borderColor: "var(--reader-border)",
+                }}
+              >
+                <ArrowUp className="h-3 w-3" />
+              </kbd>
+              <span>向上滚动</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <kbd
+                className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-medium rounded border"
+                style={{
+                  background: "var(--reader-card-bg)",
+                  borderColor: "var(--reader-border)",
+                }}
+              >
+                <ArrowDown className="h-3 w-3" />
+              </kbd>
+              <span>向下滚动</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <kbd
+                className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-medium rounded border"
+                style={{
+                  background: "var(--reader-card-bg)",
+                  borderColor: "var(--reader-border)",
+                }}
+              >
+                Esc
+              </kbd>
+              <span>返回</span>
+            </div>
           </div>
         </div>
       </div>

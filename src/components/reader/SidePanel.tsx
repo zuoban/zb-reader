@@ -23,6 +23,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 
 interface TocItem {
   label: string;
@@ -73,7 +74,6 @@ function formatDate(dateStr: string) {
   });
 }
 
-// Recursive TOC item component
 function TocItemRow({
   item,
   level = 0,
@@ -90,7 +90,6 @@ function TocItemRow({
   const [expanded, setExpanded] = useState(true);
   const hasChildren = item.subitems && item.subitems.length > 0;
 
-  // Check if this item or any descendant matches the current href
   const isActive =
     currentHref &&
     (item.href === currentHref ||
@@ -99,19 +98,21 @@ function TocItemRow({
   return (
     <div>
       <div className="flex items-center group">
-        {/* Expand/collapse button for items with children */}
         {hasChildren ? (
           <button
-            className="shrink-0 p-1 rounded hover:bg-accent/50 transition-colors"
+            className={cn(
+              "shrink-0 p-1 rounded-lg transition-colors cursor-pointer"
+            )}
+            style={{ color: "var(--reader-muted-text)" }}
             onClick={(e) => {
               e.stopPropagation();
               setExpanded(!expanded);
             }}
           >
             {expanded ? (
-              <ChevronDown className="size-3.5 text-muted-foreground" />
+              <ChevronDown className="size-3.5" />
             ) : (
-              <ChevronRight className="size-3.5 text-muted-foreground" />
+              <ChevronRight className="size-3.5" />
             )}
           </button>
         ) : (
@@ -119,12 +120,18 @@ function TocItemRow({
         )}
 
         <button
-          className={`flex-1 text-left px-2 py-1.5 rounded-md text-sm transition-colors truncate ${
-            isActive
-              ? "bg-primary/10 text-primary font-medium"
-              : "hover:bg-accent text-foreground"
-          }`}
-          style={{ paddingLeft: `${level * 12 + 8}px` }}
+          className={cn(
+            "flex-1 text-left px-2 py-1.5 rounded-lg text-sm transition-colors truncate cursor-pointer"
+          )}
+          style={{
+            paddingLeft: `${level * 12 + 8}px`,
+            color: isActive
+              ? "var(--reader-primary, #0891B2)"
+              : "var(--reader-text)",
+            background: isActive
+              ? "var(--reader-primary-light, rgba(8,145,178,0.1))"
+              : "transparent",
+          }}
           onClick={() => {
             onTocItemClick(item.href);
             onClose();
@@ -135,7 +142,6 @@ function TocItemRow({
         </button>
       </div>
 
-      {/* Render children */}
       {hasChildren && expanded && (
         <div className="ml-1">
           {item.subitems!.map((child, index) => (
@@ -181,7 +187,6 @@ export function SidePanel({
 
   const noteColors = ["#facc15", "#4ade80", "#60a5fa", "#f87171", "#c084fc"];
 
-  // Count total items recursively
   function countTocItems(items: TocItem[]): number {
     return items.reduce(
       (acc, item) =>
@@ -192,7 +197,14 @@ export function SidePanel({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="w-80 p-0">
+      <SheetContent
+        side="left"
+        className="w-80 p-0 backdrop-blur-xl border-r"
+        style={{
+          background: "var(--reader-card-bg)",
+          borderColor: "var(--reader-border)",
+        }}
+      >
         <SheetHeader className="px-4 pt-4 pb-0">
           <SheetTitle className="sr-only">侧边栏</SheetTitle>
         </SheetHeader>
@@ -203,42 +215,71 @@ export function SidePanel({
           }
           className="flex flex-col h-full"
         >
-          <TabsList className="mx-4 mt-2">
-            <TabsTrigger value="toc" className="gap-1.5">
+          <TabsList
+            className="mx-4 mt-2"
+            style={{ background: "var(--reader-border)" }}
+          >
+            <TabsTrigger
+              value="toc"
+              className="gap-1.5"
+              style={{
+                color: "var(--reader-muted-text)",
+                "--tw-ring-color": "var(--reader-primary, #0891B2)",
+              } as React.CSSProperties}
+            >
               <List className="size-4" />
               目录
             </TabsTrigger>
-            <TabsTrigger value="bookmarks" className="gap-1.5">
+            <TabsTrigger
+              value="bookmarks"
+              className="gap-1.5"
+              style={{ color: "var(--reader-muted-text)" }}
+            >
               <Bookmark className="size-4" />
               书签
               {bookmarks.length > 0 && (
-                <span className="ml-0.5 text-[10px] bg-muted rounded-full px-1.5">
+                <span
+                  className="ml-0.5 text-[10px] rounded-full px-1.5"
+                  style={{ background: "var(--reader-border)" }}
+                >
                   {bookmarks.length}
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="notes" className="gap-1.5">
+            <TabsTrigger
+              value="notes"
+              className="gap-1.5"
+              style={{ color: "var(--reader-muted-text)" }}
+            >
               <StickyNote className="size-4" />
               笔记
               {notes.length > 0 && (
-                <span className="ml-0.5 text-[10px] bg-muted rounded-full px-1.5">
+                <span
+                  className="ml-0.5 text-[10px] rounded-full px-1.5"
+                  style={{ background: "var(--reader-border)" }}
+                >
                   {notes.length}
                 </span>
               )}
             </TabsTrigger>
           </TabsList>
 
-          {/* 目录 Tab */}
           <TabsContent value="toc" className="mt-0 flex-1 overflow-hidden">
             <ScrollArea className="h-full">
               <div className="p-3">
                 {toc.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-8">
+                  <p
+                    className="text-sm text-center py-8"
+                    style={{ color: "var(--reader-muted-text)" }}
+                  >
                     暂无目录
                   </p>
                 ) : (
                   <>
-                    <p className="text-xs text-muted-foreground px-2 mb-2">
+                    <p
+                      className="text-xs px-2 mb-2"
+                      style={{ color: "var(--reader-muted-text)" }}
+                    >
                       共 {countTocItems(toc)} 章
                     </p>
                     {toc.map((item, index) => (
@@ -256,7 +297,6 @@ export function SidePanel({
             </ScrollArea>
           </TabsContent>
 
-          {/* 书签 Tab */}
           <TabsContent
             value="bookmarks"
             className="mt-0 flex-1 overflow-hidden"
@@ -264,14 +304,23 @@ export function SidePanel({
             <ScrollArea className="h-full">
               <div className="p-4 space-y-2">
                 {bookmarks.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-8">
+                  <p
+                    className="text-sm text-center py-8"
+                    style={{ color: "var(--reader-muted-text)" }}
+                  >
                     暂无书签
                   </p>
                 ) : (
                   bookmarks.map((bookmark) => (
                     <div
                       key={bookmark.id}
-                      className="group rounded-lg border p-3 hover:bg-accent/50 transition-colors"
+                      className={cn(
+                        "group rounded-xl p-3 transition-colors cursor-pointer border"
+                      )}
+                      style={{
+                        background: "var(--reader-card-bg)",
+                        borderColor: "var(--reader-border)",
+                      }}
                     >
                       {editingBookmarkId === bookmark.id ? (
                         <div className="flex items-center gap-2">
@@ -280,12 +329,19 @@ export function SidePanel({
                             onChange={(e) =>
                               setEditingBookmarkLabel(e.target.value)
                             }
-                            className="h-7 text-sm"
+                            className="h-8 text-sm rounded-lg"
+                            style={{
+                              background: "var(--reader-card-bg)",
+                              borderColor: "var(--reader-border)",
+                              color: "var(--reader-text)",
+                            }}
                             autoFocus
                           />
                           <Button
                             variant="ghost"
-                            size="icon-xs"
+                            size="icon"
+                            className="h-8 w-8 rounded-lg cursor-pointer"
+                            style={{ color: "var(--reader-primary, #0891B2)" }}
                             onClick={() => {
                               onBookmarkEdit(
                                 bookmark.id,
@@ -294,14 +350,16 @@ export function SidePanel({
                               setEditingBookmarkId(null);
                             }}
                           >
-                            <Check className="size-3" />
+                            <Check className="size-3.5" />
                           </Button>
                           <Button
                             variant="ghost"
-                            size="icon-xs"
+                            size="icon"
+                            className="h-8 w-8 rounded-lg cursor-pointer"
+                            style={{ color: "var(--reader-muted-text)" }}
                             onClick={() => setEditingBookmarkId(null)}
                           >
-                            <X className="size-3" />
+                            <X className="size-3.5" />
                           </Button>
                         </div>
                       ) : (
@@ -313,13 +371,18 @@ export function SidePanel({
                           }}
                         >
                           <div className="flex items-start justify-between">
-                            <p className="text-sm font-medium truncate flex-1">
+                            <p
+                              className="text-sm font-medium truncate flex-1"
+                              style={{ color: "var(--reader-text)" }}
+                            >
                               {bookmark.label}
                             </p>
                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                               <Button
                                 variant="ghost"
-                                size="icon-xs"
+                                size="icon"
+                                className="h-7 w-7 rounded-lg cursor-pointer"
+                                style={{ color: "var(--reader-muted-text)" }}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setEditingBookmarkId(bookmark.id);
@@ -330,21 +393,29 @@ export function SidePanel({
                               </Button>
                               <Button
                                 variant="ghost"
-                                size="icon-xs"
+                                size="icon"
+                                className="h-7 w-7 rounded-lg cursor-pointer"
+                                style={{ color: "var(--reader-destructive, #ef4444)" }}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   onBookmarkDelete(bookmark.id);
                                 }}
                               >
-                                <Trash2 className="size-3 text-destructive" />
+                                <Trash2 className="size-3" />
                               </Button>
                             </div>
                           </div>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-muted-foreground">
+                            <span
+                              className="text-xs"
+                              style={{ color: "var(--reader-muted-text)" }}
+                            >
                               {Math.round(bookmark.progress * 100)}%
                             </span>
-                            <span className="text-xs text-muted-foreground">
+                            <span
+                              className="text-xs"
+                              style={{ color: "var(--reader-muted-text)" }}
+                            >
                               {formatDate(bookmark.createdAt)}
                             </span>
                           </div>
@@ -357,25 +428,36 @@ export function SidePanel({
             </ScrollArea>
           </TabsContent>
 
-          {/* 笔记 Tab */}
           <TabsContent value="notes" className="mt-0 flex-1 overflow-hidden">
             <ScrollArea className="h-full">
               <div className="p-4 space-y-2">
                 {notes.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-8">
+                  <p
+                    className="text-sm text-center py-8"
+                    style={{ color: "var(--reader-muted-text)" }}
+                  >
                     暂无笔记
                   </p>
                 ) : (
                   notes.map((note) => (
                     <div
                       key={note.id}
-                      className="group rounded-lg border p-3 hover:bg-accent/50 transition-colors"
+                      className={cn(
+                        "group rounded-xl p-3 transition-colors cursor-pointer border"
+                      )}
+                      style={{
+                        background: "var(--reader-card-bg)",
+                        borderColor: "var(--reader-border)",
+                      }}
                     >
                       {editingNoteId === note.id ? (
                         <div className="space-y-2">
                           <div
-                            className="text-xs text-muted-foreground pl-2 border-l-2 line-clamp-2"
-                            style={{ borderColor: editingNoteColor }}
+                            className="text-xs pl-2 border-l-2 line-clamp-2 rounded"
+                            style={{
+                              borderColor: editingNoteColor,
+                              color: "var(--reader-muted-text)",
+                            }}
                           >
                             {note.selectedText}
                           </div>
@@ -383,12 +465,19 @@ export function SidePanel({
                             {noteColors.map((c) => (
                               <button
                                 key={c}
-                                className={`size-5 rounded-full border-2 transition-transform ${
+                                className={cn(
+                                  "size-5 rounded-full border-2 transition-transform cursor-pointer",
                                   editingNoteColor === c
-                                    ? "border-foreground scale-110"
-                                    : "border-transparent"
-                                }`}
-                                style={{ backgroundColor: c }}
+                                    ? "scale-110"
+                                    : "border-transparent hover:scale-105"
+                                )}
+                                style={{
+                                  backgroundColor: c,
+                                  borderColor:
+                                    editingNoteColor === c
+                                      ? "var(--reader-text)"
+                                      : "transparent",
+                                }}
                                 onClick={() => setEditingNoteColor(c)}
                               />
                             ))}
@@ -398,19 +487,31 @@ export function SidePanel({
                             onChange={(e) =>
                               setEditingNoteContent(e.target.value)
                             }
-                            className="text-sm min-h-[60px]"
+                            className="text-sm min-h-[60px] rounded-lg"
+                            style={{
+                              background: "var(--reader-card-bg)",
+                              borderColor: "var(--reader-border)",
+                              color: "var(--reader-text)",
+                            }}
                             autoFocus
                           />
                           <div className="flex items-center gap-2 justify-end">
                             <Button
                               variant="ghost"
-                              size="xs"
+                              size="sm"
+                              className="rounded-lg cursor-pointer"
+                              style={{ color: "var(--reader-muted-text)" }}
                               onClick={() => setEditingNoteId(null)}
                             >
                               取消
                             </Button>
                             <Button
-                              size="xs"
+                              size="sm"
+                              className="rounded-lg cursor-pointer"
+                              style={{
+                                background: "var(--reader-primary, #0891B2)",
+                                color: "#ffffff",
+                              }}
                               onClick={() => {
                                 onNoteEdit(
                                   note.id,
@@ -433,20 +534,33 @@ export function SidePanel({
                           }}
                         >
                           <div
-                            className="text-xs text-muted-foreground pl-2 border-l-2 line-clamp-2 mb-1.5"
-                            style={{ borderColor: note.color }}
+                            className="text-xs pl-2 border-l-2 line-clamp-2 mb-1.5 rounded"
+                            style={{
+                              borderColor: note.color,
+                              color: "var(--reader-muted-text)",
+                            }}
                           >
                             {note.selectedText}
                           </div>
-                          <p className="text-sm line-clamp-3">{note.content}</p>
+                          <p
+                            className="text-sm line-clamp-3"
+                            style={{ color: "var(--reader-text)" }}
+                          >
+                            {note.content}
+                          </p>
                           <div className="flex items-center justify-between mt-2">
-                            <span className="text-xs text-muted-foreground">
+                            <span
+                              className="text-xs"
+                              style={{ color: "var(--reader-muted-text)" }}
+                            >
                               {formatDate(note.createdAt)}
                             </span>
                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                               <Button
                                 variant="ghost"
-                                size="icon-xs"
+                                size="icon"
+                                className="h-7 w-7 rounded-lg cursor-pointer"
+                                style={{ color: "var(--reader-muted-text)" }}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setEditingNoteId(note.id);
@@ -458,13 +572,15 @@ export function SidePanel({
                               </Button>
                               <Button
                                 variant="ghost"
-                                size="icon-xs"
+                                size="icon"
+                                className="h-7 w-7 rounded-lg cursor-pointer"
+                                style={{ color: "var(--reader-destructive, #ef4444)" }}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   onNoteDelete(note.id);
                                 }}
                               >
-                                <Trash2 className="size-3 text-destructive" />
+                                <Trash2 className="size-3" />
                               </Button>
                             </div>
                           </div>

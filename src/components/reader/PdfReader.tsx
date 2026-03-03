@@ -7,7 +7,6 @@ import "react-pdf/dist/Page/TextLayer.css";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 
-// Set worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 interface PdfReaderProps {
@@ -77,7 +76,6 @@ function PdfReader({
     });
   }, [goToPage, numPages, onRegisterController, pageNumber]);
 
-  // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
@@ -113,18 +111,28 @@ function PdfReader({
         </Document>
       </div>
 
-      {/* Navigation buttons */}
       {numPages > 0 && (
-        <div className="fixed bottom-16 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-background/95 backdrop-blur border rounded-full px-4 py-2 shadow-lg">
+        <div
+          className="fixed bottom-16 left-1/2 -translate-x-1/2 flex items-center gap-4 backdrop-blur-xl border rounded-full px-4 py-2 shadow-lg"
+          style={{
+            background: "var(--reader-card-bg)",
+            borderColor: "var(--reader-border)",
+          }}
+        >
           <Button
             variant="ghost"
             size="icon"
             onClick={() => goToPage(pageNumber - 1)}
             disabled={pageNumber <= 1}
+            className="rounded-full"
+            style={{ color: "var(--reader-text)" }}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="text-sm text-muted-foreground min-w-[5rem] text-center">
+          <span
+            className="text-sm min-w-[5rem] text-center"
+            style={{ color: "var(--reader-muted-text)" }}
+          >
             {pageNumber} / {numPages}
           </span>
           <Button
@@ -132,6 +140,8 @@ function PdfReader({
             size="icon"
             onClick={() => goToPage(pageNumber + 1)}
             disabled={pageNumber >= numPages}
+            className="rounded-full"
+            style={{ color: "var(--reader-text)" }}
           >
             <ChevronRight className="h-4 w-4" />
           </Button>

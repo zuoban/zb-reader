@@ -1075,9 +1075,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         epubContainer.removeEventListener("scroll", handleScroll);
         if (scrollTimer !== null) clearTimeout(scrollTimer);
       };
-    // onLocationChange is intentionally omitted from deps to avoid re-binding on every render;
-    // it is accessed via closure and is stable in practice (wrapped in useCallback in parent).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isRenditionReady]);
 
     return (

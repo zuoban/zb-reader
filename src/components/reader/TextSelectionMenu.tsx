@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Highlighter, StickyNote, Copy, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface TextSelectionMenuProps {
   visible: boolean;
@@ -33,7 +34,6 @@ export function TextSelectionMenu({
 }: TextSelectionMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Close menu when clicking outside
   useEffect(() => {
     if (!visible) return;
 
@@ -110,25 +110,48 @@ function TextSelectionMenuInner({
       }}
     >
       <div className="relative">
-        <div className="flex items-center gap-1 rounded-xl bg-card/95 backdrop-blur-xl border border-border/50 shadow-2xl p-1.5">
+        <div
+          className={cn(
+            "flex items-center gap-1 rounded-xl p-1.5",
+            "backdrop-blur-xl",
+            "border",
+            "shadow-lg"
+          )}
+          style={{
+            background: "var(--reader-card-bg)",
+            borderColor: "var(--reader-border)",
+            boxShadow: "0 4px 16px var(--reader-shadow)",
+          }}
+        >
           {showColors ? (
             <div className="flex items-center gap-2 px-1">
               {highlightColors.map((color) => (
                 <button
                   key={color.value}
-                  className="size-7 rounded-full border-2 border-border/50 transition-all duration-200 hover:scale-125 hover:shadow-md cursor-pointer"
+                  className={cn(
+                    "size-7 rounded-full border-2 border-transparent",
+                    "transition-all duration-200",
+                    "hover:scale-125 hover:shadow-md hover:border-foreground/30",
+                    "cursor-pointer"
+                  )}
                   style={{ backgroundColor: color.value }}
-                  onClick={() => handleAction(() => {
-                    onHighlight(color.value);
-                    setShowColors(false);
-                  })}
+                  onClick={() =>
+                    handleAction(() => {
+                      onHighlight(color.value);
+                      setShowColors(false);
+                    })
+                  }
                   title={color.label}
                 />
               ))}
               <Button
                 variant="ghost"
                 size="icon"
-                className="ml-1 h-7 w-7 text-muted-foreground cursor-pointer transition-all duration-200 hover:bg-primary/10"
+                className={cn(
+                  "ml-1 h-7 w-7 rounded-lg cursor-pointer",
+                  "transition-all duration-200"
+                )}
+                style={{ color: "var(--reader-muted-text)" }}
                 onClick={() => setShowColors(false)}
               >
                 <X className="h-4 w-4" />
@@ -139,7 +162,11 @@ function TextSelectionMenuInner({
               <Button
                 variant="ghost"
                 size="sm"
-                className="gap-1.5 h-8 cursor-pointer transition-all duration-200 hover:bg-primary/10 hover:scale-105"
+                className={cn(
+                  "gap-1.5 h-8 rounded-lg cursor-pointer",
+                  "transition-all duration-200"
+                )}
+                style={{ color: "var(--reader-text)" }}
                 onClick={() => setShowColors(true)}
               >
                 <Highlighter className="h-4 w-4" />
@@ -148,7 +175,11 @@ function TextSelectionMenuInner({
               <Button
                 variant="ghost"
                 size="sm"
-                className="gap-1.5 h-8 cursor-pointer transition-all duration-200 hover:bg-primary/10 hover:scale-105"
+                className={cn(
+                  "gap-1.5 h-8 rounded-lg cursor-pointer",
+                  "transition-all duration-200"
+                )}
+                style={{ color: "var(--reader-text)" }}
                 onClick={() => handleAction(onAddNote)}
               >
                 <StickyNote className="h-4 w-4" />
@@ -157,7 +188,11 @@ function TextSelectionMenuInner({
               <Button
                 variant="ghost"
                 size="sm"
-                className="gap-1.5 h-8 cursor-pointer transition-all duration-200 hover:bg-primary/10 hover:scale-105"
+                className={cn(
+                  "gap-1.5 h-8 rounded-lg cursor-pointer",
+                  "transition-all duration-200"
+                )}
+                style={{ color: "var(--reader-text)" }}
                 onClick={() => handleAction(onCopy)}
               >
                 <Copy className="h-4 w-4" />
@@ -168,7 +203,13 @@ function TextSelectionMenuInner({
         </div>
 
         <div className="absolute left-1/2 -translate-x-1/2 top-full">
-          <div className="size-2.5 rotate-45 -translate-y-1.5 bg-card border-b border-r border-border/50" />
+          <div
+            className="size-2.5 rotate-45 -translate-y-1.5 border-b border-r"
+            style={{
+              background: "var(--reader-card-bg)",
+              borderColor: "var(--reader-border)",
+            }}
+          />
         </div>
       </div>
     </div>
