@@ -675,7 +675,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
 
           if (cancelled || !viewerRef.current) return;
 
-          book = ePub(arrayBuffer as unknown as string);
+          book = ePub(arrayBuffer);
           bookRef.current = book;
 
           book.spine.hooks.serialize.register(
