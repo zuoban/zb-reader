@@ -187,6 +187,10 @@ function ReaderContent() {
 
   // 跟踪 TTS 设置的上次值，用于检测设置变化
   const prevTtsSettingsRef = useRef({ rate: ttsRate, pitch: ttsPitch, volume: ttsVolume });
+  
+  // Wake Lock for preventing screen sleep during TTS
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+  const mediaSessionSetupRef = useRef(false);
 
   const wait = useCallback((ms: number) => {
     return new Promise<void>((resolve) => {
@@ -435,6 +439,46 @@ function ReaderContent() {
     setActiveTtsParagraph("");
     setTtsPlaybackProgress(0);
     setIsSpeaking(false);
+    
+    // Release wake lock
+    if (wakeLockRef.current) {
+      wakeLockRef.current.release().catch(() => {});
+      wakeLockRef.current = null;
+    }
+    
+    // Clear media session
+    if ("mediaSession" in navigator && mediaSessionSetupRef.current) {
+      navigator.mediaSession.playbackState = "none";
+      mediaSessionSetupRef.current = false;
+    }
+  }, []);
+
+  const setupMediaSession = useCallback(() => {
+    if (!("mediaSession" in navigator)) return;
+    if (mediaSessionSetupRef.current) return;
+    
+    mediaSessionSetupRef.current = true;
+    
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: book?.title || "朗读中",
+      artist: book?.author || "ZB Reader",
+      album: "电子书朗读",
+    });
+    
+    navigator.mediaSession.playbackState = "playing";
+  }, [book]);
+
+  const requestWakeLock = useCallback(async () => {
+    if (!("wakeLock" in navigator)) return;
+    
+    try {
+      if (wakeLockRef.current) {
+        await wakeLockRef.current.release();
+      }
+      wakeLockRef.current = await navigator.wakeLock.request("screen");
+    } catch {
+      // Wake Lock not supported or failed
+    }
   }, []);
 
   const loadLegadoConfigs = useCallback(async () => {
@@ -547,6 +591,20 @@ function ReaderContent() {
       saveProgress();
     };
   }, [saveProgress, bookId]);
+
+  // Re-acquire Wake Lock when page becomes visible again (if TTS is playing)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible" && isSpeaking) {
+        void requestWakeLock();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [isSpeaking, requestWakeLock]);
 
   // ---- Handlers ----
   const handleLocationChange = useCallback(
@@ -1003,6 +1061,12 @@ function ReaderContent() {
         return;
       }
 
+      // Setup Media Session for background playback on mobile
+      setupMediaSession();
+      
+      // Request Wake Lock to prevent screen sleep
+      void requestWakeLock();
+
       if (!currentAudioRef.current) {
         currentAudioRef.current = new Audio();
       }
@@ -1074,7 +1138,7 @@ function ReaderContent() {
         });
       });
     },
-    []
+    [setupMediaSession, requestWakeLock]
   );
 
   // 当 TTS 设置变化时，如果正在播放，重新播放当前段落
@@ -1909,6 +1973,47 @@ function ReaderContent() {
         }, 10);
     }
   }, [getReadableParagraphs, isSpeaking, ttsEngine, speakWithBrowserParagraphs, speakWithLegadoParagraphs]);
+
+  // Setup Media Session action handlers
+  useEffect(() => {
+    if (!("mediaSession" in navigator)) return;
+    
+    navigator.mediaSession.setActionHandler("play", () => {
+      if (!isSpeaking && ttsResumeRef.current) {
+        setIsSpeaking(true);
+        ttsResumeRef.current();
+        ttsResumeRef.current = null;
+      }
+      navigator.mediaSession.playbackState = "playing";
+    });
+    
+    navigator.mediaSession.setActionHandler("pause", () => {
+      if (isSpeaking) {
+        stopSpeaking();
+      }
+      navigator.mediaSession.playbackState = "paused";
+    });
+    
+    navigator.mediaSession.setActionHandler("stop", () => {
+      stopSpeaking();
+    });
+    
+    navigator.mediaSession.setActionHandler("previoustrack", () => {
+      handleTtsPrevParagraph();
+    });
+    
+    navigator.mediaSession.setActionHandler("nexttrack", () => {
+      handleTtsNextParagraph();
+    });
+    
+    return () => {
+      navigator.mediaSession.setActionHandler("play", null);
+      navigator.mediaSession.setActionHandler("pause", null);
+      navigator.mediaSession.setActionHandler("stop", null);
+      navigator.mediaSession.setActionHandler("previoustrack", null);
+      navigator.mediaSession.setActionHandler("nexttrack", null);
+    };
+  }, [isSpeaking, stopSpeaking, handleTtsPrevParagraph, handleTtsNextParagraph]);
 
   // ---- Navigation handlers ----
   const handleTocItemClick = useCallback((href: string) => {
