@@ -6,12 +6,16 @@ const poppins = Poppins({
   variable: "--font-poppins",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  display: "swap",
+  preload: true,
 });
 
 const openSans = Open_Sans({
   variable: "--font-open-sans",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
+  display: "swap",
+  preload: true,
 });
 
 export const metadata: Metadata = {

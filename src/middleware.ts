@@ -6,18 +6,20 @@ const publicPaths = ["/login", "/register", "/api/auth"];
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Allow public paths
   if (publicPaths.some((p) => pathname.startsWith(p))) {
     return NextResponse.next();
   }
 
-  // Allow static files and Next.js internals
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon") ||
     pathname.includes(".")
   ) {
-    return NextResponse.next();
+    const response = NextResponse.next();
+    if (pathname.match(/\.(js|css|woff2?|ttf|eot|svg|png|jpg|jpeg|gif|webp|avif|ico)$/i)) {
+      response.headers.set("Cache-Control", "public, max-age=31536000, immutable");
+    }
+    return response;
   }
 
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
@@ -28,7 +30,11 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  return NextResponse.next();
+  const response = NextResponse.next();
+  
+  response.headers.set("X-Response-Time", Date.now().toString());
+  
+  return response;
 }
 
 export const config = {
