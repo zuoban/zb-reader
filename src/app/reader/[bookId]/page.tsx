@@ -928,7 +928,7 @@ function ReaderContent() {
     }
   }, []);
 
-  const getCurrentReadableText = useCallback(() => {
+  / unused useCallback(() => {
     if (!book) return "";
 
     if (book.format === "epub") {

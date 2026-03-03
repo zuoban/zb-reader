@@ -1,7 +1,4 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import fs from "fs";
-import path from "path";
-
 const mockFs = {
   existsSync: vi.fn(),
   mkdirSync: vi.fn(),

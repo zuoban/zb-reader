@@ -20,7 +20,7 @@ const themeStyles: Record<string, { bg: string; text: string }> = {
   sepia: { bg: "bg-[#f4ecd8]", text: "text-[#5b4636]" },
 };
 
-const TELEPROMPTER_FOLLOW_FACTOR = 0.16;
+/ unused 0.16;
 const TELEPROMPTER_VIEWPORT_ANCHOR = 0.42;
 
 function TxtReader({

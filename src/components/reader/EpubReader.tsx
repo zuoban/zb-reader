@@ -86,7 +86,7 @@ const THEME_STYLES: Record<
   },
 };
 
-const TELEPROMPTER_FOLLOW_FACTOR = 0.16;
+/ unused 0.16;
 const TELEPROMPTER_VIEWPORT_ANCHOR = 0.42;
 
 const TTS_INDICATOR_CSS = `
@@ -760,11 +760,11 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
               let overallProgress = 0;
               
               if (book && book.spine && href) {
-                const spineItems = (book.spine as any).items || [];
+                const spineItems = (book.spine as unknown as { items: Array<{ href: string; index: number }> }).items || [];
                 const totalSpineItems = spineItems.length;
                 
                 if (totalSpineItems > 0) {
-                  const currentItem = spineItems.find((item: any) => item.href === href);
+                  const currentItem = spineItems.find((item) => item.href === href);
                   if (currentItem) {
                     const currentIndex = currentItem.index;
                     

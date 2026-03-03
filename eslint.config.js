@@ -11,6 +11,7 @@ export default [
       "**/*.config.js",
       "**/*.config.ts",
       "node_modules/**",
+      "coverage/**",
     ],
   },
   {
@@ -42,7 +43,6 @@ export default [
       parserOptions: {
         ecmaVersion: "latest",
         sourceType: "module",
-        project: "./tsconfig.json",
       },
       globals: {
         console: "readonly",
@@ -60,9 +60,24 @@ export default [
     },
     rules: {
       ...tseslint.configs.recommended.rules,
-      "@typescript-eslint/no-unused-vars": "warn",
+      "@typescript-eslint/no-unused-vars": ["warn", { 
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }],
       "no-console": "warn",
       "prefer-const": "error",
+    },
+  },
+  {
+    files: ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"],
+    rules: {
+      "no-console": "off",
+    },
+  },
+  {
+    files: ["src/lib/logger.ts"],
+    rules: {
+      "no-console": "off",
     },
   },
 ];

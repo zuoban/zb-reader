@@ -1,6 +1,6 @@
 "use client";
 
-import { Book, ReadingProgress } from "@/lib/db/schema";
+import type { Book } from "@/lib/db/schema";
 import { BookCard } from "./BookCard";
 import { BookOpen, Upload } from "lucide-react";
 
