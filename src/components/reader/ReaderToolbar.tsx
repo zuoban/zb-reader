@@ -11,6 +11,8 @@ import {
   Pause,
   ArrowUp,
   ArrowDown,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -39,6 +41,10 @@ interface ReaderToolbarProps {
   onProgressChange: (progress: number) => void;
   onPrevPage?: () => void;
   onNextPage?: () => void;
+  onPrevChapter?: () => void;
+  onNextChapter?: () => void;
+  hasPrevChapter?: boolean;
+  hasNextChapter?: boolean;
 }
 
 function ToolbarButton({
@@ -97,6 +103,10 @@ export function ReaderToolbar({
   onProgressChange,
   onPrevPage,
   onNextPage,
+  onPrevChapter,
+  onNextChapter,
+  hasPrevChapter,
+  hasNextChapter,
 }: ReaderToolbarProps) {
   return (
     <TooltipProvider>
@@ -211,6 +221,22 @@ export function ReaderToolbar({
               </Button>
             )}
 
+            {onPrevChapter && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onPrevChapter}
+                disabled={!hasPrevChapter}
+                className={cn(
+                  "cursor-pointer h-8 w-8 rounded-lg transition-colors",
+                  !hasPrevChapter && "opacity-30 cursor-not-allowed"
+                )}
+                style={{ color: "var(--reader-muted-text)" }}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            )}
+
             <div className="flex-1 relative">
               <div
                 className="absolute inset-0 h-2 top-1/2 -translate-y-1/2 rounded-full overflow-hidden"
@@ -234,6 +260,22 @@ export function ReaderToolbar({
                 onValueChange={(value) => onProgressChange(value[0] / 100)}
               />
             </div>
+
+            {onNextChapter && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onNextChapter}
+                disabled={!hasNextChapter}
+                className={cn(
+                  "cursor-pointer h-8 w-8 rounded-lg transition-colors",
+                  !hasNextChapter && "opacity-30 cursor-not-allowed"
+                )}
+                style={{ color: "var(--reader-muted-text)" }}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            )}
 
             {onNextPage && (
               <Button
@@ -269,6 +311,18 @@ export function ReaderToolbar({
                   borderColor: "var(--reader-border)",
                 }}
               >
+                <ChevronLeft className="h-3 w-3" />
+              </kbd>
+              <span>上一章</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <kbd
+                className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-medium rounded border"
+                style={{
+                  background: "var(--reader-card-bg)",
+                  borderColor: "var(--reader-border)",
+                }}
+              >
                 <ArrowUp className="h-3 w-3" />
               </kbd>
               <span>向上滚动</span>
@@ -284,6 +338,18 @@ export function ReaderToolbar({
                 <ArrowDown className="h-3 w-3" />
               </kbd>
               <span>向下滚动</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <kbd
+                className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-medium rounded border"
+                style={{
+                  background: "var(--reader-card-bg)",
+                  borderColor: "var(--reader-border)",
+                }}
+              >
+                <ChevronRight className="h-3 w-3" />
+              </kbd>
+              <span>下一章</span>
             </div>
             <div className="flex items-center gap-1.5">
               <kbd

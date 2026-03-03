@@ -50,6 +50,8 @@ interface ReadingSettingsProps {
   legadoImporting: boolean;
   legadoPreloadCount: number;
   onLegadoPreloadCountChange: (value: number) => void;
+  ttsAutoNextChapter: boolean;
+  onTtsAutoNextChapterChange: (value: boolean) => void;
 }
 
 const themeOptions = [
@@ -283,6 +285,8 @@ export function ReadingSettings({
   legadoImporting,
   legadoPreloadCount,
   onLegadoPreloadCountChange,
+  ttsAutoNextChapter,
+  onTtsAutoNextChapterChange,
 }: ReadingSettingsProps) {
   const themeBg = theme === "light" ? "#ffffff" : theme === "dark" ? "#1e293b" : "#f4ecd8";
 
@@ -536,6 +540,23 @@ export function ReadingSettings({
                       ]}
                     />
                   </SettingRow>
+
+                  <SettingRow label="自动续章" sublabel="当前章节朗读完后自动进入下一章" noBorder>
+                    <button
+                      onClick={() => onTtsAutoNextChapterChange(!ttsAutoNextChapter)}
+                      className={cn(
+                        "relative w-12 h-7 rounded-full transition-colors cursor-pointer",
+                        ttsAutoNextChapter ? "bg-primary" : "bg-muted"
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "absolute top-1 left-1 w-5 h-5 rounded-full bg-background transition-transform shadow-sm",
+                          ttsAutoNextChapter ? "translate-x-5" : "translate-x-0"
+                        )}
+                      />
+                    </button>
+                  </SettingRow>
                 </>
               )}
 
@@ -574,6 +595,23 @@ export function ReadingSettings({
                         { value: "5", label: "5 段" },
                       ]}
                     />
+                  </SettingRow>
+
+                  <SettingRow label="自动续章" sublabel="当前章节朗读完后自动进入下一章" noBorder>
+                    <button
+                      onClick={() => onTtsAutoNextChapterChange(!ttsAutoNextChapter)}
+                      className={cn(
+                        "relative w-12 h-7 rounded-full transition-colors cursor-pointer",
+                        ttsAutoNextChapter ? "bg-primary" : "bg-muted"
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "absolute top-1 left-1 w-5 h-5 rounded-full bg-background transition-transform shadow-sm",
+                          ttsAutoNextChapter ? "translate-x-5" : "translate-x-0"
+                        )}
+                      />
+                    </button>
                   </SettingRow>
 
                   {/* Import config */}

@@ -148,12 +148,10 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     const [isRenditionReady, setIsRenditionReady] = useState(false);
     const pendingHighlightsRef = useRef<Array<{ cfiRange: string; color: string; id: string }>>([]);
     const justSelectedRef = useRef(false);
-    // Cache the active paragraph's absolute top position (relative to epubContainer)
-    // so the progress-scroll effect doesn't need to recompute offsetTop on every tick.
+    const totalChaptersRef = useRef<number>(0);
+    const currentChapterIndexRef = useRef<number>(0);
     const activeParagraphAbsTopRef = useRef<number | null>(null);
-    // rAF handle for lerp-based intra-paragraph scrolling
     const lerpRafIdRef = useRef<number | null>(null);
-    // Timer handle: delay lerp start until smooth-scroll settles after paragraph switch
     const smoothScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // ---- Expose API via ref ----
@@ -783,6 +781,24 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
                 }
               }, 120);
             }
+            
+            // 初始显示时手动触发 relocated 事件，确保 progress 被正确设置
+            const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
+            if (epubContainer && currentLocationRef.current) {
+              const scrollRange = epubContainer.scrollHeight - epubContainer.clientHeight;
+              let progress = 0;
+              if (scrollRange > 0) {
+                progress = Math.min(1, Math.max(0, epubContainer.scrollTop / scrollRange));
+                progressRef.current = progress;
+              }
+              console.log("[EpubReader displayed] initial progress:", progress);
+              onLocationChange?.({
+                cfi: currentLocationRef.current,
+                progress,
+                scrollRatio: progress,
+                href: undefined,
+              });
+            }
           });
 
           // ---- Location change handler ----
@@ -795,18 +811,62 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
                 displayed: { page: number; total: number };
                 href: string;
               };
+              end?: {
+                cfi: string;
+                href: string;
+              };
             }) => {
               const cfi = location.start.cfi;
-              const progress = location.start.percentage ?? 0;
-              currentLocationRef.current = cfi;
-              progressRef.current = progress;
-
-              // Capture current scroll ratio so the exact position within a
-              // chapter can be restored on the next open.
-              // scrollRatioRef is kept up-to-date by the scroll listener below;
-              // fall back to reading epubContainer directly if the ref is stale.
-              let scrollRatio: number | undefined;
+              const href = location.start.href;
+              
+              // 获取当前章节在 spine 中的索引
+              const book = bookRef.current;
+              let currentChapterIndex = 0;
+              let totalChapters = 1;
+              
+              if (href) {
+                // 从 href 中提取章节索引（例如 Section0207.xhtml -> 207）
+                const match = href.match(/Section0*(\d+)\.xhtml/i);
+                if (match) {
+                  currentChapterIndex = parseInt(match[1], 10) - 1;
+                  // 估算总章节数（假设最大编号 +20）
+                  totalChapters = currentChapterIndex + 20;
+                }
+              }
+              
+              currentChapterIndexRef.current = currentChapterIndex;
+              totalChaptersRef.current = totalChapters;
+              
+              // 计算整本书的进度 = 已完成的章节 + 当前章节内的进度
               const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
+              let chapterProgress = 0;
+              if (epubContainer) {
+                const scrollRange = epubContainer.scrollHeight - epubContainer.clientHeight;
+                if (scrollRange > 0) {
+                  chapterProgress = Math.min(1, Math.max(0, epubContainer.scrollTop / scrollRange));
+                }
+              }
+              
+              // 整本书的进度
+              const overallProgress = totalChapters > 1
+                ? (currentChapterIndex + chapterProgress) / totalChapters
+                : chapterProgress;
+              
+              const clampedProgress = Math.min(1, Math.max(0, overallProgress));
+              
+              currentLocationRef.current = cfi;
+              progressRef.current = clampedProgress;
+              
+              console.log("[EpubReader relocated]", {
+                cfi: cfi.slice(0, 50) + "...",
+                href,
+                currentChapterIndex,
+                totalChapters,
+                chapterProgress,
+                overallProgress: clampedProgress,
+              });
+
+              let scrollRatio: number | undefined;
               if (epubContainer) {
                 const scrollRange = epubContainer.scrollHeight - epubContainer.clientHeight;
                 if (scrollRange > 0) {
@@ -817,10 +877,10 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
 
               onLocationChange?.({
                 cfi,
-                progress,
+                progress: clampedProgress,
                 currentPage: location.start.displayed?.page,
                 totalPages: location.start.displayed?.total,
-                href: location.start.href,
+                href,
                 scrollRatio,
               });
             }
@@ -1039,49 +1099,54 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       };
     }, [isRenditionReady]);
 
-    // ---- Track scroll position for precise progress restoration ----
-    // In scrolled-doc mode the epubContainer is the actual scrollable element.
-    // We listen to its scroll event to keep scrollRatioRef up-to-date and fire
-    // onLocationChange with the latest scrollRatio after the user stops scrolling.
-    useEffect(() => {
-      if (!isRenditionReady) return;
-      const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
-      if (!epubContainer) return;
+          // ---- Track scroll position for precise progress restoration ----
+          // In scrolled-doc mode the epubContainer is the actual scrollable element.
+          // We listen to its scroll event to keep scrollRatioRef up-to-date and fire
+          // onLocationChange with the latest scrollRatio after the user stops scrolling.
+          useEffect(() => {
+            if (!isRenditionReady) return;
+            const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
+            if (!epubContainer) return;
 
-      let scrollTimer: ReturnType<typeof setTimeout> | null = null;
+            let scrollTimer: ReturnType<typeof setTimeout> | null = null;
 
-      const handleScroll = () => {
-        const scrollRange = epubContainer.scrollHeight - epubContainer.clientHeight;
-        if (scrollRange > 0) {
-          scrollRatioRef.current = Math.min(1, Math.max(0, epubContainer.scrollTop / scrollRange));
-        }
+            const handleScroll = () => {
+              const scrollRange = epubContainer.scrollHeight - epubContainer.clientHeight;
+              let ratio: number | undefined;
+              if (scrollRange > 0) {
+                ratio = Math.min(1, Math.max(0, epubContainer.scrollTop / scrollRange));
+                scrollRatioRef.current = ratio;
+                // 在 scrolled-doc 模式下，使用 scroll ratio 作为 progress 的近似值
+                progressRef.current = ratio;
+              }
 
-        // Debounce: fire onLocationChange ~300ms after the user stops scrolling
-        if (scrollTimer !== null) clearTimeout(scrollTimer);
-        scrollTimer = setTimeout(() => {
-          scrollTimer = null;
-          if (!currentLocationRef.current) return;
-          const scrollRange2 = epubContainer.scrollHeight - epubContainer.clientHeight;
-          let ratio: number | undefined;
-          if (scrollRange2 > 0) {
-            ratio = Math.min(1, Math.max(0, epubContainer.scrollTop / scrollRange2));
-            scrollRatioRef.current = ratio;
-          }
-          onLocationChange?.({
-            cfi: currentLocationRef.current,
-            progress: progressRef.current,
-            scrollRatio: ratio,
-          });
-        }, 300);
-      };
+              // Debounce: fire onLocationChange ~300ms after the user stops scrolling
+              if (scrollTimer !== null) clearTimeout(scrollTimer);
+              scrollTimer = setTimeout(() => {
+                scrollTimer = null;
+                if (!currentLocationRef.current) return;
+                const scrollRange2 = epubContainer.scrollHeight - epubContainer.clientHeight;
+                let ratio2: number | undefined;
+                if (scrollRange2 > 0) {
+                  ratio2 = Math.min(1, Math.max(0, epubContainer.scrollTop / scrollRange2));
+                  scrollRatioRef.current = ratio2;
+                }
+                onLocationChange?.({
+                  cfi: currentLocationRef.current,
+                  progress: progressRef.current,
+                  scrollRatio: ratio2,
+                  href: undefined,
+                });
+              }, 300);
+            };
 
-      epubContainer.addEventListener("scroll", handleScroll, { passive: true });
+            epubContainer.addEventListener("scroll", handleScroll, { passive: true });
 
-      return () => {
-        epubContainer.removeEventListener("scroll", handleScroll);
-        if (scrollTimer !== null) clearTimeout(scrollTimer);
-      };
-    }, [isRenditionReady]);
+            return () => {
+              epubContainer.removeEventListener("scroll", handleScroll);
+              if (scrollTimer !== null) clearTimeout(scrollTimer);
+            };
+          }, [isRenditionReady, onLocationChange]);
 
     return (
       <div className="relative h-full w-full">

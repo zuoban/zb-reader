@@ -142,6 +142,9 @@ export const readerSettings = sqliteTable("reader_settings", {
   legadoRate: integer("legado_rate").default(50).notNull(),
   legadoConfigId: text("legado_config_id"),
   legadoPreloadCount: integer("legado_preload_count").default(3).notNull(),
+  ttsAutoNextChapter: integer("tts_auto_next_chapter", { mode: "boolean" })
+    .default(false)
+    .notNull(),
   createdAt: text("created_at")
     .default(sql`(datetime('now'))`)
     .notNull(),

@@ -128,6 +128,7 @@ function ReaderContent() {
   );
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [ttsPlaybackProgress, setTtsPlaybackProgress] = useState(0);
+  const [ttsAutoNextChapter, setTtsAutoNextChapter] = useState(false);
 
   // Side panel
   const [sidePanelOpen, setSidePanelOpen] = useState(false);
@@ -302,6 +303,7 @@ function ReaderContent() {
             legadoRate?: number;
             legadoConfigId?: string;
             legadoPreloadCount?: number;
+            ttsAutoNextChapter?: boolean;
           };
         };
 
@@ -351,6 +353,9 @@ function ReaderContent() {
         ) {
           setLegadoPreloadCount(settings.legadoPreloadCount);
         }
+        if (typeof settings.ttsAutoNextChapter === "boolean") {
+          setTtsAutoNextChapter(settings.ttsAutoNextChapter);
+        }
       } catch {
         // ignore
       } finally {
@@ -393,6 +398,7 @@ function ReaderContent() {
             legadoRate,
             legadoConfigId: selectedLegadoConfigId,
             legadoPreloadCount,
+            ttsAutoNextChapter,
           }),
         });
       } catch {
@@ -411,6 +417,7 @@ function ReaderContent() {
     ttsPitch,
     ttsRate,
     ttsVolume,
+    ttsAutoNextChapter,
   ]);
 
   useEffect(() => {
@@ -1608,16 +1615,42 @@ function ReaderContent() {
   );
 
   const tryAutoTurnPage = useCallback(
-    async (sessionId: number) => {
+    async (sessionId: number): Promise<boolean> => {
       if (!book) return false;
 
       const previousIdentity = getPageIdentity();
+      const previousHref = currentHref;
 
       if (book.format === "epub") {
-        if (progressRef.current >= 0.999) {
+        // 在 scrolled-doc 模式下，每次只显示一个章节
+        // 需要检测当前是否在章节末尾，然后调用 rendition.next()
+        const epubInstance = epubReaderRef.current;
+        if (!epubInstance) return false;
+        
+        const progress = epubInstance.getProgress();
+        const currentLocation = epubInstance.getCurrentLocation();
+        
+        // 如果已到整本书的末尾
+        if (progress >= 0.995) {
           return false;
         }
-        epubReaderRef.current?.scrollDown();
+        
+        // 检查当前视口是否已经滚动到底部
+        const epubContainer = document.querySelector("#epub-viewer .epub-container") as HTMLElement | null;
+        if (epubContainer) {
+          const scrollBottom = epubContainer.scrollHeight - epubContainer.scrollTop - epubContainer.clientHeight;
+          const isNearBottom = scrollBottom < 50;
+          
+          if (isNearBottom) {
+            // 已在当前章节底部，调用 next() 进入下一章节
+            epubInstance.nextPage();
+          } else {
+            // 还在章节中间，继续向下滚动
+            epubInstance.scrollDown();
+          }
+        } else {
+          epubInstance.scrollDown();
+        }
       } else if (book.format === "txt") {
         txtReaderControllerRef.current?.scrollDown?.();
       } else if (book.format === "pdf") {
@@ -1632,7 +1665,7 @@ function ReaderContent() {
 
       return waitForPageChange(previousIdentity, sessionId);
     },
-    [book, currentPage, getPageIdentity, totalPages, waitForPageChange]
+    [book, currentPage, currentHref, getPageIdentity, totalPages, waitForPageChange]
   );
 
   const handleToggleTts = useCallback(async () => {
@@ -1926,6 +1959,113 @@ function ReaderContent() {
     }
   }, [book?.format]);
 
+  const handlePrevChapter = useCallback(() => {
+    if (book?.format !== "epub") return;
+    
+    // 方法 1：使用 rendition.prev() - scrolled-doc 模式下切换到上一节
+    const epubInstance = epubReaderRef.current;
+    if (epubInstance) {
+      console.log("[上一章] 使用 prev()");
+      epubInstance.prevPage();
+      return;
+    }
+    
+    // 方法 2：使用 TOC 导航（备用）
+    if (toc.length === 0) return;
+    
+    let currentIndex = -1;
+    if (currentHref) {
+      currentIndex = toc.findIndex(
+        (item) => item.href === currentHref || item.href.includes(currentHref)
+      );
+    }
+    
+    if (currentIndex === -1) {
+      const currentProgress = progressRef.current;
+      currentIndex = Math.floor(currentProgress * toc.length) - 1;
+      currentIndex = Math.max(0, currentIndex);
+    }
+    
+    if (currentIndex > 0) {
+      const prevChapter = toc[currentIndex - 1];
+      console.log("[上一章] 跳转到:", prevChapter.label, prevChapter.href);
+      epubReaderRef.current?.goToHref(prevChapter.href);
+    }
+  }, [book?.format, currentHref, toc]);
+
+  const handleNextChapter = useCallback(() => {
+    if (book?.format !== "epub") return;
+    
+    // 方法 1：使用 rendition.next() - scrolled-doc 模式下切换到下一节
+    const epubInstance = epubReaderRef.current;
+    if (epubInstance) {
+      console.log("[下一章] 使用 next()");
+      epubInstance.nextPage();
+      return;
+    }
+    
+    // 方法 2：使用 TOC 导航（备用）
+    if (toc.length === 0) return;
+    
+    let currentIndex = -1;
+    if (currentHref) {
+      currentIndex = toc.findIndex(
+        (item) => item.href === currentHref || item.href.includes(currentHref)
+      );
+    }
+    
+    if (currentIndex === -1) {
+      const currentProgress = progressRef.current;
+      currentIndex = Math.floor(currentProgress * toc.length);
+    }
+    
+    if (currentIndex !== -1 && currentIndex < toc.length - 1) {
+      const nextChapter = toc[currentIndex + 1];
+      console.log("[下一章] 跳转到:", nextChapter.label, nextChapter.href);
+      epubReaderRef.current?.goToHref(nextChapter.href);
+    }
+  }, [book?.format, currentHref, toc]);
+
+  // 计算是否有上一章/下一章
+  // 优先使用 currentHref 和 TOC 来判断
+  let hasPrevChapter = false;
+  let hasNextChapter = false;
+  
+  if (book?.format === "epub" && currentHref) {
+    // 从 href 提取章节编号（例如 Section0207.xhtml -> 207）
+    const match = currentHref.match(/Section0*(\d+)\.xhtml/i);
+    if (match) {
+      const chapterNum = parseInt(match[1], 10);
+      hasPrevChapter = chapterNum > 1;
+      hasNextChapter = chapterNum < 500; // 假设最多 500 章
+    } else {
+      // 回退到 TOC 判断
+      if (toc.length > 0) {
+        const idx = toc.findIndex(item => item.href === currentHref || item.href.includes(currentHref));
+        hasPrevChapter = idx > 0;
+        hasNextChapter = idx !== -1 && idx < toc.length - 1;
+      }
+    }
+  }
+  
+  // 最终回退：使用 progress
+  if (!currentHref) {
+    hasPrevChapter = progress > 0.05;
+    hasNextChapter = progress < 0.95;
+  }
+  
+  // 调试信息
+  useEffect(() => {
+    console.log("[章节导航调试]", {
+      format: book?.format,
+      tocLength: toc.length,
+      progress,
+      hasPrevChapter,
+      hasNextChapter,
+      currentHref,
+    });
+  }, [book?.format, toc.length, progress, hasPrevChapter, hasNextChapter, currentHref]);
+
   const handleJumpToReading = useCallback(() => {
     if (book?.format === "epub") {
       epubReaderRef.current?.scrollToActiveParagraph();
@@ -2112,6 +2252,10 @@ function ReaderContent() {
         onProgressChange={handleProgressChange}
         onPrevPage={handlePrevPage}
         onNextPage={handleNextPage}
+        onPrevChapter={handlePrevChapter}
+        onNextChapter={handleNextChapter}
+        hasPrevChapter={hasPrevChapter}
+        hasNextChapter={hasNextChapter}
       />
 
       {/* Side panel (TOC / Bookmarks / Notes) */}
@@ -2178,6 +2322,8 @@ function ReaderContent() {
         legadoImporting={legadoImporting}
         legadoPreloadCount={legadoPreloadCount}
         onLegadoPreloadCountChange={setLegadoPreloadCount}
+        ttsAutoNextChapter={ttsAutoNextChapter}
+        onTtsAutoNextChapterChange={setTtsAutoNextChapter}
       />
 
       {/* Text selection menu */}
