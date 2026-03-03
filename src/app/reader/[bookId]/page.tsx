@@ -480,12 +480,6 @@ function ReaderContent() {
   const saveProgress = useCallback(async () => {
     if (!bookId || !currentLocationRef.current) return;
 
-    console.log('[Reader saveProgress]', {
-      bookId,
-      progress: progressRef.current,
-      location: currentLocationRef.current,
-    });
-
     try {
       await fetch("/api/progress", {
         method: "PUT",
@@ -564,13 +558,6 @@ function ReaderContent() {
       href?: string;
       scrollRatio?: number;
     }) => {
-      console.log('[Reader handleLocationChange]', {
-        progress: location.progress,
-        cfi: location.cfi.slice(0, 50) + '...',
-        currentPage: location.currentPage,
-        totalPages: location.totalPages,
-      });
-
       // Encode the scroll ratio into the location string so we can restore the
       // exact scroll position (not just the chapter/CFI) on the next open.
       // Format: "<cfi>#scroll=<ratio>" where ratio is a float in [0, 1].
@@ -1969,7 +1956,6 @@ function ReaderContent() {
     // 方法 1：使用 rendition.prev() - scrolled-doc 模式下切换到上一节
     const epubInstance = epubReaderRef.current;
     if (epubInstance) {
-      console.log("[上一章] 使用 prev()");
       epubInstance.prevPage();
       return;
     }
@@ -1992,7 +1978,6 @@ function ReaderContent() {
     
     if (currentIndex > 0) {
       const prevChapter = toc[currentIndex - 1];
-      console.log("[上一章] 跳转到:", prevChapter.label, prevChapter.href);
       epubReaderRef.current?.goToHref(prevChapter.href);
     }
   }, [book?.format, currentHref, toc]);
@@ -2003,7 +1988,6 @@ function ReaderContent() {
     // 方法 1：使用 rendition.next() - scrolled-doc 模式下切换到下一节
     const epubInstance = epubReaderRef.current;
     if (epubInstance) {
-      console.log("[下一章] 使用 next()");
       epubInstance.nextPage();
       return;
     }
@@ -2025,7 +2009,6 @@ function ReaderContent() {
     
     if (currentIndex !== -1 && currentIndex < toc.length - 1) {
       const nextChapter = toc[currentIndex + 1];
-      console.log("[下一章] 跳转到:", nextChapter.label, nextChapter.href);
       epubReaderRef.current?.goToHref(nextChapter.href);
     }
   }, [book?.format, currentHref, toc]);
@@ -2057,18 +2040,6 @@ function ReaderContent() {
     hasPrevChapter = progress > 0.01;
     hasNextChapter = progress < 0.99;
   }
-  
-  // 调试信息
-  useEffect(() => {
-    console.log("[章节导航调试]", {
-      format: book?.format,
-      tocLength: toc.length,
-      progress,
-      hasPrevChapter,
-      hasNextChapter,
-      currentHref,
-    });
-  }, [book?.format, toc.length, progress, hasPrevChapter, hasNextChapter, currentHref]);
 
   const handleJumpToReading = useCallback(() => {
     if (book?.format === "epub") {

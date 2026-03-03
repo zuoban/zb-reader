@@ -116,10 +116,8 @@ function TxtReader({
       const scrollRange = container.scrollHeight - container.clientHeight;
       if (scrollRange > 0) {
         const initialProgress = Math.min(1, Math.max(0, container.scrollTop / scrollRange));
-        console.log('[TxtReader] Initial progress:', initialProgress, 'scrollRange:', scrollRange);
         onPageChange(initialProgress, 1);
       } else {
-        console.log('[TxtReader] No scroll range, progress: 0');
         onPageChange(0, 1);
       }
     }
@@ -145,7 +143,6 @@ function TxtReader({
         if (scrollRange2 > 0) {
           const ratio2 = Math.min(1, Math.max(0, container.scrollTop / scrollRange2));
           scrollRatioRef.current = ratio2;
-          console.log('[TxtReader] Scroll progress:', ratio2, 'scrollTop:', container.scrollTop, 'scrollRange:', scrollRange2);
           onPageChange(ratio2, 1);
         }
       }, 300);

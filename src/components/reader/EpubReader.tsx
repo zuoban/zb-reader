@@ -763,15 +763,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
                 const spineItems = (book.spine as any).items || [];
                 const totalSpineItems = spineItems.length;
                 
-                console.log('[EpubReader] Spine info:', {
-                  totalSpineItems,
-                  currentHref: href,
-                  spineItemsSample: spineItems.slice(0, 5).map((item: any) => ({
-                    index: item.index,
-                    href: item.href,
-                  })),
-                });
-                
                 if (totalSpineItems > 0) {
                   const currentItem = spineItems.find((item: any) => item.href === href);
                   if (currentItem) {
@@ -787,14 +778,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
                     }
                     
                     overallProgress = (currentIndex + chapterProgress) / totalSpineItems;
-                    console.log('[EpubReader] Progress calculation:', {
-                      currentIndex,
-                      chapterProgress,
-                      totalSpineItems,
-                      overallProgress,
-                    });
-                  } else {
-                    console.log('[EpubReader] Could not find current item in spine');
                   }
                 }
               }
@@ -813,13 +796,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
                   scrollRatioRef.current = scrollRatio;
                 }
               }
-
-              console.log('[EpubReader relocated]', {
-                cfi: cfi.slice(0, 50) + '...',
-                href,
-                percentage: location.start.percentage,
-                calculatedProgress: clampedProgress,
-              });
 
               onLocationChange?.({
                 cfi,
