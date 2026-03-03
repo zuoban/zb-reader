@@ -48,8 +48,14 @@ export function Navbar({ onUploadClick }: NavbarProps) {
           href="/bookshelf" 
           className="flex items-center gap-3 group cursor-pointer transition-all duration-200"
         >
-          <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors duration-200">
-            <BookOpen className="h-6 w-6 text-primary" />
+          <div className="relative w-10 h-10 flex items-center justify-center rounded-md bg-primary/10 group-hover:bg-primary/20 transition-all duration-200">
+            <svg width="24" height="24" viewBox="0 0 40 40" fill="none" className="text-primary">
+              <rect x="4" y="4" width="32" height="32" rx="3" stroke="currentColor" strokeWidth="2" fill="none"/>
+              <line x1="12" y1="12" x2="28" y2="12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+              <line x1="28" y1="12" x2="12" y2="28" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+              <line x1="12" y1="28" x2="28" y2="28" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+              <circle cx="20" cy="20" r="2" fill="currentColor"/>
+            </svg>
           </div>
           <span className="font-heading font-bold text-xl text-foreground group-hover:text-primary transition-colors duration-200">
             ZB Reader
