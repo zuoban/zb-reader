@@ -105,11 +105,12 @@ export function TtsFloatingControl({
       {isExpanded && (
         <div
           className={cn(
-            "flex items-center gap-0.5 px-1.5 py-1 mr-1",
+            "flex items-center gap-0.5 sm:gap-1 px-1.5 py-1 mr-1",
             "rounded-xl",
             "backdrop-blur-xl",
             "border",
-            "animate-in slide-in-from-right-4 fade-in duration-200 ease-out"
+            "animate-in slide-in-from-right-4 fade-in duration-200 ease-out",
+            "flex-wrap justify-center max-w-[calc(100vw-5rem)]"
           )}
           style={{
             background: "var(--reader-card-bg)",
@@ -121,7 +122,7 @@ export function TtsFloatingControl({
             <button
               type="button"
               onClick={onPrev}
-              className="group flex size-7 items-center justify-center rounded-lg transition-all duration-150 cursor-pointer active:scale-90"
+              className="group flex size-7 sm:size-7 items-center justify-center rounded-lg transition-all duration-150 cursor-pointer active:scale-90"
               style={{ color: "var(--reader-muted-text)" }}
               title="上一段"
             >
@@ -132,7 +133,7 @@ export function TtsFloatingControl({
           <button
             type="button"
             onClick={onToggle}
-            className="group flex size-7 items-center justify-center rounded-lg shadow-sm transition-all duration-150 cursor-pointer active:scale-90"
+            className="group flex size-7 sm:size-7 items-center justify-center rounded-lg shadow-sm transition-all duration-150 cursor-pointer active:scale-90"
             style={{
               background: "var(--reader-primary, #0891B2)",
               color: "#ffffff",
@@ -149,7 +150,7 @@ export function TtsFloatingControl({
           <button
             type="button"
             onClick={onStop}
-            className="group flex size-7 items-center justify-center rounded-lg transition-all duration-150 cursor-pointer active:scale-90"
+            className="group flex size-7 sm:size-7 items-center justify-center rounded-lg transition-all duration-150 cursor-pointer active:scale-90"
             style={{ color: "var(--reader-destructive, #ef4444)" }}
             title="停止"
           >
@@ -160,7 +161,7 @@ export function TtsFloatingControl({
             <button
               type="button"
               onClick={onNext}
-              className="group flex size-7 items-center justify-center rounded-lg transition-all duration-150 cursor-pointer active:scale-90"
+              className="group flex size-7 sm:size-7 items-center justify-center rounded-lg transition-all duration-150 cursor-pointer active:scale-90"
               style={{ color: "var(--reader-muted-text)" }}
               title="下一段"
             >
@@ -169,20 +170,20 @@ export function TtsFloatingControl({
           )}
 
           <div
-            className="w-px h-4 mx-0.5"
+            className="w-px h-4 mx-0.5 hidden sm:block"
             style={{ background: "var(--reader-border)" }}
           />
 
           {totalParagraphs > 0 && (
-            <div className="flex items-center gap-1.5 px-2">
+            <div className="flex items-center gap-1 sm:gap-1.5 px-1 sm:px-2">
               <span
-                className="text-xs font-medium min-w-[3rem] text-center"
+                className="text-[10px] sm:text-xs font-medium min-w-[2.5rem] sm:min-w-[3rem] text-center"
                 style={{ color: "var(--reader-muted-text)" }}
               >
                 {currentParagraphIndex + 1}/{totalParagraphs}
               </span>
               <div
-                className="w-12 h-1 rounded-full overflow-hidden"
+                className="w-10 sm:w-12 h-1 rounded-full overflow-hidden"
                 style={{ background: "var(--reader-border)" }}
               >
                 <div
@@ -199,13 +200,13 @@ export function TtsFloatingControl({
           {onJumpToPosition && (
             <>
               <div
-                className="w-px h-4 mx-0.5"
+                className="w-px h-4 mx-0.5 hidden sm:block"
                 style={{ background: "var(--reader-border)" }}
               />
               <button
                 type="button"
                 onClick={onJumpToPosition}
-                className="group flex size-7 items-center justify-center rounded-lg transition-all duration-150 cursor-pointer active:scale-90"
+                className="group flex size-7 sm:size-7 items-center justify-center rounded-lg transition-all duration-150 cursor-pointer active:scale-90"
                 style={{ color: "var(--reader-muted-text)" }}
                 title="跳转到朗读位置"
               >
@@ -217,13 +218,13 @@ export function TtsFloatingControl({
           {onTtsAutoNextChapterChange && (
             <>
               <div
-                className="w-px h-4 mx-0.5"
+                className="w-px h-4 mx-0.5 hidden sm:block"
                 style={{ background: "var(--reader-border)" }}
               />
               <button
                 type="button"
                 onClick={() => onTtsAutoNextChapterChange(!ttsAutoNextChapter)}
-                className="group flex size-7 items-center justify-center rounded-lg transition-all duration-150 cursor-pointer active:scale-90"
+                className="group flex size-7 sm:size-7 items-center justify-center rounded-lg transition-all duration-150 cursor-pointer active:scale-90"
                 style={{ 
                   color: ttsAutoNextChapter 
                     ? "var(--reader-primary, #0891B2)" 
