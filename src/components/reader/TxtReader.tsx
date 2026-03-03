@@ -20,7 +20,6 @@ const themeStyles: Record<string, { bg: string; text: string }> = {
   sepia: { bg: "bg-[#f4ecd8]", text: "text-[#5b4636]" },
 };
 
-/ unused 0.16;
 const TELEPROMPTER_VIEWPORT_ANCHOR = 0.42;
 
 function TxtReader({
@@ -165,7 +164,7 @@ function TxtReader({
   const normalizeText = (value: string) => value.replace(/\s+/g, "").trim();
   const activeNeedle = normalizeText(activeTtsParagraph || "").slice(0, 80);
 
-  const getTeleprompterScrollTop = useCallback((element: HTMLElement, progress: number) => {
+  const _getTeleprompterScrollTop = useCallback((element: HTMLElement, progress: number) => {
     const scrollRange = Math.max(0, element.scrollHeight - element.clientHeight);
     if (scrollRange <= 0) return 0;
 

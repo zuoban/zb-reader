@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -34,7 +35,7 @@ export async function GET() {
       .orderBy(desc(ttsConfigs.createdAt));
     return NextResponse.json(configs);
   } catch (error) {
-    console.error("Failed to fetch TTS configs:", error);
+    logger.error("api", "Failed to fetch TTS configs:", error);
     return NextResponse.json({ error: "获取TTS配置失败" }, { status: 500 });
   }
 }
@@ -64,7 +65,7 @@ export async function POST(req: NextRequest) {
           try {
               headers = JSON.parse(item.header);
           } catch {
-              console.warn("Failed to parse Legado header JSON", item.header);
+              logger.warn("tts", "Failed to parse Legado header JSON", item.header);
               // If not valid JSON, maybe store as is or object? 
               // Our schema expects `json` mode, so `headers` should be an object.
               // If it's a simple string, we might just put it in a wrapper or ignore.
@@ -113,7 +114,7 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error) {
-    console.error("Failed to create TTS config:", error);
+    logger.error("api", "Failed to create TTS config:", error);
     return NextResponse.json({ error: "创建TTS配置失败" }, { status: 500 });
   }
 }

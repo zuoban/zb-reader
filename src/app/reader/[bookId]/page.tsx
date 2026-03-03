@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
-import { useTheme } from "next-themes";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import dynamic from "next/dynamic";
 import { ReaderErrorBoundary } from "@/components/reader/ReaderErrorBoundary";
@@ -25,6 +24,7 @@ import {
   getCachedBook,
 } from "@/lib/book-cache";
 import { ttsAudioCache, TtsAudioLruCache } from "@/lib/ttsAudioCache";
+import { logger } from "@/lib/logger";
 
 // Dynamic import for EpubReader (client-only, depends on browser APIs)
 const EpubReader = dynamic(() => import("@/components/reader/EpubReader"), {
@@ -259,7 +259,7 @@ function ReaderContent() {
         setBookUrl(fileUrl);
         bookUrlRef.current = fileUrl;
       } catch (error) {
-        console.error("Failed to load book:", error);
+        logger.error("reader", "加载书籍失败", error);
         toast.error("加载失败");
       } finally {
         setLoading(false);
@@ -536,7 +536,7 @@ function ReaderContent() {
           totalPages: totalPagesRef.current,
         }),
       });
-    } catch (error) {
+    } catch {
       // Silently fail
     }
   }, [bookId]);
@@ -915,7 +915,7 @@ function ReaderContent() {
     setReaderTheme(theme);
     
     // Sync with next-themes and API
-    const globalTheme = theme === "dark" ? "dark" : "light";
+    const _globalTheme = theme === "dark" ? "dark" : "light";
     
     try {
       await fetch("/api/reader-settings", {
@@ -927,32 +927,6 @@ function ReaderContent() {
       // ignore
     }
   }, []);
-
-  / unused useCallback(() => {
-    if (!book) return "";
-
-    if (book.format === "epub") {
-      return epubReaderRef.current?.getCurrentText()?.trim() || "";
-    }
-
-    if (book.format === "txt") {
-      const txtNode = document.querySelector("[data-reader-txt-page='true']");
-      return txtNode?.textContent?.trim() || "";
-    }
-
-    if (book.format === "pdf") {
-      const spans = document.querySelectorAll(
-        ".react-pdf__Page__textContent span"
-      );
-      const text = Array.from(spans)
-        .map((span) => span.textContent || "")
-        .join(" ")
-        .trim();
-      return text;
-    }
-
-    return "";
-  }, [book]);
 
   const handleLegadoImport = useCallback(async () => {
     const raw = legadoImportText.trim();
@@ -1102,7 +1076,7 @@ function ReaderContent() {
           dispose();
           options?.onCleanup?.();
           if (IS_DEV) {
-            console.warn("[TTS] audio element onerror", options?.debugMeta);
+            logger.warn("tts", "audio element onerror", options?.debugMeta);
           }
           reject(new Error("audio_play_error:MediaError"));
         };
@@ -1128,7 +1102,7 @@ function ReaderContent() {
           }
 
           if (IS_DEV) {
-            console.warn("[TTS] audio.play rejected", {
+            logger.warn("tts", "audio.play rejected", {
               ...options?.debugMeta,
               reason,
             });
@@ -1302,7 +1276,6 @@ function ReaderContent() {
               if (ttsSessionRef.current === sessionId) {
                 toast(`朗读失败，正在重试（${attempt + 1}/${MAX_TTS_RETRY_COUNT}）`);
               }
-              // eslint-disable-next-line no-await-in-loop
               await wait(TTS_RETRY_DELAY_MS);
               continue;
             }
@@ -1509,11 +1482,9 @@ function ReaderContent() {
 
           try {
             const prepared =
-              // eslint-disable-next-line no-await-in-loop
               await (attempt === 1
                 ? currentPreparedPromise
                 : requestLegadoSpeech(paragraph));
-            // eslint-disable-next-line no-await-in-loop
             await playLegadoPreparedSpeech(prepared, paragraph, sessionId);
             paragraphSucceeded = true;
             break;
@@ -1525,7 +1496,6 @@ function ReaderContent() {
               if (ttsSessionRef.current === sessionId) {
                 toast(`朗读失败，正在重试（${attempt + 1}/${MAX_TTS_RETRY_COUNT}）`);
               }
-              // eslint-disable-next-line no-await-in-loop
               await wait(TTS_RETRY_DELAY_MS);
               continue;
             }
@@ -1670,7 +1640,6 @@ function ReaderContent() {
           return true;
         }
 
-        // eslint-disable-next-line no-await-in-loop
         await new Promise((resolve) => setTimeout(resolve, 120));
       }
       return false;
@@ -1683,7 +1652,7 @@ function ReaderContent() {
       if (!book) return false;
 
       const previousIdentity = getPageIdentity();
-      const previousHref = currentHref;
+      const _previousHref = currentHref;
 
       if (book.format === "epub") {
         // 在 scrolled-doc 模式下，每次只显示一个章节
@@ -1692,7 +1661,7 @@ function ReaderContent() {
         if (!epubInstance) return false;
         
         const progress = epubInstance.getProgress();
-        const currentLocation = epubInstance.getCurrentLocation();
+        const _currentLocation = epubInstance.getCurrentLocation();
         
         // 如果已到整本书的末尾
         if (progress >= 0.995) {

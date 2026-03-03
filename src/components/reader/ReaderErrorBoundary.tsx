@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { AlertTriangle, RefreshCw, ArrowLeft } from "lucide-react";
+import { logger } from "@/lib/logger";
 
 interface ReaderErrorBoundaryProps {
   children: ReactNode;
@@ -27,7 +28,7 @@ export class ReaderErrorBoundary extends Component<ReaderErrorBoundaryProps, Rea
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error("[ReaderErrorBoundary]", error, errorInfo.componentStack);
+    logger.error("reader-error-boundary", "Reader error", error, errorInfo.componentStack);
   }
 
   handleReset = () => {

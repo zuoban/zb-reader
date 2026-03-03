@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -44,7 +45,7 @@ export async function PUT(
 
     return NextResponse.json({ message: "更新成功" });
   } catch (error) {
-    console.error("Failed to update TTS config:", error);
+    logger.error("api", "Failed to update TTS config:", error);
     return NextResponse.json({ error: "更新TTS配置失败" }, { status: 500 });
   }
 }
@@ -65,7 +66,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: "删除成功" });
   } catch (error) {
-    console.error("Failed to delete TTS config:", error);
+    logger.error("api", "Failed to delete TTS config:", error);
     return NextResponse.json({ error: "删除TTS配置失败" }, { status: 500 });
   }
 }

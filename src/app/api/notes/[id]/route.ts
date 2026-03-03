@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -43,7 +44,7 @@ export async function PUT(
 
     return NextResponse.json({ note: updated });
   } catch (error) {
-    console.error("Update note error:", error);
+    logger.error("api", "Update note error:", error);
     return NextResponse.json({ error: "更新笔记失败" }, { status: 500 });
   }
 }
@@ -72,7 +73,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: "删除成功" });
   } catch (error) {
-    console.error("Delete note error:", error);
+    logger.error("api", "Delete note error:", error);
     return NextResponse.json({ error: "删除笔记失败" }, { status: 500 });
   }
 }

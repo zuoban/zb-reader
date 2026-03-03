@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
@@ -166,7 +167,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ text: parsed.text, audioUrl: parsed.audioUrl });
   } catch (error) {
-    console.error("Failed to request TTS speech text:", error);
+    logger.error("api", "Failed to request TTS speech text:", error);
     return NextResponse.json({ error: "获取朗读内容失败" }, { status: 500 });
   }
 }

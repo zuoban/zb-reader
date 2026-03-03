@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import ePub, { Book, Rendition } from "epubjs";
+import { logger } from "@/lib/logger";
 
 interface EpubReaderProps {
   url: string;
@@ -86,7 +87,6 @@ const THEME_STYLES: Record<
   },
 };
 
-/ unused 0.16;
 const TELEPROMPTER_VIEWPORT_ANCHOR = 0.42;
 
 const TTS_INDICATOR_CSS = `
@@ -144,7 +144,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     const progressRef = useRef<number>(0);
     const scrollRatioRef = useRef<number>(0);
     const highlightIdsRef = useRef<Set<string>>(new Set());
-    const [isReady, setIsReady] = useState(false);
+    const [_isReady, setIsReady] = useState(false);
     const [isRenditionReady, setIsRenditionReady] = useState(false);
     const pendingHighlightsRef = useRef<Array<{ cfiRange: string; color: string; id: string }>>([]);
     const justSelectedRef = useRef(false);
@@ -405,7 +405,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       return text.replace(/\s+/g, "").trim();
     }, []);
 
-    const getTeleprompterScrollTop = useCallback(
+    const _getTeleprompterScrollTop = useCallback(
       (element: HTMLElement, progress: number) => {
         const scrollRange = Math.max(0, element.scrollHeight - element.clientHeight);
         if (scrollRange <= 0) return 0;
@@ -810,7 +810,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
 
           rendition.on(
             "selected",
-            (cfiRange: string, contents: { window: Window }) => {
+            (cfiRange: string, _contents: { window: Window }) => {
               if (!onTextSelected) return;
               book!.getRange(cfiRange).then((range: Range) => {
                 const text = range.toString();
@@ -850,7 +850,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
             });
           });
         } catch (error) {
-          console.error("Failed to load EPUB:", error);
+          logger.error("epub-reader", "加载EPUB失败", error);
         }
       }
 

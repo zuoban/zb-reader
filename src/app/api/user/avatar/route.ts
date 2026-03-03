@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -47,8 +48,6 @@ export async function POST(req: NextRequest) {
 
     await writeFile(filepath, buffer);
 
-    const avatarPath = `/data/avatars/${filename}`;
-
     await db
       .update(users)
       .set({ 
@@ -62,7 +61,7 @@ export async function POST(req: NextRequest) {
       avatar: `/api/user/avatar/${session.user.id}`,
     });
   } catch (error) {
-    console.error("头像上传失败:", error);
+    logger.error("api", "头像上传失败:", error);
     return NextResponse.json({ error: "头像上传失败" }, { status: 500 });
   }
 }

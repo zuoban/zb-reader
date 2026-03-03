@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -28,7 +29,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ progress: progress || null });
   } catch (error) {
-    console.error("Get progress error:", error);
+    logger.error("api", "Get progress error:", error);
     return NextResponse.json({ error: "获取进度失败" }, { status: 500 });
   }
 }
@@ -43,7 +44,7 @@ export async function PUT(req: NextRequest) {
     const { bookId, progress, location, currentPage, totalPages } =
       await req.json();
 
-    console.log('[Progress API PUT]', {
+    logger.debug("api", '[Progress API PUT]', {
       userId: session.user.id,
       bookId,
       progress,
@@ -98,7 +99,7 @@ export async function PUT(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Update progress error:", error);
+    logger.error("api", "Update progress error:", error);
     return NextResponse.json({ error: "更新进度失败" }, { status: 500 });
   }
 }

@@ -4,6 +4,7 @@ import { users } from "@/lib/db/schema";
 import { eq, or } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: NextRequest) {
   try {
@@ -71,7 +72,7 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Register error:", error);
+    logger.error("register", "注册失败", error);
     return NextResponse.json(
       { error: "注册失败，请稍后再试" },
       { status: 500 }

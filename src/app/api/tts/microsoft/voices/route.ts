@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { listMicrosoftVoices } from "@/lib/microsoftTts";
@@ -12,7 +13,7 @@ export async function GET() {
     const voices = await listMicrosoftVoices();
     return NextResponse.json({ voices });
   } catch (error) {
-    console.error("Failed to list Microsoft voices:", error);
+    logger.error("api", "Failed to list Microsoft voices:", error);
     return NextResponse.json({ error: "获取语音列表失败" }, { status: 500 });
   }
 }

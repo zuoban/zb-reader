@@ -54,7 +54,7 @@ export default function BookshelfPage() {
         setBooks(data.books);
         setProgressMap(data.progressMap || {});
       }
-    } catch (error) {
+    } catch {
       toast.error("获取书籍失败");
     } finally {
       setLoading(false);

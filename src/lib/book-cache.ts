@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 const DB_NAME = "zb-reader-books";
 const DB_VERSION = 1;
 const STORE_NAME = "books";
@@ -60,7 +61,7 @@ export async function cacheBook(
       request.onerror = () => reject(request.error);
     });
   } catch (error) {
-    console.error("Failed to cache book:", error);
+    logger.error("book-cache", "Failed to cache book:", error);
     throw error;
   }
 }
@@ -82,7 +83,7 @@ export async function getCachedBook(
       request.onerror = () => reject(request.error);
     });
   } catch (error) {
-    console.error("Failed to get cached book:", error);
+    logger.error("book-cache", "Failed to get cached book:", error);
     return null;
   }
 }
@@ -108,7 +109,7 @@ export async function clearBookCache(bookId: string): Promise<void> {
       request.onerror = () => reject(request.error);
     });
   } catch (error) {
-    console.error("Failed to clear book cache:", error);
+    logger.error("book-cache", "Failed to clear book cache:", error);
   }
 }
 
@@ -136,7 +137,7 @@ export async function getAllCachedBooks(): Promise<
       request.onerror = () => reject(request.error);
     });
   } catch (error) {
-    console.error("Failed to get all cached books:", error);
+    logger.error("book-cache", "Failed to get all cached books:", error);
     return [];
   }
 }
@@ -153,7 +154,7 @@ export async function clearAllCache(): Promise<void> {
       request.onerror = () => reject(request.error);
     });
   } catch (error) {
-    console.error("Failed to clear all cache:", error);
+    logger.error("book-cache", "Failed to clear all cache:", error);
     throw error;
   }
 }

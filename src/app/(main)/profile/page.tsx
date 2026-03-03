@@ -28,8 +28,8 @@ interface UserProfile {
 }
 
 export default function ProfilePage() {
-  const { data: session, update } = useSession();
-  const router = useRouter();
+  const { data: _session, update } = useSession();
+  const _router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [profile, setProfile] = useState<UserProfile | null>(null);

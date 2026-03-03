@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -29,7 +30,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ notes: result });
   } catch (error) {
-    console.error("Get notes error:", error);
+    logger.error("api", "Get notes error:", error);
     return NextResponse.json({ error: "获取笔记失败" }, { status: 500 });
   }
 }
@@ -71,7 +72,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ note }, { status: 201 });
   } catch (error) {
-    console.error("Create note error:", error);
+    logger.error("api", "Create note error:", error);
     return NextResponse.json({ error: "创建笔记失败" }, { status: 500 });
   }
 }

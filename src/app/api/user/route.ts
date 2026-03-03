@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -33,7 +34,7 @@ export async function GET(_req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("获取用户信息失败:", error);
+    logger.error("api", "获取用户信息失败:", error);
     return NextResponse.json({ error: "获取用户信息失败" }, { status: 500 });
   }
 }
@@ -134,7 +135,7 @@ export async function PATCH(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("更新用户信息失败:", error);
+    logger.error("api", "更新用户信息失败:", error);
     return NextResponse.json({ error: "更新用户信息失败" }, { status: 500 });
   }
 }

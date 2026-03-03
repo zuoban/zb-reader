@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { synthesizeMicrosoftSpeech } from "@/lib/microsoftTts";
@@ -66,7 +67,7 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Failed to synthesize Microsoft speech:", error);
+    logger.error("api", "Failed to synthesize Microsoft speech:", error);
     return NextResponse.json({ error: "生成语音失败" }, { status: 500 });
   }
 }

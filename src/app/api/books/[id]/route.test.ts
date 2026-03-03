@@ -26,7 +26,7 @@ vi.mock("@/lib/storage", () => ({
   deleteCoverImage: vi.fn(),
 }));
 
-function createRequest(url: string, params: { id: string }): NextRequest {
+function createRequest(url: string, _params: { id: string }): NextRequest {
   return new NextRequest(new URL(url, "http://localhost:3000"), {
     method: "GET",
   });

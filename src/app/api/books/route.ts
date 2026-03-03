@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
     const progressMap: Record<string, number> = {};
     progressRecords.forEach((p) => {
       progressMap[p.bookId] = p.progress;
-      console.log('[Books API] Progress record:', {
+      logger.debug('books', 'Progress record', {
         bookId: p.bookId,
         progress: p.progress,
         currentPage: p.currentPage,
@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
       });
     });
 
-    console.log('[Books API] Final progressMap:', progressMap);
+    logger.debug('books', 'Final progressMap', progressMap);
 
     return NextResponse.json({ books: result, progressMap, total, page, limit });
   } catch (error) {

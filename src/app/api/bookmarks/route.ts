@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -32,7 +33,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ bookmarks: result });
   } catch (error) {
-    console.error("Get bookmarks error:", error);
+    logger.error("api", "Get bookmarks error:", error);
     return NextResponse.json({ error: "获取书签失败" }, { status: 500 });
   }
 }
@@ -71,7 +72,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ bookmark }, { status: 201 });
   } catch (error) {
-    console.error("Create bookmark error:", error);
+    logger.error("api", "Create bookmark error:", error);
     return NextResponse.json({ error: "创建书签失败" }, { status: 500 });
   }
 }

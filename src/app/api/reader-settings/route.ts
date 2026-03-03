@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
@@ -66,7 +67,7 @@ export async function GET() {
 
     return NextResponse.json({ settings: toResponseShape(settings) });
   } catch (error) {
-    console.error("Get reader settings error:", error);
+    logger.error("api", "Get reader settings error:", error);
     return NextResponse.json({ error: "获取阅读设置失败" }, { status: 500 });
   }
 }
@@ -135,7 +136,7 @@ export async function PUT(req: NextRequest) {
 
     return NextResponse.json({ settings: toResponseShape(updated) });
   } catch (error) {
-    console.error("Update reader settings error:", error);
+    logger.error("api", "Update reader settings error:", error);
     return NextResponse.json({ error: "更新阅读设置失败" }, { status: 500 });
   }
 }

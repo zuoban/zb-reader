@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -42,7 +43,7 @@ export async function PUT(
 
     return NextResponse.json({ bookmark: updated });
   } catch (error) {
-    console.error("Update bookmark error:", error);
+    logger.error("api", "Update bookmark error:", error);
     return NextResponse.json({ error: "更新书签失败" }, { status: 500 });
   }
 }
@@ -74,7 +75,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: "删除成功" });
   } catch (error) {
-    console.error("Delete bookmark error:", error);
+    logger.error("api", "Delete bookmark error:", error);
     return NextResponse.json({ error: "删除书签失败" }, { status: 500 });
   }
 }
