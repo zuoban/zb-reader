@@ -284,17 +284,15 @@ export function ReadingSettings({
   legadoPreloadCount,
   onLegadoPreloadCountChange,
 }: ReadingSettingsProps) {
+  const bgClass = theme === "light" ? "bg-[#ffffff]" : theme === "dark" ? "bg-[#1e293b]" : "bg-[#f4ecd8]";
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
+        key={theme}
         side="bottom"
         showBackground={false}
-        className={cn(
-          "rounded-t-3xl border-t px-0 sm:max-w-md sm:mx-auto overflow-hidden transition-colors duration-200",
-          theme === "light" && "bg-[#ffffff]",
-          theme === "dark" && "bg-[#1e293b]",
-          theme === "sepia" && "bg-[#f4ecd8]"
-        )}
+        className={cn("rounded-t-3xl border-t px-0 sm:max-w-md sm:mx-auto overflow-hidden", bgClass)}
         style={{
           borderColor: "var(--reader-border)",
           boxShadow: "0 -12px 48px -4px rgba(0,0,0,0.18)",
