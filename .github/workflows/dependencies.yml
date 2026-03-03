@@ -1,0 +1,43 @@
+name: Dependencies
+
+on:
+  schedule:
+    # Run every week on Sunday at 00:00 UTC
+    - cron: '0 0 * * 0'
+
+jobs:
+  update:
+    name: Check for Updates
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check for outdated dependencies
+        run: npm outdated || true
+
+      - name: Create issue for outdated dependencies
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { stdout } = await exec.getExecOutput('npm outdated --json');
+            if (stdout) {
+              const outdated = JSON.parse(stdout);
+              const body = Object.entries(outdated)
+                .map(([pkg, info]) => `- **${pkg}**: ${info.current} → ${info.latest}`)
+                .join('\n');
+              
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '📦 Weekly dependency update check',
+                body: `## Outdated dependencies\n\n${body}\n\n*This is an automated weekly check.*`,
+                labels: ['dependencies', 'maintenance']
+              });
+            }

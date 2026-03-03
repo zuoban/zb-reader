@@ -18,9 +18,6 @@ export default [
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",
-      ecmaFeatures: {
-        jsx: true,
-      },
       globals: {
         console: "readonly",
         process: "readonly",
@@ -45,9 +42,7 @@ export default [
       parserOptions: {
         ecmaVersion: "latest",
         sourceType: "module",
-        ecmaFeatures: {
-          jsx: true,
-        },
+        project: "./tsconfig.json",
       },
       globals: {
         console: "readonly",
