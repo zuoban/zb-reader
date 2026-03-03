@@ -1962,16 +1962,7 @@ function ReaderContent() {
     root.style.setProperty("--reader-muted-text", currentTheme.mutedText);
     root.style.setProperty("--reader-border", currentTheme.border);
     root.style.setProperty("--reader-shadow", currentTheme.shadow);
-    
-    return () => {
-      root.style.removeProperty("--reader-bg");
-      root.style.removeProperty("--reader-card-bg");
-      root.style.removeProperty("--reader-text");
-      root.style.removeProperty("--reader-muted-text");
-      root.style.removeProperty("--reader-border");
-      root.style.removeProperty("--reader-shadow");
-    };
-  }, [readerTheme, currentTheme]);
+  }, [readerTheme]);
 
   if (loading || !book || !bookUrl) {
     return (

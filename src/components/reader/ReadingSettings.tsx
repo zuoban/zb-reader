@@ -289,9 +289,13 @@ export function ReadingSettings({
       <SheetContent
         side="bottom"
         showBackground={false}
-        className="rounded-t-3xl border-t px-0 sm:max-w-md sm:mx-auto overflow-hidden"
+        className={cn(
+          "rounded-t-3xl border-t px-0 sm:max-w-md sm:mx-auto overflow-hidden transition-colors duration-200",
+          theme === "light" && "bg-[#ffffff]",
+          theme === "dark" && "bg-[#1e293b]",
+          theme === "sepia" && "bg-[#f4ecd8]"
+        )}
         style={{
-          background: "var(--reader-bg)",
           borderColor: "var(--reader-border)",
           boxShadow: "0 -12px 48px -4px rgba(0,0,0,0.18)",
         }}
