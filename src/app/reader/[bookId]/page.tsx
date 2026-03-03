@@ -1925,7 +1925,7 @@ function ReaderContent() {
     light: {
       bg: "bg-white",
       solidBg: "#ffffff",
-      cardBg: "rgba(255, 255, 255, 0.95)",
+      cardBg: "#ffffff",
       text: "#0f172a",
       mutedText: "#64748b",
       border: "rgba(226, 232, 240, 0.8)",
@@ -1934,7 +1934,7 @@ function ReaderContent() {
     dark: {
       bg: "bg-[#1a1a2e]",
       solidBg: "#1e293b",
-      cardBg: "rgba(30, 41, 59, 0.95)",
+      cardBg: "#1e293b",
       text: "#f1f5f9",
       mutedText: "#94a3b8",
       border: "rgba(51, 65, 85, 0.8)",
@@ -1943,7 +1943,7 @@ function ReaderContent() {
     sepia: {
       bg: "bg-[#f4ecd8]",
       solidBg: "#f4ecd8",
-      cardBg: "rgba(244, 236, 216, 0.95)",
+      cardBg: "#f4ecd8",
       text: "#5b4636",
       mutedText: "#8b7355",
       border: "rgba(214, 201, 168, 0.8)",
@@ -1952,6 +1952,26 @@ function ReaderContent() {
   };
 
   const currentTheme = themeStyles[readerTheme] || themeStyles.light;
+
+  // Apply CSS variables to root for Portal access
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty("--reader-bg", currentTheme.solidBg);
+    root.style.setProperty("--reader-card-bg", currentTheme.cardBg);
+    root.style.setProperty("--reader-text", currentTheme.text);
+    root.style.setProperty("--reader-muted-text", currentTheme.mutedText);
+    root.style.setProperty("--reader-border", currentTheme.border);
+    root.style.setProperty("--reader-shadow", currentTheme.shadow);
+    
+    return () => {
+      root.style.removeProperty("--reader-bg");
+      root.style.removeProperty("--reader-card-bg");
+      root.style.removeProperty("--reader-text");
+      root.style.removeProperty("--reader-muted-text");
+      root.style.removeProperty("--reader-border");
+      root.style.removeProperty("--reader-shadow");
+    };
+  }, [readerTheme, currentTheme]);
 
   if (loading || !book || !bookUrl) {
     return (

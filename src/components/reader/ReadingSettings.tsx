@@ -288,6 +288,7 @@ export function ReadingSettings({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
+        showBackground={false}
         className="rounded-t-3xl border-t px-0 sm:max-w-md sm:mx-auto overflow-hidden"
         style={{
           background: "var(--reader-bg)",
