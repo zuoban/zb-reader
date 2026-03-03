@@ -126,13 +126,25 @@ function getConnection() {
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
-
-    CREATE INDEX IF NOT EXISTS idx_books_uploader ON books(uploader_id);
-    CREATE INDEX IF NOT EXISTS idx_reading_progress_user_book ON reading_progress(user_id, book_id);
-    CREATE INDEX IF NOT EXISTS idx_bookmarks_user_book ON bookmarks(user_id, book_id);
-    CREATE INDEX IF NOT EXISTS idx_notes_user_book ON notes(user_id, book_id);
-    CREATE INDEX IF NOT EXISTS idx_reader_settings_user ON reader_settings(user_id);
   `);
+
+  // Migration: Add missing columns to reader_settings (2026-03-04)
+  // These migrations are idempotent - they only run if columns don't exist
+  try {
+    sqlite.exec(`ALTER TABLE reader_settings ADD COLUMN tts_auto_next_chapter INTEGER NOT NULL DEFAULT 0;`);
+  } catch {
+    // Column already exists, ignore
+  }
+  try {
+    sqlite.exec(`ALTER TABLE reader_settings ADD COLUMN tts_highlight_style TEXT NOT NULL DEFAULT 'indicator' CHECK(tts_highlight_style IN ('background', 'indicator'));`);
+  } catch {
+    // Column already exists, ignore
+  }
+  try {
+    sqlite.exec(`ALTER TABLE reader_settings ADD COLUMN tts_highlight_color TEXT NOT NULL DEFAULT '#3b82f6';`);
+  } catch {
+    // Column already exists, ignore
+  }
 
   _sqlite = sqlite;
   _db = drizzle(sqlite, { schema });
