@@ -18,6 +18,30 @@ export default function BookshelfPage() {
   const [loading, setLoading] = useState(true);
   const [uploadOpen, setUploadOpen] = useState(false);
 
+  // Sync theme with reader settings on mount
+  useEffect(() => {
+    async function syncTheme() {
+      try {
+        const res = await fetch("/api/reader-settings");
+        if (!res.ok) return;
+        const data = await res.json();
+        const settings = data.settings;
+        
+        if (settings?.theme) {
+          // Map reader theme to next-themes theme
+          const globalTheme = settings.theme === "dark" ? "dark" : "light";
+          document.documentElement.classList.remove("light", "dark");
+          document.documentElement.classList.add(globalTheme);
+          document.documentElement.setAttribute("data-theme", globalTheme);
+          localStorage.setItem("theme", globalTheme);
+        }
+      } catch {
+        // ignore
+      }
+    }
+    syncTheme();
+  }, []);
+
   const fetchBooks = useCallback(async () => {
     try {
       const params = new URLSearchParams();

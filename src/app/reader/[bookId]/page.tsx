@@ -847,6 +847,15 @@ function ReaderContent() {
 
   const handleThemeChange = useCallback((theme: "light" | "dark" | "sepia") => {
     setReaderTheme(theme);
+    
+    // Sync with next-themes for consistent dark/light mode across the app
+    // sepia is treated as light mode for the global theme
+    const globalTheme = theme === "dark" ? "dark" : "light";
+    document.documentElement.classList.remove("light", "dark");
+    document.documentElement.classList.add(globalTheme);
+    document.documentElement.setAttribute("data-theme", globalTheme);
+    // Also update next-themes internal state
+    localStorage.setItem("theme", globalTheme);
   }, []);
 
   const getCurrentReadableText = useCallback(() => {
