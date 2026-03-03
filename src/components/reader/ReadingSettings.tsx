@@ -88,21 +88,21 @@ function SettingRow({
   return (
     <div
       className={cn(
-        "flex items-center justify-between gap-4 px-4 py-3.5",
+        "flex items-center justify-between gap-3 sm:gap-4 px-3.5 sm:px-4 py-3 sm:py-3.5",
         !noBorder && "border-b"
       )}
       style={{ borderColor: "var(--reader-border)" }}
     >
       <div className="min-w-0 flex-shrink-0">
         <span
-          className="text-[14px] font-medium block"
+          className="text-[13px] sm:text-[14px] font-medium block"
           style={{ color: "var(--reader-text)" }}
         >
           {label}
         </span>
         {sublabel && (
           <span
-            className="text-[12px] block mt-0.5"
+            className="text-[11px] sm:text-[12px] block mt-0.5"
             style={{ color: "var(--reader-text)", opacity: 0.5 }}
           >
             {sublabel}
@@ -116,13 +116,13 @@ function SettingRow({
 
 function SectionLabel({ icon: Icon, title }: { icon: React.ElementType; title: string }) {
   return (
-    <div className="flex items-center gap-2 mb-2.5 px-1">
+    <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-2.5 px-0.5 sm:px-1">
       <Icon
-        className="size-3.5"
+        className="size-3 sm:size-3.5"
         style={{ color: "var(--reader-text)", opacity: 0.45 }}
       />
       <span
-        className="text-[11px] font-semibold uppercase tracking-widest"
+        className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider sm:tracking-widest"
         style={{ color: "var(--reader-text)", opacity: 0.45 }}
       >
         {title}
@@ -158,20 +158,20 @@ function SliderRow({
   return (
     <div
       className={cn(
-        "px-4 py-3.5 space-y-3",
+        "px-3.5 sm:px-4 py-3 sm:py-3.5 space-y-2.5 sm:space-y-3",
         !noBorder && "border-b"
       )}
       style={{ borderColor: "var(--reader-border)" }}
     >
       <div className="flex items-center justify-between">
         <span
-          className="text-[14px] font-medium"
+          className="text-[13px] sm:text-[14px] font-medium"
           style={{ color: "var(--reader-text)" }}
         >
           {label}
         </span>
         <span
-          className="text-[12px] font-semibold tabular-nums min-w-[48px] text-center px-2.5 py-1 rounded-lg"
+          className="text-[11px] sm:text-[12px] font-semibold tabular-nums min-w-[44px] sm:min-w-[48px] text-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg"
           style={{
             background: "color-mix(in srgb, var(--primary) 12%, transparent)",
             color: "var(--primary)",
@@ -180,9 +180,9 @@ function SliderRow({
           {showValue}{unit}
         </span>
       </div>
-      <div className="relative h-6 flex items-center">
+      <div className="relative h-5 sm:h-6 flex items-center">
         <div
-          className="absolute inset-x-0 h-[3px] rounded-full"
+          className="absolute inset-x-0 h-[2.5px] sm:h-[3px] rounded-full"
           style={{ background: "color-mix(in srgb, var(--reader-text) 12%, transparent)" }}
         >
           <div
@@ -200,9 +200,9 @@ function SliderRow({
           onChange={(e) => onChange(Number(e.target.value))}
         />
         <div
-          className="absolute w-5 h-5 rounded-full pointer-events-none transition-shadow"
+          className="absolute w-4.5 sm:w-5 h-4.5 sm:h-5 rounded-full pointer-events-none transition-shadow"
           style={{
-            left: `calc(${percentage}% - 10px)`,
+            left: `calc(${percentage}% - 9px)`,
             background: "var(--reader-card-bg)",
             border: "2px solid var(--primary)",
             boxShadow: "0 1px 6px color-mix(in srgb, var(--primary) 35%, transparent)",
@@ -227,24 +227,24 @@ function CompactSelect({
   return (
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger
-        className="h-9 text-[13px] font-medium border-0 rounded-xl cursor-pointer focus:ring-0 focus:ring-offset-0 gap-1.5 pr-2.5 pl-3"
+        className="h-8 sm:h-9 text-[12px] sm:text-[13px] font-medium border-0 rounded-lg sm:rounded-xl cursor-pointer focus:ring-0 focus:ring-offset-0 gap-1 sm:gap-1.5 pr-2 sm:pr-2.5 pl-2.5 sm:pl-3"
         style={{
           background: "color-mix(in srgb, var(--reader-text) 8%, transparent)",
           color: "var(--reader-text)",
-          minWidth: "140px",
+          minWidth: "120px",
           maxWidth: "200px",
         }}
       >
         <SelectValue placeholder={placeholder} />
-        <ChevronDown className="size-3.5 shrink-0 opacity-50" />
+        <ChevronDown className="size-3 sm:size-3.5 shrink-0 opacity-50" />
       </SelectTrigger>
-      <SelectContent className="rounded-xl">
+      <SelectContent className="rounded-lg sm:rounded-xl">
         {options.map((opt) => (
           <SelectItem
             key={opt.value}
             value={opt.value}
             disabled={opt.disabled}
-            className="rounded-lg text-[13px]"
+            className="rounded-md sm:rounded-lg text-[12px] sm:text-[13px]"
           >
             {opt.label}
           </SelectItem>
@@ -303,14 +303,14 @@ export function ReadingSettings({
         }}
       >
         {/* Handle + Title */}
-        <SheetHeader className="px-5 pt-3.5 pb-4">
-          <div className="flex flex-col items-center gap-3">
+        <SheetHeader className="px-4 sm:px-5 pt-3 sm:pt-3.5 pb-3 sm:pb-4">
+          <div className="flex flex-col items-center gap-2.5 sm:gap-3">
             <div
               className="w-9 h-1 rounded-full"
               style={{ background: "var(--reader-text)", opacity: 0.12 }}
             />
             <SheetTitle
-              className="text-[15px] font-semibold tracking-wide"
+              className="text-[14px] sm:text-[15px] font-semibold tracking-wide"
               style={{ color: "var(--reader-text)" }}
             >
               阅读设置
@@ -318,7 +318,7 @@ export function ReadingSettings({
           </div>
         </SheetHeader>
 
-        <div className="px-5 pb-10 max-h-[72vh] overflow-y-auto space-y-6 scrollbar-hide">
+        <div className="px-4 sm:px-5 pb-8 sm:pb-10 max-h-[70vh] sm:max-h-[72vh] overflow-y-auto space-y-5 sm:space-y-6 scrollbar-hide">
 
           {/* ── 排版 ── */}
           <section>
@@ -326,21 +326,21 @@ export function ReadingSettings({
             <SettingCard>
               {/* Font size row */}
               <div
-                className="flex items-center justify-between px-4 py-3.5 border-b"
+                className="flex items-center justify-between px-3.5 sm:px-4 py-3 sm:py-3.5 border-b"
                 style={{ borderColor: "var(--reader-border)" }}
               >
                 <span
-                  className="text-[14px] font-medium"
+                  className="text-[13px] sm:text-[14px] font-medium"
                   style={{ color: "var(--reader-text)" }}
                 >
                   字体大小
                 </span>
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2 sm:gap-2.5">
                   <button
                     onClick={() => fontSize > 12 && onFontSizeChange(fontSize - 1)}
                     disabled={fontSize <= 12}
                     className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer",
+                      "w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer",
                       fontSize <= 12 ? "opacity-25 cursor-not-allowed" : "hover:opacity-75 active:opacity-60"
                     )}
                     style={{
@@ -348,13 +348,13 @@ export function ReadingSettings({
                     }}
                   >
                     <Minus
-                      className="size-3.5"
+                      className="size-3 sm:size-3.5"
                       style={{ color: "var(--reader-text)" }}
                     />
                   </button>
 
                   <span
-                    className="text-[15px] font-bold tabular-nums w-9 text-center"
+                    className="text-[14px] sm:text-[15px] font-bold tabular-nums w-8 sm:w-9 text-center"
                     style={{ color: "var(--primary)" }}
                   >
                     {fontSize}
@@ -364,7 +364,7 @@ export function ReadingSettings({
                     onClick={() => fontSize < 28 && onFontSizeChange(fontSize + 1)}
                     disabled={fontSize >= 28}
                     className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer",
+                      "w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer",
                       fontSize >= 28 ? "opacity-25 cursor-not-allowed" : "hover:opacity-75 active:opacity-60"
                     )}
                     style={{
@@ -372,7 +372,7 @@ export function ReadingSettings({
                     }}
                   >
                     <Plus
-                      className="size-3.5"
+                      className="size-3 sm:size-3.5"
                       style={{ color: "var(--reader-text)" }}
                     />
                   </button>
@@ -380,18 +380,18 @@ export function ReadingSettings({
               </div>
 
               {/* Font size preview strip */}
-              <div className="flex items-end justify-between px-6 py-3">
+              <div className="flex items-end justify-between px-5 sm:px-6 py-2.5 sm:py-3">
                 {[12, 16, 20, 24, 28].map((s) => {
                   const isActive = fontSize === s;
                   return (
                     <button
                       key={s}
                       onClick={() => onFontSizeChange(s)}
-                      className="flex flex-col items-center gap-1.5 cursor-pointer transition-transform active:scale-90 group"
+                      className="flex flex-col items-center gap-1 sm:gap-1.5 cursor-pointer transition-transform active:scale-90 group"
                     >
                       <span
                         style={{
-                          fontSize: s * 0.72,
+                          fontSize: s * 0.65,
                           color: isActive ? "var(--primary)" : "var(--reader-text)",
                           opacity: isActive ? 1 : 0.3,
                           fontWeight: isActive ? 700 : 500,
@@ -419,14 +419,14 @@ export function ReadingSettings({
           {/* ── 主题 ── */}
           <section>
             <SectionLabel icon={Palette} title="主题" />
-            <div className="flex gap-3">
+            <div className="flex gap-2.5 sm:gap-3">
               {themeOptions.map((option) => {
                 const isActive = theme === option.value;
                 return (
                   <button
                     key={option.value}
                     onClick={() => onThemeChange(option.value)}
-                    className="flex-1 flex flex-col items-center gap-2.5 pt-4 pb-3 rounded-2xl transition-all cursor-pointer relative"
+                    className="flex-1 flex flex-col items-center gap-2 sm:gap-2.5 pt-3 sm:pt-4 pb-2.5 sm:pb-3 rounded-xl sm:rounded-2xl transition-all cursor-pointer relative"
                     style={{
                       background: option.bg,
                       border: isActive
@@ -443,23 +443,23 @@ export function ReadingSettings({
                     {/* Active checkmark */}
                     {isActive && (
                       <div
-                        className="absolute top-2 right-2 w-4.5 h-4.5 rounded-full flex items-center justify-center"
+                        className="absolute top-1.5 sm:top-2 right-1.5 sm:right-2 w-4 sm:w-4.5 h-4 sm:h-4.5 rounded-full flex items-center justify-center"
                         style={{ background: "var(--primary)" }}
                       >
-                        <Check className="size-2.5 text-white" strokeWidth={3} />
+                        <Check className="size-2 sm:size-2.5 text-white" strokeWidth={3} />
                       </div>
                     )}
 
                     {/* Preview lines */}
-                    <div className="flex flex-col gap-1.5 w-9 px-0.5">
-                      <div className="h-1.5 rounded-full" style={{ background: option.textColor, opacity: 0.65 }} />
-                      <div className="h-1.5 rounded-full w-3/4" style={{ background: option.textColor, opacity: 0.4 }} />
-                      <div className="h-1.5 rounded-full" style={{ background: option.textColor, opacity: 0.5 }} />
-                      <div className="h-1.5 rounded-full w-5/6" style={{ background: option.textColor, opacity: 0.35 }} />
+                    <div className="flex flex-col gap-1 sm:gap-1.5 w-8 sm:w-9 px-0.5">
+                      <div className="h-1 sm:h-1.5 rounded-full" style={{ background: option.textColor, opacity: 0.65 }} />
+                      <div className="h-1 sm:h-1.5 rounded-full w-3/4" style={{ background: option.textColor, opacity: 0.4 }} />
+                      <div className="h-1 sm:h-1.5 rounded-full" style={{ background: option.textColor, opacity: 0.5 }} />
+                      <div className="h-1 sm:h-1.5 rounded-full w-5/6" style={{ background: option.textColor, opacity: 0.35 }} />
                     </div>
 
                     <span
-                      className="text-[12px] font-semibold"
+                      className="text-[11px] sm:text-[12px] font-semibold"
                       style={{ color: option.textColor }}
                     >
                       {option.label}
@@ -545,14 +545,14 @@ export function ReadingSettings({
                     <button
                       onClick={() => onTtsAutoNextChapterChange(!ttsAutoNextChapter)}
                       className={cn(
-                        "relative w-12 h-7 rounded-full transition-colors cursor-pointer",
+                        "relative w-11 sm:w-12 h-6 sm:h-7 rounded-full transition-colors cursor-pointer",
                         ttsAutoNextChapter ? "bg-primary" : "bg-muted"
                       )}
                     >
                       <span
                         className={cn(
-                          "absolute top-1 left-1 w-5 h-5 rounded-full bg-background transition-transform shadow-sm",
-                          ttsAutoNextChapter ? "translate-x-5" : "translate-x-0"
+                          "absolute top-0.5 sm:top-1 left-0.5 sm:left-1 w-5 h-5 rounded-full bg-background transition-transform shadow-sm",
+                          ttsAutoNextChapter ? "translate-x-5 sm:translate-x-5" : "translate-x-0"
                         )}
                       />
                     </button>
@@ -601,14 +601,14 @@ export function ReadingSettings({
                     <button
                       onClick={() => onTtsAutoNextChapterChange(!ttsAutoNextChapter)}
                       className={cn(
-                        "relative w-12 h-7 rounded-full transition-colors cursor-pointer",
+                        "relative w-11 sm:w-12 h-6 sm:h-7 rounded-full transition-colors cursor-pointer",
                         ttsAutoNextChapter ? "bg-primary" : "bg-muted"
                       )}
                     >
                       <span
                         className={cn(
-                          "absolute top-1 left-1 w-5 h-5 rounded-full bg-background transition-transform shadow-sm",
-                          ttsAutoNextChapter ? "translate-x-5" : "translate-x-0"
+                          "absolute top-0.5 sm:top-1 left-0.5 sm:left-1 w-5 h-5 rounded-full bg-background transition-transform shadow-sm",
+                          ttsAutoNextChapter ? "translate-x-5 sm:translate-x-5" : "translate-x-0"
                         )}
                       />
                     </button>
@@ -616,11 +616,11 @@ export function ReadingSettings({
 
                   {/* Import config */}
                   <div
-                    className="px-4 pt-3.5 pb-4 space-y-3"
+                    className="px-3.5 sm:px-4 pt-3 sm:pt-3.5 pb-3.5 sm:pb-4 space-y-2.5 sm:space-y-3"
                     style={{ borderTop: "1px solid var(--reader-border)" }}
                   >
                     <span
-                      className="text-[12px] font-semibold uppercase tracking-wider block"
+                      className="text-[11px] sm:text-[12px] font-semibold uppercase tracking-wider block"
                       style={{ color: "var(--reader-text)", opacity: 0.45 }}
                     >
                       导入配置 (JSON)
@@ -628,7 +628,7 @@ export function ReadingSettings({
                     <Textarea
                       value={legadoImportText}
                       onChange={(e) => onLegadoImportTextChange(e.target.value)}
-                      className="min-h-[88px] resize-none text-[13px] rounded-xl border-0 focus-visible:ring-1 focus-visible:ring-primary/30 p-3"
+                      className="min-h-[72px] sm:min-h-[88px] resize-none text-[12px] sm:text-[13px] rounded-lg sm:rounded-xl border-0 focus-visible:ring-1 focus-visible:ring-primary/30 p-2.5 sm:p-3"
                       placeholder="粘贴 Legado TTS JSON 规则"
                       style={{
                         background: "color-mix(in srgb, var(--reader-text) 6%, transparent)",
@@ -637,7 +637,7 @@ export function ReadingSettings({
                     />
                     <Button
                       size="sm"
-                      className="w-full h-10 rounded-xl cursor-pointer text-[14px] font-semibold transition-all active:scale-[0.98]"
+                      className="w-full h-9 sm:h-10 rounded-lg sm:rounded-xl cursor-pointer text-[13px] sm:text-[14px] font-semibold transition-all active:scale-[0.98]"
                       style={{ background: "var(--primary)", color: "white" }}
                       disabled={legadoImporting || !legadoImportText.trim()}
                       onClick={onLegadoImport}
@@ -645,7 +645,7 @@ export function ReadingSettings({
                       {legadoImporting ? (
                         <span className="flex items-center gap-2">
                           <span
-                            className="size-3.5 border-2 rounded-full animate-spin"
+                            className="size-3 sm:size-3.5 border-2 rounded-full animate-spin"
                             style={{
                               borderColor: "rgba(255,255,255,0.25)",
                               borderTopColor: "#fff",

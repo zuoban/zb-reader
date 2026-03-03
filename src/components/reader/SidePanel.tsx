@@ -199,7 +199,7 @@ export function SidePanel({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="left"
-        className="w-80 p-0 backdrop-blur-xl border-r"
+        className="w-[88vw] sm:w-80 p-0 backdrop-blur-xl border-r"
         style={{
           background: "var(--reader-card-bg)",
           borderColor: "var(--reader-border)",

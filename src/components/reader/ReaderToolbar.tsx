@@ -68,7 +68,7 @@ function ToolbarButton({
           size="icon"
           onClick={onClick}
           className={cn(
-            "cursor-pointer h-9 w-9 rounded-lg transition-all duration-200",
+            "cursor-pointer h-8 w-8 sm:h-9 sm:w-9 rounded-lg transition-all duration-200",
             "hover:bg-[var(--reader-primary-light,_rgba(8,145,178,0.1))]",
             "active:scale-95",
             isActive && "bg-[var(--reader-primary-light,_rgba(8,145,178,0.15))] text-[var(--reader-primary,_#0891B2)]",
@@ -79,7 +79,7 @@ function ToolbarButton({
           {children}
         </Button>
       </TooltipTrigger>
-      <TooltipContent side="bottom" className="text-xs">
+      <TooltipContent side="bottom" className="text-xs hidden sm:block">
         {tooltip}
       </TooltipContent>
     </Tooltip>
@@ -127,38 +127,38 @@ export function ReaderToolbar({
             boxShadow: "0 4px 24px var(--reader-shadow)",
           }}
         >
-          <div className="flex items-center justify-between h-12 px-1">
-            <div className="flex items-center gap-0.5">
+          <div className="flex items-center justify-between h-12 sm:h-14 px-1 sm:px-2">
+            <div className="flex items-center gap-0.5 sm:gap-1">
               <ToolbarButton onClick={onBack} tooltip="返回书架">
-                <ArrowLeft className="size-5" />
+                <ArrowLeft className="size-[18px] sm:size-5" />
               </ToolbarButton>
               <ToolbarButton onClick={onToggleToc} tooltip="目录">
-                <List className="size-5" />
+                <List className="size-[18px] sm:size-5" />
               </ToolbarButton>
             </div>
 
             <h1
-              className="flex-1 mx-2 text-sm font-medium text-center truncate"
+              className="flex-1 mx-1.5 sm:mx-3 text-xs sm:text-sm font-medium text-center truncate max-w-[140px] sm:max-w-none"
               style={{ color: "var(--reader-text)" }}
             >
               {title}
             </h1>
 
-            <div className="flex items-center gap-0.5">
+            <div className="flex items-center gap-0.5 sm:gap-1">
               <ToolbarButton
                 onClick={onToggleBookmark}
                 tooltip={isBookmarked ? "取消书签" : "添加书签"}
                 isActive={isBookmarked}
               >
                 {isBookmarked ? (
-                  <BookmarkCheck className="size-5" />
+                  <BookmarkCheck className="size-[18px] sm:size-5" />
                 ) : (
-                  <Bookmark className="size-5" />
+                  <Bookmark className="size-[18px] sm:size-5" />
                 )}
               </ToolbarButton>
 
               <ToolbarButton onClick={onToggleNotes} tooltip="笔记">
-                <StickyNote className="size-5" />
+                <StickyNote className="size-[18px] sm:size-5" />
               </ToolbarButton>
 
               <ToolbarButton
@@ -167,14 +167,14 @@ export function ReaderToolbar({
                 isActive={isSpeaking}
               >
                 {isSpeaking ? (
-                  <Pause className="size-5" />
+                  <Pause className="size-[18px] sm:size-5" />
                 ) : (
-                  <Volume2 className="size-5" />
+                  <Volume2 className="size-[18px] sm:size-5" />
                 )}
               </ToolbarButton>
 
               <ToolbarButton onClick={onToggleSettings} tooltip="设置">
-                <Settings className="size-5" />
+                <Settings className="size-[18px] sm:size-5" />
               </ToolbarButton>
             </div>
           </div>
@@ -198,15 +198,15 @@ export function ReaderToolbar({
             boxShadow: "0 -4px 24px var(--reader-shadow)",
           }}
         >
-          <div className="flex items-center gap-3 px-4 py-3">
+          <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3">
             <div
-              className="text-xs font-semibold whitespace-nowrap min-w-[3rem] text-center px-2 py-1 rounded-md"
+              className="text-[10px] sm:text-xs font-semibold whitespace-nowrap min-w-[2.5rem] sm:min-w-[3rem] text-center px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md"
               style={{
                 background: "var(--reader-primary-light, rgba(8,145,178,0.1))",
                 color: "var(--reader-primary, #0891B2)",
               }}
             >
-              {(progress * 100).toFixed(2)}%
+              {(progress * 100).toFixed(1)}%
             </div>
 
             {onPrevPage && (
@@ -214,10 +214,10 @@ export function ReaderToolbar({
                 variant="ghost"
                 size="icon"
                 onClick={onPrevPage}
-                className="cursor-pointer h-8 w-8 rounded-lg transition-colors"
+                className="cursor-pointer h-7 w-7 sm:h-8 sm:w-8 rounded-lg transition-colors"
                 style={{ color: "var(--reader-muted-text)" }}
               >
-                <ArrowUp className="h-4 w-4" />
+                <ArrowUp className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </Button>
             )}
 
@@ -228,18 +228,18 @@ export function ReaderToolbar({
                 onClick={onPrevChapter}
                 disabled={!hasPrevChapter}
                 className={cn(
-                  "cursor-pointer h-8 w-8 rounded-lg transition-colors",
+                  "cursor-pointer h-7 w-7 sm:h-8 sm:w-8 rounded-lg transition-colors",
                   !hasPrevChapter && "opacity-30 cursor-not-allowed"
                 )}
                 style={{ color: "var(--reader-muted-text)" }}
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </Button>
             )}
 
-            <div className="flex-1 relative h-6 flex items-center">
+            <div className="flex-1 relative h-5 sm:h-6 flex items-center">
               <div
-                className="absolute inset-x-0 h-2 top-1/2 -translate-y-1/2 rounded-full overflow-hidden pointer-events-none"
+                className="absolute inset-x-0 h-1.5 sm:h-2 top-1/2 -translate-y-1/2 rounded-full overflow-hidden pointer-events-none"
                 style={{ background: "var(--reader-border)" }}
               >
                 <div
@@ -268,12 +268,12 @@ export function ReaderToolbar({
                 onClick={onNextChapter}
                 disabled={!hasNextChapter}
                 className={cn(
-                  "cursor-pointer h-8 w-8 rounded-lg transition-colors",
+                  "cursor-pointer h-7 w-7 sm:h-8 sm:w-8 rounded-lg transition-colors",
                   !hasNextChapter && "opacity-30 cursor-not-allowed"
                 )}
                 style={{ color: "var(--reader-muted-text)" }}
               >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </Button>
             )}
 
@@ -282,15 +282,15 @@ export function ReaderToolbar({
                 variant="ghost"
                 size="icon"
                 onClick={onNextPage}
-                className="cursor-pointer h-8 w-8 rounded-lg transition-colors"
+                className="cursor-pointer h-7 w-7 sm:h-8 sm:w-8 rounded-lg transition-colors"
                 style={{ color: "var(--reader-muted-text)" }}
               >
-                <ArrowDown className="h-4 w-4" />
+                <ArrowDown className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </Button>
             )}
 
             <span
-              className="text-xs font-medium whitespace-nowrap min-w-[4rem] text-right"
+              className="text-[10px] sm:text-xs font-medium whitespace-nowrap min-w-[3rem] sm:min-w-[4rem] text-right"
               style={{ color: "var(--reader-muted-text)" }}
             >
               {currentPage !== undefined && totalPages !== undefined
@@ -299,8 +299,9 @@ export function ReaderToolbar({
             </span>
           </div>
 
+          {/* 快捷键提示 - 仅桌面端显示 */}
           <div
-            className="flex items-center justify-center gap-6 pb-2 text-xs"
+            className="hidden sm:flex items-center justify-center gap-6 pb-2 text-xs"
             style={{ color: "var(--reader-muted-text)" }}
           >
             <div className="flex items-center gap-1.5">
