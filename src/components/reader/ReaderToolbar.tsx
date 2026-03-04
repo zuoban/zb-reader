@@ -304,15 +304,6 @@ export function ReaderToolbar({
                 <ArrowDown className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </Button>
             )}
-
-            <span
-              className="text-[10px] sm:text-xs font-medium whitespace-nowrap min-w-[3rem] sm:min-w-[4rem] text-right"
-              style={{ color: "var(--reader-muted-text)" }}
-            >
-              {currentPage !== undefined && totalPages !== undefined
-                ? `${currentPage} / ${totalPages}`
-                : ""}
-            </span>
           </div>
 
           {/* 快捷键提示 - 仅桌面端显示 */}
