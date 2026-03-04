@@ -150,9 +150,9 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <Navbar />
-        <main className="container mx-auto max-w-4xl px-4 py-8">
+        <main className="mx-auto w-full max-w-5xl px-3 py-8 sm:px-4">
           <div className="flex items-center justify-center min-h-[400px]">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
@@ -162,19 +162,19 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <Navbar />
 
-      <main className="container mx-auto max-w-4xl px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">个人资料</h1>
+      <main className="mx-auto w-full max-w-5xl px-3 py-8 sm:px-4">
+        <div className="section-shell mb-6 px-5 py-5 sm:mb-8 sm:px-6">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">个人资料</h1>
           <p className="text-sm text-muted-foreground mt-1">
             管理您的账户信息和安全设置
           </p>
         </div>
 
         <div className="grid gap-6">
-          <Card className="border-border/50 shadow-xl backdrop-blur-sm">
+          <Card className="border-border/70">
             <CardHeader>
               <CardTitle className="text-xl">头像</CardTitle>
               <CardDescription>
@@ -184,12 +184,12 @@ export default function ProfilePage() {
             <CardContent>
               <div className="flex items-center gap-6">
                 <div
-                  className="relative group cursor-pointer transition-all duration-200"
+                  className="relative group transition-all duration-200"
                   onClick={handleAvatarClick}
                 >
-                  <Avatar className="h-24 w-24 border-4 border-primary/20 group-hover:border-primary/40 transition-colors duration-200">
+                  <Avatar className="h-24 w-24 border-4 border-border/80 transition-colors duration-200 group-hover:border-ring/40">
                     <AvatarImage src={profile?.avatar || undefined} />
-                    <AvatarFallback className="bg-primary/10 text-primary text-2xl font-semibold">
+                    <AvatarFallback className="bg-accent text-foreground text-2xl font-semibold">
                       {profile?.username?.[0]?.toUpperCase() || "U"}
                     </AvatarFallback>
                   </Avatar>
@@ -218,7 +218,7 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
 
-          <Card className="border-border/50 shadow-xl backdrop-blur-sm">
+          <Card className="border-border/70">
             <CardHeader>
               <CardTitle className="text-xl flex items-center gap-2">
                 <UserIcon className="h-5 w-5" />
@@ -240,7 +240,7 @@ export default function ProfilePage() {
                   required
                   minLength={2}
                   maxLength={20}
-                  className="h-11 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                  className="h-11"
                 />
               </div>
               <div className="space-y-2">
@@ -252,13 +252,13 @@ export default function ProfilePage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="h-11 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                  className="h-11"
                 />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-border/50 shadow-xl backdrop-blur-sm">
+          <Card className="border-border/70">
             <CardHeader>
               <CardTitle className="text-xl flex items-center gap-2">
                 <KeyRound className="h-5 w-5" />
@@ -278,7 +278,7 @@ export default function ProfilePage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   minLength={6}
-                  className="h-11 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                  className="h-11"
                 />
               </div>
               <div className="space-y-2">
@@ -290,13 +290,13 @@ export default function ProfilePage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   minLength={6}
-                  className="h-11 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                  className="h-11"
                 />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-border/50 shadow-xl backdrop-blur-sm">
+          <Card className="border-border/70">
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -316,7 +316,7 @@ export default function ProfilePage() {
             <Button
               onClick={handleSave}
               disabled={saving}
-              className="min-w-[120px] h-11 font-semibold transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5"
+              className="h-11 min-w-[120px] font-semibold"
             >
               {saving ? (
                 <>

@@ -73,9 +73,9 @@ function ToolbarButton({
           onClick={onClick}
           className={cn(
             "cursor-pointer h-8 w-8 sm:h-9 sm:w-9 rounded-lg transition-all duration-200",
-            "hover:bg-[var(--reader-primary-light,_rgba(8,145,178,0.1))]",
+            "hover:bg-[var(--reader-primary-light,_rgba(23,23,23,0.1))]",
             "active:scale-95",
-            isActive && "bg-[var(--reader-primary-light,_rgba(8,145,178,0.15))] text-[var(--reader-primary,_#0891B2)]",
+            isActive && "bg-[var(--reader-primary-light,_rgba(23,23,23,0.15))] text-[var(--reader-primary,_#171717)]",
             className
           )}
           style={{ color: "var(--reader-text)" }}
@@ -124,13 +124,12 @@ export function ReaderToolbar({
       >
         <div
           className={cn(
-            "mx-3 mt-2 rounded-2xl",
-            "border backdrop-blur-xl"
+            "mx-3 mt-2 rounded-2xl border backdrop-blur-xl"
           )}
           style={{
             background: "var(--reader-card-bg)",
             borderColor: "var(--reader-border)",
-            boxShadow: "0 4px 24px var(--reader-shadow)",
+            boxShadow: "0 10px 28px -18px var(--reader-shadow)",
           }}
         >
           <div className="flex items-center justify-between h-12 sm:h-14 px-1 sm:px-2">
@@ -207,21 +206,20 @@ export function ReaderToolbar({
       >
         <div
           className={cn(
-            "mx-3 mb-2 rounded-2xl",
-            "border backdrop-blur-xl"
+            "mx-3 mb-2 rounded-2xl border backdrop-blur-xl"
           )}
           style={{
             background: "var(--reader-card-bg)",
             borderColor: "var(--reader-border)",
-            boxShadow: "0 -4px 24px var(--reader-shadow)",
+            boxShadow: "0 10px 28px -18px var(--reader-shadow)",
           }}
         >
           <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3">
             <div
               className="text-[10px] sm:text-xs font-semibold whitespace-nowrap min-w-[2.5rem] sm:min-w-[3rem] text-center px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md"
               style={{
-                background: "var(--reader-primary-light, rgba(8,145,178,0.1))",
-                color: "var(--reader-primary, #0891B2)",
+                background: "var(--reader-primary-light, rgba(23,23,23,0.1))",
+                color: "var(--reader-primary, #171717)",
               }}
             >
               {(progress * 100).toFixed(1)}%
@@ -264,7 +262,7 @@ export function ReaderToolbar({
                   className="h-full rounded-full transition-all duration-150"
                   style={{
                     width: `${progress * 100}%`,
-                    background: "var(--reader-primary, #0891B2)",
+                    background: "var(--reader-primary, #171717)",
                     opacity: 0.6,
                   }}
                 />

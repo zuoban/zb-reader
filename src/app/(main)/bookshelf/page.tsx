@@ -7,8 +7,8 @@ import { BookCardSkeleton } from "@/components/bookshelf/BookCardSkeleton";
 import { SearchBar } from "@/components/bookshelf/SearchBar";
 import { UploadDialog } from "@/components/bookshelf/UploadDialog";
 import { useTheme } from "next-themes";
-import { Book } from "@/lib/db/schema";
 import { toast } from "sonner";
+import type { Book } from "@/lib/db/schema";
 
 const SKELETON_COUNT = 8;
 
@@ -86,24 +86,46 @@ export default function BookshelfPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <Navbar onUploadClick={() => setUploadOpen(true)} />
 
-      <main className="container mx-auto max-w-7xl px-3 sm:px-4 py-6 sm:py-8">
-        <div className="flex flex-col gap-4 mb-6 sm:mb-8">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">我的书架</h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                {books.length > 0 ? `共 ${books.length} 本书` : "开始你的阅读之旅"}
-              </p>
+      <main className="mx-auto w-full max-w-7xl px-3 pb-8 pt-5 sm:px-4 sm:pb-10 sm:pt-7">
+        <section className="section-shell mb-6 p-4 sm:mb-8 sm:p-6">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+              <div>
+                <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">我的书架</h1>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {books.length > 0 ? `共 ${books.length} 本书，继续今天的阅读。` : "开始你的阅读之旅"}
+                </p>
+              </div>
+              <div className="w-full sm:w-auto">
+                <SearchBar value={search} onChange={setSearch} />
+              </div>
             </div>
-            <SearchBar value={search} onChange={setSearch} />
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <div className="rounded-xl border border-border/80 bg-card/80 px-3 py-2.5">
+                <p className="text-xs text-muted-foreground">书籍总数</p>
+                <p className="mt-1 text-lg font-semibold">{books.length}</p>
+              </div>
+              <div className="rounded-xl border border-border/80 bg-card/80 px-3 py-2.5">
+                <p className="text-xs text-muted-foreground">阅读中</p>
+                <p className="mt-1 text-lg font-semibold">
+                  {Object.values(progressMap).filter((v) => v > 0 && v < 1).length}
+                </p>
+              </div>
+              <div className="rounded-xl border border-border/80 bg-card/80 px-3 py-2.5 col-span-2 sm:col-span-1">
+                <p className="text-xs text-muted-foreground">已完成</p>
+                <p className="mt-1 text-lg font-semibold">
+                  {Object.values(progressMap).filter((v) => v >= 1).length}
+                </p>
+              </div>
+            </div>
           </div>
-        </div>
+        </section>
 
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
             {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
               <BookCardSkeleton key={i} />
             ))}

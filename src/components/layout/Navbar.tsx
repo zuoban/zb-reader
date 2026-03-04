@@ -42,13 +42,13 @@ export function Navbar({ onUploadClick }: NavbarProps) {
   };
 
   return (
-    <header className="sticky top-2 sm:top-4 z-50 mx-2 sm:mx-4 lg:mx-auto max-w-7xl">
-      <div className="flex h-14 sm:h-16 items-center justify-between px-3 sm:px-6 rounded-2xl border border-border/40 bg-card/80 backdrop-blur-xl shadow-lg">
+    <header className="sticky top-3 z-50 mx-auto w-full max-w-7xl px-3 sm:px-4">
+      <div className="surface-glass surface-elevated flex h-14 sm:h-16 items-center justify-between rounded-2xl px-3 sm:px-5">
         <Link 
           href="/bookshelf" 
-          className="flex items-center gap-2 sm:gap-3 group cursor-pointer transition-all duration-200"
+          className="group flex items-center gap-2.5 sm:gap-3 transition-all duration-200"
         >
-          <div className="relative w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-md bg-primary/10 group-hover:bg-primary/20 transition-all duration-200">
+          <div className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-border/80 bg-card/70 transition-all duration-200 group-hover:border-ring/40 group-hover:bg-accent/60 sm:h-10 sm:w-10">
             <svg width="24" height="24" viewBox="0 0 40 40" fill="none" className="text-primary">
               <rect x="4" y="4" width="32" height="32" rx="3" stroke="currentColor" strokeWidth="2" fill="none"/>
               <line x1="12" y1="12" x2="28" y2="12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
@@ -57,18 +57,18 @@ export function Navbar({ onUploadClick }: NavbarProps) {
               <circle cx="20" cy="20" r="2" fill="currentColor"/>
             </svg>
           </div>
-          <span className="font-heading font-bold text-lg sm:text-xl text-foreground group-hover:text-primary transition-colors duration-200">
+          <span className="font-heading text-base font-semibold tracking-tight text-foreground transition-colors duration-200 group-hover:text-primary sm:text-lg">
             ZB Reader
           </span>
         </Link>
 
-        <div className="flex items-center gap-1.5 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           {onUploadClick && (
             <Button 
               variant="outline" 
               size="sm" 
               onClick={onUploadClick}
-              className="gap-2 cursor-pointer transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 h-9 sm:h-9"
+              className="h-9 gap-2 px-3"
             >
               <Upload className="h-4 w-4" />
               <span className="hidden sm:inline">上传书籍</span>
@@ -79,7 +79,7 @@ export function Navbar({ onUploadClick }: NavbarProps) {
             variant="ghost"
             size="icon"
             onClick={handleThemeToggle}
-            className="relative cursor-pointer transition-all duration-200 hover:shadow-md h-9 w-9"
+            className="relative h-9 w-9 border border-transparent hover:border-border/90"
           >
             <Sun className="h-5 w-5 rotate-0 scale-100 transition-all duration-300 dark:-rotate-90 dark:scale-0" />
             <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all duration-300 dark:rotate-0 dark:scale-100" />
@@ -91,21 +91,21 @@ export function Navbar({ onUploadClick }: NavbarProps) {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="relative h-9 w-9 sm:h-10 sm:w-10 rounded-full cursor-pointer transition-all duration-200 hover:shadow-md p-0"
+                  className="relative h-9 w-9 rounded-full border border-transparent p-0 hover:border-border/90 sm:h-10 sm:w-10"
                 >
-                  <Avatar className="h-9 w-9 sm:h-10 sm:w-10 border-2 border-primary/20">
+                  <Avatar className="h-9 w-9 border-2 border-border/80 sm:h-10 sm:w-10">
                     <AvatarImage src={session.user.avatar || undefined} alt={session.user.username || "用户头像"} />
-                    <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm sm:text-base">
+                    <AvatarFallback className="bg-accent text-foreground font-semibold text-sm sm:text-base">
                       {session.user.username?.[0]?.toUpperCase() || "U"}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent align="end" className="surface-glass w-56">
                 <div className="flex items-center justify-start gap-3 p-3">
-                  <Avatar className="h-12 w-12 border-2 border-primary/20">
+                  <Avatar className="h-12 w-12 border-2 border-border/80">
                     <AvatarImage src={session.user.avatar || undefined} alt={session.user.username || "用户头像"} />
-                    <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                    <AvatarFallback className="bg-accent text-foreground font-semibold">
                       {session.user.username?.[0]?.toUpperCase() || "U"}
                     </AvatarFallback>
                   </Avatar>
