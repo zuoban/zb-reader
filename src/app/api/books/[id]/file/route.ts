@@ -36,7 +36,6 @@ export async function GET(
 
     const contentTypeMap: Record<string, string> = {
       epub: "application/epub+zip",
-      txt: "text/plain; charset=utf-8",
     };
 
     return new NextResponse(fileBuffer, {

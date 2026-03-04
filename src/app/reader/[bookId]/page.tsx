@@ -37,26 +37,7 @@ const EpubReader = dynamic(() => import("@/components/reader/EpubReader"), {
   ),
 });
 
-// Dynamic import for TXT reader
-const TxtReader = dynamic<{
-  url: string;
-  initialPage?: number;
-  fontSize?: number;
-  theme?: "light" | "dark" | "sepia";
-  activeTtsParagraph?: string;
-  ttsPlaybackProgress?: number;
-  ttsHighlightColor?: string;
-  autoScrollToActive?: boolean;
-  onPageChange?: (page: number, totalPages: number) => void;
-  onRegisterController?: (controller: { nextPage: () => boolean; prevPage: () => boolean; scrollDown: (amount?: number) => void; scrollUp: (amount?: number) => void; scrollToActiveParagraph: () => void }) => void;
-}>(() => import("@/components/reader/TxtReader"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex items-center justify-center h-full">
-      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-    </div>
-  ),
-});
+
 
 const DEFAULT_MICROSOFT_PRELOAD_COUNT = 3;
 const MAX_TTS_RETRY_COUNT = 5;
@@ -154,7 +135,7 @@ function ReaderContent() {
   const loadedAtRef = useRef<string | null>(null); // 记录加载进度时的时间戳，用于多窗口同步
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
-  const txtReaderControllerRef = useRef<{ nextPage: () => boolean; prevPage: () => boolean; scrollDown: (amount?: number) => void; scrollUp: (amount?: number) => void; scrollToActiveParagraph: () => void } | null>(null);
+
   const ttsSessionRef = useRef(0);
   const settingsLoadedRef = useRef(false);
   const settingsSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1289,30 +1270,12 @@ function ReaderContent() {
       return paragraphs;
     }
 
-    if (book.format === "txt") {
-      const txtNode = document.querySelector("[data-reader-txt-page='true']");
-      if (!txtNode) return [];
-      const pElements = Array.from(txtNode.querySelectorAll("p"));
-      if (pElements.length > 0) {
-        return pElements
-          .map((p) => p.textContent?.trim() || "")
-          .filter((text) => text.length > 0);
-      }
-      // fallback：直接按空行分段
-      const text = txtNode.textContent?.trim() || "";
-      return text
-        .split(/\n\s*\n+/)
-        .map((item) => item.trim())
-        .filter((item) => item.length > 0);
-    }
-
     return [] as string[];
   }, [book]);
 
   /**
    * 获取朗读起始段落的索引：找到当前视口内第一个可见段落在段落列表中的位置。
    * - EPUB：getCurrentParagraphs 已经只返回视口内段落，始终从 0 开始
-   * - TXT：遍历 <p> 元素，找到第一个出现在视口内的，返回其索引
    * - PDF/其他：始终从 0 开始
    */
   const getInitialParagraphIndex = useCallback((paragraphs: string[]): number => {
@@ -1320,28 +1283,6 @@ function ReaderContent() {
 
     if (book.format === "epub") {
       // EPUB 已经只返回视口内段落，始终从头开始
-      return 0;
-    }
-
-    if (book.format === "txt") {
-      const txtNode = document.querySelector("[data-reader-txt-page='true']");
-      if (!txtNode) return 0;
-      const pElements = Array.from(txtNode.querySelectorAll("p"));
-      const container = txtNode.closest(".overflow-auto") as HTMLElement | null;
-      const containerRect = container?.getBoundingClientRect();
-      const viewportTop = containerRect?.top ?? 0;
-      const viewportBottom = containerRect ? containerRect.top + containerRect.height : window.innerHeight;
-
-      for (let i = 0; i < pElements.length; i++) {
-        const rect = pElements[i].getBoundingClientRect();
-        // 找到第一个底部在视口内（或与视口相交）的段落
-        if (rect.bottom > viewportTop && rect.top < viewportBottom) {
-          // 在 paragraphs 数组中找到对应索引（按文本匹配）
-          const pText = pElements[i].textContent?.trim() || "";
-          const idx = paragraphs.findIndex((p) => p === pText);
-          return idx >= 0 ? idx : i;
-        }
-      }
       return 0;
     }
 
@@ -1356,10 +1297,6 @@ function ReaderContent() {
       // Use pure CFI (without scroll suffix) so TTS page-change detection
       // only triggers on actual chapter/section navigation, not scroll movement.
       return currentCfiRef.current || "";
-    }
-
-    if (book.format === "txt" || book.format === "pdf") {
-      return `${currentPage || 0}/${totalPages || 0}`;
     }
 
     return "";
@@ -1421,8 +1358,6 @@ function ReaderContent() {
         } else {
           epubInstance.scrollDown();
         }
-      } else if (book.format === "txt") {
-        txtReaderControllerRef.current?.scrollDown?.();
       } else {
         return false;
       }
@@ -1716,16 +1651,12 @@ function ReaderContent() {
   const handlePrevPage = useCallback(() => {
     if (book?.format === "epub") {
       epubReaderRef.current?.scrollUp();
-    } else if (book?.format === "txt") {
-      txtReaderControllerRef.current?.scrollUp?.();
     }
   }, [book?.format]);
 
   const handleNextPage = useCallback(() => {
     if (book?.format === "epub") {
       epubReaderRef.current?.scrollDown();
-    } else if (book?.format === "txt") {
-      txtReaderControllerRef.current?.scrollDown?.();
     }
   }, [book?.format]);
 
@@ -1814,17 +1745,11 @@ function ReaderContent() {
       hasPrevChapter = true;
       hasNextChapter = true;
     }
-  } else if (book?.format === "txt") {
-    // TXT 使用进度判断
-    hasPrevChapter = progress > 0.01;
-    hasNextChapter = progress < 0.99;
   }
 
   const handleJumpToReading = useCallback(() => {
     if (book?.format === "epub") {
       epubReaderRef.current?.scrollToActiveParagraph();
-    } else if (book?.format === "txt") {
-      txtReaderControllerRef.current?.scrollToActiveParagraph?.();
     }
   }, [book?.format]);
 
@@ -1955,34 +1880,6 @@ function ReaderContent() {
             ttsHighlightColor={ttsHighlightColor}
             autoScrollToActive={autoScrollToActive}
           />
-        )}
-
-        {book.format === "txt" && (
-          <div
-            className="h-full"
-            onClick={isSpeaking ? undefined : handleToggleToolbar}
-          >
-            <TxtReader
-              url={bookUrl}
-              initialPage={currentPage}
-              fontSize={fontSize}
-              theme={readerTheme}
-              activeTtsParagraph={activeTtsParagraph}
-              ttsPlaybackProgress={ttsPlaybackProgress}
-              ttsHighlightColor={ttsHighlightColor}
-              autoScrollToActive={autoScrollToActive}
-              onRegisterController={(controller) => {
-                txtReaderControllerRef.current = controller;
-              }}
-              onPageChange={(progressRatio, _total) => {
-                const progress = Math.min(1, Math.max(0, progressRatio));
-                setProgress(progress);
-                progressRef.current = progress;
-                currentLocationRef.current = JSON.stringify({ progress });
-                debouncedSaveProgress();
-              }}
-            />
-          </div>
         )}
       </div>
 

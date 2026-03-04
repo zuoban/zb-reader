@@ -52,7 +52,7 @@ describe("Storage utilities", () => {
 
     it("should handle different formats", async () => {
       const { saveBookFile } = await import("./storage");
-      const formats = ["txt"];
+      const formats = ["epub"];
 
       formats.forEach((format) => {
         const buffer = Buffer.from("test");

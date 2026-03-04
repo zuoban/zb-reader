@@ -100,11 +100,11 @@ export async function POST(req: NextRequest) {
 
     const fileName = file.name;
     const ext = fileName.split(".").pop()?.toLowerCase();
-    const validFormats = ["epub", "txt"];
+    const validFormats = ["epub"];
 
     if (!ext || !validFormats.includes(ext)) {
       return NextResponse.json(
-        { error: "不支持的文件格式，仅支持 EPUB, TXT" },
+        { error: "不支持的文件格式，仅支持 EPUB" },
         { status: 400 }
       );
     }
@@ -117,15 +117,13 @@ export async function POST(req: NextRequest) {
     let author = "未知作者";
     let coverFileName: string | null = null;
 
-    if (ext === "epub") {
-      try {
-        const metadata = await extractEpubMetadata(buffer, bookId);
-        title = metadata.title || title;
-        author = metadata.author || author;
-        coverFileName = metadata.coverFileName || null;
-      } catch (e) {
-        logger.warn("books", "Failed to extract EPUB metadata", e);
-      }
+    try {
+      const metadata = await extractEpubMetadata(buffer, bookId);
+      title = metadata.title || title;
+      author = metadata.author || author;
+      coverFileName = metadata.coverFileName || null;
+    } catch (e) {
+      logger.warn("books", "Failed to extract EPUB metadata", e);
     }
 
     const manualTitle = formData.get("title") as string | null;
@@ -140,7 +138,7 @@ export async function POST(req: NextRequest) {
       cover: coverFileName,
       filePath: savedFileName,
       fileSize: buffer.length,
-      format: ext as "epub" | "txt",
+      format: ext as "epub",
       uploaderId: session.user.id,
     });
 

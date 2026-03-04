@@ -1,6 +1,6 @@
 # 📚 ZB Reader
 
-一个现代化的自托管电子书阅读器，支持 EPUB、PDF 和 TXT 格式。
+一个现代化的自托管电子书阅读器，支持 EPUB 格式。
 
 [![Next.js](https://img.shields.io/badge/Next.js-16.1.6-black)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.2.3-blue)](https://react.dev/)
@@ -10,7 +10,7 @@
 ## ✨ 功能特性
 
 ### 📖 电子书支持
-- **多格式支持**: EPUB、PDF、TXT、MOBI（开发中）
+- **支持格式**: EPUB
 - **元数据提取**: 自动提取书籍标题、作者、封面
 - **封面展示**: 美观的书籍卡片展示
 - **文件管理**: 轻松上传和管理电子书
@@ -128,7 +128,7 @@ docker compose up -d
 ### 上传书籍
 
 1. 点击书架页面的"上传"按钮
-2. 拖拽或选择电子书文件（EPUB、PDF、TXT）
+2. 拖拽或选择电子书文件（EPUB）
 3. 等待上传完成
 4. 书籍将自动出现在书架中
 
