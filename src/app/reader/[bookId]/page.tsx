@@ -687,9 +687,25 @@ function ReaderContent() {
       if (!document.fullscreenElement) {
         await document.documentElement.requestFullscreen();
         setIsFullscreen(true);
+        // Lock orientation to portrait on mobile devices
+        if (screen.orientation && "lock" in screen.orientation) {
+          try {
+            await (screen.orientation as ScreenOrientation & { lock: (orientation: string) => Promise<void> }).lock("portrait");
+          } catch {
+            // Orientation lock not supported or failed, ignore
+          }
+        }
       } else {
         await document.exitFullscreen();
         setIsFullscreen(false);
+        // Unlock orientation when exiting fullscreen
+        if (screen.orientation && "unlock" in screen.orientation) {
+          try {
+            (screen.orientation as ScreenOrientation & { unlock: () => void }).unlock();
+          } catch {
+            // Orientation unlock not supported or failed, ignore
+          }
+        }
       }
     } catch (error) {
       logger.warn("reader", "全屏切换失败", error);
@@ -698,7 +714,17 @@ function ReaderContent() {
 
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
+      const isFullscreen = !!document.fullscreenElement;
+      setIsFullscreen(isFullscreen);
+      
+      // Unlock orientation when exiting fullscreen
+      if (!isFullscreen && screen.orientation && "unlock" in screen.orientation) {
+        try {
+          (screen.orientation as ScreenOrientation & { unlock: () => void }).unlock();
+        } catch {
+          // Orientation unlock not supported or failed, ignore
+        }
+      }
     };
 
     document.addEventListener("fullscreenchange", handleFullscreenChange);
