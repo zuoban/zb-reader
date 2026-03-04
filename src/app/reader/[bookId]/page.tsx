@@ -215,9 +215,6 @@ function ReaderContent() {
 
         if (cached) {
           fileUrl = URL.createObjectURL(new Blob([cached]));
-          toast.success("使用缓存书籍", {
-            position: "top-right",
-          });
         } else {
           const fileRes = await fetch(`/api/books/${bookId}/file`);
           if (!fileRes.ok) {
@@ -2046,25 +2043,28 @@ function ReaderContent() {
       <Toaster />
 
       <AlertDialog open={conflictDialogOpen} onOpenChange={setConflictDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>进度冲突</AlertDialogTitle>
-            <AlertDialogDescription>
+        <AlertDialogContent className="px-4 w-[calc(100%-2rem)] max-w-md rounded-2xl p-5 sm:p-6 sm:px-6">
+          <AlertDialogHeader className="text-center sm:text-left">
+            <AlertDialogTitle className="text-lg sm:text-xl">进度冲突</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm sm:text-base leading-relaxed">
               {latestProgress !== null && currentProgress !== null
                 ? `当前进度：${(currentProgress * 100).toFixed(1)}%，最新进度：${(latestProgress * 100).toFixed(1)}%。是否强制覆盖？`
                 : "其他窗口已更新了阅读进度。是否强制覆盖？"}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-2">
             <AlertDialogCancel
               onClick={() => {
                 setConflictDialogOpen(false);
                 router.push("/bookshelf");
               }}
+              className="w-full sm:w-auto h-10 rounded-xl"
             >
               返回书架
             </AlertDialogCancel>
-            <AlertDialogAction onClick={handleForceSave}>强制保存</AlertDialogAction>
+            <AlertDialogAction onClick={handleForceSave} className="w-full sm:w-auto h-10 rounded-xl">
+              强制保存
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

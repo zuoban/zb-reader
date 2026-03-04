@@ -180,11 +180,19 @@ export function TtsFloatingControl({
               <button
                 type="button"
                 onClick={() => onAutoScrollToActiveChange(!autoScrollToActive)}
-                className="group flex size-7 sm:size-7 items-center justify-center rounded-lg transition-all duration-150 cursor-pointer active:scale-90 hover:bg-[var(--reader-primary-light,_rgba(23,23,23,0.1))]"
+                className={cn(
+                  "group flex size-7 sm:size-7 items-center justify-center rounded-lg transition-all duration-150 cursor-pointer active:scale-90",
+                  autoScrollToActive 
+                    ? "shadow-sm" 
+                    : "hover:bg-[var(--reader-primary-light,_rgba(23,23,23,0.1))]"
+                )}
                 style={{ 
                   color: autoScrollToActive 
+                    ? "#ffffff" 
+                    : "var(--reader-muted-text)",
+                  background: autoScrollToActive 
                     ? "var(--reader-primary, #171717)" 
-                    : "var(--reader-muted-text)" 
+                    : "transparent"
                 }}
                 title={autoScrollToActive ? "关闭自动定位" : "开启自动定位"}
               >
@@ -207,11 +215,19 @@ export function TtsFloatingControl({
               <button
                 type="button"
                 onClick={() => onTtsAutoNextChapterChange(!ttsAutoNextChapter)}
-                className="group flex size-7 sm:size-7 items-center justify-center rounded-lg transition-all duration-150 cursor-pointer active:scale-90 hover:bg-[var(--reader-primary-light,_rgba(23,23,23,0.1))]"
+                className={cn(
+                  "group flex size-7 sm:size-7 items-center justify-center rounded-lg transition-all duration-150 cursor-pointer active:scale-90",
+                  ttsAutoNextChapter 
+                    ? "shadow-sm" 
+                    : "hover:bg-[var(--reader-primary-light,_rgba(23,23,23,0.1))]"
+                )}
                 style={{ 
                   color: ttsAutoNextChapter 
+                    ? "#ffffff" 
+                    : "var(--reader-muted-text)",
+                  background: ttsAutoNextChapter 
                     ? "var(--reader-primary, #171717)" 
-                    : "var(--reader-muted-text)" 
+                    : "transparent"
                 }}
                 title={ttsAutoNextChapter ? "关闭自动续章" : "开启自动续章"}
               >

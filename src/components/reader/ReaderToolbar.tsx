@@ -9,8 +9,6 @@ import {
   StickyNote,
   Volume2,
   Pause,
-  ArrowUp,
-  ArrowDown,
   ChevronLeft,
   ChevronRight,
   Maximize,
@@ -206,148 +204,71 @@ export function ReaderToolbar({
       >
         <div
           className={cn(
-            "mx-3 mb-2 rounded-2xl border backdrop-blur-xl"
+            "mx-auto max-w-lg px-3 pb-2"
           )}
-          style={{
-            background: "var(--reader-card-bg)",
-            borderColor: "var(--reader-border)",
-            boxShadow: "0 10px 28px -18px var(--reader-shadow)",
-          }}
         >
-          <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3">
-            {onPrevPage && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onPrevPage}
-                className="cursor-pointer h-7 w-7 sm:h-8 sm:w-8 rounded-lg transition-colors"
-                style={{ color: "var(--reader-muted-text)" }}
-              >
-                <ArrowUp className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              </Button>
-            )}
-
-            {onPrevChapter && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onPrevChapter}
-                disabled={!hasPrevChapter}
-                className={cn(
-                  "cursor-pointer h-7 w-7 sm:h-8 sm:w-8 rounded-lg transition-colors",
-                  !hasPrevChapter && "opacity-30 cursor-not-allowed"
-                )}
-                style={{ color: "var(--reader-muted-text)" }}
-              >
-                <ChevronLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              </Button>
-            )}
-
-            <div className="flex-1 flex items-center justify-center h-8 sm:h-10">
-              <div
-                className="px-3 py-1 rounded-lg text-[10px] sm:text-xs font-semibold"
-                style={{
-                  background: "var(--reader-primary-light, rgba(23,23,23,0.1))",
-                  color: "var(--reader-primary, #171717)",
-                }}
-              >
-                {(progress * 100).toFixed(2)}%
-              </div>
-            </div>
-
-            {onNextChapter && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onNextChapter}
-                disabled={!hasNextChapter}
-                className={cn(
-                  "cursor-pointer h-7 w-7 sm:h-8 sm:w-8 rounded-lg transition-colors",
-                  !hasNextChapter && "opacity-30 cursor-not-allowed"
-                )}
-                style={{ color: "var(--reader-muted-text)" }}
-              >
-                <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              </Button>
-            )}
-
-            {onNextPage && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onNextPage}
-                className="cursor-pointer h-7 w-7 sm:h-8 sm:w-8 rounded-lg transition-colors"
-                style={{ color: "var(--reader-muted-text)" }}
-              >
-                <ArrowDown className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              </Button>
-            )}
-          </div>
-
-          {/* 快捷键提示 - 仅桌面端显示 */}
           <div
-            className="hidden sm:flex items-center justify-center gap-6 pb-2 text-xs"
-            style={{ color: "var(--reader-muted-text)" }}
+            className="rounded-2xl border backdrop-blur-xl overflow-hidden"
+            style={{
+              background: "var(--reader-card-bg)",
+              borderColor: "var(--reader-border)",
+              boxShadow: "0 8px 32px -8px var(--reader-shadow)",
+            }}
           >
-            <div className="flex items-center gap-1.5">
-              <kbd
-                className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-medium rounded border"
-                style={{
-                  background: "var(--reader-card-bg)",
-                  borderColor: "var(--reader-border)",
-                }}
-              >
-                <ChevronLeft className="h-3 w-3" />
-              </kbd>
-              <span>上一章</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <kbd
-                className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-medium rounded border"
-                style={{
-                  background: "var(--reader-card-bg)",
-                  borderColor: "var(--reader-border)",
-                }}
-              >
-                <ArrowUp className="h-3 w-3" />
-              </kbd>
-              <span>向上滚动</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <kbd
-                className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-medium rounded border"
-                style={{
-                  background: "var(--reader-card-bg)",
-                  borderColor: "var(--reader-border)",
-                }}
-              >
-                <ArrowDown className="h-3 w-3" />
-              </kbd>
-              <span>向下滚动</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <kbd
-                className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-medium rounded border"
-                style={{
-                  background: "var(--reader-card-bg)",
-                  borderColor: "var(--reader-border)",
-                }}
-              >
-                <ChevronRight className="h-3 w-3" />
-              </kbd>
-              <span>下一章</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <kbd
-                className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-medium rounded border"
-                style={{
-                  background: "var(--reader-card-bg)",
-                  borderColor: "var(--reader-border)",
-                }}
-              >
-                Esc
-              </kbd>
-              <span>返回</span>
+            <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4">
+              {onPrevChapter && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onPrevChapter}
+                  disabled={!hasPrevChapter}
+                  className={cn(
+                    "cursor-pointer h-10 w-10 sm:h-11 sm:w-11 rounded-xl transition-all duration-200",
+                    "hover:bg-[var(--reader-primary-light,_rgba(23,23,23,0.08))] active:scale-95",
+                    !hasPrevChapter && "opacity-30 cursor-not-allowed hover:bg-transparent"
+                  )}
+                  style={{ color: "var(--reader-muted-text)" }}
+                >
+                  <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
+                </Button>
+              )}
+
+              <div className="flex-1 mx-3 sm:mx-4 flex flex-col items-center gap-2">
+                <div
+                  className="w-full h-1.5 rounded-full overflow-hidden"
+                  style={{
+                    background: "var(--reader-primary-light, rgba(23,23,23,0.1))",
+                  }}
+                >
+                  <div
+                    className="h-full rounded-full transition-all duration-300 ease-out"
+                    style={{
+                      width: `${progress * 100}%`,
+                      background: "var(--reader-primary, #171717)",
+                    }}
+                  />
+                </div>
+                <div className="text-[10px] sm:text-xs font-medium tracking-wide" style={{ color: "var(--reader-muted-text)" }}>
+                  {(progress * 100).toFixed(1)}%
+                </div>
+              </div>
+
+              {onNextChapter && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onNextChapter}
+                  disabled={!hasNextChapter}
+                  className={cn(
+                    "cursor-pointer h-10 w-10 sm:h-11 sm:w-11 rounded-xl transition-all duration-200",
+                    "hover:bg-[var(--reader-primary-light,_rgba(23,23,23,0.08))] active:scale-95",
+                    !hasNextChapter && "opacity-30 cursor-not-allowed hover:bg-transparent"
+                  )}
+                  style={{ color: "var(--reader-muted-text)" }}
+                >
+                  <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
+                </Button>
+              )}
             </div>
           </div>
         </div>
