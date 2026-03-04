@@ -141,8 +141,6 @@ export const readerSettings = sqliteTable("reader_settings", {
     .notNull(),
   browserVoiceId: text("browser_voice_id"),
   ttsRate: real("tts_rate").default(1).notNull(),
-  ttsPitch: real("tts_pitch").default(1).notNull(),
-  ttsVolume: real("tts_volume").default(1).notNull(),
   microsoftPreloadCount: integer("microsoft_preload_count").default(3).notNull(),
   ttsAutoNextChapter: integer("tts_auto_next_chapter", { mode: "boolean" })
     .default(false)

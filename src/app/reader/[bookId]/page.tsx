@@ -18,7 +18,7 @@ import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import type { EpubReaderRef } from "@/components/reader/EpubReader";
 import type { Book, Bookmark, Note } from "@/lib/db/schema";
-import type { BrowserVoiceOption, TtsConfigApiItem } from "@/lib/tts";
+import type { BrowserVoiceOption } from "@/lib/tts";
 import {
   cacheBook,
   getCachedBook,
@@ -99,8 +99,6 @@ function ReaderContent() {
   const [browserVoices, setBrowserVoices] = useState<BrowserVoiceOption[]>([]);
   const [selectedBrowserVoiceId, setSelectedBrowserVoiceId] = useState("");
   const [ttsRate, setTtsRate] = useState(1);
-  const [ttsPitch, setTtsPitch] = useState(1);
-  const [ttsVolume, setTtsVolume] = useState(1);
   const [microsoftPreloadCount, setMicrosoftPreloadCount] = useState(
     DEFAULT_MICROSOFT_PRELOAD_COUNT
   );
@@ -164,12 +162,12 @@ function ReaderContent() {
   const [activeTtsParagraph, setActiveTtsParagraph] = useState("");
   const currentParagraphIndexRef = useRef(0);
   const allParagraphsRef = useRef<string[]>([]);
-  const readParagraphsHashRef = useRef<Set<string>>(new Set());
+  const readParagraphsHashRef = useRef<Set<string>>(new Set<string>());
   const [ttsCurrentIndex, setTtsCurrentIndex] = useState(0);
   const [ttsTotalParagraphs, setTtsTotalParagraphs] = useState(0);
 
   // 跟踪 TTS 设置的上次值，用于检测设置变化
-  const prevTtsSettingsRef = useRef({ rate: ttsRate, pitch: ttsPitch, volume: ttsVolume });
+  const prevTtsSettingsRef = useRef({ rate: ttsRate });
   
   // Wake Lock for preventing screen sleep during TTS
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
@@ -312,12 +310,6 @@ function ReaderContent() {
         if (typeof settings.ttsRate === "number") {
           setTtsRate(Math.min(5, Math.max(1, settings.ttsRate)));
         }
-        if (typeof settings.ttsPitch === "number") {
-          setTtsPitch(Math.min(2, Math.max(0.5, settings.ttsPitch)));
-        }
-        if (typeof settings.ttsVolume === "number") {
-          setTtsVolume(Math.min(1, Math.max(0, settings.ttsVolume)));
-        }
         if (
           typeof settings.microsoftPreloadCount === "number" &&
           [1, 2, 3, 5].includes(settings.microsoftPreloadCount)
@@ -368,8 +360,6 @@ function ReaderContent() {
             theme: readerTheme,
             browserVoiceId: selectedBrowserVoiceId,
             ttsRate,
-            ttsPitch,
-            ttsVolume,
             microsoftPreloadCount,
             ttsAutoNextChapter,
           }),
@@ -383,9 +373,7 @@ function ReaderContent() {
     microsoftPreloadCount,
     readerTheme,
     selectedBrowserVoiceId,
-    ttsPitch,
     ttsRate,
-    ttsVolume,
     ttsAutoNextChapter,
   ]);
 
@@ -947,8 +935,6 @@ function ReaderContent() {
   const requestMicrosoftSpeech = useCallback(
     async (text: string) => {
       const ratePercent = Math.round((ttsRate - 1) * 100);
-      const pitchPercent = Math.round((ttsPitch - 1) * 100);
-      const volumePercent = Math.round(ttsVolume * 100);
 
       // 检查缓存
       const cacheKey = TtsAudioLruCache.hashKey({
@@ -956,8 +942,8 @@ function ReaderContent() {
         text,
         voiceName: selectedBrowserVoiceId,
         rate: ratePercent,
-        pitch: pitchPercent,
-        volume: volumePercent,
+        pitch: 0,
+        volume: 100,
       });
       const cached = ttsAudioCache.get(cacheKey);
       if (cached?.kind === "blob") {
@@ -971,8 +957,8 @@ function ReaderContent() {
           text,
           voiceName: selectedBrowserVoiceId,
           rate: ratePercent,
-          pitch: pitchPercent,
-          volume: volumePercent,
+          pitch: 0,
+          volume: 100,
         }),
       });
 
@@ -985,7 +971,7 @@ function ReaderContent() {
           | { error?: string; details?: string }
           | null;
         const message = data?.error || "朗读失败";
-        const details = data?.details ? `：${data.details}` : "";
+        const details = data?.details ? `: ${data.details}` : "";
         throw new Error(`${message}${details}`);
       }
 
@@ -994,7 +980,7 @@ function ReaderContent() {
       ttsAudioCache.set(cacheKey, { kind: "blob", blob: audioBlob });
       return URL.createObjectURL(audioBlob);
     },
-    [selectedBrowserVoiceId, ttsPitch, ttsRate, ttsVolume]
+    [selectedBrowserVoiceId, ttsRate]
   );
 
   const playAudioSource = useCallback(
@@ -1097,13 +1083,10 @@ function ReaderContent() {
   // 当 TTS 设置变化时，如果正在播放，重新播放当前段落
   useEffect(() => {
     const prev = prevTtsSettingsRef.current;
-    const current = { rate: ttsRate, pitch: ttsPitch, volume: ttsVolume };
+    const current = { rate: ttsRate };
 
     // 检查是否有变化
-    const hasChanged =
-      prev.rate !== current.rate ||
-      prev.pitch !== current.pitch ||
-      prev.volume !== current.volume;
+    const hasChanged = prev.rate !== current.rate;
 
     if (hasChanged && isSpeaking && activeTtsParagraph) {
       // 更新 ref
@@ -1140,7 +1123,7 @@ function ReaderContent() {
       // 只更新 ref，不重新播放
       prevTtsSettingsRef.current = current;
     }
-  }, [ttsRate, ttsPitch, ttsVolume, isSpeaking, activeTtsParagraph]);
+  }, [ttsRate, isSpeaking, activeTtsParagraph]);
 
   const speakWithBrowserParagraphs = useCallback(
     async (paragraphs: string[], sessionId: number, startIndex = 0) => {
@@ -2078,10 +2061,6 @@ function ReaderContent() {
         onSelectedBrowserVoiceIdChange={handleSelectedBrowserVoiceIdChange}
         ttsRate={ttsRate}
         onTtsRateChange={setTtsRate}
-        ttsPitch={ttsPitch}
-        onTtsPitchChange={setTtsPitch}
-        ttsVolume={ttsVolume}
-        onTtsVolumeChange={setTtsVolume}
         microsoftPreloadCount={microsoftPreloadCount}
         onMicrosoftPreloadCountChange={setMicrosoftPreloadCount}
         ttsAutoNextChapter={ttsAutoNextChapter}

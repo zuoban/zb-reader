@@ -7,7 +7,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -15,8 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import type { BrowserVoiceOption, TtsConfigApiItem } from "@/lib/tts";
+import type { BrowserVoiceOption } from "@/lib/tts";
 import { cn } from "@/lib/utils";
 
 interface ReadingSettingsProps {
@@ -31,10 +29,6 @@ interface ReadingSettingsProps {
   onSelectedBrowserVoiceIdChange: (voiceId: string) => void;
   ttsRate: number;
   onTtsRateChange: (value: number) => void;
-  ttsPitch: number;
-  onTtsPitchChange: (value: number) => void;
-  ttsVolume: number;
-  onTtsVolumeChange: (value: number) => void;
   microsoftPreloadCount: number;
   onMicrosoftPreloadCountChange: (value: number) => void;
   ttsAutoNextChapter: boolean;
@@ -257,10 +251,6 @@ export function ReadingSettings({
   onSelectedBrowserVoiceIdChange,
   ttsRate,
   onTtsRateChange,
-  ttsPitch,
-  onTtsPitchChange,
-  ttsVolume,
-  onTtsVolumeChange,
   microsoftPreloadCount,
   onMicrosoftPreloadCountChange,
   ttsAutoNextChapter,
@@ -477,24 +467,6 @@ export function ReadingSettings({
                 step={0.1}
                 onChange={onTtsRateChange}
                 unit="x"
-              />
-              <SliderRow
-                label="音调"
-                value={ttsPitch}
-                min={0.5}
-                max={2}
-                step={0.1}
-                onChange={onTtsPitchChange}
-              />
-              <SliderRow
-                label="音量"
-                value={ttsVolume}
-                min={0}
-                max={1}
-                step={0.1}
-                onChange={onTtsVolumeChange}
-                displayValue={Math.round(ttsVolume * 100)}
-                unit="%"
               />
               <SettingRow label="预加载段数" noBorder>
                 <CompactSelect
