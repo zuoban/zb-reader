@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, unique } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 
 export const users = sqliteTable("users", {
@@ -39,28 +39,36 @@ export const books = sqliteTable("books", {
     .notNull(),
 });
 
-export const readingProgress = sqliteTable("reading_progress", {
-  id: text("id").primaryKey(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  bookId: text("book_id")
-    .notNull()
-    .references(() => books.id, { onDelete: "cascade" }),
-  progress: real("progress").default(0).notNull(),
-  location: text("location"),
-  currentPage: integer("current_page"),
-  totalPages: integer("total_pages"),
-  lastReadAt: text("last_read_at")
-    .default(sql`(datetime('now'))`)
-    .notNull(),
-  createdAt: text("created_at")
-    .default(sql`(datetime('now'))`)
-    .notNull(),
-  updatedAt: text("updated_at")
-    .default(sql`(datetime('now'))`)
-    .notNull(),
-});
+export const readingProgress = sqliteTable(
+  "reading_progress",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    bookId: text("book_id")
+      .notNull()
+      .references(() => books.id, { onDelete: "cascade" }),
+    deviceId: text("device_id").notNull().default("legacy"),
+    deviceName: text("device_name"),
+    progress: real("progress").default(0).notNull(),
+    location: text("location"),
+    currentPage: integer("current_page"),
+    totalPages: integer("total_pages"),
+    lastReadAt: text("last_read_at")
+      .default(sql`(datetime('now'))`)
+      .notNull(),
+    createdAt: text("created_at")
+      .default(sql`(datetime('now'))`)
+      .notNull(),
+    updatedAt: text("updated_at")
+      .default(sql`(datetime('now'))`)
+      .notNull(),
+  },
+  (table) => ({
+    userBookDeviceUnique: unique().on(table.userId, table.bookId, table.deviceId),
+  })
+);
 
 export const bookmarks = sqliteTable("bookmarks", {
   id: text("id").primaryKey(),

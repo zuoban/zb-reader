@@ -59,6 +59,8 @@ function getConnection() {
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+      device_id TEXT NOT NULL DEFAULT 'legacy',
+      device_name TEXT,
       progress REAL NOT NULL DEFAULT 0,
       location TEXT,
       current_page INTEGER,
@@ -66,7 +68,7 @@ function getConnection() {
       last_read_at TEXT NOT NULL DEFAULT (datetime('now')),
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-      UNIQUE(user_id, book_id)
+      UNIQUE(user_id, book_id, device_id)
     );
 
     CREATE TABLE IF NOT EXISTS bookmarks (
@@ -144,6 +146,48 @@ function getConnection() {
     sqlite.exec(`ALTER TABLE reader_settings ADD COLUMN tts_highlight_color TEXT NOT NULL DEFAULT '#3b82f6';`);
   } catch {
     // Column already exists, ignore
+  }
+
+  // Migration: Add device_id and device_name to reading_progress for multi-device sync (2026-03-04)
+  // SQLite doesn't support modifying constraints, so we need to rebuild the table
+  const progressInfo = sqlite.prepare("PRAGMA table_info(reading_progress)").all() as { name: string }[];
+  const hasDeviceId = progressInfo.some((col) => col.name === "device_id");
+
+  if (!hasDeviceId) {
+    // Step 1: Add new columns
+    sqlite.exec(`ALTER TABLE reading_progress ADD COLUMN device_id TEXT NOT NULL DEFAULT 'legacy';`);
+    sqlite.exec(`ALTER TABLE reading_progress ADD COLUMN device_name TEXT;`);
+
+    // Step 2: Rebuild table with new constraint
+    sqlite.exec(`
+      CREATE TABLE reading_progress_new (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+        device_id TEXT NOT NULL DEFAULT 'legacy',
+        device_name TEXT,
+        progress REAL NOT NULL DEFAULT 0,
+        location TEXT,
+        current_page INTEGER,
+        total_pages INTEGER,
+        last_read_at TEXT NOT NULL DEFAULT (datetime('now')),
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+        UNIQUE(user_id, book_id, device_id)
+      );
+    `);
+
+    // Step 3: Copy data
+    sqlite.exec(`
+      INSERT INTO reading_progress_new 
+      SELECT id, user_id, book_id, device_id, device_name, progress, location, 
+             current_page, total_pages, last_read_at, created_at, updated_at
+      FROM reading_progress;
+    `);
+
+    // Step 4: Replace old table
+    sqlite.exec(`DROP TABLE reading_progress;`);
+    sqlite.exec(`ALTER TABLE reading_progress_new RENAME TO reading_progress;`);
   }
 
   _sqlite = sqlite;

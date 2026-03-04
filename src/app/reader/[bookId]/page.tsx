@@ -25,6 +25,7 @@ import {
 } from "@/lib/book-cache";
 import { ttsAudioCache, TtsAudioLruCache } from "@/lib/ttsAudioCache";
 import { logger } from "@/lib/logger";
+import { getDeviceId, getDeviceName } from "@/lib/utils";
 
 // Dynamic import for EpubReader (client-only, depends on browser APIs)
 const EpubReader = dynamic(() => import("@/components/reader/EpubReader"), {
@@ -177,6 +178,7 @@ function ReaderContent() {
   const currentLocationRef = useRef<string | null>(null); // may include "#scroll=<ratio>" suffix
   const currentCfiRef = useRef<string | null>(null); // pure CFI without scroll suffix
   const progressRef = useRef(0);
+  const loadedAtRef = useRef<string | null>(null); // 记录加载进度时的时间戳，用于多窗口同步
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const txtReaderControllerRef = useRef<{ nextPage: () => boolean; prevPage: () => boolean; scrollDown: (amount?: number) => void; scrollUp: (amount?: number) => void; scrollToActiveParagraph: () => void } | null>(null);
@@ -234,6 +236,7 @@ function ReaderContent() {
         if (progressData.progress?.location) {
           setInitialLocation(progressData.progress.location);
           setProgress(progressData.progress.progress || 0);
+          loadedAtRef.current = progressData.progress.updatedAt;
         }
 
         // Load bookmarks
@@ -540,6 +543,22 @@ function ReaderContent() {
     if (!bookId || !currentLocationRef.current) return;
 
     try {
+      // 乐观检查：先获取最新进度
+      const checkRes = await fetch(`/api/progress?bookId=${bookId}`);
+      const checkData = await checkRes.json();
+
+      // 如果服务器进度比本地加载时间新，说明其他窗口/设备已更新，跳过保存
+      if (
+        checkData.progress?.updatedAt &&
+        loadedAtRef.current &&
+        checkData.progress.updatedAt > loadedAtRef.current
+      ) {
+        loadedAtRef.current = checkData.progress.updatedAt;
+        return;
+      }
+
+      // 保存进度
+      const now = new Date().toISOString().replace("T", " ").replace("Z", "");
       await fetch("/api/progress", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -549,8 +568,13 @@ function ReaderContent() {
           location: currentLocationRef.current,
           currentPage: currentPageRef.current,
           totalPages: totalPagesRef.current,
+          deviceId: getDeviceId(),
+          deviceName: getDeviceName(),
         }),
       });
+
+      // 更新本地时间戳
+      loadedAtRef.current = now;
     } catch {
       // Silently fail
     }
@@ -569,43 +593,19 @@ function ReaderContent() {
 
   // Save on page leave
   useEffect(() => {
-    const handleBeforeUnload = () => {
-      if (currentLocationRef.current && bookId) {
-        // 使用 keepalive fetch 替代 sendBeacon：
-        // sendBeacon 固定发 POST，但 API 只接受 PUT，会导致 405 静默失败。
-        // keepalive: true 允许请求在页面卸载后继续发送，且方法正确。
-        fetch("/api/progress", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          keepalive: true,
-          body: JSON.stringify({
-            bookId,
-            progress: progressRef.current,
-            location: currentLocationRef.current,
-            currentPage: currentPageRef.current,
-            totalPages: totalPagesRef.current,
-          }),
-        }).catch(() => {
-          // fire-and-forget，页面卸载时无法处理响应
-        });
-      }
-    };
-
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
         saveProgress();
       }
     };
 
-    window.addEventListener("beforeunload", handleBeforeUnload);
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       saveProgress();
     };
-  }, [saveProgress, bookId]);
+  }, [saveProgress]);
 
   // Re-acquire Wake Lock when page becomes visible again (if TTS is playing)
   useEffect(() => {
@@ -681,8 +681,8 @@ function ReaderContent() {
     setSelectionMenu((prev) => ({ ...prev, visible: false }));
   }, [isSpeaking]);
 
-  const handleBack = useCallback(() => {
-    saveProgress();
+  const handleBack = useCallback(async () => {
+    await saveProgress();
     router.push("/bookshelf");
   }, [saveProgress, router]);
 

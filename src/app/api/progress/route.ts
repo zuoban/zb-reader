@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { readingProgress } from "@/lib/db/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, desc } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 
 export async function GET(req: NextRequest) {
@@ -20,14 +20,17 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const progress = await db.query.readingProgress.findFirst({
+    const allProgress = await db.query.readingProgress.findMany({
       where: and(
         eq(readingProgress.userId, session.user.id),
         eq(readingProgress.bookId, bookId)
       ),
+      orderBy: [desc(readingProgress.updatedAt)],
     });
 
-    return NextResponse.json({ progress: progress || null });
+    const latestProgress = allProgress[0] || null;
+
+    return NextResponse.json({ progress: latestProgress });
   } catch (error) {
     logger.error("api", "Get progress error:", error);
     return NextResponse.json({ error: "获取进度失败" }, { status: 500 });
@@ -41,14 +44,22 @@ export async function PUT(req: NextRequest) {
   }
 
   try {
-    const { bookId, progress, location, currentPage, totalPages } =
-      await req.json();
+    const {
+      bookId,
+      progress,
+      location,
+      currentPage,
+      totalPages,
+      deviceId,
+      deviceName,
+    } = await req.json();
 
-    logger.debug("api", '[Progress API PUT]', {
+    logger.debug("api", "[Progress API PUT]", {
       userId: session.user.id,
       bookId,
       progress,
-      location: location?.slice(0, 50) + '...',
+      deviceId,
+      location: location?.slice(0, 50) + "...",
     });
 
     if (!bookId) {
@@ -58,16 +69,17 @@ export async function PUT(req: NextRequest) {
       );
     }
 
+    const effectiveDeviceId = deviceId || "legacy";
     const now = new Date().toISOString().replace("T", " ").replace("Z", "");
 
-    // 原子 upsert：INSERT ... ON CONFLICT(user_id, book_id) DO UPDATE SET ...
-    // 避免先查后写的竞态，同时减少一次 DB 操作
     await db
       .insert(readingProgress)
       .values({
         id: uuidv4(),
         userId: session.user.id,
         bookId,
+        deviceId: effectiveDeviceId,
+        deviceName: deviceName ?? null,
         progress: progress ?? 0,
         location: location ?? null,
         currentPage: currentPage ?? null,
@@ -75,22 +87,24 @@ export async function PUT(req: NextRequest) {
         lastReadAt: now,
       })
       .onConflictDoUpdate({
-        target: [readingProgress.userId, readingProgress.bookId],
+        target: [readingProgress.userId, readingProgress.bookId, readingProgress.deviceId],
         set: {
           progress: sql`COALESCE(${progress ?? null}, ${readingProgress.progress})`,
           location: sql`COALESCE(${location ?? null}, ${readingProgress.location})`,
           currentPage: sql`COALESCE(${currentPage ?? null}, ${readingProgress.currentPage})`,
           totalPages: sql`COALESCE(${totalPages ?? null}, ${readingProgress.totalPages})`,
+          deviceName: sql`COALESCE(${deviceName ?? null}, ${readingProgress.deviceName})`,
           lastReadAt: now,
           updatedAt: now,
         },
       });
 
-    // 直接返回请求参数，无需再查一次 DB
     return NextResponse.json({
       progress: {
         userId: session.user.id,
         bookId,
+        deviceId: effectiveDeviceId,
+        deviceName: deviceName ?? null,
         progress: progress ?? 0,
         location: location ?? null,
         currentPage: currentPage ?? null,

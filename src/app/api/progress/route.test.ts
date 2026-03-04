@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 
 const mockAuth = vi.fn();
-const mockFindFirst = vi.fn();
+const mockFindMany = vi.fn();
 const mockInsert = vi.fn(() => ({
   values: vi.fn(() => ({
     onConflictDoUpdate: vi.fn(),
@@ -17,7 +17,7 @@ vi.mock("@/lib/db", () => ({
   db: {
     query: {
       readingProgress: {
-        findFirst: () => mockFindFirst(),
+        findMany: () => mockFindMany(),
       },
     },
     insert: () => mockInsert(),
@@ -75,6 +75,8 @@ describe("Progress API", () => {
         id: "progress-1",
         userId: "user-1",
         bookId: "book-1",
+        deviceId: "device-1",
+        deviceName: "iPhone",
         progress: 50.5,
         location: "chapter-3",
         currentPage: 100,
@@ -84,7 +86,7 @@ describe("Progress API", () => {
         updatedAt: "2024-01-01 12:00:00",
       };
 
-      mockFindFirst.mockResolvedValue(mockProgress);
+      mockFindMany.mockResolvedValue([mockProgress]);
 
       const { GET } = await import("./route");
       const req = createRequest("/api/progress?bookId=book-1");
@@ -101,7 +103,7 @@ describe("Progress API", () => {
         expires: new Date().toISOString(),
       });
 
-      mockFindFirst.mockResolvedValue(undefined);
+      mockFindMany.mockResolvedValue([]);
 
       const { GET } = await import("./route");
       const req = createRequest("/api/progress?bookId=book-1");
@@ -118,7 +120,7 @@ describe("Progress API", () => {
         expires: new Date().toISOString(),
       });
 
-      mockFindFirst.mockRejectedValue(new Error("DB error"));
+      mockFindMany.mockRejectedValue(new Error("DB error"));
 
       const { GET } = await import("./route");
       const req = createRequest("/api/progress?bookId=book-1");
