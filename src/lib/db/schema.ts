@@ -49,8 +49,6 @@ export const readingProgress = sqliteTable(
     bookId: text("book_id")
       .notNull()
       .references(() => books.id, { onDelete: "cascade" }),
-    deviceId: text("device_id").notNull().default("legacy"),
-    deviceName: text("device_name"),
     progress: real("progress").default(0).notNull(),
     location: text("location"),
     currentPage: integer("current_page"),
@@ -66,7 +64,7 @@ export const readingProgress = sqliteTable(
       .notNull(),
   },
   (table) => ({
-    userBookDeviceUnique: unique().on(table.userId, table.bookId, table.deviceId),
+    userBookUnique: unique().on(table.userId, table.bookId),
   })
 );
 

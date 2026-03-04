@@ -65,9 +65,9 @@ function getConnection() {
       location TEXT,
       current_page INTEGER,
       total_pages INTEGER,
-      last_read_at TEXT NOT NULL DEFAULT (datetime('now')),
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      last_read_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+      created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+      updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
       UNIQUE(user_id, book_id, device_id)
     );
 
@@ -193,6 +193,71 @@ function getConnection() {
     // Step 4: Replace old table
     sqlite.exec(`DROP TABLE reading_progress;`);
     sqlite.exec(`ALTER TABLE reading_progress_new RENAME TO reading_progress;`);
+  }
+
+  // Migration: Simplify reading_progress table (remove device fields, single progress record per book) (2026-03-05)
+  const progressTableInfo = sqlite.prepare("PRAGMA table_info(reading_progress)").all() as { name: string }[];
+  const hasDeviceIdInTable = progressTableInfo.some((col) => col.name === "device_id");
+
+  // Check if the new constraint exists
+  const indexInfo = sqlite.prepare("PRAGMA index_list(reading_progress)").all() as { name: string }[];
+  const hasNewConstraint = indexInfo.some((idx) => idx.name === "reading_progress_user_book_unique");
+
+  if (hasDeviceIdInTable && !hasNewConstraint) {
+    // Step 1: Cleanup old backup and create new backup
+    sqlite.exec(`DROP TABLE IF EXISTS reading_progress_backup;`);
+    sqlite.exec(`
+      CREATE TABLE reading_progress_backup AS
+      SELECT * FROM reading_progress;
+    `);
+
+    // Step 2: Create new table (no device_id/device_name, new unique constraint)
+    sqlite.exec(`
+      CREATE TABLE reading_progress_new (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+        progress REAL NOT NULL DEFAULT 0,
+        location TEXT,
+        current_page INTEGER,
+        total_pages INTEGER,
+        last_read_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+        created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+        updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+        UNIQUE(user_id, book_id)
+      );
+    `);
+
+    // Step 3: Merge data: keep only the latest record per user per book
+    sqlite.exec(`
+      INSERT INTO reading_progress_new (id, user_id, book_id, progress, location,
+                                        current_page, total_pages, last_read_at,
+                                        created_at, updated_at)
+      SELECT
+        id,
+        user_id,
+        book_id,
+        progress,
+        location,
+        current_page,
+        total_pages,
+        last_read_at,
+        created_at,
+        updated_at
+      FROM reading_progress_backup
+      WHERE id IN (
+        SELECT id FROM reading_progress_backup
+        GROUP BY user_id, book_id
+        HAVING updated_at = MAX(updated_at)
+      );
+    `);
+
+    // Step 4: Replace table
+    sqlite.exec(`DROP TABLE reading_progress;`);
+    sqlite.exec(`ALTER TABLE reading_progress_new RENAME TO reading_progress;`);
+
+    // Step 5: Cleanup
+    sqlite.exec(`DROP TABLE IF EXISTS reading_progress_backup;`);
   }
 
   _sqlite = sqlite;

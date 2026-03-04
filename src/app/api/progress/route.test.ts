@@ -2,11 +2,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 
 const mockAuth = vi.fn();
-const mockFindMany = vi.fn();
+const mockFindFirst = vi.fn();
+const mockUpdate = vi.fn();
 const mockInsert = vi.fn(() => ({
-  values: vi.fn(() => ({
-    onConflictDoUpdate: vi.fn(),
-  })),
+  values: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("@/lib/auth", () => ({
@@ -17,9 +16,10 @@ vi.mock("@/lib/db", () => ({
   db: {
     query: {
       readingProgress: {
-        findMany: () => mockFindMany(),
+        findFirst: () => mockFindFirst(),
       },
     },
+    update: () => mockUpdate(),
     insert: () => mockInsert(),
   },
 }));
@@ -65,7 +65,7 @@ describe("Progress API", () => {
       expect(data.error).toBe("缺少 bookId 参数");
     });
 
-    it("should return progress when found", async () => {
+    it("should return progress with serverToken when found", async () => {
       mockAuth.mockResolvedValue({
         user: { id: "user-1", username: "test", email: "test@test.com" },
         expires: new Date().toISOString(),
@@ -75,8 +75,6 @@ describe("Progress API", () => {
         id: "progress-1",
         userId: "user-1",
         bookId: "book-1",
-        deviceId: "device-1",
-        deviceName: "iPhone",
         progress: 50.5,
         location: "chapter-3",
         currentPage: 100,
@@ -86,7 +84,7 @@ describe("Progress API", () => {
         updatedAt: "2024-01-01 12:00:00",
       };
 
-      mockFindMany.mockResolvedValue([mockProgress]);
+      mockFindFirst.mockResolvedValue(mockProgress);
 
       const { GET } = await import("./route");
       const req = createRequest("/api/progress?bookId=book-1");
@@ -95,6 +93,8 @@ describe("Progress API", () => {
 
       expect(res.status).toBe(200);
       expect(data.progress).toEqual(mockProgress);
+      expect(data.serverToken).toBeDefined();
+      expect(typeof data.serverToken).toBe("string");
     });
 
     it("should return null when progress not found", async () => {
@@ -103,7 +103,7 @@ describe("Progress API", () => {
         expires: new Date().toISOString(),
       });
 
-      mockFindMany.mockResolvedValue([]);
+      mockFindFirst.mockResolvedValue(null);
 
       const { GET } = await import("./route");
       const req = createRequest("/api/progress?bookId=book-1");
@@ -112,6 +112,7 @@ describe("Progress API", () => {
 
       expect(res.status).toBe(200);
       expect(data.progress).toBeNull();
+      expect(data.serverToken).toBeNull();
     });
 
     it("should handle database errors", async () => {
@@ -120,7 +121,7 @@ describe("Progress API", () => {
         expires: new Date().toISOString(),
       });
 
-      mockFindMany.mockRejectedValue(new Error("DB error"));
+      mockFindFirst.mockRejectedValue(new Error("DB error"));
 
       const { GET } = await import("./route");
       const req = createRequest("/api/progress?bookId=book-1");
@@ -152,7 +153,7 @@ describe("Progress API", () => {
       });
 
       const { PUT } = await import("./route");
-      const req = createRequest("/api/progress", {});
+      const req = createRequest("/api/progress", { progress: 50 });
       const res = await PUT(req);
       const data = await res.json();
 
@@ -160,18 +161,108 @@ describe("Progress API", () => {
       expect(data.error).toBe("缺少 bookId 参数");
     });
 
-    it("should update progress successfully", async () => {
+    it("should return 400 when clientToken is missing", async () => {
       mockAuth.mockResolvedValue({
         user: { id: "user-1", username: "test", email: "test@test.com" },
         expires: new Date().toISOString(),
       });
 
-      const mockOnConflict = vi.fn().mockResolvedValue(undefined);
-      const mockValues = vi.fn(() => ({
-        onConflictDoUpdate: mockOnConflict,
-      }));
-      mockInsert.mockReturnValue({
-        values: mockValues,
+      const { PUT } = await import("./route");
+      const req = createRequest("/api/progress", {
+        bookId: "book-1",
+        progress: 75.5,
+      });
+      const res = await PUT(req);
+      const data = await res.json();
+
+      expect(res.status).toBe(400);
+      expect(data.error).toBe("缺少 clientToken 参数");
+    });
+
+    it("should return 400 when clientToken is invalid", async () => {
+      mockAuth.mockResolvedValue({
+        user: { id: "user-1", username: "test", email: "test@test.com" },
+        expires: new Date().toISOString(),
+      });
+
+      const { PUT } = await import("./route");
+      const req = createRequest("/api/progress", {
+        bookId: "book-1",
+        progress: 75.5,
+        clientToken: "invalid-token",
+      });
+      const res = await PUT(req);
+      const data = await res.json();
+
+      expect(res.status).toBe(400);
+      expect(data.error).toBe("无效的 token");
+    });
+
+    it("should return 409 when token is outdated", async () => {
+      mockAuth.mockResolvedValue({
+        user: { id: "user-1", username: "test", email: "test@test.com" },
+        expires: new Date().toISOString(),
+      });
+
+      const mockProgress = {
+        id: "progress-1",
+        userId: "user-1",
+        bookId: "book-1",
+        progress: 50,
+        updatedAt: "2024-01-01 12:00:00",
+      };
+
+      mockFindFirst.mockResolvedValue(mockProgress);
+
+      const { generateToken } = await import("@/lib/progress-token");
+      const oldToken = generateToken({
+        userId: "user-1",
+        bookId: "book-1",
+        timestamp: "2024-01-01 11:00:00",
+      });
+
+      const { PUT } = await import("./route");
+      const req = createRequest("/api/progress", {
+        bookId: "book-1",
+        progress: 75.5,
+        clientToken: oldToken,
+      });
+      const res = await PUT(req);
+      const data = await res.json();
+
+      expect(res.status).toBe(409);
+      expect(data.conflict).toBe(true);
+      expect(data.latestTimestamp).toBe("2024-01-01 12:00:00");
+    });
+
+    it("should update progress successfully with valid token", async () => {
+      mockAuth.mockResolvedValue({
+        user: { id: "user-1", username: "test", email: "test@test.com" },
+        expires: new Date().toISOString(),
+      });
+
+      const mockProgress = {
+        id: "progress-1",
+        userId: "user-1",
+        bookId: "book-1",
+        progress: 50,
+        updatedAt: "2024-01-01 11:00:00",
+      };
+
+      mockFindFirst.mockResolvedValue(mockProgress);
+
+      const mockWhere = vi.fn().mockResolvedValue(undefined);
+      mockUpdate.mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: mockWhere,
+        }),
+      });
+
+      const { generateToken } = await import("@/lib/progress-token");
+      const newToken = generateToken({
+        userId: "user-1",
+        bookId: "book-1",
+        timestamp: "2024-01-01 12:00:00",
       });
 
       const { PUT } = await import("./route");
@@ -181,6 +272,7 @@ describe("Progress API", () => {
         location: "chapter-5",
         currentPage: 150,
         totalPages: 200,
+        clientToken: newToken,
       });
       const res = await PUT(req);
       const data = await res.json();
@@ -194,9 +286,39 @@ describe("Progress API", () => {
         currentPage: 150,
         totalPages: 200,
       });
+    });
+
+    it("should create new progress record when none exists", async () => {
+      mockAuth.mockResolvedValue({
+        user: { id: "user-1", username: "test", email: "test@test.com" },
+        expires: new Date().toISOString(),
+      });
+
+      mockFindFirst.mockResolvedValue(null);
+
+      const { generateToken } = await import("@/lib/progress-token");
+      const token = generateToken({
+        userId: "user-1",
+        bookId: "book-1",
+        timestamp: "2024-01-01 12:00:00",
+      });
+
+      const { PUT } = await import("./route");
+      const req = createRequest("/api/progress", {
+        bookId: "book-1",
+        progress: 50.5,
+        clientToken: token,
+      });
+      const res = await PUT(req);
+      const data = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(data.progress).toMatchObject({
+        userId: "user-1",
+        bookId: "book-1",
+        progress: 50.5,
+      });
       expect(mockInsert).toHaveBeenCalled();
-      expect(mockValues).toHaveBeenCalled();
-      expect(mockOnConflict).toHaveBeenCalled();
     });
   });
 });

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { SessionProvider } from "next-auth/react";
+import { SessionProvider, useSession } from "next-auth/react";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import dynamic from "next/dynamic";
@@ -25,7 +25,8 @@ import {
 } from "@/lib/book-cache";
 import { ttsAudioCache, TtsAudioLruCache } from "@/lib/ttsAudioCache";
 import { logger } from "@/lib/logger";
-import { getDeviceId, getDeviceName } from "@/lib/utils";
+import { generateToken } from "@/lib/progress-token";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 // Dynamic import for EpubReader (client-only, depends on browser APIs)
 const EpubReader = dynamic(() => import("@/components/reader/EpubReader"), {
@@ -55,6 +56,7 @@ function ReaderContent() {
   const router = useRouter();
   const params = useParams();
   const bookId = params.bookId as string;
+  const { data: session } = useSession();
 
   const epubReaderRef = useRef<EpubReaderRef>(null);
 
@@ -129,11 +131,15 @@ function ReaderContent() {
   }>({ open: false, selectedText: "", cfiRange: "" });
 
   // Progress saving
-  const currentLocationRef = useRef<string | null>(null); // may include "#scroll=<ratio>" suffix
-  const currentCfiRef = useRef<string | null>(null); // pure CFI without scroll suffix
+  const currentLocationRef = useRef<string | null>(null);
+  const currentCfiRef = useRef<string | null>(null);
   const progressRef = useRef(0);
-  const loadedAtRef = useRef<string | null>(null); // 记录加载进度时的时间戳，用于多窗口同步
+  const loadedAtRef = useRef<string | null>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const serverTokenRef = useRef<string | null>(null);
+  const [conflictDialogOpen, setConflictDialogOpen] = useState(false);
+  const [latestProgress, setLatestProgress] = useState<number | null>(null);
+  const [currentProgress, setCurrentProgress] = useState<number | null>(null);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const ttsSessionRef = useRef(0);
@@ -191,6 +197,7 @@ function ReaderContent() {
           setProgress(progressData.progress.progress || 0);
           loadedAtRef.current = progressData.progress.updatedAt;
         }
+        serverTokenRef.current = progressData.serverToken || null;
 
         // Load bookmarks
         const bmRes = await fetch(`/api/bookmarks?bookId=${bookId}`);
@@ -208,7 +215,9 @@ function ReaderContent() {
 
         if (cached) {
           fileUrl = URL.createObjectURL(new Blob([cached]));
-          toast.success("使用缓存书籍");
+          toast.success("使用缓存书籍", {
+            position: "top-right",
+          });
         } else {
           const fileRes = await fetch(`/api/books/${bookId}/file`);
           if (!fileRes.ok) {
@@ -439,51 +448,78 @@ function ReaderContent() {
   }, []);
 
   // ---- Save progress ----
-  const saveProgress = useCallback(async () => {
-    if (!bookId || !currentLocationRef.current) return;
+  const saveProgress = useCallback(async (forceSave = false): Promise<{ conflict: boolean }> => {
+    if (!bookId || !currentLocationRef.current) return { conflict: false };
 
     try {
-      // 乐观检查：先获取最新进度
-      const checkRes = await fetch(`/api/progress?bookId=${bookId}`);
-      const checkData = await checkRes.json();
+      const payload: Record<string, unknown> = {
+        bookId,
+        progress: progressRef.current,
+        location: currentLocationRef.current,
+        currentPage: currentPageRef.current,
+        totalPages: totalPagesRef.current,
+      };
 
-      // 如果服务器进度比本地加载时间新，说明其他窗口/设备已更新，跳过保存
-      if (
-        checkData.progress?.updatedAt &&
-        loadedAtRef.current &&
-        checkData.progress.updatedAt > loadedAtRef.current
-      ) {
-        loadedAtRef.current = checkData.progress.updatedAt;
-        return;
+      if (!forceSave && serverTokenRef.current) {
+        payload.clientToken = serverTokenRef.current;
       }
 
-      // 保存进度
-      const now = new Date().toISOString().replace("T", " ").replace("Z", "");
-      await fetch("/api/progress", {
+      const saveRes = await fetch("/api/progress", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          bookId,
-          progress: progressRef.current,
-          location: currentLocationRef.current,
-          currentPage: currentPageRef.current,
-          totalPages: totalPagesRef.current,
-          deviceId: getDeviceId(),
-          deviceName: getDeviceName(),
-        }),
+        body: JSON.stringify(payload),
       });
 
-      // 更新本地时间戳
+      if (!saveRes.ok) {
+        const data = await saveRes.json();
+
+        if (saveRes.status === 409 && data.conflict) {
+          setLatestProgress(data.latestProgress);
+          setCurrentProgress(progressRef.current);
+          setConflictDialogOpen(true);
+          return { conflict: true };
+        }
+
+        throw new Error(data.error || "保存失败");
+      }
+
+      const now = new Date().toISOString();
       loadedAtRef.current = now;
+
+      if (session?.user?.id) {
+        const tokenPayload = {
+          userId: session.user.id,
+          bookId,
+          timestamp: now,
+        };
+        serverTokenRef.current = generateToken(tokenPayload);
+      }
+      return { conflict: false };
     } catch {
-      // Silently fail
+      return { conflict: false };
     }
-  }, [bookId]);
+  }, [bookId, session?.user?.id]);
 
   const debouncedSaveProgress = useCallback(() => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(saveProgress, 500);
   }, [saveProgress]);
+
+  const handleForceSave = useCallback(async () => {
+    setConflictDialogOpen(false);
+
+    const now = new Date().toISOString();
+    if (session?.user?.id) {
+      const tokenPayload = {
+        userId: session.user.id,
+        bookId,
+        timestamp: now,
+      };
+      serverTokenRef.current = generateToken(tokenPayload);
+    }
+
+    await saveProgress(true);
+  }, [bookId, session?.user?.id, saveProgress]);
 
   // Auto-save timer (every 30s)
   useEffect(() => {
@@ -582,8 +618,10 @@ function ReaderContent() {
   }, [isSpeaking]);
 
   const handleBack = useCallback(async () => {
-    await saveProgress();
-    router.push("/bookshelf");
+    const saveResult = await saveProgress();
+    if (!saveResult?.conflict) {
+      router.push("/bookshelf");
+    }
   }, [saveProgress, router]);
 
   // ---- Esc key to go back ----
@@ -2006,6 +2044,30 @@ function ReaderContent() {
       />
 
       <Toaster />
+
+      <AlertDialog open={conflictDialogOpen} onOpenChange={setConflictDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>进度冲突</AlertDialogTitle>
+            <AlertDialogDescription>
+              {latestProgress !== null && currentProgress !== null
+                ? `当前进度：${(currentProgress * 100).toFixed(1)}%，最新进度：${(latestProgress * 100).toFixed(1)}%。是否强制覆盖？`
+                : "其他窗口已更新了阅读进度。是否强制覆盖？"}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setConflictDialogOpen(false);
+                router.push("/bookshelf");
+              }}
+            >
+              返回书架
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleForceSave}>强制保存</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

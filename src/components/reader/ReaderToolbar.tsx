@@ -215,16 +215,6 @@ export function ReaderToolbar({
           }}
         >
           <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3">
-            <div
-              className="text-[10px] sm:text-xs font-semibold whitespace-nowrap min-w-[2.5rem] sm:min-w-[3rem] text-center px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md"
-              style={{
-                background: "var(--reader-primary-light, rgba(23,23,23,0.1))",
-                color: "var(--reader-primary, #171717)",
-              }}
-            >
-              {(progress * 100).toFixed(1)}%
-            </div>
-
             {onPrevPage && (
               <Button
                 variant="ghost"
@@ -253,28 +243,16 @@ export function ReaderToolbar({
               </Button>
             )}
 
-            <div className="flex-1 relative h-5 sm:h-6 flex items-center">
+            <div className="flex-1 flex items-center justify-center h-8 sm:h-10">
               <div
-                className="absolute inset-x-0 h-1.5 sm:h-2 top-1/2 -translate-y-1/2 rounded-full overflow-hidden pointer-events-none"
-                style={{ background: "var(--reader-border)" }}
+                className="px-3 py-1 rounded-lg text-[10px] sm:text-xs font-semibold"
+                style={{
+                  background: "var(--reader-primary-light, rgba(23,23,23,0.1))",
+                  color: "var(--reader-primary, #171717)",
+                }}
               >
-                <div
-                  className="h-full rounded-full transition-all duration-150"
-                  style={{
-                    width: `${progress * 100}%`,
-                    background: "var(--reader-primary, #171717)",
-                    opacity: 0.6,
-                  }}
-                />
+                {(progress * 100).toFixed(2)}%
               </div>
-              <Slider
-                className="relative z-10 w-full"
-                value={[progress * 100]}
-                min={0}
-                max={100}
-                step={0.1}
-                onValueChange={(value) => onProgressChange(value[0] / 100)}
-              />
             </div>
 
             {onNextChapter && (

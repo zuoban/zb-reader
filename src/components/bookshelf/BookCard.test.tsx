@@ -27,7 +27,6 @@ describe("BookCard", () => {
 
     expect(screen.getAllByText("Test Book")[0]).toBeInTheDocument();
     expect(screen.getByText("Test Author")).toBeInTheDocument();
-    expect(screen.getByText("epub")).toBeInTheDocument();
   });
 
   it("should display file size correctly", () => {
@@ -63,17 +62,6 @@ describe("BookCard", () => {
     const mbBook = { ...mockBook, fileSize: 1024 * 1024 * 5.5 };
     rerender(<BookCard book={mbBook} onDelete={() => {}} />);
     expect(screen.getByText("5.5 MB")).toBeInTheDocument();
-  });
-
-  it("should display different format badges", () => {
-    const formats = ["epub"] as const;
-
-    formats.forEach((format) => {
-      const formatBook = { ...mockBook, format };
-      const { unmount } = render(<BookCard book={formatBook} onDelete={() => {}} />);
-      expect(screen.getByText(format)).toBeInTheDocument();
-      unmount();
-    });
   });
 
   it("should call onDelete when delete is clicked", async () => {

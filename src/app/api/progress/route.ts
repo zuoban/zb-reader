@@ -3,8 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { readingProgress } from "@/lib/db/schema";
-import { eq, and, sql, desc } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
+import { generateToken, ProgressTokenPayload } from "@/lib/progress-token";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -20,17 +21,27 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const allProgress = await db.query.readingProgress.findMany({
+    const progress = await db.query.readingProgress.findFirst({
       where: and(
         eq(readingProgress.userId, session.user.id),
         eq(readingProgress.bookId, bookId)
       ),
-      orderBy: [desc(readingProgress.updatedAt)],
     });
 
-    const latestProgress = allProgress[0] || null;
+    let serverToken: string | null = null;
+    if (progress) {
+      const tokenPayload: ProgressTokenPayload = {
+        userId: session.user.id,
+        bookId,
+        timestamp: progress.updatedAt,
+      };
+      serverToken = generateToken(tokenPayload);
+    }
 
-    return NextResponse.json({ progress: latestProgress });
+    return NextResponse.json({
+      progress,
+      serverToken,
+    });
   } catch (error) {
     logger.error("api", "Get progress error:", error);
     return NextResponse.json({ error: "获取进度失败" }, { status: 500 });
@@ -50,61 +61,91 @@ export async function PUT(req: NextRequest) {
       location,
       currentPage,
       totalPages,
-      deviceId,
-      deviceName,
+      clientToken,
     } = await req.json();
 
     logger.debug("api", "[Progress API PUT]", {
       userId: session.user.id,
       bookId,
       progress,
-      deviceId,
-      location: location?.slice(0, 50) + "...",
+      hasToken: !!clientToken,
     });
 
     if (!bookId) {
-      return NextResponse.json(
-        { error: "缺少 bookId 参数" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "缺少 bookId 参数" }, { status: 400 });
     }
 
-    const effectiveDeviceId = deviceId || "legacy";
-    const now = new Date().toISOString().replace("T", " ").replace("Z", "");
+    if (!clientToken) {
+      return NextResponse.json({ error: "缺少 clientToken 参数" }, { status: 400 });
+    }
 
-    await db
-      .insert(readingProgress)
-      .values({
+    const { verifyToken, isTokenNewer } = await import("@/lib/progress-token");
+
+    const tokenPayload = verifyToken(clientToken);
+    if (!tokenPayload) {
+      return NextResponse.json({ error: "无效的 token" }, { status: 400 });
+    }
+
+    const currentProgress = await db.query.readingProgress.findFirst({
+      where: and(
+        eq(readingProgress.userId, session.user.id),
+        eq(readingProgress.bookId, bookId)
+      ),
+    });
+
+    const now = new Date().toISOString();
+
+    if (currentProgress) {
+      const isNewer = isTokenNewer(clientToken, currentProgress.updatedAt);
+      logger.debug("api", "[Progress] Token comparison", {
+        tokenTimestamp: tokenPayload.timestamp,
+        dbTimestamp: currentProgress.updatedAt,
+        isNewer,
+      });
+
+      if (!isNewer) {
+        return NextResponse.json({
+          error: "进度冲突",
+          conflict: true,
+          latestTimestamp: currentProgress.updatedAt,
+          latestProgress: currentProgress.progress,
+        }, { status: 409 });
+      }
+    }
+
+    if (currentProgress) {
+      await db.update(readingProgress)
+        .set({
+          progress,
+          location,
+          currentPage,
+          totalPages,
+          lastReadAt: now,
+          updatedAt: now,
+        })
+        .where(and(
+          eq(readingProgress.userId, session.user.id),
+          eq(readingProgress.bookId, bookId)
+        ));
+    } else {
+      await db.insert(readingProgress).values({
         id: uuidv4(),
         userId: session.user.id,
         bookId,
-        deviceId: effectiveDeviceId,
-        deviceName: deviceName ?? null,
         progress: progress ?? 0,
         location: location ?? null,
         currentPage: currentPage ?? null,
         totalPages: totalPages ?? null,
         lastReadAt: now,
-      })
-      .onConflictDoUpdate({
-        target: [readingProgress.userId, readingProgress.bookId, readingProgress.deviceId],
-        set: {
-          progress: sql`COALESCE(${progress ?? null}, ${readingProgress.progress})`,
-          location: sql`COALESCE(${location ?? null}, ${readingProgress.location})`,
-          currentPage: sql`COALESCE(${currentPage ?? null}, ${readingProgress.currentPage})`,
-          totalPages: sql`COALESCE(${totalPages ?? null}, ${readingProgress.totalPages})`,
-          deviceName: sql`COALESCE(${deviceName ?? null}, ${readingProgress.deviceName})`,
-          lastReadAt: now,
-          updatedAt: now,
-        },
+        createdAt: now,
+        updatedAt: now,
       });
+    }
 
     return NextResponse.json({
       progress: {
         userId: session.user.id,
         bookId,
-        deviceId: effectiveDeviceId,
-        deviceName: deviceName ?? null,
         progress: progress ?? 0,
         location: location ?? null,
         currentPage: currentPage ?? null,

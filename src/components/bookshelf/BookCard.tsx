@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
-import { BookOpen, MoreVertical, Trash2, FileText } from "lucide-react";
+import { BookOpen, MoreVertical, Trash2 } from "lucide-react";
 import type { Book } from "@/lib/db/schema";
 
 interface BookCardProps {
@@ -27,13 +26,6 @@ export function BookCard({ book, progress = 0, onDelete }: BookCardProps) {
     return (bytes / (1024 * 1024)).toFixed(1) + " MB";
   };
 
-  const formatBadgeColor = (format: string) => {
-    const colors: Record<string, string> = {
-      epub: "bg-blue-500/15 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400",
-    };
-    return colors[format] || "";
-  };
-
   return (
     <Card className="group relative overflow-hidden rounded-2xl border-border/70 py-0 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
       <Link href={`/reader/${book.id}`} className="block cursor-pointer">
@@ -46,21 +38,30 @@ export function BookCard({ book, progress = 0, onDelete }: BookCardProps) {
               loading="lazy"
             />
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center gap-2 sm:gap-3 bg-gradient-to-br from-primary/5 to-secondary/20 transition-all duration-300 group-hover:from-primary/10 group-hover:to-secondary/30">
-              <FileText className="h-12 w-12 sm:h-16 sm:w-16 text-primary/30 transition-all duration-300 group-hover:scale-110 group-hover:text-primary/50" />
-              <span className="text-xs sm:text-sm text-primary/50 font-medium px-2 sm:px-3 text-center line-clamp-2 transition-colors duration-300 group-hover:text-primary/70">
-                {book.title}
-              </span>
+            <div className="w-full h-full relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-100 via-orange-50 to-yellow-100 dark:from-amber-950/30 dark:via-orange-950/20 dark:to-yellow-950/30" />
+              <div className="absolute inset-0 opacity-30" style={{
+                backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(212,175,55,0.03) 10px, rgba(212,175,55,0.03) 20px), repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(212,175,55,0.03) 10px, rgba(212,175,55,0.03) 20px)`
+              }} />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(212,175,55,0.15),transparent_60%)]" />
+              
+              <div className="absolute inset-0 flex items-center justify-center p-6">
+                <div className="relative w-full h-full flex flex-col items-center justify-center">
+                  <div className="relative w-20 h-28 sm:w-24 sm:h-32 bg-gradient-to-br from-amber-400 to-orange-500 dark:from-amber-500 dark:to-orange-600 rounded-sm shadow-2xl shadow-amber-500/30 dark:shadow-amber-500/20 transform transition-all duration-300 group-hover:scale-105 group-hover:shadow-amber-500/40 dark:group-hover:shadow-amber-500/30">
+                    <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent" />
+                    <div className="absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-black/5 to-transparent" />
+                    <div className="absolute inset-0 border-2 border-white/10" />
+                    <div className="relative w-full h-full flex items-center justify-center">
+                      <span className="text-3xl sm:text-4xl font-bold text-white drop-shadow-lg">
+                        {book.title?.charAt(0) || "书"}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-20 h-1 bg-gradient-to-r from-transparent via-amber-400/50 to-transparent" />
+                </div>
+              </div>
             </div>
           )}
-
-          {/* Format badge */}
-          <Badge
-            variant="secondary"
-            className={`absolute left-2 top-2 text-[10px] font-semibold uppercase sm:left-3 sm:top-3 sm:text-xs ${formatBadgeColor(book.format)}`}
-          >
-            {book.format}
-          </Badge>
 
           {/* Progress overlay */}
           {progress > 0 && (
