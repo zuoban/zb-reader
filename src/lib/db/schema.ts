@@ -149,6 +149,9 @@ export const readerSettings = sqliteTable("reader_settings", {
     .default("indicator")
     .notNull(),
   ttsHighlightColor: text("tts_highlight_color").default("#3b82f6").notNull(),
+  autoScrollToActive: integer("auto_scroll_to_active", { mode: "boolean" })
+    .default(true)
+    .notNull(),
   createdAt: text("created_at")
     .default(sql`(datetime('now'))`)
     .notNull(),

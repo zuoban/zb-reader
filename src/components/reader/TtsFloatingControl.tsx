@@ -15,6 +15,8 @@ interface TtsFloatingControlProps {
   onTtsAutoNextChapterChange?: (value: boolean) => void;
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
+  autoScrollToActive?: boolean;
+  onAutoScrollToActiveChange?: (value: boolean) => void;
 }
 
 function AudioWaveIndicator() {
@@ -40,11 +42,13 @@ export function TtsFloatingControl({
   onStop,
   onPrev,
   onNext,
-  onJumpToPosition,
+  onJumpToPosition: _onJumpToPosition,
   ttsAutoNextChapter = false,
   onTtsAutoNextChapterChange,
   isFullscreen = false,
   onToggleFullscreen,
+  autoScrollToActive = true,
+  onAutoScrollToActiveChange,
 }: TtsFloatingControlProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isAutoTransparent, setIsAutoTransparent] = useState(false);
@@ -167,7 +171,7 @@ export function TtsFloatingControl({
             </button>
           )}
 
-          {onJumpToPosition && (
+          {onAutoScrollToActiveChange && (
             <>
               <div
                 className="w-px h-4 mx-0.5 hidden sm:block"
@@ -175,12 +179,21 @@ export function TtsFloatingControl({
               />
               <button
                 type="button"
-                onClick={onJumpToPosition}
+                onClick={() => onAutoScrollToActiveChange(!autoScrollToActive)}
                 className="group flex size-7 sm:size-7 items-center justify-center rounded-lg transition-all duration-150 cursor-pointer active:scale-90 hover:bg-[var(--reader-primary-light,_rgba(23,23,23,0.1))]"
-                style={{ color: "var(--reader-muted-text)" }}
-                title="跳转到朗读位置"
+                style={{ 
+                  color: autoScrollToActive 
+                    ? "var(--reader-primary, #171717)" 
+                    : "var(--reader-muted-text)" 
+                }}
+                title={autoScrollToActive ? "关闭自动定位" : "开启自动定位"}
               >
-                <LocateFixed className="size-3.5" />
+                <LocateFixed 
+                  className={cn(
+                    "size-3.5 transition-all duration-200",
+                    autoScrollToActive && "scale-110"
+                  )} 
+                />
               </button>
             </>
           )}

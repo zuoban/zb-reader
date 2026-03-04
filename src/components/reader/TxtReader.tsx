@@ -45,6 +45,7 @@ interface TxtReaderProps {
   onRegisterController?: (controller: { nextPage: () => boolean; prevPage: () => boolean; scrollDown: (amount?: number) => void; scrollUp: (amount?: number) => void; scrollToActiveParagraph: () => void }) => void;
   ttsHighlightStyle?: "background" | "indicator";
   ttsHighlightColor?: string;
+  autoScrollToActive?: boolean;
 }
 
 const themeStyles: Record<string, { bg: string; text: string }> = {
@@ -64,6 +65,7 @@ function TxtReader({
   onRegisterController,
   ttsHighlightStyle = "indicator",
   ttsHighlightColor = "#3b82f6",
+  autoScrollToActive = true,
 }: TxtReaderProps) {
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(true);
@@ -197,6 +199,7 @@ function TxtReader({
 
   useEffect(() => {
     if (!activeNeedle) return;
+    if (!autoScrollToActive) return;
 
     const container = containerRef.current;
     if (!container) return;
@@ -214,7 +217,7 @@ function TxtReader({
       container.clientHeight / 2 +
       elementRect.height / 2;
     container.scrollTo({ top: Math.max(0, targetScrollTop), behavior: "smooth" });
-  }, [activeNeedle]);
+  }, [activeNeedle, autoScrollToActive]);
 
   if (loading) {
     return (

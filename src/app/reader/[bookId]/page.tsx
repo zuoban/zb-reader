@@ -46,6 +46,7 @@ const TxtReader = dynamic<{
   activeTtsParagraph?: string;
   ttsPlaybackProgress?: number;
   ttsHighlightColor?: string;
+  autoScrollToActive?: boolean;
   onPageChange?: (page: number, totalPages: number) => void;
   onRegisterController?: (controller: { nextPage: () => boolean; prevPage: () => boolean; scrollDown: (amount?: number) => void; scrollUp: (amount?: number) => void; scrollToActiveParagraph: () => void }) => void;
 }>(() => import("@/components/reader/TxtReader"), {
@@ -105,6 +106,7 @@ function ReaderContent() {
   const [ttsPlaybackProgress, setTtsPlaybackProgress] = useState(0);
   const [ttsAutoNextChapter, setTtsAutoNextChapter] = useState(false);
   const [ttsHighlightColor, setTtsHighlightColor] = useState("#3b82f6");
+  const [autoScrollToActive, setAutoScrollToActive] = useState(true);
 
   // Side panel
   const [sidePanelOpen, setSidePanelOpen] = useState(false);
@@ -285,6 +287,7 @@ function ReaderContent() {
             microsoftPreloadCount?: number;
             ttsAutoNextChapter?: boolean;
             ttsHighlightColor?: string;
+            autoScrollToActive?: boolean;
           };
         };
 
@@ -318,6 +321,9 @@ function ReaderContent() {
         }
         if (typeof settings.ttsHighlightColor === "string") {
           setTtsHighlightColor(settings.ttsHighlightColor);
+        }
+        if (typeof settings.autoScrollToActive === "boolean") {
+          setAutoScrollToActive(settings.autoScrollToActive);
         }
       } catch {
         // ignore
@@ -356,6 +362,7 @@ function ReaderContent() {
             ttsRate,
             microsoftPreloadCount,
             ttsAutoNextChapter,
+            autoScrollToActive,
           }),
         });
       } catch {
@@ -369,6 +376,7 @@ function ReaderContent() {
     selectedBrowserVoiceId,
     ttsRate,
     ttsAutoNextChapter,
+    autoScrollToActive,
   ]);
 
   useEffect(() => {
@@ -1945,6 +1953,7 @@ function ReaderContent() {
             activeTtsParagraph={activeTtsParagraph}
             ttsPlaybackProgress={ttsPlaybackProgress}
             ttsHighlightColor={ttsHighlightColor}
+            autoScrollToActive={autoScrollToActive}
           />
         )}
 
@@ -1961,6 +1970,7 @@ function ReaderContent() {
               activeTtsParagraph={activeTtsParagraph}
               ttsPlaybackProgress={ttsPlaybackProgress}
               ttsHighlightColor={ttsHighlightColor}
+              autoScrollToActive={autoScrollToActive}
               onRegisterController={(controller) => {
                 txtReaderControllerRef.current = controller;
               }}
@@ -2090,11 +2100,12 @@ function ReaderContent() {
         onStop={stopSpeaking}
         onPrev={handleTtsPrevParagraph}
         onNext={handleTtsNextParagraph}
-        onJumpToPosition={isSpeaking ? handleJumpToReading : undefined}
         ttsAutoNextChapter={ttsAutoNextChapter}
         onTtsAutoNextChapterChange={setTtsAutoNextChapter}
         isFullscreen={isFullscreen}
         onToggleFullscreen={handleToggleFullscreen}
+        autoScrollToActive={autoScrollToActive}
+        onAutoScrollToActiveChange={setAutoScrollToActive}
       />
 
       <Toaster />

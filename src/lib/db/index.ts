@@ -147,6 +147,11 @@ function getConnection() {
   } catch {
     // Column already exists, ignore
   }
+  try {
+    sqlite.exec(`ALTER TABLE reader_settings ADD COLUMN auto_scroll_to_active INTEGER NOT NULL DEFAULT 1;`);
+  } catch {
+    // Column already exists, ignore
+  }
 
   // Migration: Add device_id and device_name to reading_progress for multi-device sync (2026-03-04)
   // SQLite doesn't support modifying constraints, so we need to rebuild the table

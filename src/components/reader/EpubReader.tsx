@@ -33,6 +33,7 @@ interface EpubReaderProps {
   ttsPlaybackProgress?: number;
   ttsHighlightStyle?: "background" | "indicator";
   ttsHighlightColor?: string;
+  autoScrollToActive?: boolean;
 }
 
 export interface EpubReaderRef {
@@ -136,6 +137,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       ttsPlaybackProgress = 0,
       ttsHighlightStyle = "indicator",
       ttsHighlightColor = "#3b82f6",
+      autoScrollToActive = true,
     },
     ref
   ) => {
@@ -559,6 +561,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     // 只在段落切换时滚动（不在播放进度更新时滚动）
     useEffect(() => {
       if (!activeTtsParagraph) return;
+      if (!autoScrollToActive) return;
 
       const contents = renditionRef.current?.getContents?.() as
         | Array<{ document?: Document }>
@@ -593,7 +596,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         const targetScrollTop = absoluteTop - epubContainer.clientHeight * 0.25;
         epubContainer.scrollTo({ top: Math.max(0, targetScrollTop), behavior: "smooth" });
       }
-    }, [activeTtsParagraph]);
+    }, [activeTtsParagraph, autoScrollToActive]);
 
     useEffect(() => {
       if (!activeTtsParagraph) return;
