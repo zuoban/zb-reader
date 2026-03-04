@@ -4,15 +4,11 @@ import { devtools } from "zustand/middleware";
 interface ReaderSettingsState {
   fontSize: number;
   theme: "light" | "dark" | "sepia";
-  ttsEngine: "browser" | "legado";
   browserVoiceId: string;
   ttsRate: number;
   ttsPitch: number;
   ttsVolume: number;
   microsoftPreloadCount: number;
-  legadoRate: number;
-  legadoConfigId: string;
-  legadoPreloadCount: number;
   ttsHighlightStyle: "background" | "indicator";
   ttsHighlightColor: string;
   loaded: boolean;
@@ -21,16 +17,12 @@ interface ReaderSettingsState {
 interface ReaderSettingsActions {
   setFontSize: (size: number) => void;
   setTheme: (theme: "light" | "dark" | "sepia") => void;
-  setTtsEngine: (engine: "browser" | "legado") => void;
   setBrowserVoiceId: (id: string) => void;
   setTtsRate: (rate: number) => void;
   setTtsPitch: (pitch: number) => void;
   setTtsVolume: (volume: number) => void;
   setMicrosoftPreloadCount: (count: number) => void;
-  setLegadoRate: (rate: number) => void;
-  setLegadoConfigId: (id: string) => void;
-  setLegadoPreloadCount: (count: number) => void;
-  setTtsHighlightStyle: (style: "background" | "underline" | "indicator") => void;
+  setTtsHighlightStyle: (style: "background" | "indicator") => void;
   setTtsHighlightColor: (color: string) => void;
   loadFromServer: () => Promise<void>;
   saveToServer: () => Promise<void>;
@@ -39,15 +31,11 @@ interface ReaderSettingsActions {
 const DEFAULT_STATE: ReaderSettingsState = {
   fontSize: 16,
   theme: "light",
-  ttsEngine: "browser",
   browserVoiceId: "",
   ttsRate: 1,
   ttsPitch: 1,
   ttsVolume: 1,
   microsoftPreloadCount: 3,
-  legadoRate: 50,
-  legadoConfigId: "",
-  legadoPreloadCount: 3,
   ttsHighlightStyle: "indicator",
   ttsHighlightColor: "#3b82f6",
   loaded: false,
@@ -62,18 +50,12 @@ export const useReaderSettingsStore = create<
 
       setFontSize: (size) => set({ fontSize: Math.min(28, Math.max(12, size)) }),
       setTheme: (theme) => set({ theme }),
-      setTtsEngine: (ttsEngine) => set({ ttsEngine }),
       setBrowserVoiceId: (browserVoiceId) => set({ browserVoiceId }),
       setTtsRate: (rate) => set({ ttsRate: Math.min(5, Math.max(1, rate)) }),
       setTtsPitch: (pitch) => set({ ttsPitch: Math.min(2, Math.max(0.5, pitch)) }),
       setTtsVolume: (volume) => set({ ttsVolume: Math.min(1, Math.max(0, volume)) }),
       setMicrosoftPreloadCount: (count) =>
         set({ microsoftPreloadCount: [1, 2, 3, 5].includes(count) ? count : 3 }),
-      setLegadoRate: (rate) =>
-        set({ legadoRate: Math.min(500, Math.max(1, rate)) }),
-      setLegadoConfigId: (legadoConfigId) => set({ legadoConfigId }),
-      setLegadoPreloadCount: (count) =>
-        set({ legadoPreloadCount: [1, 2, 3, 5].includes(count) ? count : 3 }),
       setTtsHighlightStyle: (style: "background" | "indicator") => set({ ttsHighlightStyle: style }),
       setTtsHighlightColor: (color) => set({ ttsHighlightColor: color }),
 
@@ -95,7 +77,6 @@ export const useReaderSettingsStore = create<
                 ? Math.min(28, Math.max(12, settings.fontSize))
                 : DEFAULT_STATE.fontSize,
             theme: settings.theme || DEFAULT_STATE.theme,
-            ttsEngine: settings.ttsEngine || DEFAULT_STATE.ttsEngine,
             browserVoiceId: settings.browserVoiceId || DEFAULT_STATE.browserVoiceId,
             ttsRate:
               typeof settings.ttsRate === "number"
@@ -114,16 +95,6 @@ export const useReaderSettingsStore = create<
             )
               ? (settings.microsoftPreloadCount as number)
               : DEFAULT_STATE.microsoftPreloadCount,
-            legadoRate:
-              typeof settings.legadoRate === "number"
-                ? Math.min(500, Math.max(1, settings.legadoRate))
-                : DEFAULT_STATE.legadoRate,
-            legadoConfigId: settings.legadoConfigId || DEFAULT_STATE.legadoConfigId,
-            legadoPreloadCount: [1, 2, 3, 5].includes(
-              settings.legadoPreloadCount as number
-            )
-              ? (settings.legadoPreloadCount as number)
-              : DEFAULT_STATE.legadoPreloadCount,
             ttsHighlightStyle: settings.ttsHighlightStyle || DEFAULT_STATE.ttsHighlightStyle,
             ttsHighlightColor: settings.ttsHighlightColor || DEFAULT_STATE.ttsHighlightColor,
             loaded: true,
@@ -144,15 +115,11 @@ export const useReaderSettingsStore = create<
             body: JSON.stringify({
               fontSize: state.fontSize,
               theme: state.theme,
-              ttsEngine: state.ttsEngine,
               browserVoiceId: state.browserVoiceId,
               ttsRate: state.ttsRate,
               ttsPitch: state.ttsPitch,
               ttsVolume: state.ttsVolume,
               microsoftPreloadCount: state.microsoftPreloadCount,
-              legadoRate: state.legadoRate,
-              legadoConfigId: state.legadoConfigId,
-              legadoPreloadCount: state.legadoPreloadCount,
               ttsHighlightStyle: state.ttsHighlightStyle,
               ttsHighlightColor: state.ttsHighlightColor,
             }),

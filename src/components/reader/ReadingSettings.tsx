@@ -26,8 +26,6 @@ interface ReadingSettingsProps {
   onFontSizeChange: (size: number) => void;
   theme: "light" | "dark" | "sepia";
   onThemeChange: (theme: "light" | "dark" | "sepia") => void;
-  ttsEngine: "browser" | "legado";
-  onTtsEngineChange: (engine: "browser" | "legado") => void;
   browserVoices: BrowserVoiceOption[];
   selectedBrowserVoiceId: string;
   onSelectedBrowserVoiceIdChange: (voiceId: string) => void;
@@ -39,17 +37,6 @@ interface ReadingSettingsProps {
   onTtsVolumeChange: (value: number) => void;
   microsoftPreloadCount: number;
   onMicrosoftPreloadCountChange: (value: number) => void;
-  legadoRate: number;
-  onLegadoRateChange: (value: number) => void;
-  legadoConfigs: TtsConfigApiItem[];
-  selectedLegadoConfigId: string;
-  onSelectedLegadoConfigIdChange: (configId: string) => void;
-  legadoImportText: string;
-  onLegadoImportTextChange: (text: string) => void;
-  onLegadoImport: () => void;
-  legadoImporting: boolean;
-  legadoPreloadCount: number;
-  onLegadoPreloadCountChange: (value: number) => void;
   ttsAutoNextChapter: boolean;
   onTtsAutoNextChapterChange: (value: boolean) => void;
   ttsHighlightStyle: "background" | "indicator";
@@ -265,8 +252,6 @@ export function ReadingSettings({
   onFontSizeChange,
   theme,
   onThemeChange,
-  ttsEngine,
-  onTtsEngineChange,
   browserVoices,
   selectedBrowserVoiceId,
   onSelectedBrowserVoiceIdChange,
@@ -278,17 +263,6 @@ export function ReadingSettings({
   onTtsVolumeChange,
   microsoftPreloadCount,
   onMicrosoftPreloadCountChange,
-  legadoRate,
-  onLegadoRateChange,
-  legadoConfigs,
-  selectedLegadoConfigId,
-  onSelectedLegadoConfigIdChange,
-  legadoImportText,
-  onLegadoImportTextChange,
-  onLegadoImport,
-  legadoImporting,
-  legadoPreloadCount,
-  onLegadoPreloadCountChange,
   ttsAutoNextChapter,
   onTtsAutoNextChapterChange,
   ttsHighlightStyle,
@@ -482,298 +456,128 @@ export function ReadingSettings({
           <section>
             <SectionLabel icon={Volume2} title="朗读" />
             <SettingCard>
-              {/* Engine selector */}
-              <SettingRow label="朗读引擎">
+              <SettingRow label="语音包">
                 <CompactSelect
-                  value={ttsEngine}
-                  onChange={(v) => onTtsEngineChange(v as "browser" | "legado")}
+                  value={selectedBrowserVoiceId}
+                  onChange={onSelectedBrowserVoiceIdChange}
+                  placeholder="选择语音"
+                  options={
+                    browserVoices.length === 0
+                      ? [{ value: "__none", label: "未检测到语音", disabled: true }]
+                      : browserVoices.map((v) => ({ value: v.id, label: v.name }))
+                  }
+                />
+              </SettingRow>
+
+              <SliderRow
+                label="语速"
+                value={ttsRate}
+                min={0.5}
+                max={2}
+                step={0.1}
+                onChange={onTtsRateChange}
+                unit="x"
+              />
+              <SliderRow
+                label="音调"
+                value={ttsPitch}
+                min={0.5}
+                max={2}
+                step={0.1}
+                onChange={onTtsPitchChange}
+              />
+              <SliderRow
+                label="音量"
+                value={ttsVolume}
+                min={0}
+                max={1}
+                step={0.1}
+                onChange={onTtsVolumeChange}
+                displayValue={Math.round(ttsVolume * 100)}
+                unit="%"
+              />
+              <SettingRow label="预加载段数" noBorder>
+                <CompactSelect
+                  value={String(microsoftPreloadCount)}
+                  onChange={(v) => onMicrosoftPreloadCountChange(Number(v))}
                   options={[
-                    { value: "browser", label: "微软在线 (Edge)" },
-                    { value: "legado", label: "Legado 引擎" },
+                    { value: "1", label: "1 段" },
+                    { value: "2", label: "2 段" },
+                    { value: "3", label: "3 段" },
+                    { value: "5", label: "5 段" },
                   ]}
                 />
               </SettingRow>
 
-              {ttsEngine === "browser" && (
-                <>
-                  <SettingRow label="语音包">
-                    <CompactSelect
-                      value={selectedBrowserVoiceId}
-                      onChange={onSelectedBrowserVoiceIdChange}
-                      placeholder="选择语音"
-                      options={
-                        browserVoices.length === 0
-                          ? [{ value: "__none", label: "未检测到语音", disabled: true }]
-                          : browserVoices.map((v) => ({ value: v.id, label: v.name }))
-                      }
-                    />
-                  </SettingRow>
+              <SettingRow label="自动续章" sublabel="当前章节朗读完后自动进入下一章" noBorder>
+                <button
+                  onClick={() => onTtsAutoNextChapterChange(!ttsAutoNextChapter)}
+                  className={cn(
+                    "relative w-11 sm:w-12 h-6 sm:h-7 rounded-full transition-colors cursor-pointer",
+                    ttsAutoNextChapter ? "bg-primary" : "bg-muted"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "absolute top-0.5 sm:top-1 left-0.5 sm:left-1 w-5 h-5 rounded-full bg-background transition-transform shadow-sm",
+                      ttsAutoNextChapter ? "translate-x-5 sm:translate-x-5" : "translate-x-0"
+                    )}
+                  />
+                </button>
+              </SettingRow>
 
-                  <SliderRow
-                    label="语速"
-                    value={ttsRate}
-                    min={0.5}
-                    max={2}
-                    step={0.1}
-                    onChange={onTtsRateChange}
-                    unit="x"
-                  />
-                  <SliderRow
-                    label="音调"
-                    value={ttsPitch}
-                    min={0.5}
-                    max={2}
-                    step={0.1}
-                    onChange={onTtsPitchChange}
-                  />
-                  <SliderRow
-                    label="音量"
-                    value={ttsVolume}
-                    min={0}
-                    max={1}
-                    step={0.1}
-                    onChange={onTtsVolumeChange}
-                    displayValue={Math.round(ttsVolume * 100)}
-                    unit="%"
-                  />
-                  <SettingRow label="预加载段数" noBorder>
-                    <CompactSelect
-                      value={String(microsoftPreloadCount)}
-                      onChange={(v) => onMicrosoftPreloadCountChange(Number(v))}
-                      options={[
-                        { value: "1", label: "1 段" },
-                        { value: "2", label: "2 段" },
-                        { value: "3", label: "3 段" },
-                        { value: "5", label: "5 段" },
-                      ]}
-                    />
-                  </SettingRow>
-
-                  <SettingRow label="自动续章" sublabel="当前章节朗读完后自动进入下一章" noBorder>
-                    <button
-                      onClick={() => onTtsAutoNextChapterChange(!ttsAutoNextChapter)}
-                      className={cn(
-                        "relative w-11 sm:w-12 h-6 sm:h-7 rounded-full transition-colors cursor-pointer",
-                        ttsAutoNextChapter ? "bg-primary" : "bg-muted"
-                      )}
-                    >
-                      <span
+              <SettingRow label="高亮样式">
+                <div className="flex gap-1.5">
+                  {(["indicator", "background"] as const).map((style) => {
+                    const isActive = ttsHighlightStyle === style;
+                    const labels: Record<typeof style, string> = {
+                      indicator: "指示条",
+                      background: "背景",
+                    };
+                    return (
+                      <button
+                        key={style}
+                        onClick={() => onTtsHighlightStyleChange(style)}
                         className={cn(
-                          "absolute top-0.5 sm:top-1 left-0.5 sm:left-1 w-5 h-5 rounded-full bg-background transition-transform shadow-sm",
-                          ttsAutoNextChapter ? "translate-x-5 sm:translate-x-5" : "translate-x-0"
+                          "px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-[12px] font-medium transition-all cursor-pointer",
+                          isActive
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-muted-foreground hover:bg-muted/80"
                         )}
-                      />
-                    </button>
-                  </SettingRow>
+                      >
+                        {labels[style]}
+                      </button>
+                    );
+                  })}
+                </div>
+              </SettingRow>
 
-                  <SettingRow label="高亮样式">
-                    <div className="flex gap-1.5">
-                      {(["indicator", "background"] as const).map((style) => {
-                        const isActive = ttsHighlightStyle === style;
-                        const labels: Record<typeof style, string> = {
-                          indicator: "指示条",
-                          background: "背景",
-                        };
-                        return (
-                          <button
-                            key={style}
-                            onClick={() => onTtsHighlightStyleChange(style)}
-                            className={cn(
-                              "px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-[12px] font-medium transition-all cursor-pointer",
-                              isActive
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-muted text-muted-foreground hover:bg-muted/80"
-                            )}
-                          >
-                            {labels[style]}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </SettingRow>
-
-                  <SettingRow label="高亮颜色" noBorder>
-                    <div className="flex gap-1.5">
-                      {["#3b82f6", "#ef4444", "#22c55e", "#eab308", "#a855f7", "#ec4899"].map((color) => {
-                        const isActive = ttsHighlightColor === color;
-                        return (
-                          <button
-                            key={color}
-                            onClick={() => onTtsHighlightColorChange(color)}
-                            className={cn(
-                              "w-7 h-7 sm:w-8 sm:h-8 rounded-full transition-all cursor-pointer",
-                              isActive
-                                ? "ring-2 ring-offset-2 ring-primary scale-110"
-                                : "hover:scale-105"
-                            )}
-                            style={{ backgroundColor: color }}
-                          />
-                        );
-                      })}
-                      <input
-                        type="color"
-                        value={ttsHighlightColor}
-                        onChange={(e) => onTtsHighlightColorChange(e.target.value)}
-                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full cursor-pointer border-0 p-0"
-                      />
-                    </div>
-                  </SettingRow>
-                </>
-              )}
-
-              {ttsEngine === "legado" && (
-                <>
-                  <SettingRow label="TTS 配置">
-                    <CompactSelect
-                      value={selectedLegadoConfigId}
-                      onChange={onSelectedLegadoConfigIdChange}
-                      placeholder="选择配置"
-                      options={
-                        legadoConfigs.length === 0
-                          ? [{ value: "__none", label: "暂无配置", disabled: true }]
-                          : legadoConfigs.map((c) => ({ value: c.id, label: c.name }))
-                      }
-                    />
-                  </SettingRow>
-
-                  <SliderRow
-                    label="朗读速度"
-                    value={legadoRate}
-                    min={0}
-                    max={100}
-                    step={1}
-                    onChange={onLegadoRateChange}
-                  />
-
-                  <SettingRow label="预加载段数">
-                    <CompactSelect
-                      value={String(legadoPreloadCount)}
-                      onChange={(v) => onLegadoPreloadCountChange(Number(v))}
-                      options={[
-                        { value: "1", label: "1 段" },
-                        { value: "2", label: "2 段" },
-                        { value: "3", label: "3 段" },
-                        { value: "5", label: "5 段" },
-                      ]}
-                    />
-                  </SettingRow>
-
-                  <SettingRow label="自动续章" sublabel="当前章节朗读完后自动进入下一章" noBorder>
-                    <button
-                      onClick={() => onTtsAutoNextChapterChange(!ttsAutoNextChapter)}
-                      className={cn(
-                        "relative w-11 sm:w-12 h-6 sm:h-7 rounded-full transition-colors cursor-pointer",
-                        ttsAutoNextChapter ? "bg-primary" : "bg-muted"
-                      )}
-                    >
-                      <span
+              <SettingRow label="高亮颜色" noBorder>
+                <div className="flex gap-1.5">
+                  {["#3b82f6", "#ef4444", "#22c55e", "#eab308", "#a855f7", "#ec4899"].map((color) => {
+                    const isActive = ttsHighlightColor === color;
+                    return (
+                      <button
+                        key={color}
+                        onClick={() => onTtsHighlightColorChange(color)}
                         className={cn(
-                          "absolute top-0.5 sm:top-1 left-0.5 sm:left-1 w-5 h-5 rounded-full bg-background transition-transform shadow-sm",
-                          ttsAutoNextChapter ? "translate-x-5 sm:translate-x-5" : "translate-x-0"
+                          "w-7 h-7 sm:w-8 sm:h-8 rounded-full transition-all cursor-pointer",
+                          isActive
+                            ? "ring-2 ring-offset-2 ring-primary scale-110"
+                            : "hover:scale-105"
                         )}
+                        style={{ backgroundColor: color }}
                       />
-                    </button>
-                  </SettingRow>
-
-                  <SettingRow label="高亮样式">
-                    <div className="flex gap-1.5">
-                      {(["indicator", "background"] as const).map((style) => {
-                        const isActive = ttsHighlightStyle === style;
-                        const labels: Record<typeof style, string> = {
-                          indicator: "指示条",
-                          background: "背景",
-                        };
-                        return (
-                          <button
-                            key={style}
-                            onClick={() => onTtsHighlightStyleChange(style)}
-                            className={cn(
-                              "px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-[12px] font-medium transition-all cursor-pointer",
-                              isActive
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-muted text-muted-foreground hover:bg-muted/80"
-                            )}
-                          >
-                            {labels[style]}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </SettingRow>
-
-                  <SettingRow label="高亮颜色" noBorder>
-                    <div className="flex gap-1.5">
-                      {["#3b82f6", "#ef4444", "#22c55e", "#eab308", "#a855f7", "#ec4899"].map((color) => {
-                        const isActive = ttsHighlightColor === color;
-                        return (
-                          <button
-                            key={color}
-                            onClick={() => onTtsHighlightColorChange(color)}
-                            className={cn(
-                              "w-7 h-7 sm:w-8 sm:h-8 rounded-full transition-all cursor-pointer",
-                              isActive
-                                ? "ring-2 ring-offset-2 ring-primary scale-110"
-                                : "hover:scale-105"
-                            )}
-                            style={{ backgroundColor: color }}
-                          />
-                        );
-                      })}
-                      <input
-                        type="color"
-                        value={ttsHighlightColor}
-                        onChange={(e) => onTtsHighlightColorChange(e.target.value)}
-                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full cursor-pointer border-0 p-0"
-                      />
-                    </div>
-                  </SettingRow>
-
-                  {/* Import config */}
-                  <div
-                    className="px-3.5 sm:px-4 pt-3 sm:pt-3.5 pb-3.5 sm:pb-4 space-y-2.5 sm:space-y-3"
-                    style={{ borderTop: "1px solid var(--reader-border)" }}
-                  >
-                    <span
-                      className="text-[11px] sm:text-[12px] font-semibold uppercase tracking-wider block"
-                      style={{ color: "var(--reader-text)", opacity: 0.45 }}
-                    >
-                      导入配置 (JSON)
-                    </span>
-                    <Textarea
-                      value={legadoImportText}
-                      onChange={(e) => onLegadoImportTextChange(e.target.value)}
-                      className="min-h-[72px] sm:min-h-[88px] resize-none text-[12px] sm:text-[13px] rounded-lg sm:rounded-xl border-0 focus-visible:ring-1 focus-visible:ring-primary/30 p-2.5 sm:p-3"
-                      placeholder="粘贴 Legado TTS JSON 规则"
-                      style={{
-                        background: "color-mix(in srgb, var(--reader-text) 6%, transparent)",
-                        color: "var(--reader-text)",
-                      }}
-                    />
-                    <Button
-                      size="sm"
-                      className="w-full h-9 sm:h-10 rounded-lg sm:rounded-xl cursor-pointer text-[13px] sm:text-[14px] font-semibold transition-all active:scale-[0.98]"
-                      style={{ background: "var(--primary)", color: "white" }}
-                      disabled={legadoImporting || !legadoImportText.trim()}
-                      onClick={onLegadoImport}
-                    >
-                      {legadoImporting ? (
-                        <span className="flex items-center gap-2">
-                          <span
-                            className="size-3 sm:size-3.5 border-2 rounded-full animate-spin"
-                            style={{
-                              borderColor: "rgba(255,255,255,0.25)",
-                              borderTopColor: "#fff",
-                            }}
-                          />
-                          导入中...
-                        </span>
-                      ) : (
-                        "导入配置"
-                      )}
-                    </Button>
-                  </div>
-                </>
-              )}
+                    );
+                  })}
+                  <input
+                    type="color"
+                    value={ttsHighlightColor}
+                    onChange={(e) => onTtsHighlightColorChange(e.target.value)}
+                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-full cursor-pointer border-0 p-0"
+                  />
+                </div>
+              </SettingRow>
             </SettingCard>
           </section>
         </div>

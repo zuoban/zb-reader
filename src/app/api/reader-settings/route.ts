@@ -9,15 +9,11 @@ import { readerSettings } from "@/lib/db/schema";
 interface ReaderSettingsPayload {
   fontSize?: number;
   theme?: "light" | "dark" | "sepia";
-  ttsEngine?: "browser" | "legado";
   browserVoiceId?: string;
   ttsRate?: number;
   ttsPitch?: number;
   ttsVolume?: number;
   microsoftPreloadCount?: number;
-  legadoRate?: number;
-  legadoConfigId?: string;
-  legadoPreloadCount?: number;
   ttsAutoNextChapter?: boolean;
   ttsHighlightStyle?: "background" | "indicator";
   ttsHighlightColor?: string;
@@ -26,15 +22,11 @@ interface ReaderSettingsPayload {
 const DEFAULTS = {
   fontSize: 16,
   theme: "light" as const,
-  ttsEngine: "browser" as const,
   browserVoiceId: "",
   ttsRate: 1,
   ttsPitch: 1,
   ttsVolume: 1,
   microsoftPreloadCount: 3,
-  legadoRate: 50,
-  legadoConfigId: "",
-  legadoPreloadCount: 3,
   ttsAutoNextChapter: false,
   ttsHighlightStyle: "indicator" as const,
   ttsHighlightColor: "#3b82f6",
@@ -48,15 +40,11 @@ function toResponseShape(settings: typeof readerSettings.$inferSelect | null | u
   return {
     fontSize: settings.fontSize,
     theme: settings.theme,
-    ttsEngine: settings.ttsEngine,
     browserVoiceId: settings.browserVoiceId || "",
     ttsRate: settings.ttsRate,
     ttsPitch: settings.ttsPitch,
     ttsVolume: settings.ttsVolume,
     microsoftPreloadCount: settings.microsoftPreloadCount,
-    legadoRate: settings.legadoRate,
-    legadoConfigId: settings.legadoConfigId || "",
-    legadoPreloadCount: settings.legadoPreloadCount,
     ttsAutoNextChapter: settings.ttsAutoNextChapter,
     ttsHighlightStyle: settings.ttsHighlightStyle || "indicator",
     ttsHighlightColor: settings.ttsHighlightColor || "#3b82f6",
@@ -101,10 +89,6 @@ export async function PUT(req: NextRequest) {
         payload.theme === "dark" || payload.theme === "sepia" || payload.theme === "light"
           ? payload.theme
           : existing?.theme ?? DEFAULTS.theme,
-      ttsEngine:
-        payload.ttsEngine === "legado" || payload.ttsEngine === "browser"
-          ? payload.ttsEngine
-          : existing?.ttsEngine ?? DEFAULTS.ttsEngine,
       browserVoiceId:
         typeof payload.browserVoiceId === "string"
           ? payload.browserVoiceId
@@ -115,14 +99,6 @@ export async function PUT(req: NextRequest) {
       microsoftPreloadCount: [1, 2, 3, 5].includes(Number(payload.microsoftPreloadCount))
         ? Number(payload.microsoftPreloadCount)
         : existing?.microsoftPreloadCount ?? DEFAULTS.microsoftPreloadCount,
-      legadoRate: Math.min(500, Math.max(1, Number(payload.legadoRate ?? existing?.legadoRate ?? DEFAULTS.legadoRate))),
-      legadoConfigId:
-        typeof payload.legadoConfigId === "string"
-          ? payload.legadoConfigId
-          : existing?.legadoConfigId ?? DEFAULTS.legadoConfigId,
-      legadoPreloadCount: [1, 2, 3, 5].includes(Number(payload.legadoPreloadCount))
-        ? Number(payload.legadoPreloadCount)
-        : existing?.legadoPreloadCount ?? DEFAULTS.legadoPreloadCount,
       ttsAutoNextChapter:
         typeof payload.ttsAutoNextChapter === "boolean"
           ? payload.ttsAutoNextChapter

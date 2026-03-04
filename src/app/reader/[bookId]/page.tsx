@@ -58,7 +58,6 @@ const TxtReader = dynamic<{
   ),
 });
 
-const DEFAULT_LEGADO_PRELOAD_COUNT = 3;
 const DEFAULT_MICROSOFT_PRELOAD_COUNT = 3;
 const MAX_TTS_RETRY_COUNT = 5;
 const TTS_RETRY_DELAY_MS = 450;
@@ -97,7 +96,6 @@ function ReaderContent() {
   // Settings
   const [fontSize, setFontSize] = useState(16);
   const [readerTheme, setReaderTheme] = useState<"light" | "dark" | "sepia">("light");
-  const [ttsEngine, setTtsEngine] = useState<"browser" | "legado">("browser");
   const [browserVoices, setBrowserVoices] = useState<BrowserVoiceOption[]>([]);
   const [selectedBrowserVoiceId, setSelectedBrowserVoiceId] = useState("");
   const [ttsRate, setTtsRate] = useState(1);
@@ -105,14 +103,6 @@ function ReaderContent() {
   const [ttsVolume, setTtsVolume] = useState(1);
   const [microsoftPreloadCount, setMicrosoftPreloadCount] = useState(
     DEFAULT_MICROSOFT_PRELOAD_COUNT
-  );
-  const [legadoRate, setLegadoRate] = useState(50);
-  const [legadoConfigs, setLegadoConfigs] = useState<TtsConfigApiItem[]>([]);
-  const [selectedLegadoConfigId, setSelectedLegadoConfigId] = useState("");
-  const [legadoImportText, setLegadoImportText] = useState("");
-  const [legadoImporting, setLegadoImporting] = useState(false);
-  const [legadoPreloadCount, setLegadoPreloadCount] = useState(
-    DEFAULT_LEGADO_PRELOAD_COUNT
   );
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [ttsPlaybackProgress, setTtsPlaybackProgress] = useState(0);
@@ -292,15 +282,11 @@ function ReaderContent() {
           settings?: {
             fontSize?: number;
             theme?: "light" | "dark" | "sepia";
-            ttsEngine?: "browser" | "legado";
             browserVoiceId?: string;
             ttsRate?: number;
             ttsPitch?: number;
             ttsVolume?: number;
             microsoftPreloadCount?: number;
-            legadoRate?: number;
-            legadoConfigId?: string;
-            legadoPreloadCount?: number;
             ttsAutoNextChapter?: boolean;
             ttsHighlightStyle?: "background" | "indicator";
             ttsHighlightColor?: string;
@@ -320,9 +306,6 @@ function ReaderContent() {
         ) {
           setReaderTheme(settings.theme);
         }
-        if (settings.ttsEngine === "browser" || settings.ttsEngine === "legado") {
-          setTtsEngine(settings.ttsEngine);
-        }
         if (typeof settings.browserVoiceId === "string") {
           setSelectedBrowserVoiceId(settings.browserVoiceId);
         }
@@ -340,18 +323,6 @@ function ReaderContent() {
           [1, 2, 3, 5].includes(settings.microsoftPreloadCount)
         ) {
           setMicrosoftPreloadCount(settings.microsoftPreloadCount);
-        }
-        if (typeof settings.legadoRate === "number") {
-          setLegadoRate(Math.min(500, Math.max(1, settings.legadoRate)));
-        }
-        if (typeof settings.legadoConfigId === "string") {
-          setSelectedLegadoConfigId(settings.legadoConfigId);
-        }
-        if (
-          typeof settings.legadoPreloadCount === "number" &&
-          [1, 2, 3, 5].includes(settings.legadoPreloadCount)
-        ) {
-          setLegadoPreloadCount(settings.legadoPreloadCount);
         }
         if (typeof settings.ttsAutoNextChapter === "boolean") {
           setTtsAutoNextChapter(settings.ttsAutoNextChapter);
@@ -395,15 +366,11 @@ function ReaderContent() {
           body: JSON.stringify({
             fontSize,
             theme: readerTheme,
-            ttsEngine,
             browserVoiceId: selectedBrowserVoiceId,
             ttsRate,
             ttsPitch,
             ttsVolume,
             microsoftPreloadCount,
-            legadoRate,
-            legadoConfigId: selectedLegadoConfigId,
-            legadoPreloadCount,
             ttsAutoNextChapter,
           }),
         });
@@ -413,13 +380,9 @@ function ReaderContent() {
     }, 220);
   }, [
     fontSize,
-    legadoPreloadCount,
-    legadoRate,
     microsoftPreloadCount,
     readerTheme,
     selectedBrowserVoiceId,
-    selectedLegadoConfigId,
-    ttsEngine,
     ttsPitch,
     ttsRate,
     ttsVolume,
@@ -482,24 +445,6 @@ function ReaderContent() {
       // Wake Lock not supported or failed
     }
   }, []);
-
-  const loadLegadoConfigs = useCallback(async () => {
-    try {
-      const res = await fetch("/api/tts");
-      if (!res.ok) return;
-      const data = (await res.json()) as TtsConfigApiItem[];
-      setLegadoConfigs(data || []);
-      if (!selectedLegadoConfigId && data.length > 0) {
-        setSelectedLegadoConfigId(data[0].id);
-      }
-    } catch {
-      // ignore
-    }
-  }, [selectedLegadoConfigId]);
-
-  useEffect(() => {
-    loadLegadoConfigs();
-  }, [loadLegadoConfigs]);
 
   useEffect(() => {
     const loadVoices = async () => {
@@ -999,43 +944,6 @@ function ReaderContent() {
     });
   }, []);
 
-  const handleLegadoImport = useCallback(async () => {
-    const raw = legadoImportText.trim();
-    if (!raw) {
-      toast.error("请先粘贴配置JSON");
-      return;
-    }
-
-    let payload: unknown;
-    try {
-      payload = JSON.parse(raw);
-    } catch {
-      toast.error("JSON格式不正确");
-      return;
-    }
-
-    try {
-      setLegadoImporting(true);
-      const res = await fetch("/api/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        toast.error(data?.error || "导入失败");
-        return;
-      }
-      toast.success(data?.message || "导入成功");
-      setLegadoImportText("");
-      await loadLegadoConfigs();
-    } catch {
-      toast.error("导入失败");
-    } finally {
-      setLegadoImporting(false);
-    }
-  }, [legadoImportText, loadLegadoConfigs]);
-
   const requestMicrosoftSpeech = useCallback(
     async (text: string) => {
       const ratePercent = Math.round((ttsRate - 1) * 100);
@@ -1096,7 +1004,7 @@ function ReaderContent() {
       options?: {
         onEnd?: () => void;
         onCleanup?: () => void;
-        debugMeta?: { engine: "microsoft" | "legado"; paragraphIndex?: number; paragraph?: string };
+        debugMeta?: { engine: "microsoft"; paragraphIndex?: number; paragraph?: string };
       }
     ) => {
       if (ttsSessionRef.current !== sessionId) return;
@@ -1197,7 +1105,7 @@ function ReaderContent() {
       prev.pitch !== current.pitch ||
       prev.volume !== current.volume;
 
-    if (hasChanged && isSpeaking && activeTtsParagraph && ttsEngine === "browser") {
+    if (hasChanged && isSpeaking && activeTtsParagraph) {
       // 更新 ref
       prevTtsSettingsRef.current = current;
 
@@ -1232,7 +1140,7 @@ function ReaderContent() {
       // 只更新 ref，不重新播放
       prevTtsSettingsRef.current = current;
     }
-  }, [ttsRate, ttsPitch, ttsVolume, isSpeaking, activeTtsParagraph, ttsEngine]);
+  }, [ttsRate, ttsPitch, ttsVolume, isSpeaking, activeTtsParagraph]);
 
   const speakWithBrowserParagraphs = useCallback(
     async (paragraphs: string[], sessionId: number, startIndex = 0) => {
@@ -1385,217 +1293,6 @@ function ReaderContent() {
       playAudioSource,
       requestMicrosoftSpeech,
       wait,
-    ]
-  );
-
-  type PreparedLegadoSpeech =
-    | { kind: "blob"; objectUrl: string }
-    | { kind: "url"; audioUrl: string }
-    | { kind: "text"; text: string };
-
-  const requestLegadoSpeech = useCallback(
-    async (text: string): Promise<PreparedLegadoSpeech> => {
-      // 检查缓存
-      const cacheKey = TtsAudioLruCache.hashKey({
-        engine: "legado",
-        text,
-        configId: selectedLegadoConfigId,
-        speakSpeed: legadoRate,
-      });
-      const cached = ttsAudioCache.get(cacheKey);
-      if (cached?.kind === "blob") {
-        return { kind: "blob", objectUrl: URL.createObjectURL(cached.blob) };
-      }
-      if (cached?.kind === "url") {
-        return { kind: "url", audioUrl: cached.audioUrl };
-      }
-
-      const res = await fetch("/api/tts/speak", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          configId: selectedLegadoConfigId,
-          text,
-          speakSpeed: legadoRate,
-        }),
-      });
-
-      const contentType = res.headers.get("content-type") || "";
-
-      if (res.ok && contentType.startsWith("audio/")) {
-        const audioBlob = await res.blob();
-        // 写入缓存
-        ttsAudioCache.set(cacheKey, { kind: "blob", blob: audioBlob });
-        return { kind: "blob", objectUrl: URL.createObjectURL(audioBlob) };
-      }
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data?.error || "朗读失败");
-      }
-
-      const audioUrl = typeof data?.audioUrl === "string" ? data.audioUrl : "";
-      const speechText = typeof data?.text === "string" ? data.text.trim() : "";
-
-      if (audioUrl) {
-        // 写入缓存（直接缓存 URL）
-        ttsAudioCache.set(cacheKey, { kind: "url", audioUrl });
-        return { kind: "url", audioUrl };
-      }
-
-      if (speechText) {
-        return { kind: "text", text: speechText };
-      }
-
-      throw new Error("未获取到可朗读内容");
-    },
-    [selectedLegadoConfigId, legadoRate]
-  );
-
-  const playLegadoPreparedSpeech = useCallback(
-    async (
-      prepared: PreparedLegadoSpeech,
-      paragraph: string,
-      sessionId: number
-    ) => {
-      if (ttsSessionRef.current !== sessionId) return;
-
-      setActiveTtsParagraph(paragraph);
-      setIsSpeaking(true);
-
-      if (prepared.kind === "text") {
-        await speakWithBrowserParagraphs([prepared.text], sessionId);
-        return;
-      }
-
-      const source = prepared.kind === "blob" ? prepared.objectUrl : prepared.audioUrl;
-
-      await playAudioSource(source, sessionId, {
-        onCleanup: () => {
-          if (prepared.kind === "blob") {
-            URL.revokeObjectURL(prepared.objectUrl);
-          }
-        },
-        onEnd: () => {
-          if (prepared.kind === "blob") {
-            URL.revokeObjectURL(prepared.objectUrl);
-          }
-        },
-        debugMeta: {
-          engine: "legado",
-          paragraph: paragraph.slice(0, 48),
-        },
-      });
-    },
-    [playAudioSource, speakWithBrowserParagraphs]
-  );
-
-  const speakWithLegadoParagraphs = useCallback(
-    async (paragraphs: string[], sessionId: number, startIndex = 0) => {
-      if (!selectedLegadoConfigId) {
-        toast.error("请先选择 Legado 配置");
-        return;
-      }
-
-      const queue = paragraphs.filter((item) => item.trim().length > 0);
-      if (queue.length === 0) {
-        toast.error("当前页面没有可朗读段落");
-        return;
-      }
-
-      const preparedTaskMap = new Map<number, Promise<PreparedLegadoSpeech>>();
-
-      const ensurePreloadWindow = (windowStart: number) => {
-        for (
-          let cursor = windowStart;
-          cursor < Math.min(queue.length, windowStart + legadoPreloadCount);
-          cursor += 1
-        ) {
-          if (!preparedTaskMap.has(cursor)) {
-            const task = requestLegadoSpeech(queue[cursor]);
-            task.catch(() => {
-              // avoid unhandled promise rejection for preloaded items
-            });
-            preparedTaskMap.set(cursor, task);
-          }
-        }
-      };
-
-      ensurePreloadWindow(0);
-
-      for (let index = 0; index < queue.length; index += 1) {
-        if (ttsSessionRef.current !== sessionId) {
-          return;
-        }
-
-        currentParagraphIndexRef.current = startIndex + index;
-        setTtsCurrentIndex(startIndex + index);
-        const paragraph = queue[index];
-
-        // 跳过已读的段落（避免跨页重复朗读）
-        const hash = paragraph.slice(0, 50);
-        if (readParagraphsHashRef.current.has(hash)) {
-          ensurePreloadWindow(index + 1);
-          continue;
-        }
-
-        ensurePreloadWindow(index + 1);
-        const currentPreparedPromise =
-          preparedTaskMap.get(index) ?? requestLegadoSpeech(paragraph);
-
-        let paragraphSucceeded = false;
-        let lastError: unknown = null;
-
-        for (let attempt = 1; attempt <= MAX_TTS_RETRY_COUNT; attempt += 1) {
-          if (ttsSessionRef.current !== sessionId) {
-            return;
-          }
-
-          try {
-            const prepared =
-              await (attempt === 1
-                ? currentPreparedPromise
-                : requestLegadoSpeech(paragraph));
-            await playLegadoPreparedSpeech(prepared, paragraph, sessionId);
-            paragraphSucceeded = true;
-            break;
-          } catch (error) {
-            lastError = error;
-            const canRetry = isRetryableTtsError(error);
-
-            if (attempt < MAX_TTS_RETRY_COUNT && canRetry) {
-              if (ttsSessionRef.current === sessionId) {
-                toast(`朗读失败，正在重试（${attempt + 1}/${MAX_TTS_RETRY_COUNT}）`);
-              }
-              await wait(TTS_RETRY_DELAY_MS);
-              continue;
-            }
-
-            break;
-          }
-        }
-
-        if (!paragraphSucceeded) {
-          if (ttsSessionRef.current === sessionId) {
-            setActiveTtsParagraph("");
-            setIsSpeaking(false);
-            if (!isRetryableTtsError(lastError)) {
-              toast.error("音频播放失败，请检查浏览器自动播放权限");
-            } else {
-              toast.error(`朗读失败，已重试${MAX_TTS_RETRY_COUNT}次`);
-            }
-          }
-          return;
-        }
-      }
-    },
-    [
-      legadoPreloadCount,
-      playLegadoPreparedSpeech,
-      requestLegadoSpeech,
-      selectedLegadoConfigId,
-      wait,
-      isRetryableTtsError,
     ]
   );
 
@@ -1827,32 +1524,20 @@ function ReaderContent() {
           continue; 
       }
 
-      if (ttsEngine === "browser") {
-        try {
-          await speakWithBrowserParagraphs(paragraphsToRead, sessionId, startIndex);
-          // 朗读成功后，记录这些段落的哈希
-          paragraphsToRead.forEach(p => {
-            readParagraphsHashRef.current.add(p.slice(0, 50));
-          });
-        } catch {
-          break;
-        }
-      } else {
-        try {
-          await speakWithLegadoParagraphs(paragraphsToRead, sessionId, startIndex);
-          // 朗读成功后，记录这些段落的哈希
-          paragraphsToRead.forEach(p => {
-            readParagraphsHashRef.current.add(p.slice(0, 50));
-          });
-        } catch {
-          break;
-        }
+      try {
+        await speakWithBrowserParagraphs(paragraphsToRead, sessionId, startIndex);
+        // 朗读成功后，记录这些段落的哈希
+        paragraphsToRead.forEach(p => {
+          readParagraphsHashRef.current.add(p.slice(0, 50));
+        });
+      } catch {
+        break;
       }
 
       if (ttsSessionRef.current !== sessionId) {
         break;
       }
-      
+
       // 当前页读完（speak 函数返回意味着这一批读完了），准备翻页
       const moved = await tryAutoTurnPage(sessionId);
       if (!moved) {
@@ -1872,10 +1557,8 @@ function ReaderContent() {
     getReadableParagraphs,
     isSpeaking,
     speakWithBrowserParagraphs,
-    speakWithLegadoParagraphs,
     stopSpeaking,
     tryAutoTurnPage,
-    ttsEngine,
   ]);
 
   useEffect(() => {
@@ -1932,11 +1615,7 @@ function ReaderContent() {
           // 确保设置 isSpeaking 为 true，否则 speak 函数可能会因为状态不对而退出或者 UI 状态不对
           setIsSpeaking(true);
 
-          if (ttsEngine === "browser") {
-            speakWithBrowserParagraphs(startParagraphs, sessionId, newIndex);
-          } else {
-            speakWithLegadoParagraphs(startParagraphs, sessionId, newIndex);
-          }
+          speakWithBrowserParagraphs(startParagraphs, sessionId, newIndex);
         }, 10);
     } else {
         // 如果之前没在读，就只停留在那里，高亮已经更新
@@ -1944,7 +1623,7 @@ function ReaderContent() {
         // 但这里 activeTtsParagraph 是状态，可能会被之前的逻辑清空？
         // 不会，因为 session ID 变了。
     }
-  }, [getReadableParagraphs, isSpeaking, ttsEngine, speakWithBrowserParagraphs, speakWithLegadoParagraphs]);
+  }, [getReadableParagraphs, isSpeaking, speakWithBrowserParagraphs]);
 
   const handleTtsNextParagraph = useCallback(() => {
     let paragraphs = allParagraphsRef.current;
@@ -1980,17 +1659,13 @@ function ReaderContent() {
         
         setTimeout(() => {
           if (ttsSessionRef.current !== sessionId) return;
-          
+
           setIsSpeaking(true);
 
-          if (ttsEngine === "browser") {
-            speakWithBrowserParagraphs(startParagraphs, sessionId, newIndex);
-          } else {
-            speakWithLegadoParagraphs(startParagraphs, sessionId, newIndex);
-          }
+          speakWithBrowserParagraphs(startParagraphs, sessionId, newIndex);
         }, 10);
     }
-  }, [getReadableParagraphs, isSpeaking, ttsEngine, speakWithBrowserParagraphs, speakWithLegadoParagraphs]);
+  }, [getReadableParagraphs, isSpeaking, speakWithBrowserParagraphs]);
 
   // Setup Media Session action handlers
   useEffect(() => {
@@ -2398,8 +2073,6 @@ function ReaderContent() {
         onFontSizeChange={handleFontSizeChange}
         theme={readerTheme}
         onThemeChange={handleThemeChange}
-        ttsEngine={ttsEngine}
-        onTtsEngineChange={setTtsEngine}
         browserVoices={browserVoices}
         selectedBrowserVoiceId={selectedBrowserVoiceId}
         onSelectedBrowserVoiceIdChange={handleSelectedBrowserVoiceIdChange}
@@ -2411,17 +2084,6 @@ function ReaderContent() {
         onTtsVolumeChange={setTtsVolume}
         microsoftPreloadCount={microsoftPreloadCount}
         onMicrosoftPreloadCountChange={setMicrosoftPreloadCount}
-        legadoRate={legadoRate}
-        onLegadoRateChange={setLegadoRate}
-        legadoConfigs={legadoConfigs}
-        selectedLegadoConfigId={selectedLegadoConfigId}
-        onSelectedLegadoConfigIdChange={setSelectedLegadoConfigId}
-        legadoImportText={legadoImportText}
-        onLegadoImportTextChange={setLegadoImportText}
-        onLegadoImport={handleLegadoImport}
-        legadoImporting={legadoImporting}
-        legadoPreloadCount={legadoPreloadCount}
-        onLegadoPreloadCountChange={setLegadoPreloadCount}
         ttsAutoNextChapter={ttsAutoNextChapter}
         onTtsAutoNextChapterChange={setTtsAutoNextChapter}
         ttsHighlightStyle={ttsHighlightStyle}

@@ -14,15 +14,11 @@ describe("useReaderSettingsStore", () => {
     useReaderSettingsStore.setState({
       fontSize: 16,
       theme: "light",
-      ttsEngine: "browser",
       browserVoiceId: "",
       ttsRate: 1,
       ttsPitch: 1,
       ttsVolume: 1,
       microsoftPreloadCount: 3,
-      legadoRate: 50,
-      legadoConfigId: "",
-      legadoPreloadCount: 3,
       loaded: false,
     });
     mockFetch.mockReset();

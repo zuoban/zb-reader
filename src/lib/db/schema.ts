@@ -139,17 +139,11 @@ export const readerSettings = sqliteTable("reader_settings", {
   theme: text("theme", { enum: ["light", "dark", "sepia"] })
     .default("light")
     .notNull(),
-  ttsEngine: text("tts_engine", { enum: ["browser", "legado"] })
-    .default("browser")
-    .notNull(),
   browserVoiceId: text("browser_voice_id"),
   ttsRate: real("tts_rate").default(1).notNull(),
   ttsPitch: real("tts_pitch").default(1).notNull(),
   ttsVolume: real("tts_volume").default(1).notNull(),
   microsoftPreloadCount: integer("microsoft_preload_count").default(3).notNull(),
-  legadoRate: integer("legado_rate").default(50).notNull(),
-  legadoConfigId: text("legado_config_id"),
-  legadoPreloadCount: integer("legado_preload_count").default(3).notNull(),
   ttsAutoNextChapter: integer("tts_auto_next_chapter", { mode: "boolean" })
     .default(false)
     .notNull(),
