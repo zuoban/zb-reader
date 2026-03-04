@@ -47,7 +47,6 @@
 
 项目已经使用了良好的代码分割策略：
 - EpubReader 使用 `dynamic` 导入
-- PdfReader 使用 `dynamic` 导入
 - TxtReader 使用 `dynamic` 导入
 - 所有阅读器组件都设置了 `ssr: false`
 

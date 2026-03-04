@@ -1590,22 +1590,6 @@ function ReaderContent() {
         .filter((item) => item.length > 0);
     }
 
-    if (book.format === "pdf") {
-      const spans = document.querySelectorAll(
-        ".react-pdf__Page__textContent span"
-      );
-      const text = Array.from(spans)
-        .map((span) => span.textContent || "")
-        .join(" ")
-        .trim();
-      if (!text) return [];
-      const chunks = text
-        .split(/(?<=[。！？.!?])\s+/)
-        .map((item) => item.trim())
-        .filter((item) => item.length > 0);
-      return chunks.length > 0 ? chunks : [text];
-    }
-
     return [] as string[];
   }, [book]);
 
