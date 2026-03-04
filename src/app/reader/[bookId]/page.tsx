@@ -2122,9 +2122,6 @@ function ReaderContent() {
         onPrev={handleTtsPrevParagraph}
         onNext={handleTtsNextParagraph}
         onJumpToPosition={isSpeaking ? handleJumpToReading : undefined}
-        currentParagraphIndex={ttsCurrentIndex}
-        totalParagraphs={ttsTotalParagraphs}
-        paragraphProgress={ttsPlaybackProgress}
         ttsAutoNextChapter={ttsAutoNextChapter}
         onTtsAutoNextChapterChange={setTtsAutoNextChapter}
         isFullscreen={isFullscreen}

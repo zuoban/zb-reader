@@ -11,9 +11,6 @@ interface TtsFloatingControlProps {
   onPrev?: () => void;
   onNext?: () => void;
   onJumpToPosition?: () => void;
-  currentParagraphIndex?: number;
-  totalParagraphs?: number;
-  paragraphProgress?: number;
   ttsAutoNextChapter?: boolean;
   onTtsAutoNextChapterChange?: (value: boolean) => void;
   isFullscreen?: boolean;
@@ -44,9 +41,6 @@ export function TtsFloatingControl({
   onPrev,
   onNext,
   onJumpToPosition,
-  currentParagraphIndex = 0,
-  totalParagraphs = 0,
-  paragraphProgress = 0,
   ttsAutoNextChapter = false,
   onTtsAutoNextChapterChange,
   isFullscreen = false,
@@ -171,34 +165,6 @@ export function TtsFloatingControl({
             >
               <SkipForward className="size-3.5 transition-transform duration-150 group-hover:translate-x-0.5" />
             </button>
-          )}
-
-          <div
-            className="w-px h-4 mx-0.5 hidden sm:block"
-            style={{ background: "var(--reader-border)" }}
-          />
-
-          {totalParagraphs > 0 && (
-            <div className="flex items-center gap-1 sm:gap-1.5 px-1 sm:px-2">
-              <span
-                className="text-[10px] sm:text-xs font-medium min-w-[2.5rem] sm:min-w-[3rem] text-center"
-                style={{ color: "var(--reader-muted-text)" }}
-              >
-                {currentParagraphIndex + 1}/{totalParagraphs}
-              </span>
-              <div
-                className="w-10 sm:w-12 h-1 rounded-full overflow-hidden"
-                style={{ background: "var(--reader-border)" }}
-              >
-                <div
-                  className="h-full transition-all duration-150 rounded-full"
-                  style={{
-                    width: `${Math.min(100, Math.max(0, paragraphProgress * 100))}%`,
-                    background: "var(--reader-primary, #171717)",
-                  }}
-                />
-              </div>
-            </div>
           )}
 
           {onJumpToPosition && (
