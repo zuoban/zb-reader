@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Pause, Play, Square, SkipBack, SkipForward, LocateFixed, ListEnd } from "lucide-react";
+import { Pause, Play, Square, SkipBack, SkipForward, LocateFixed, ListEnd, Maximize, Minimize } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TtsFloatingControlProps {
@@ -16,6 +16,8 @@ interface TtsFloatingControlProps {
   paragraphProgress?: number;
   ttsAutoNextChapter?: boolean;
   onTtsAutoNextChapterChange?: (value: boolean) => void;
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
 }
 
 function AudioWaveIndicator() {
@@ -47,6 +49,8 @@ export function TtsFloatingControl({
   paragraphProgress = 0,
   ttsAutoNextChapter = false,
   onTtsAutoNextChapterChange,
+  isFullscreen = false,
+  onToggleFullscreen,
 }: TtsFloatingControlProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isAutoTransparent, setIsAutoTransparent] = useState(false);
@@ -238,6 +242,28 @@ export function TtsFloatingControl({
                     ttsAutoNextChapter && "scale-110"
                   )} 
                 />
+              </button>
+            </>
+          )}
+
+          {onToggleFullscreen && (
+            <>
+              <div
+                className="w-px h-4 mx-0.5 hidden sm:block"
+                style={{ background: "var(--reader-border)" }}
+              />
+              <button
+                type="button"
+                onClick={onToggleFullscreen}
+                className="group flex size-7 sm:size-7 items-center justify-center rounded-lg transition-all duration-150 cursor-pointer active:scale-90 hover:bg-[var(--reader-primary-light,_rgba(23,23,23,0.1))]"
+                style={{ color: "var(--reader-muted-text)" }}
+                title={isFullscreen ? "退出全屏" : "全屏"}
+              >
+                {isFullscreen ? (
+                  <Minimize className="size-3.5" />
+                ) : (
+                  <Maximize className="size-3.5" />
+                )}
               </button>
             </>
           )}

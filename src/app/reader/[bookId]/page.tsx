@@ -2501,6 +2501,8 @@ function ReaderContent() {
         paragraphProgress={ttsPlaybackProgress}
         ttsAutoNextChapter={ttsAutoNextChapter}
         onTtsAutoNextChapterChange={setTtsAutoNextChapter}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={handleToggleFullscreen}
       />
 
       <Toaster />
