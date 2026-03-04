@@ -14,7 +14,7 @@ describe("UploadDialog", () => {
 
     expect(screen.getByText("上传电子书")).toBeInTheDocument();
     expect(screen.getByText("拖拽文件到此处，或")).toBeInTheDocument();
-    expect(screen.getByText("支持 EPUB、PDF、TXT、MOBI 格式")).toBeInTheDocument();
+    expect(screen.getByText("支持 EPUB、TXT 格式")).toBeInTheDocument();
   });
 
   it("should not render when closed", () => {
