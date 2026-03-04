@@ -13,6 +13,8 @@ import {
   ArrowDown,
   ChevronLeft,
   ChevronRight,
+  Maximize,
+  Minimize,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -31,12 +33,14 @@ interface ReaderToolbarProps {
   totalPages?: number;
   progress: number;
   isBookmarked: boolean;
+  isFullscreen: boolean;
   onBack: () => void;
   onToggleToc: () => void;
   onToggleBookmark: () => void;
   onToggleSettings: () => void;
   onToggleNotes: () => void;
   onToggleTts: () => void;
+  onToggleFullscreen: () => void;
   isSpeaking: boolean;
   onProgressChange: (progress: number) => void;
   onPrevPage?: () => void;
@@ -93,12 +97,14 @@ export function ReaderToolbar({
   totalPages,
   progress,
   isBookmarked,
+  isFullscreen,
   onBack,
   onToggleToc,
   onToggleBookmark,
   onToggleSettings,
   onToggleNotes,
   onToggleTts,
+  onToggleFullscreen,
   isSpeaking,
   onProgressChange,
   onPrevPage,
@@ -170,6 +176,18 @@ export function ReaderToolbar({
                   <Pause className="size-[18px] sm:size-5" />
                 ) : (
                   <Volume2 className="size-[18px] sm:size-5" />
+                )}
+              </ToolbarButton>
+
+              <ToolbarButton
+                onClick={onToggleFullscreen}
+                tooltip={isFullscreen ? "退出全屏" : "全屏阅读"}
+                isActive={isFullscreen}
+              >
+                {isFullscreen ? (
+                  <Minimize className="size-[18px] sm:size-5" />
+                ) : (
+                  <Maximize className="size-[18px] sm:size-5" />
                 )}
               </ToolbarButton>
 

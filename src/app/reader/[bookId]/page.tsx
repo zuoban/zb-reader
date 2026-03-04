@@ -143,6 +143,9 @@ function ReaderContent() {
   // Settings panel
   const [settingsOpen, setSettingsOpen] = useState(false);
 
+  // Fullscreen
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
   // Bookmarks
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [isCurrentBookmarked, setIsCurrentBookmarked] = useState(false);
@@ -693,6 +696,32 @@ function ReaderContent() {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [handleBack]);
+
+  // ---- Fullscreen handlers ----
+  const handleToggleFullscreen = useCallback(async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+        setIsFullscreen(true);
+      } else {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    } catch (error) {
+      logger.warn("reader", "全屏切换失败", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    };
+  }, []);
 
   // ---- Bookmark handlers ----
   const handleToggleBookmark = useCallback(async () => {
@@ -2312,6 +2341,7 @@ function ReaderContent() {
         totalPages={totalPages}
         progress={progress}
         isBookmarked={isCurrentBookmarked}
+        isFullscreen={isFullscreen}
         onBack={handleBack}
         onToggleToc={() => {
           setSidePanelOpen(true);
@@ -2323,8 +2353,9 @@ function ReaderContent() {
           setActiveTab("notes");
         }}
         onToggleTts={handleToggleTts}
-        isSpeaking={isSpeaking}
+        onToggleFullscreen={handleToggleFullscreen}
         onToggleSettings={() => setSettingsOpen(true)}
+        isSpeaking={isSpeaking}
         onProgressChange={handleProgressChange}
         onPrevPage={handlePrevPage}
         onNextPage={handleNextPage}
