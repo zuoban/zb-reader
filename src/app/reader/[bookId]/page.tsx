@@ -688,22 +688,26 @@ function ReaderContent() {
         await document.documentElement.requestFullscreen();
         setIsFullscreen(true);
         // Lock orientation to portrait on mobile devices
-        if (screen.orientation && "lock" in screen.orientation) {
+        const orientation = screen.orientation as ScreenOrientation & { lock?: (type: string) => Promise<void> };
+        if (orientation && typeof orientation.lock === "function") {
           try {
-            await (screen.orientation as ScreenOrientation & { lock: (orientation: string) => Promise<void> }).lock("portrait");
-          } catch {
+            await orientation.lock("portrait");
+          } catch (err) {
             // Orientation lock not supported or failed, ignore
+            logger.debug("reader", "屏幕方向锁定失败", err);
           }
         }
       } else {
         await document.exitFullscreen();
         setIsFullscreen(false);
         // Unlock orientation when exiting fullscreen
-        if (screen.orientation && "unlock" in screen.orientation) {
+        const orientation = screen.orientation as ScreenOrientation & { unlock?: () => void };
+        if (orientation && typeof orientation.unlock === "function") {
           try {
-            (screen.orientation as ScreenOrientation & { unlock: () => void }).unlock();
-          } catch {
+            orientation.unlock();
+          } catch (err) {
             // Orientation unlock not supported or failed, ignore
+            logger.debug("reader", "屏幕方向解锁失败", err);
           }
         }
       }
@@ -716,13 +720,17 @@ function ReaderContent() {
     const handleFullscreenChange = () => {
       const isFullscreen = !!document.fullscreenElement;
       setIsFullscreen(isFullscreen);
-      
+
       // Unlock orientation when exiting fullscreen
-      if (!isFullscreen && screen.orientation && "unlock" in screen.orientation) {
-        try {
-          (screen.orientation as ScreenOrientation & { unlock: () => void }).unlock();
-        } catch {
-          // Orientation unlock not supported or failed, ignore
+      if (!isFullscreen) {
+        const orientation = screen.orientation as ScreenOrientation & { unlock?: () => void };
+        if (orientation && typeof orientation.unlock === "function") {
+          try {
+            orientation.unlock();
+          } catch (err) {
+            // Orientation unlock not supported or failed, ignore
+            logger.debug("reader", "屏幕方向解锁失败", err);
+          }
         }
       }
     };
