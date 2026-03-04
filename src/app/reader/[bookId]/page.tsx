@@ -45,7 +45,6 @@ const TxtReader = dynamic<{
   theme?: "light" | "dark" | "sepia";
   activeTtsParagraph?: string;
   ttsPlaybackProgress?: number;
-  ttsHighlightStyle?: "background" | "indicator";
   ttsHighlightColor?: string;
   onPageChange?: (page: number, totalPages: number) => void;
   onRegisterController?: (controller: { nextPage: () => boolean; prevPage: () => boolean; scrollDown: (amount?: number) => void; scrollUp: (amount?: number) => void; scrollToActiveParagraph: () => void }) => void;
@@ -105,7 +104,6 @@ function ReaderContent() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [ttsPlaybackProgress, setTtsPlaybackProgress] = useState(0);
   const [ttsAutoNextChapter, setTtsAutoNextChapter] = useState(false);
-  const [ttsHighlightStyle, setTtsHighlightStyle] = useState<"background" | "indicator">("indicator");
   const [ttsHighlightColor, setTtsHighlightColor] = useState("#3b82f6");
 
   // Side panel
@@ -286,7 +284,6 @@ function ReaderContent() {
             ttsVolume?: number;
             microsoftPreloadCount?: number;
             ttsAutoNextChapter?: boolean;
-            ttsHighlightStyle?: "background" | "indicator";
             ttsHighlightColor?: string;
           };
         };
@@ -318,9 +315,6 @@ function ReaderContent() {
         }
         if (typeof settings.ttsAutoNextChapter === "boolean") {
           setTtsAutoNextChapter(settings.ttsAutoNextChapter);
-        }
-        if (settings.ttsHighlightStyle === "background" || settings.ttsHighlightStyle === "indicator") {
-          setTtsHighlightStyle(settings.ttsHighlightStyle);
         }
         if (typeof settings.ttsHighlightColor === "string") {
           setTtsHighlightColor(settings.ttsHighlightColor);
@@ -1950,7 +1944,6 @@ function ReaderContent() {
             highlights={highlights}
             activeTtsParagraph={activeTtsParagraph}
             ttsPlaybackProgress={ttsPlaybackProgress}
-            ttsHighlightStyle={ttsHighlightStyle}
             ttsHighlightColor={ttsHighlightColor}
           />
         )}
@@ -1967,7 +1960,6 @@ function ReaderContent() {
               theme={readerTheme}
               activeTtsParagraph={activeTtsParagraph}
               ttsPlaybackProgress={ttsPlaybackProgress}
-              ttsHighlightStyle={ttsHighlightStyle}
               ttsHighlightColor={ttsHighlightColor}
               onRegisterController={(controller) => {
                 txtReaderControllerRef.current = controller;
@@ -2065,8 +2057,6 @@ function ReaderContent() {
         onMicrosoftPreloadCountChange={setMicrosoftPreloadCount}
         ttsAutoNextChapter={ttsAutoNextChapter}
         onTtsAutoNextChapterChange={setTtsAutoNextChapter}
-        ttsHighlightStyle={ttsHighlightStyle}
-        onTtsHighlightStyleChange={setTtsHighlightStyle}
         ttsHighlightColor={ttsHighlightColor}
         onTtsHighlightColorChange={setTtsHighlightColor}
       />
