@@ -89,8 +89,6 @@ const THEME_STYLES: Record<
   },
 };
 
-const TELEPROMPTER_VIEWPORT_ANCHOR = 0.42;
-
 const TTS_INDICATOR_CSS = `
 [data-tts-active='1'] {
   position: relative;
@@ -152,9 +150,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     const [isRenditionReady, setIsRenditionReady] = useState(false);
     const pendingHighlightsRef = useRef<Array<{ cfiRange: string; color: string; id: string }>>([]);
     const justSelectedRef = useRef(false);
-    const activeParagraphAbsTopRef = useRef<number | null>(null);
-    const lerpRafIdRef = useRef<number | null>(null);
-    const smoothScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useImperativeHandle(ref, () => ({
       goToLocation(cfi: string) {
@@ -409,27 +404,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       return text.replace(/\s+/g, "").trim();
     }, []);
 
-    const _getTeleprompterScrollTop = useCallback(
-      (element: HTMLElement, progress: number) => {
-        const scrollRange = Math.max(0, element.scrollHeight - element.clientHeight);
-        if (scrollRange <= 0) return 0;
-
-        const clampedProgress = Math.min(1, Math.max(0, progress));
-        const leadIn = 0.08;
-        const leadOut = 0.94;
-
-        if (clampedProgress <= leadIn) return 0;
-        if (clampedProgress >= leadOut) return scrollRange;
-
-        const normalized = (clampedProgress - leadIn) / (leadOut - leadIn);
-        const eased = normalized * normalized * (3 - 2 * normalized);
-        const contentPosition = eased * element.scrollHeight;
-        const anchoredTop = contentPosition - element.clientHeight * TELEPROMPTER_VIEWPORT_ANCHOR;
-        return Math.min(scrollRange, Math.max(0, anchoredTop));
-      },
-      []
-    );
-
     useEffect(() => {
       const contents = renditionRef.current?.getContents?.() as
         | Array<{ document?: Document }>
@@ -487,7 +461,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       doc.body.removeAttribute("data-tts-immersive");
 
       if (!activeTtsParagraph) {
-        activeParagraphAbsTopRef.current = null;
         return;
       }
 
@@ -581,7 +554,22 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         activeElement.style.paddingBottom = "";
         activeElement.style.setProperty("--tts-indicator-color", ttsHighlightColor);
       }
+    }, [activeTtsParagraph, normalizeText, theme, ttsHighlightStyle, ttsHighlightColor]);
 
+    // 只在段落切换时滚动（不在播放进度更新时滚动）
+    useEffect(() => {
+      if (!activeTtsParagraph) return;
+
+      const contents = renditionRef.current?.getContents?.() as
+        | Array<{ document?: Document }>
+        | undefined;
+      const doc = contents?.[0]?.document;
+      if (!doc) return;
+
+      const activeElement = doc.querySelector("[data-tts-active='1']") as HTMLElement | null;
+      if (!activeElement) return;
+
+      // 滚动到活动段落
       const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
       if (epubContainer) {
         let elementOffsetTop = 0;
@@ -602,21 +590,10 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         }
 
         const absoluteTop = iframeOffsetTop + elementOffsetTop;
-        activeParagraphAbsTopRef.current = absoluteTop;
-
-        if (lerpRafIdRef.current !== null) {
-          cancelAnimationFrame(lerpRafIdRef.current);
-          lerpRafIdRef.current = null;
-        }
-        if (smoothScrollTimerRef.current !== null) {
-          clearTimeout(smoothScrollTimerRef.current);
-          smoothScrollTimerRef.current = null;
-        }
-
         const targetScrollTop = absoluteTop - epubContainer.clientHeight * 0.25;
         epubContainer.scrollTo({ top: Math.max(0, targetScrollTop), behavior: "smooth" });
       }
-    }, [activeTtsParagraph, normalizeText, theme, ttsHighlightStyle, ttsHighlightColor, ttsPlaybackProgress]);
+    }, [activeTtsParagraph]);
 
     useEffect(() => {
       if (!activeTtsParagraph) return;
@@ -656,43 +633,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         const progressFill = activeElement.querySelector(".tts-progress-fill");
         if (progressTrack) progressTrack.remove();
         if (progressFill) progressFill.remove();
-      }
-
-      const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
-      if (epubContainer && activeParagraphAbsTopRef.current !== null) {
-        const paragraphHeight = activeElement.offsetHeight;
-        if (paragraphHeight > epubContainer.clientHeight * 0.8) {
-          const progressY = paragraphHeight * ttsPlaybackProgress;
-          const targetScrollTop =
-            activeParagraphAbsTopRef.current + progressY - epubContainer.clientHeight * 0.35;
-          const clampedTarget = Math.max(0, targetScrollTop);
-
-          if (lerpRafIdRef.current !== null) {
-            cancelAnimationFrame(lerpRafIdRef.current);
-            lerpRafIdRef.current = null;
-          }
-
-          if (smoothScrollTimerRef.current !== null) {
-            clearTimeout(smoothScrollTimerRef.current);
-          }
-          smoothScrollTimerRef.current = setTimeout(() => {
-            smoothScrollTimerRef.current = null;
-            const LERP_FACTOR = 0.1;
-            const step = () => {
-              if (!epubContainer) return;
-              const current = epubContainer.scrollTop;
-              const diff = clampedTarget - current;
-              if (Math.abs(diff) < 0.5) {
-                epubContainer.scrollTop = clampedTarget;
-                lerpRafIdRef.current = null;
-                return;
-              }
-              epubContainer.scrollTop = current + diff * LERP_FACTOR;
-              lerpRafIdRef.current = requestAnimationFrame(step);
-            };
-            lerpRafIdRef.current = requestAnimationFrame(step);
-          }, 400);
-        }
       }
     }, [activeTtsParagraph, ttsPlaybackProgress, ttsHighlightStyle, ttsHighlightColor]);
 

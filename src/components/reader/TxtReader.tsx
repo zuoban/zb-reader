@@ -53,8 +53,6 @@ const themeStyles: Record<string, { bg: string; text: string }> = {
   sepia: { bg: "bg-[#f4ecd8]", text: "text-[#5b4636]" },
 };
 
-const TELEPROMPTER_VIEWPORT_ANCHOR = 0.42;
-
 function TxtReader({
   url,
   initialPage: _initialPage,
@@ -70,8 +68,6 @@ function TxtReader({
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
-  const lerpRafIdRef = useRef<number | null>(null);
-  const smoothScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrollRatioRef = useRef<number>(0);
 
   useEffect(() => {
@@ -199,24 +195,6 @@ function TxtReader({
   const normalizeText = (value: string) => value.replace(/\s+/g, "").trim();
   const activeNeedle = normalizeText(activeTtsParagraph || "").slice(0, 80);
 
-  const _getTeleprompterScrollTop = useCallback((element: HTMLElement, progress: number) => {
-    const scrollRange = Math.max(0, element.scrollHeight - element.clientHeight);
-    if (scrollRange <= 0) return 0;
-
-    const clampedProgress = Math.min(1, Math.max(0, progress));
-    const leadIn = 0.08;
-    const leadOut = 0.94;
-
-    if (clampedProgress <= leadIn) return 0;
-    if (clampedProgress >= leadOut) return scrollRange;
-
-    const normalized = (clampedProgress - leadIn) / (leadOut - leadIn);
-    const eased = normalized * normalized * (3 - 2 * normalized);
-    const contentPosition = eased * element.scrollHeight;
-    const anchoredTop = contentPosition - element.clientHeight * TELEPROMPTER_VIEWPORT_ANCHOR;
-    return Math.min(scrollRange, Math.max(0, anchoredTop));
-  }, []);
-
   useEffect(() => {
     if (!activeNeedle) return;
 
@@ -228,15 +206,6 @@ function TxtReader({
       | null;
     if (!activeElement) return;
 
-    if (lerpRafIdRef.current !== null) {
-      cancelAnimationFrame(lerpRafIdRef.current);
-      lerpRafIdRef.current = null;
-    }
-    if (smoothScrollTimerRef.current !== null) {
-      clearTimeout(smoothScrollTimerRef.current);
-      smoothScrollTimerRef.current = null;
-    }
-
     const elementRect = activeElement.getBoundingClientRect();
     const containerRect = container.getBoundingClientRect();
     const targetScrollTop =
@@ -246,56 +215,6 @@ function TxtReader({
       elementRect.height / 2;
     container.scrollTo({ top: Math.max(0, targetScrollTop), behavior: "smooth" });
   }, [activeNeedle]);
-
-  useEffect(() => {
-    if (!activeNeedle) return;
-
-    const container = containerRef.current;
-    if (!container) return;
-
-    const activeElement = container.querySelector("[data-tts-active='1']") as HTMLElement | null;
-    if (!activeElement) return;
-
-    const paragraphHeight = activeElement.offsetHeight;
-    if (paragraphHeight <= container.clientHeight * 0.8) return;
-
-    let elementAbsTop = 0;
-    let node: HTMLElement | null = activeElement;
-    while (node && node !== container) {
-      elementAbsTop += node.offsetTop;
-      node = node.offsetParent as HTMLElement | null;
-    }
-
-    const progressY = paragraphHeight * ttsPlaybackProgress;
-    const targetScrollTop = elementAbsTop + progressY - container.clientHeight * 0.35;
-    const clampedTarget = Math.max(0, targetScrollTop);
-
-    if (lerpRafIdRef.current !== null) {
-      cancelAnimationFrame(lerpRafIdRef.current);
-      lerpRafIdRef.current = null;
-    }
-
-    if (smoothScrollTimerRef.current !== null) {
-      clearTimeout(smoothScrollTimerRef.current);
-    }
-    smoothScrollTimerRef.current = setTimeout(() => {
-      smoothScrollTimerRef.current = null;
-      const LERP_FACTOR = 0.1;
-      const step = () => {
-        if (!container) return;
-        const current = container.scrollTop;
-        const diff = clampedTarget - current;
-        if (Math.abs(diff) < 0.5) {
-          container.scrollTop = clampedTarget;
-          lerpRafIdRef.current = null;
-          return;
-        }
-        container.scrollTop = current + diff * LERP_FACTOR;
-        lerpRafIdRef.current = requestAnimationFrame(step);
-      };
-      lerpRafIdRef.current = requestAnimationFrame(step);
-    }, 400);
-  }, [activeNeedle, ttsPlaybackProgress]);
 
   if (loading) {
     return (
