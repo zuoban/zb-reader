@@ -46,9 +46,7 @@ export function UploadDialog({
     onDrop,
     accept: {
       "application/epub+zip": [".epub"],
-      "application/pdf": [".pdf"],
       "text/plain": [".txt"],
-      "application/x-mobipocket-ebook": [".mobi"],
     },
     multiple: true,
   });
@@ -149,7 +147,7 @@ export function UploadDialog({
             )}
           </p>
           <p className="text-xs text-muted-foreground mt-2">
-            支持 EPUB、PDF、TXT、MOBI 格式
+            支持 EPUB、TXT 格式
           </p>
         </div>
 

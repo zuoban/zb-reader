@@ -66,7 +66,7 @@ describe("BookCard", () => {
   });
 
   it("should display different format badges", () => {
-    const formats = ["epub", "pdf", "txt", "mobi"] as const;
+    const formats = ["epub", "txt"] as const;
 
     formats.forEach((format) => {
       const formatBook = { ...mockBook, format };

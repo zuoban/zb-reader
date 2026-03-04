@@ -37,21 +37,6 @@ const EpubReader = dynamic(() => import("@/components/reader/EpubReader"), {
   ),
 });
 
-// Dynamic import for PDF reader
-const PdfReader = dynamic<{
-  url: string;
-  initialPage?: number;
-  onPageChange?: (page: number, totalPages: number) => void;
-  onRegisterController?: (controller: { nextPage: () => boolean; prevPage: () => boolean }) => void;
-}>(() => import("@/components/reader/PdfReader"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex items-center justify-center h-full">
-      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-    </div>
-  ),
-});
-
 // Dynamic import for TXT reader
 const TxtReader = dynamic<{
   url: string;
@@ -182,7 +167,6 @@ function ReaderContent() {
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const txtReaderControllerRef = useRef<{ nextPage: () => boolean; prevPage: () => boolean; scrollDown: (amount?: number) => void; scrollUp: (amount?: number) => void; scrollToActiveParagraph: () => void } | null>(null);
-  const pdfReaderControllerRef = useRef<{ nextPage: () => boolean; prevPage: () => boolean } | null>(null);
   const ttsSessionRef = useRef(0);
   const settingsLoadedRef = useRef(false);
   const settingsSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1739,12 +1723,6 @@ function ReaderContent() {
         }
       } else if (book.format === "txt") {
         txtReaderControllerRef.current?.scrollDown?.();
-      } else if (book.format === "pdf") {
-        if (!currentPage || !totalPages || currentPage >= totalPages) {
-          return false;
-        }
-        const moved = pdfReaderControllerRef.current?.nextPage();
-        if (!moved) return false;
       } else {
         return false;
       }
@@ -2062,8 +2040,6 @@ function ReaderContent() {
       epubReaderRef.current?.scrollUp();
     } else if (book?.format === "txt") {
       txtReaderControllerRef.current?.scrollUp?.();
-    } else if (book?.format === "pdf") {
-      pdfReaderControllerRef.current?.prevPage();
     }
   }, [book?.format]);
 
@@ -2072,8 +2048,6 @@ function ReaderContent() {
       epubReaderRef.current?.scrollDown();
     } else if (book?.format === "txt") {
       txtReaderControllerRef.current?.scrollDown?.();
-    } else if (book?.format === "pdf") {
-      pdfReaderControllerRef.current?.nextPage();
     }
   }, [book?.format]);
 
@@ -2162,8 +2136,8 @@ function ReaderContent() {
       hasPrevChapter = true;
       hasNextChapter = true;
     }
-  } else if (book?.format === "pdf" || book?.format === "txt") {
-    // PDF 和 TXT 使用进度判断
+  } else if (book?.format === "txt") {
+    // TXT 使用进度判断
     hasPrevChapter = progress > 0.01;
     hasNextChapter = progress < 0.99;
   }
@@ -2305,26 +2279,6 @@ function ReaderContent() {
           />
         )}
 
-        {book.format === "pdf" && (
-          <div onClick={isSpeaking ? undefined : handleToggleToolbar}>
-            <PdfReader
-              url={bookUrl}
-              initialPage={currentPage}
-              onRegisterController={(controller) => {
-                pdfReaderControllerRef.current = controller;
-              }}
-              onPageChange={(page, total) => {
-                setCurrentPage(page);
-                setTotalPages(total);
-                setProgress(total > 0 ? page / total : 0);
-                progressRef.current = total > 0 ? page / total : 0;
-                currentLocationRef.current = JSON.stringify({ page });
-                debouncedSaveProgress();
-              }}
-            />
-          </div>
-        )}
-
         {book.format === "txt" && (
           <div
             className="h-full"
@@ -2350,14 +2304,6 @@ function ReaderContent() {
                 debouncedSaveProgress();
               }}
             />
-          </div>
-        )}
-
-        {book.format === "mobi" && (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-muted-foreground">
-              MOBI 格式支持开发中，请将文件转换为 EPUB 格式后上传
-            </p>
           </div>
         )}
       </div>

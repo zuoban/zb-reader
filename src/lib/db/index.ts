@@ -44,7 +44,7 @@ function getConnection() {
       cover TEXT,
       file_path TEXT NOT NULL,
       file_size INTEGER NOT NULL,
-      format TEXT NOT NULL CHECK(format IN ('epub', 'pdf', 'txt', 'mobi')),
+      format TEXT NOT NULL CHECK(format IN ('epub', 'txt')),
       description TEXT,
       isbn TEXT,
       publisher TEXT,

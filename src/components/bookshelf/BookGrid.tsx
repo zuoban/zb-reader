@@ -23,7 +23,7 @@ export function BookGrid({ books, progressMap, onDelete }: BookGridProps) {
         </p>
         <div className="mt-6 flex items-center gap-2 text-xs text-muted-foreground">
           <Upload className="h-4 w-4" />
-          <span>支持 EPUB, PDF, TXT, MOBI 格式</span>
+          <span>支持 EPUB, TXT 格式</span>
         </div>
       </div>
     );

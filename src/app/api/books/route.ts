@@ -100,11 +100,11 @@ export async function POST(req: NextRequest) {
 
     const fileName = file.name;
     const ext = fileName.split(".").pop()?.toLowerCase();
-    const validFormats = ["epub", "pdf", "txt", "mobi"];
+    const validFormats = ["epub", "txt"];
 
     if (!ext || !validFormats.includes(ext)) {
       return NextResponse.json(
-        { error: "不支持的文件格式，仅支持 EPUB, PDF, TXT, MOBI" },
+        { error: "不支持的文件格式，仅支持 EPUB, TXT" },
         { status: 400 }
       );
     }
@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
       cover: coverFileName,
       filePath: savedFileName,
       fileSize: buffer.length,
-      format: ext as "epub" | "pdf" | "txt" | "mobi",
+      format: ext as "epub" | "txt",
       uploaderId: session.user.id,
     });
 

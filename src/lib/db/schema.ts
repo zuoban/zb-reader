@@ -22,7 +22,7 @@ export const books = sqliteTable("books", {
   cover: text("cover"),
   filePath: text("file_path").notNull(),
   fileSize: integer("file_size").notNull(),
-  format: text("format", { enum: ["epub", "pdf", "txt", "mobi"] }).notNull(),
+  format: text("format", { enum: ["epub", "txt"] }).notNull(),
   description: text("description"),
   isbn: text("isbn"),
   publisher: text("publisher"),
