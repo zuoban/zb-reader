@@ -158,8 +158,8 @@ function SliderRow({
         <span
           className="text-[11px] sm:text-[12px] font-semibold tabular-nums min-w-[44px] sm:min-w-[48px] text-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg"
           style={{
-            background: "color-mix(in srgb, var(--primary) 12%, transparent)",
-            color: "var(--primary)",
+            background: "color-mix(in srgb, var(--reader-primary) 12%, transparent)",
+            color: "var(--reader-primary)",
           }}
         >
           {showValue}{unit}
@@ -168,11 +168,11 @@ function SliderRow({
       <div className="relative h-5 sm:h-6 flex items-center">
         <div
           className="absolute inset-x-0 h-[2.5px] sm:h-[3px] rounded-full"
-          style={{ background: "color-mix(in srgb, var(--reader-text) 12%, transparent)" }}
+          style={{ background: "color-mix(in srgb, var(--reader-text) 20%, transparent)" }}
         >
           <div
             className="h-full rounded-full"
-            style={{ width: `${percentage}%`, background: "var(--primary)" }}
+            style={{ width: `${percentage}%`, background: "var(--reader-primary)" }}
           />
         </div>
         <input
@@ -189,8 +189,8 @@ function SliderRow({
           style={{
             left: `calc(${percentage}% - 9px)`,
             background: "var(--reader-card-bg)",
-            border: "2px solid var(--primary)",
-            boxShadow: "0 1px 6px color-mix(in srgb, var(--primary) 35%, transparent)",
+            border: "2px solid var(--reader-primary)",
+            boxShadow: "0 1px 6px color-mix(in srgb, var(--reader-primary) 35%, transparent)",
           }}
         />
       </div>
@@ -214,7 +214,7 @@ function CompactSelect({
       <SelectTrigger
         className="h-8 sm:h-9 text-[12px] sm:text-[13px] font-medium border-0 rounded-lg sm:rounded-xl cursor-pointer focus:ring-0 focus:ring-offset-0 gap-1 sm:gap-1.5 pr-2 sm:pr-2.5 pl-2.5 sm:pl-3"
         style={{
-          background: "color-mix(in srgb, var(--reader-text) 8%, transparent)",
+          background: "color-mix(in srgb, var(--reader-text) 15%, transparent)",
           color: "var(--reader-text)",
           minWidth: "120px",
           maxWidth: "200px",
@@ -316,7 +316,7 @@ export function ReadingSettings({
                       fontSize <= 12 ? "opacity-25 cursor-not-allowed" : "hover:opacity-75 active:opacity-60"
                     )}
                     style={{
-                      background: "color-mix(in srgb, var(--reader-text) 10%, transparent)",
+                      background: "color-mix(in srgb, var(--reader-text) 18%, transparent)",
                     }}
                   >
                     <Minus
@@ -340,7 +340,7 @@ export function ReadingSettings({
                       fontSize >= 28 ? "opacity-25 cursor-not-allowed" : "hover:opacity-75 active:opacity-60"
                     )}
                     style={{
-                      background: "color-mix(in srgb, var(--reader-text) 10%, transparent)",
+                      background: "color-mix(in srgb, var(--reader-text) 18%, transparent)",
                     }}
                   >
                     <Plus
@@ -462,7 +462,7 @@ export function ReadingSettings({
               <SliderRow
                 label="语速"
                 value={ttsRate}
-                min={0.5}
+                min={1}
                 max={2}
                 step={0.1}
                 onChange={onTtsRateChange}
@@ -485,15 +485,20 @@ export function ReadingSettings({
                 <button
                   onClick={() => onTtsAutoNextChapterChange(!ttsAutoNextChapter)}
                   className={cn(
-                    "relative w-11 sm:w-12 h-6 sm:h-7 rounded-full transition-colors cursor-pointer",
-                    ttsAutoNextChapter ? "bg-primary" : "bg-muted"
+                    "relative w-11 sm:w-12 h-6 sm:h-7 rounded-full transition-colors cursor-pointer"
                   )}
+                  style={{
+                    background: ttsAutoNextChapter
+                      ? "var(--reader-primary)"
+                      : "color-mix(in srgb, var(--reader-text) 20%, transparent)",
+                  }}
                 >
                   <span
                     className={cn(
-                      "absolute top-0.5 sm:top-1 left-0.5 sm:left-1 w-5 h-5 rounded-full bg-background transition-transform shadow-sm",
+                      "absolute top-0.5 sm:top-1 left-0.5 sm:left-1 w-5 h-5 rounded-full transition-transform shadow-sm",
                       ttsAutoNextChapter ? "translate-x-5 sm:translate-x-5" : "translate-x-0"
                     )}
+                    style={{ background: "var(--reader-card-bg)" }}
                   />
                 </button>
               </SettingRow>
@@ -511,11 +516,17 @@ export function ReadingSettings({
                         key={style}
                         onClick={() => onTtsHighlightStyleChange(style)}
                         className={cn(
-                          "px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-[12px] font-medium transition-all cursor-pointer",
-                          isActive
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                          "px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-[12px] font-medium transition-all cursor-pointer"
                         )}
+                        style={{
+                          background: isActive
+                            ? "var(--reader-primary)"
+                            : "color-mix(in srgb, var(--reader-text) 15%, transparent)",
+                          color: isActive
+                            ? "var(--reader-card-bg)"
+                            : "var(--reader-text)",
+                          opacity: isActive ? 1 : 0.7,
+                        }}
                       >
                         {labels[style]}
                       </button>
@@ -534,11 +545,14 @@ export function ReadingSettings({
                         onClick={() => onTtsHighlightColorChange(color)}
                         className={cn(
                           "w-7 h-7 sm:w-8 sm:h-8 rounded-full transition-all cursor-pointer",
-                          isActive
-                            ? "ring-2 ring-offset-2 ring-primary scale-110"
-                            : "hover:scale-105"
+                          isActive ? "scale-110" : "hover:scale-105"
                         )}
-                        style={{ backgroundColor: color }}
+                        style={{
+                          backgroundColor: color,
+                          ...(isActive && {
+                            boxShadow: `0 0 0 2px var(--reader-card-bg), 0 0 0 4px ${color}`,
+                          }),
+                        }}
                       />
                     );
                   })}
@@ -547,6 +561,7 @@ export function ReadingSettings({
                     value={ttsHighlightColor}
                     onChange={(e) => onTtsHighlightColorChange(e.target.value)}
                     className="w-7 h-7 sm:w-8 sm:h-8 rounded-full cursor-pointer border-0 p-0"
+                    style={{ background: "transparent" }}
                   />
                 </div>
               </SettingRow>
