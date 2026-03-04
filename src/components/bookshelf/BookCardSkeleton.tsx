@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function BookCardSkeleton() {
   return (
-    <Card className="overflow-hidden border-border/50">
+    <Card className="overflow-hidden rounded-2xl border-border/70 py-0">
       <div className="aspect-[3/4] bg-muted relative">
         <Skeleton className="w-full h-full" />
       </div>

@@ -2177,33 +2177,56 @@ function ReaderContent() {
   }, [book?.format]);
 
   // ---- Theme styles ----
-  const themeStyles: Record<string, { bg: string; solidBg: string; cardBg: string; text: string; mutedText: string; border: string; shadow: string }> = {
+  const themeStyles: Record<
+    string,
+    {
+      bg: string;
+      solidBg: string;
+      cardBg: string;
+      text: string;
+      mutedText: string;
+      border: string;
+      shadow: string;
+      primary: string;
+      primaryLight: string;
+      destructive: string;
+    }
+  > = {
     light: {
-      bg: "bg-white",
-      solidBg: "#ffffff",
-      cardBg: "#ffffff",
-      text: "#0f172a",
-      mutedText: "#64748b",
-      border: "rgba(226, 232, 240, 0.8)",
-      shadow: "rgba(0, 0, 0, 0.05)",
+      bg: "bg-[#f8f8f7]",
+      solidBg: "#f8f8f7",
+      cardBg: "rgba(255, 255, 255, 0.88)",
+      text: "#171717",
+      mutedText: "#666666",
+      border: "rgba(230, 229, 225, 0.95)",
+      shadow: "rgba(23, 23, 23, 0.12)",
+      primary: "#171717",
+      primaryLight: "rgba(23, 23, 23, 0.1)",
+      destructive: "#dc2626",
     },
     dark: {
-      bg: "bg-[#1a1a2e]",
-      solidBg: "#1e293b",
-      cardBg: "#1e293b",
-      text: "#f1f5f9",
-      mutedText: "#94a3b8",
-      border: "rgba(51, 65, 85, 0.8)",
-      shadow: "rgba(0, 0, 0, 0.3)",
+      bg: "bg-[#121212]",
+      solidBg: "#121212",
+      cardBg: "rgba(26, 26, 26, 0.9)",
+      text: "#f5f5f5",
+      mutedText: "#a3a3a3",
+      border: "rgba(49, 49, 49, 0.95)",
+      shadow: "rgba(0, 0, 0, 0.35)",
+      primary: "#e0bc4b",
+      primaryLight: "rgba(224, 188, 75, 0.16)",
+      destructive: "#f87171",
     },
     sepia: {
       bg: "bg-[#f4ecd8]",
       solidBg: "#f4ecd8",
-      cardBg: "#f4ecd8",
+      cardBg: "rgba(250, 241, 219, 0.9)",
       text: "#5b4636",
       mutedText: "#8b7355",
       border: "rgba(214, 201, 168, 0.8)",
       shadow: "rgba(91, 70, 54, 0.08)",
+      primary: "#8a6b2f",
+      primaryLight: "rgba(138, 107, 47, 0.16)",
+      destructive: "#c2410c",
     },
   };
 
@@ -2218,6 +2241,9 @@ function ReaderContent() {
     root.style.setProperty("--reader-muted-text", currentTheme.mutedText);
     root.style.setProperty("--reader-border", currentTheme.border);
     root.style.setProperty("--reader-shadow", currentTheme.shadow);
+    root.style.setProperty("--reader-primary", currentTheme.primary);
+    root.style.setProperty("--reader-primary-light", currentTheme.primaryLight);
+    root.style.setProperty("--reader-destructive", currentTheme.destructive);
   }, [readerTheme]);
 
   if (loading || !book || !bookUrl) {
@@ -2247,6 +2273,9 @@ function ReaderContent() {
         "--reader-muted-text": currentTheme.mutedText,
         "--reader-border": currentTheme.border,
         "--reader-shadow": currentTheme.shadow,
+        "--reader-primary": currentTheme.primary,
+        "--reader-primary-light": currentTheme.primaryLight,
+        "--reader-destructive": currentTheme.destructive,
       } as React.CSSProperties}
     >
        {/* Reader content area */}

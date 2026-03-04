@@ -61,14 +61,16 @@ function LoginForm() {
   };
 
   return (
-    <Card className="border-border/50 shadow-2xl backdrop-blur-sm">
+    <Card className="rounded-3xl border-border/70 py-5">
       <CardHeader className="text-center pb-2">
         <div className="flex justify-center mb-4">
-          <Image src="/logo.svg" alt="ZB Reader" width={64} height={64} />
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-border/80 bg-card/80">
+            <Image src="/logo.svg" alt="ZB Reader" width={48} height={48} />
+          </div>
         </div>
-        <CardTitle className="text-2xl font-bold">ZB Reader</CardTitle>
+        <CardTitle className="text-2xl font-semibold tracking-tight">ZB Reader</CardTitle>
         <CardDescription className="text-base mt-2">
-          登录你的阅读账户
+          登录后继续你的阅读进度
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
@@ -87,7 +89,7 @@ function LoginForm() {
               value={login}
               onChange={(e) => setLogin(e.target.value)}
               required
-              className="h-11 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+              className="h-11"
             />
           </div>
           <div className="space-y-2">
@@ -99,14 +101,14 @@ function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="h-11 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+              className="h-11"
             />
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4 pt-2">
           <Button 
             type="submit" 
-            className="w-full h-11 font-semibold transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5" 
+            className="w-full h-11 font-semibold" 
             disabled={loading}
           >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

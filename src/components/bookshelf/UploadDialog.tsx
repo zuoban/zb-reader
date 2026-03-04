@@ -123,17 +123,17 @@ export function UploadDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg rounded-2xl border-border/70 bg-card/92">
         <DialogHeader>
-          <DialogTitle>上传电子书</DialogTitle>
+          <DialogTitle className="text-xl tracking-tight">上传电子书</DialogTitle>
         </DialogHeader>
 
         <div
           {...getRootProps()}
-          className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+          className={`cursor-pointer rounded-xl border-2 border-dashed p-8 text-center transition-colors ${
             isDragActive
               ? "border-primary bg-primary/5"
-              : "border-muted-foreground/25 hover:border-primary/50"
+              : "border-muted-foreground/25 bg-card/70 hover:border-primary/50"
           }`}
         >
           <input {...getInputProps()} />
@@ -158,7 +158,7 @@ export function UploadDialog({
             {files.map((f, i) => (
               <div
                 key={i}
-                className="flex items-center gap-3 p-3 rounded-lg border"
+                className="flex items-center gap-3 rounded-xl border border-border/70 bg-card/75 p-3"
               >
                 <FileText className="h-8 w-8 text-muted-foreground shrink-0" />
                 <div className="flex-1 min-w-0">

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { Book } from "@/lib/db/schema";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import { BookOpen, MoreVertical, Trash2, FileText } from "lucide-react";
+import type { Book } from "@/lib/db/schema";
 
 interface BookCardProps {
   book: Book;
@@ -38,8 +38,8 @@ export function BookCard({ book, progress = 0, onDelete }: BookCardProps) {
   };
 
   return (
-    <Card className="group relative overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-xl hover:-translate-y-1 border-border/50 active:scale-98">
-      <Link href={`/reader/${book.id}`} className="block">
+    <Card className="group relative overflow-hidden rounded-2xl border-border/70 py-0 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
+      <Link href={`/reader/${book.id}`} className="block cursor-pointer">
         <div className="aspect-[3/4] bg-muted relative overflow-hidden">
           {book.cover ? (
             <img
@@ -60,14 +60,14 @@ export function BookCard({ book, progress = 0, onDelete }: BookCardProps) {
           {/* Format badge */}
           <Badge
             variant="secondary"
-            className={`absolute top-2 left-2 sm:top-3 sm:left-3 text-[10px] sm:text-xs uppercase font-semibold px-2 py-0.5 sm:px-2.5 sm:py-1 ${formatBadgeColor(book.format)}`}
+            className={`absolute left-2 top-2 text-[10px] font-semibold uppercase sm:left-3 sm:top-3 sm:text-xs ${formatBadgeColor(book.format)}`}
           >
             {book.format}
           </Badge>
 
           {/* Progress overlay */}
           {progress > 0 && (
-            <div className="absolute bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm px-3 py-2 border-t border-border/50">
+            <div className="absolute bottom-0 left-0 right-0 border-t border-border/60 bg-card/95 px-3 py-2 backdrop-blur-sm">
               <div className="flex items-center gap-2">
                 <Progress value={progress * 100} className="h-1.5 sm:h-2 flex-1" />
                 <span className="text-xs font-medium text-foreground shrink-0">
@@ -98,12 +98,12 @@ export function BookCard({ book, progress = 0, onDelete }: BookCardProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 cursor-pointer hover:bg-primary/10 active:bg-primary/20 -mr-2"
+                className="-mr-2 h-8 w-8 shrink-0 border border-transparent transition-all duration-200 hover:border-border/90 hover:bg-accent sm:opacity-0 sm:group-hover:opacity-100"
               >
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40">
+            <DropdownMenuContent align="end" className="surface-glass w-40">
               <DropdownMenuItem asChild className="cursor-pointer">
                 <Link href={`/reader/${book.id}`} className="flex items-center gap-2">
                   <BookOpen className="h-4 w-4" />

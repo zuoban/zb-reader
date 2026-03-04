@@ -93,10 +93,10 @@ export function TtsFloatingControl({
   return (
     <div
       className={cn(
-        "fixed z-50 left-1/2 top-4 -translate-x-1/2",
+        "fixed bottom-5 right-3 sm:bottom-6 sm:right-4 z-50",
         "flex items-center",
         "transition-all duration-300 ease-out",
-        !isSpeaking && "pointer-events-none opacity-0 -translate-y-2",
+        !isSpeaking && "pointer-events-none opacity-0 translate-y-2",
         isSpeaking && "opacity-100 translate-y-0",
         isAutoTransparent && isSpeaking && !isExpanded && "opacity-30 scale-95"
       )}
@@ -109,20 +109,20 @@ export function TtsFloatingControl({
             "rounded-xl",
             "backdrop-blur-xl",
             "border",
-            "animate-in slide-in-from-right-4 fade-in duration-200 ease-out",
+            "animate-in slide-in-from-right-2 fade-in duration-200 ease-out",
             "flex-wrap justify-center max-w-[calc(100vw-5rem)]"
           )}
           style={{
             background: "var(--reader-card-bg)",
             borderColor: "var(--reader-border)",
-            boxShadow: "0 4px 16px var(--reader-shadow)",
+            boxShadow: "0 10px 24px -16px var(--reader-shadow)",
           }}
         >
           {onPrev && (
             <button
               type="button"
               onClick={onPrev}
-              className="group flex size-7 sm:size-7 items-center justify-center rounded-lg transition-all duration-150 cursor-pointer active:scale-90"
+              className="group flex size-7 sm:size-7 items-center justify-center rounded-lg transition-all duration-150 cursor-pointer active:scale-90 hover:bg-[var(--reader-primary-light,_rgba(23,23,23,0.1))]"
               style={{ color: "var(--reader-muted-text)" }}
               title="上一段"
             >
@@ -135,7 +135,7 @@ export function TtsFloatingControl({
             onClick={onToggle}
             className="group flex size-7 sm:size-7 items-center justify-center rounded-lg shadow-sm transition-all duration-150 cursor-pointer active:scale-90"
             style={{
-              background: "var(--reader-primary, #0891B2)",
+              background: "var(--reader-primary, #171717)",
               color: "#ffffff",
             }}
             title={isSpeaking ? "暂停" : "播放"}
@@ -150,8 +150,8 @@ export function TtsFloatingControl({
           <button
             type="button"
             onClick={onStop}
-            className="group flex size-7 sm:size-7 items-center justify-center rounded-lg transition-all duration-150 cursor-pointer active:scale-90"
-            style={{ color: "var(--reader-destructive, #ef4444)" }}
+            className="group flex size-7 sm:size-7 items-center justify-center rounded-lg transition-all duration-150 cursor-pointer active:scale-90 hover:bg-[var(--reader-primary-light,_rgba(23,23,23,0.1))]"
+            style={{ color: "var(--reader-destructive, #dc2626)" }}
             title="停止"
           >
             <Square className="size-3" />
@@ -161,7 +161,7 @@ export function TtsFloatingControl({
             <button
               type="button"
               onClick={onNext}
-              className="group flex size-7 sm:size-7 items-center justify-center rounded-lg transition-all duration-150 cursor-pointer active:scale-90"
+              className="group flex size-7 sm:size-7 items-center justify-center rounded-lg transition-all duration-150 cursor-pointer active:scale-90 hover:bg-[var(--reader-primary-light,_rgba(23,23,23,0.1))]"
               style={{ color: "var(--reader-muted-text)" }}
               title="下一段"
             >
@@ -190,7 +190,7 @@ export function TtsFloatingControl({
                   className="h-full transition-all duration-150 rounded-full"
                   style={{
                     width: `${Math.min(100, Math.max(0, paragraphProgress * 100))}%`,
-                    background: "var(--reader-primary, #0891B2)",
+                    background: "var(--reader-primary, #171717)",
                   }}
                 />
               </div>
@@ -206,7 +206,7 @@ export function TtsFloatingControl({
               <button
                 type="button"
                 onClick={onJumpToPosition}
-                className="group flex size-7 sm:size-7 items-center justify-center rounded-lg transition-all duration-150 cursor-pointer active:scale-90"
+                className="group flex size-7 sm:size-7 items-center justify-center rounded-lg transition-all duration-150 cursor-pointer active:scale-90 hover:bg-[var(--reader-primary-light,_rgba(23,23,23,0.1))]"
                 style={{ color: "var(--reader-muted-text)" }}
                 title="跳转到朗读位置"
               >
@@ -224,10 +224,10 @@ export function TtsFloatingControl({
               <button
                 type="button"
                 onClick={() => onTtsAutoNextChapterChange(!ttsAutoNextChapter)}
-                className="group flex size-7 sm:size-7 items-center justify-center rounded-lg transition-all duration-150 cursor-pointer active:scale-90"
+                className="group flex size-7 sm:size-7 items-center justify-center rounded-lg transition-all duration-150 cursor-pointer active:scale-90 hover:bg-[var(--reader-primary-light,_rgba(23,23,23,0.1))]"
                 style={{ 
                   color: ttsAutoNextChapter 
-                    ? "var(--reader-primary, #0891B2)" 
+                    ? "var(--reader-primary, #171717)" 
                     : "var(--reader-muted-text)" 
                 }}
                 title={ttsAutoNextChapter ? "关闭自动续章" : "开启自动续章"}
@@ -250,14 +250,15 @@ export function TtsFloatingControl({
         className={cn(
           "group relative flex size-10 items-center justify-center rounded-full cursor-pointer",
           "transition-all duration-200 ease-out",
-          "shadow-lg",
+          "shadow-lg border",
           "active:scale-95",
           isExpanded && "rotate-180"
         )}
         style={{
-          background: "var(--reader-primary, #0891B2)",
+          background: "var(--reader-primary, #171717)",
+          borderColor: "color-mix(in srgb, var(--reader-primary, #171717) 75%, #ffffff 25%)",
           color: "#ffffff",
-          boxShadow: "0 4px 16px var(--reader-shadow)",
+          boxShadow: "0 12px 24px -14px var(--reader-shadow)",
         }}
         title="朗读控制"
       >

@@ -13,11 +13,11 @@ interface BookGridProps {
 export function BookGrid({ books, progressMap, onDelete }: BookGridProps) {
   if (books.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-24">
-        <div className="p-6 rounded-2xl bg-card/50 backdrop-blur-sm border border-border/50 mb-6">
-          <BookOpen className="h-20 w-20 text-primary/30" />
+      <div className="section-shell flex flex-col items-center justify-center py-20">
+        <div className="mb-6 rounded-2xl border border-border/70 bg-card/80 p-5">
+          <BookOpen className="h-16 w-16 text-muted-foreground" />
         </div>
-        <h3 className="text-xl font-semibold text-foreground mb-2">书架是空的</h3>
+        <h3 className="mb-2 text-xl font-semibold text-foreground">书架是空的</h3>
         <p className="text-muted-foreground text-sm max-w-md text-center">
           点击上方的&ldquo;上传书籍&rdquo;按钮添加你的第一本书
         </p>
@@ -30,7 +30,7 @@ export function BookGrid({ books, progressMap, onDelete }: BookGridProps) {
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 md:gap-5">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
       {books.map((book) => (
         <BookCard
           key={book.id}
