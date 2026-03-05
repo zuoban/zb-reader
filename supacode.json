@@ -4,6 +4,6 @@
   "copyUntrackedOnWorktreeCreate" : false,
   "openActionID" : "auto",
   "pullRequestMergeStrategy" : "merge",
-  "runScript" : "",
+  "runScript" : "npm run dev",
   "setupScript" : ""
 }
