@@ -7,10 +7,11 @@ import { BookOpen, Upload } from "lucide-react";
 interface BookGridProps {
   books: Book[];
   progressMap: Record<string, number>;
+  lastReadAtMap: Record<string, string>;
   onDelete: (id: string) => void;
 }
 
-export function BookGrid({ books, progressMap, onDelete }: BookGridProps) {
+export function BookGrid({ books, progressMap, lastReadAtMap, onDelete }: BookGridProps) {
   if (books.length === 0) {
     return (
       <div className="section-shell flex flex-col items-center justify-center py-20">
@@ -36,6 +37,7 @@ export function BookGrid({ books, progressMap, onDelete }: BookGridProps) {
           key={book.id}
           book={book}
           progress={progressMap[book.id] || 0}
+          lastReadAt={lastReadAtMap[book.id]}
           onDelete={onDelete}
         />
       ))}

@@ -15,6 +15,7 @@ const SKELETON_COUNT = 8;
 export default function BookshelfPage() {
   const [books, setBooks] = useState<Book[]>([]);
   const [progressMap, setProgressMap] = useState<Record<string, number>>({});
+  const [lastReadAtMap, setLastReadAtMap] = useState<Record<string, string>>({});
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -53,6 +54,7 @@ export default function BookshelfPage() {
       if (res.ok) {
         setBooks(data.books);
         setProgressMap(data.progressMap || {});
+        setLastReadAtMap(data.lastReadAtMap || {});
       }
     } catch {
       toast.error("获取书籍失败");
@@ -134,6 +136,7 @@ export default function BookshelfPage() {
           <BookGrid
             books={books}
             progressMap={progressMap}
+            lastReadAtMap={lastReadAtMap}
             onDelete={handleDelete}
           />
         )}

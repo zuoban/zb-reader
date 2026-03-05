@@ -16,14 +16,33 @@ import type { Book } from "@/lib/db/schema";
 interface BookCardProps {
   book: Book;
   progress?: number;
+  lastReadAt?: string;
   onDelete: (id: string) => void;
 }
 
-export function BookCard({ book, progress = 0, onDelete }: BookCardProps) {
+export function BookCard({ book, progress = 0, lastReadAt, onDelete }: BookCardProps) {
   const formatSize = (bytes: number) => {
     if (bytes < 1024) return bytes + " B";
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
     return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  };
+
+  const formatLastRead = (dateStr?: string) => {
+    if (!dateStr) return null;
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return "刚刚";
+    if (diffMins < 60) return `${diffMins}分钟前`;
+    if (diffHours < 24) return `${diffHours}小时前`;
+    if (diffDays === 1) return "昨天";
+    if (diffDays < 7) return `${diffDays}天前`;
+    
+    return date.toLocaleDateString("zh-CN", { month: "short", day: "numeric" });
   };
 
   return (
@@ -86,6 +105,11 @@ export function BookCard({ book, progress = 0, onDelete }: BookCardProps) {
             <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
               {book.author}
             </p>
+            {lastReadAt && (
+              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                {formatLastRead(lastReadAt)}
+              </p>
+            )}
             <p className="text-xs text-muted-foreground mt-0.5 hidden sm:block">
               {formatSize(book.fileSize)}
             </p>

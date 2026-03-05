@@ -65,8 +65,10 @@ export async function GET(req: NextRequest) {
       );
 
     const progressMap: Record<string, number> = {};
+    const lastReadAtMap: Record<string, string> = {};
     progressRecords.forEach((p) => {
       progressMap[p.bookId] = p.progress;
+      lastReadAtMap[p.bookId] = p.lastReadAt;
       logger.debug('books', 'Progress record', {
         bookId: p.bookId,
         progress: p.progress,
@@ -76,8 +78,9 @@ export async function GET(req: NextRequest) {
     });
 
     logger.debug('books', 'Final progressMap', progressMap);
+    logger.debug('books', 'Final lastReadAtMap', lastReadAtMap);
 
-    return NextResponse.json({ books: result, progressMap, total, page, limit });
+    return NextResponse.json({ books: result, progressMap, lastReadAtMap, total, page, limit });
   } catch (error) {
     logger.error("books", "Failed to get books", error);
     return NextResponse.json({ error: "获取书籍失败" }, { status: 500 });
