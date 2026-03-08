@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 
 interface TtsFloatingControlProps {
   isSpeaking: boolean;
+  isPaused?: boolean;
   onToggle: () => void;
   onStop: () => void;
   onPrev?: () => void;
@@ -17,6 +18,7 @@ interface TtsFloatingControlProps {
   onToggleFullscreen?: () => void;
   autoScrollToActive?: boolean;
   onAutoScrollToActiveChange?: (value: boolean) => void;
+  progress?: number;
 }
 
 function AudioWaveIndicator() {
@@ -38,6 +40,7 @@ function AudioWaveIndicator() {
 
 export function TtsFloatingControl({
   isSpeaking,
+  isPaused = false,
   onToggle,
   onStop,
   onPrev,
@@ -49,6 +52,7 @@ export function TtsFloatingControl({
   onToggleFullscreen,
   autoScrollToActive = true,
   onAutoScrollToActiveChange,
+  progress = 0,
 }: TtsFloatingControlProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isAutoTransparent, setIsAutoTransparent] = useState(false);
@@ -120,6 +124,18 @@ export function TtsFloatingControl({
             boxShadow: "0 10px 24px -16px var(--reader-shadow)",
           }}
         >
+          <span
+            className="text-[10px] sm:text-xs font-semibold tabular-nums px-1.5"
+            style={{ color: "var(--reader-primary, #171717)" }}
+          >
+            {(progress * 100).toFixed(4)}%
+          </span>
+
+          <div
+            className="w-px h-4 mx-0.5"
+            style={{ background: "var(--reader-border)" }}
+          />
+
           {onPrev && (
             <button
               type="button"
@@ -132,7 +148,7 @@ export function TtsFloatingControl({
             </button>
           )}
 
-          <button
+<button
             type="button"
             onClick={onToggle}
             className="group flex size-7 sm:size-7 items-center justify-center rounded-lg shadow-sm transition-all duration-150 cursor-pointer active:scale-90"
@@ -140,12 +156,12 @@ export function TtsFloatingControl({
               background: "var(--reader-primary, #171717)",
               color: "#ffffff",
             }}
-            title={isSpeaking ? "暂停" : "播放"}
+            title={isPaused ? "播放" : "暂停"}
           >
-            {isSpeaking ? (
-              <Pause className="size-3.5" />
-            ) : (
+            {isPaused ? (
               <Play className="size-3.5 ml-0.5" />
+            ) : (
+              <Pause className="size-3.5" />
             )}
           </button>
 

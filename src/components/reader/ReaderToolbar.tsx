@@ -242,7 +242,7 @@ export function ReaderToolbar({
                       className="text-xs sm:text-sm font-semibold tabular-nums"
                       style={{ color: "var(--reader-primary, #171717)" }}
                     >
-                      {(progress * 100).toFixed(1)}%
+                      {(progress * 100).toFixed(4)}%
                     </span>
                   </div>
                   <div

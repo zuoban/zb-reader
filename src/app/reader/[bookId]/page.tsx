@@ -86,6 +86,7 @@ function ReaderContent() {
     DEFAULT_MICROSOFT_PRELOAD_COUNT
   );
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [ttsPlaybackProgress, setTtsPlaybackProgress] = useState(0);
   const [ttsAutoNextChapter, setTtsAutoNextChapter] = useState(false);
   const [ttsHighlightColor, setTtsHighlightColor] = useState("#3b82f6");
@@ -381,6 +382,7 @@ function ReaderContent() {
     setActiveTtsParagraph("");
     setTtsPlaybackProgress(0);
     setIsSpeaking(false);
+    setIsPaused(false);
     
     // Release wake lock
     if (wakeLockRef.current) {
@@ -516,7 +518,8 @@ function ReaderContent() {
     }
 
     await saveProgress(true);
-  }, [bookId, session?.user?.id, saveProgress]);
+    router.push("/bookshelf");
+  }, [bookId, session?.user?.id, saveProgress, router]);
 
   // Auto-save timer (every 30s)
   useEffect(() => {
@@ -1404,7 +1407,17 @@ function ReaderContent() {
 
   const handleToggleTts = useCallback(async () => {
     if (isSpeaking) {
-      stopSpeaking();
+      if (isPaused) {
+        if (currentAudioRef.current) {
+          currentAudioRef.current.play().catch(() => {});
+        }
+        setIsPaused(false);
+      } else {
+        if (currentAudioRef.current) {
+          currentAudioRef.current.pause();
+        }
+        setIsPaused(true);
+      }
       return;
     }
 
@@ -2026,8 +2039,9 @@ function ReaderContent() {
         onSave={handleSaveNote}
       />
 
-      <TtsFloatingControl
+<TtsFloatingControl
         isSpeaking={isSpeaking}
+        isPaused={isPaused}
         onToggle={handleToggleTts}
         onStop={stopSpeaking}
         onPrev={handleTtsPrevParagraph}
@@ -2038,6 +2052,7 @@ function ReaderContent() {
         onToggleFullscreen={handleToggleFullscreen}
         autoScrollToActive={autoScrollToActive}
         onAutoScrollToActiveChange={setAutoScrollToActive}
+        progress={progress}
       />
 
       <Toaster />
@@ -2047,9 +2062,25 @@ function ReaderContent() {
           <AlertDialogHeader className="text-center sm:text-left">
             <AlertDialogTitle className="text-lg sm:text-xl">进度冲突</AlertDialogTitle>
             <AlertDialogDescription className="text-sm sm:text-base leading-relaxed">
-              {latestProgress !== null && currentProgress !== null
-                ? `当前进度：${(currentProgress * 100).toFixed(1)}%，最新进度：${(latestProgress * 100).toFixed(1)}%。是否强制覆盖？`
-                : "其他窗口已更新了阅读进度。是否强制覆盖？"}
+              {latestProgress !== null && currentProgress !== null && (
+                <>
+                  <p className="mb-2">
+                    本窗口进度：{(currentProgress * 100).toFixed(4)}%
+                    {currentProgress < latestProgress && (
+                      <span className="text-orange-500 ml-1">（落后）</span>
+                    )}
+                    {currentProgress > latestProgress && (
+                      <span className="text-green-500 ml-1">（领先）</span>
+                    )}
+                  </p>
+                  <p>
+                    服务器最新进度：{(latestProgress * 100).toFixed(4)}%
+                  </p>
+                </>
+              )}
+              {(latestProgress === null || currentProgress === null) && (
+                "其他窗口已更新了阅读进度，是否强制保存本窗口进度？"
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-2">
