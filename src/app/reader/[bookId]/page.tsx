@@ -1523,6 +1523,7 @@ function ReaderContent() {
     book,
     getInitialParagraphIndex,
     getReadableParagraphs,
+    isPaused,
     isSpeaking,
     speakWithBrowserParagraphs,
     stopSpeaking,
