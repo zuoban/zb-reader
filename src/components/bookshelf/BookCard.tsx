@@ -58,25 +58,63 @@ export function BookCard({ book, progress = 0, lastReadAt, onDelete }: BookCardP
             />
           ) : (
             <div className="w-full h-full relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-100 via-orange-50 to-yellow-100 dark:from-amber-950/30 dark:via-orange-950/20 dark:to-yellow-950/30" />
-              <div className="absolute inset-0 opacity-30" style={{
-                backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(212,175,55,0.03) 10px, rgba(212,175,55,0.03) 20px), repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(212,175,55,0.03) 10px, rgba(212,175,55,0.03) 20px)`
+              {/* 背景纹理 */}
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-slate-50 to-zinc-100 dark:from-slate-900/80 dark:via-slate-800/60 dark:to-zinc-900/80" />
+              <div className="absolute inset-0 opacity-40" style={{
+                backgroundImage: `radial-gradient(circle at 20% 80%, rgba(99,102,241,0.08) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(236,72,153,0.08) 0%, transparent 50%), radial-gradient(circle at 40% 40%, rgba(34,211,238,0.05) 0%, transparent 40%)`
               }} />
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(212,175,55,0.15),transparent_60%)]" />
               
+              {/* 几何装饰 */}
+              <div className="absolute top-4 right-4 w-16 h-16 rounded-full border border-indigo-200/30 dark:border-indigo-500/20" />
+              <div className="absolute bottom-8 left-4 w-8 h-8 rounded-full bg-gradient-to-br from-pink-200/20 to-purple-200/20 dark:from-pink-500/10 dark:to-purple-500/10" />
+              <div className="absolute top-1/3 left-8 w-2 h-16 rounded-full bg-gradient-to-b from-indigo-200/30 to-transparent dark:from-indigo-500/20" />
+              
+              {/* 书本主体 */}
               <div className="absolute inset-0 flex items-center justify-center p-6">
-                <div className="relative w-full h-full flex flex-col items-center justify-center">
-                  <div className="relative w-20 h-28 sm:w-24 sm:h-32 bg-gradient-to-br from-amber-400 to-orange-500 dark:from-amber-500 dark:to-orange-600 rounded-sm shadow-2xl shadow-amber-500/30 dark:shadow-amber-500/20 transform transition-all duration-300 group-hover:scale-105 group-hover:shadow-amber-500/40 dark:group-hover:shadow-amber-500/30">
-                    <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent" />
-                    <div className="absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-black/5 to-transparent" />
-                    <div className="absolute inset-0 border-2 border-white/10" />
-                    <div className="relative w-full h-full flex items-center justify-center">
-                      <span className="text-3xl sm:text-4xl font-bold text-white drop-shadow-lg">
-                        {book.title?.charAt(0) || "书"}
-                      </span>
+                <div className="relative">
+                  {/* 书本阴影 */}
+                  <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-28 h-4 bg-gradient-to-r from-transparent via-slate-400/20 to-transparent blur-sm rounded-full" />
+                  
+                  {/* 书本封面 */}
+                  <div className="relative w-[4.5rem] h-[6.5rem] sm:w-24 sm:h-[8.5rem] rounded-r-md rounded-l-sm shadow-xl transform transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-1 group-hover:shadow-2xl overflow-hidden">
+                    {/* 封面渐变 */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 dark:from-indigo-600 dark:via-purple-600 dark:to-pink-600" />
+                    
+                    {/* 封面纹理 */}
+                    <div className="absolute inset-0 opacity-30" style={{
+                      backgroundImage: `linear-gradient(135deg, rgba(255,255,255,0.1) 25%, transparent 25%), linear-gradient(225deg, rgba(255,255,255,0.1) 25%, transparent 25%), linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%), linear-gradient(315deg, rgba(255,255,255,0.1) 25%, transparent 25%)`,
+                      backgroundSize: '12px 12px',
+                      backgroundPosition: '0 0, 6px 0, 6px -6px, 0 6px'
+                    }} />
+                    
+                    {/* 高光 */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/25 via-transparent to-transparent" />
+                    <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-white/10 to-transparent" />
+                    
+                    {/* 书脊 */}
+                    <div className="absolute left-0 top-0 bottom-0 w-2 bg-gradient-to-r from-black/20 via-transparent to-transparent" />
+                    <div className="absolute left-1 top-0 bottom-0 w-px bg-white/20" />
+                    
+                    {/* 装饰线条 */}
+                    <div className="absolute top-3 left-3 right-3 h-px bg-white/20" />
+                    <div className="absolute bottom-3 left-3 right-3 h-px bg-white/20" />
+                    
+                    {/* 书名首字母 */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="relative">
+                        <span className="relative z-10 text-4xl sm:text-5xl font-black text-white/95 drop-shadow-lg tracking-tight" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.2)' }}>
+                          {book.title?.charAt(0) || "书"}
+                        </span>
+                        {/* 字母光晕 */}
+                        <div className="absolute inset-0 blur-lg bg-white/30 -z-10 scale-150" />
+                      </div>
+                    </div>
+                    
+                    {/* 底部装饰标签 */}
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-white/15 backdrop-blur-sm rounded text-[8px] sm:text-[10px] font-medium text-white/80 tracking-wider">
+                      {book.format?.toUpperCase() || "BOOK"}
                     </div>
                   </div>
-                  <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-20 h-1 bg-gradient-to-r from-transparent via-amber-400/50 to-transparent" />
                 </div>
               </div>
             </div>
