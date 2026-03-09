@@ -47,6 +47,7 @@ interface ReaderToolbarProps {
   onNextChapter?: () => void;
   hasPrevChapter?: boolean;
   hasNextChapter?: boolean;
+  rightContent?: React.ReactNode;
 }
 
 function ToolbarButton({
@@ -111,6 +112,7 @@ export function ReaderToolbar({
   onNextChapter,
   hasPrevChapter,
   hasNextChapter,
+  rightContent,
 }: ReaderToolbarProps) {
   return (
     <TooltipProvider>
@@ -191,6 +193,9 @@ export function ReaderToolbar({
               <ToolbarButton onClick={onToggleSettings} tooltip="设置">
                 <Settings className="size-[18px] sm:size-5" />
               </ToolbarButton>
+
+              {/* Custom right content */}
+              {rightContent}
             </div>
           </div>
         </div>

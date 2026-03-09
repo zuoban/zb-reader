@@ -25,7 +25,9 @@ import {
 } from "@/lib/book-cache";
 import { ttsAudioCache, TtsAudioLruCache } from "@/lib/ttsAudioCache";
 import { logger } from "@/lib/logger";
-import { generateToken } from "@/lib/progress-token";
+import { useProgressSyncCompat } from "@/hooks/useProgressSyncCompat";
+import { SyncIndicator } from "@/components/reader/SyncIndicator";
+import { History } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 // Dynamic import for EpubReader (client-only, depends on browser APIs)
@@ -131,16 +133,16 @@ function ReaderContent() {
     editingId?: string;
   }>({ open: false, selectedText: "", cfiRange: "" });
 
-  // Progress saving
-  const currentLocationRef = useRef<string | null>(null);
+  // Progress sync using compat hook
+  const progressSync = useProgressSyncCompat(bookId);
+  const currentLocationRef = progressSync.currentLocationRef;
+  const progressRef = progressSync.progressRef;
+  const saveProgress = progressSync.saveProgress;
+  const debouncedSaveProgress = progressSync.debouncedSaveProgress;
+  const pendingSync = progressSync.pendingSync;
+  const isSyncing = progressSync.isSyncing;
+
   const currentCfiRef = useRef<string | null>(null);
-  const progressRef = useRef(0);
-  const loadedAtRef = useRef<string | null>(null);
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const serverTokenRef = useRef<string | null>(null);
-  const [conflictDialogOpen, setConflictDialogOpen] = useState(false);
-  const [latestProgress, setLatestProgress] = useState<number | null>(null);
-  const [currentProgress, setCurrentProgress] = useState<number | null>(null);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const ttsSessionRef = useRef(0);
@@ -196,9 +198,7 @@ function ReaderContent() {
         if (progressData.progress?.location) {
           setInitialLocation(progressData.progress.location);
           setProgress(progressData.progress.progress || 0);
-          loadedAtRef.current = progressData.progress.updatedAt;
         }
-        serverTokenRef.current = progressData.serverToken || null;
 
         // Load bookmarks
         const bmRes = await fetch(`/api/bookmarks?bookId=${bookId}`);
@@ -446,116 +446,8 @@ function ReaderContent() {
     loadVoices();
   }, []);
 
-  // ---- Save progress ----
-  const saveProgress = useCallback(async (forceSave = false): Promise<{ conflict: boolean }> => {
-    if (!bookId || !currentLocationRef.current) return { conflict: false };
-
-    try {
-      const payload: Record<string, unknown> = {
-        bookId,
-        progress: progressRef.current,
-        location: currentLocationRef.current,
-        currentPage: currentPageRef.current,
-        totalPages: totalPagesRef.current,
-      };
-
-      if (!forceSave && serverTokenRef.current) {
-        payload.clientToken = serverTokenRef.current;
-      }
-
-      const saveRes = await fetch("/api/progress", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!saveRes.ok) {
-        const data = await saveRes.json();
-
-        if (saveRes.status === 409 && data.conflict) {
-          setLatestProgress(data.latestProgress);
-          setCurrentProgress(progressRef.current);
-          setConflictDialogOpen(true);
-          return { conflict: true };
-        }
-
-        throw new Error(data.error || "保存失败");
-      }
-
-      const now = new Date().toISOString();
-      loadedAtRef.current = now;
-
-      if (session?.user?.id) {
-        const tokenPayload = {
-          userId: session.user.id,
-          bookId,
-          timestamp: now,
-        };
-        serverTokenRef.current = generateToken(tokenPayload);
-      }
-      return { conflict: false };
-    } catch {
-      return { conflict: false };
-    }
-  }, [bookId, session?.user?.id]);
-
-  const debouncedSaveProgress = useCallback(() => {
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(saveProgress, 500);
-  }, [saveProgress]);
-
-  const handleForceSave = useCallback(async () => {
-    setConflictDialogOpen(false);
-
-    const now = new Date().toISOString();
-    if (session?.user?.id) {
-      const tokenPayload = {
-        userId: session.user.id,
-        bookId,
-        timestamp: now,
-      };
-      serverTokenRef.current = generateToken(tokenPayload);
-    }
-
-    await saveProgress(true);
-    router.push("/bookshelf");
-  }, [bookId, session?.user?.id, saveProgress, router]);
-
-  // Auto-save timer (every 30s)
-  useEffect(() => {
-    const interval = setInterval(saveProgress, 30000);
-    return () => clearInterval(interval);
-  }, [saveProgress]);
-
-  // Save on page leave
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden") {
-        saveProgress();
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      saveProgress();
-    };
-  }, [saveProgress]);
-
-  // Re-acquire Wake Lock when page becomes visible again (if TTS is playing)
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible" && isSpeaking) {
-        void requestWakeLock();
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, [isSpeaking, requestWakeLock]);
+  // Progress saving is now handled by useProgressSyncCompat hook
+  // Use saveProgress() and debouncedSaveProgress() from the hook
 
   // ---- Handlers ----
   const handleLocationChange = useCallback(
@@ -2057,49 +1949,6 @@ function ReaderContent() {
       />
 
       <Toaster />
-
-      <AlertDialog open={conflictDialogOpen} onOpenChange={setConflictDialogOpen}>
-        <AlertDialogContent className="px-4 w-[calc(100%-2rem)] max-w-md rounded-2xl p-5 sm:p-6 sm:px-6">
-          <AlertDialogHeader className="text-center sm:text-left">
-            <AlertDialogTitle className="text-lg sm:text-xl">进度冲突</AlertDialogTitle>
-            <AlertDialogDescription className="text-sm sm:text-base leading-relaxed">
-              {latestProgress !== null && currentProgress !== null && (
-                <>
-                  <p className="mb-2">
-                    本窗口进度：{(currentProgress * 100).toFixed(4)}%
-                    {currentProgress < latestProgress && (
-                      <span className="text-orange-500 ml-1">（落后）</span>
-                    )}
-                    {currentProgress > latestProgress && (
-                      <span className="text-green-500 ml-1">（领先）</span>
-                    )}
-                  </p>
-                  <p>
-                    服务器最新进度：{(latestProgress * 100).toFixed(4)}%
-                  </p>
-                </>
-              )}
-              {(latestProgress === null || currentProgress === null) && (
-                "其他窗口已更新了阅读进度，是否强制保存本窗口进度？"
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-2">
-            <AlertDialogCancel
-              onClick={() => {
-                setConflictDialogOpen(false);
-                router.push("/bookshelf");
-              }}
-              className="w-full sm:w-auto h-10 rounded-xl"
-            >
-              返回书架
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={handleForceSave} className="w-full sm:w-auto h-10 rounded-xl">
-              强制保存
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
