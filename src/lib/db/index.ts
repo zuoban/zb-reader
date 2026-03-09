@@ -260,6 +260,26 @@ function getConnection() {
     sqlite.exec(`DROP TABLE IF EXISTS reading_progress_backup;`);
   }
 
+  // Migration: Add missing columns to reading_progress (2026-03-09)
+  const currentProgressInfo = sqlite.prepare("PRAGMA table_info(reading_progress)").all() as { name: string }[];
+  const hasVersion = currentProgressInfo.some((col) => col.name === "version");
+  const hasScrollRatio = currentProgressInfo.some((col) => col.name === "scroll_ratio");
+  const hasReadingDuration = currentProgressInfo.some((col) => col.name === "reading_duration");
+  const hasDeviceIdColumn = currentProgressInfo.some((col) => col.name === "device_id");
+
+  if (!hasVersion) {
+    sqlite.exec(`ALTER TABLE reading_progress ADD COLUMN version INTEGER DEFAULT 1;`);
+  }
+  if (!hasScrollRatio) {
+    sqlite.exec(`ALTER TABLE reading_progress ADD COLUMN scroll_ratio REAL;`);
+  }
+  if (!hasReadingDuration) {
+    sqlite.exec(`ALTER TABLE reading_progress ADD COLUMN reading_duration INTEGER DEFAULT 0;`);
+  }
+  if (!hasDeviceIdColumn) {
+    sqlite.exec(`ALTER TABLE reading_progress ADD COLUMN device_id TEXT;`);
+  }
+
   _sqlite = sqlite;
   _db = drizzle(sqlite, { schema });
 

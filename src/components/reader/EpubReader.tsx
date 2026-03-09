@@ -15,6 +15,7 @@ interface EpubReaderProps {
   url: string;
   initialLocation?: string;
   fontSize?: number;
+  pageWidth?: number;
   theme?: "light" | "dark" | "sepia";
   onLocationChange?: (location: {
     cfi: string;
@@ -126,6 +127,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       url,
       initialLocation,
       fontSize = 16,
+      pageWidth = 800,
       theme = "light",
       onLocationChange,
       onTocLoaded,
@@ -1015,8 +1017,8 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
           }, [isRenditionReady, onLocationChange]);
 
     return (
-      <div className="relative h-full w-full">
-        <div ref={viewerRef} id="epub-viewer" className="h-full w-full" />
+      <div className="relative h-full w-full flex justify-center">
+        <div ref={viewerRef} id="epub-viewer" className="h-full" style={{ width: pageWidth, maxWidth: "100%" }} />
       </div>
     );
   }

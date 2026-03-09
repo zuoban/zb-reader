@@ -13,6 +13,7 @@ import { ReadingSettings } from "@/components/reader/ReadingSettings";
 import { TextSelectionMenu } from "@/components/reader/TextSelectionMenu";
 import { NoteEditor } from "@/components/reader/NoteEditor";
 import { TtsFloatingControl } from "@/components/reader/TtsFloatingControl";
+import { ProgressHistoryDialog } from "@/components/reader/ProgressHistoryDialog";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
@@ -80,6 +81,7 @@ function ReaderContent() {
 
   // Settings
   const [fontSize, setFontSize] = useState(16);
+  const [pageWidth, setPageWidth] = useState(800);
   const [readerTheme, setReaderTheme] = useState<"light" | "dark" | "sepia">("light");
   const [browserVoices, setBrowserVoices] = useState<BrowserVoiceOption[]>([]);
   const [selectedBrowserVoiceId, setSelectedBrowserVoiceId] = useState("");
@@ -102,6 +104,9 @@ function ReaderContent() {
 
   // Settings panel
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  // Progress history dialog
+  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
 
   // Fullscreen
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -267,6 +272,7 @@ function ReaderContent() {
         const data = (await res.json()) as {
           settings?: {
             fontSize?: number;
+            pageWidth?: number;
             theme?: "light" | "dark" | "sepia";
             browserVoiceId?: string;
             ttsRate?: number;
@@ -284,6 +290,9 @@ function ReaderContent() {
 
         if (typeof settings.fontSize === "number") {
           setFontSize(Math.min(28, Math.max(12, settings.fontSize)));
+        }
+        if (typeof settings.pageWidth === "number") {
+          setPageWidth(Math.min(1200, Math.max(600, settings.pageWidth)));
         }
         if (
           settings.theme === "light" ||
@@ -345,6 +354,7 @@ function ReaderContent() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             fontSize,
+            pageWidth,
             theme: readerTheme,
             browserVoiceId: selectedBrowserVoiceId,
             ttsRate,
@@ -359,6 +369,7 @@ function ReaderContent() {
     }, 220);
   }, [
     fontSize,
+    pageWidth,
     microsoftPreloadCount,
     readerTheme,
     selectedBrowserVoiceId,
@@ -526,6 +537,32 @@ function ReaderContent() {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [handleBack]);
+
+  // ---- History dialog handler ----
+  const handleToggleHistory = useCallback(() => {
+    setHistoryDialogOpen((prev) => !prev);
+  }, []);
+
+  const handleRestoreHistory = useCallback(async (historyId: string) => {
+    try {
+      const response = await fetch(`/api/progress/history/${historyId}/restore`, {
+        method: "POST",
+      });
+      if (!response.ok) throw new Error("恢复失败");
+      const data = await response.json();
+      if (data.location) {
+        epubReaderRef.current?.goToLocation(data.location);
+        toast.success("已恢复到历史位置");
+      }
+    } catch (error) {
+      toast.error("恢复失败");
+      logger.error("reader", "恢复历史进度失败", error);
+    }
+  }, []);
+
+  const handleJumpToHistoryLocation = useCallback((location: string, _scrollRatio: number | null) => {
+    epubReaderRef.current?.goToLocation(location);
+  }, []);
 
   // ---- Fullscreen handlers ----
   const handleToggleFullscreen = useCallback(async () => {
@@ -814,6 +851,10 @@ function ReaderContent() {
   // ---- Settings handlers ----
   const handleFontSizeChange = useCallback((size: number) => {
     setFontSize(size);
+  }, []);
+
+  const handlePageWidthChange = useCallback((width: number) => {
+    setPageWidth(width);
   }, []);
 
   const handleThemeChange = useCallback(async (theme: "light" | "dark" | "sepia") => {
@@ -1810,6 +1851,7 @@ function ReaderContent() {
             url={bookUrl}
             initialLocation={initialLocation}
             fontSize={fontSize}
+            pageWidth={pageWidth}
             theme={readerTheme}
             onLocationChange={handleLocationChange}
             onTocLoaded={handleTocLoaded}
@@ -1843,6 +1885,7 @@ function ReaderContent() {
           setSidePanelOpen(true);
           setActiveTab("notes");
         }}
+        onToggleHistory={handleToggleHistory}
         onToggleTts={handleToggleTts}
         onToggleFullscreen={handleToggleFullscreen}
         onToggleSettings={() => setSettingsOpen(true)}
@@ -1894,6 +1937,8 @@ function ReaderContent() {
         onOpenChange={setSettingsOpen}
         fontSize={fontSize}
         onFontSizeChange={handleFontSizeChange}
+        pageWidth={pageWidth}
+        onPageWidthChange={handlePageWidthChange}
         theme={readerTheme}
         onThemeChange={handleThemeChange}
         browserVoices={browserVoices}
@@ -1930,6 +1975,15 @@ function ReaderContent() {
         initialContent={noteEditor.initialContent}
         initialColor={noteEditor.initialColor}
         onSave={handleSaveNote}
+      />
+
+      {/* Progress history dialog */}
+      <ProgressHistoryDialog
+        open={historyDialogOpen}
+        onOpenChange={setHistoryDialogOpen}
+        bookId={bookId}
+        onRestore={handleRestoreHistory}
+        onJumpToLocation={handleJumpToHistoryLocation}
       />
 
 <TtsFloatingControl

@@ -128,7 +128,7 @@ export function TtsFloatingControl({
             className="text-[10px] sm:text-xs font-semibold tabular-nums px-1.5"
             style={{ color: "var(--reader-primary, #171717)" }}
           >
-            {(progress * 100).toFixed(4)}%
+            {(progress * 100).toFixed(2)}%
           </span>
 
           <div

@@ -13,6 +13,7 @@ import {
   ChevronRight,
   Maximize,
   Minimize,
+  History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -37,6 +38,7 @@ interface ReaderToolbarProps {
   onToggleBookmark: () => void;
   onToggleSettings: () => void;
   onToggleNotes: () => void;
+  onToggleHistory: () => void;
   onToggleTts: () => void;
   onToggleFullscreen: () => void;
   isSpeaking: boolean;
@@ -102,6 +104,7 @@ export function ReaderToolbar({
   onToggleBookmark,
   onToggleSettings,
   onToggleNotes,
+  onToggleHistory,
   onToggleTts,
   onToggleFullscreen,
   isSpeaking,
@@ -164,6 +167,10 @@ export function ReaderToolbar({
 
               <ToolbarButton onClick={onToggleNotes} tooltip="笔记">
                 <StickyNote className="size-[18px] sm:size-5" />
+              </ToolbarButton>
+
+              <ToolbarButton onClick={onToggleHistory} tooltip="阅读历史">
+                <History className="size-[18px] sm:size-5" />
               </ToolbarButton>
 
               <ToolbarButton
@@ -247,7 +254,7 @@ export function ReaderToolbar({
                       className="text-xs sm:text-sm font-semibold tabular-nums"
                       style={{ color: "var(--reader-primary, #171717)" }}
                     >
-                      {(progress * 100).toFixed(4)}%
+                      {(progress * 100).toFixed(2)}%
                     </span>
                   </div>
                   <div

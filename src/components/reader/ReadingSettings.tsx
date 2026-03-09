@@ -22,6 +22,8 @@ interface ReadingSettingsProps {
   onOpenChange: (open: boolean) => void;
   fontSize: number;
   onFontSizeChange: (size: number) => void;
+  pageWidth: number;
+  onPageWidthChange: (width: number) => void;
   theme: "light" | "dark" | "sepia";
   onThemeChange: (theme: "light" | "dark" | "sepia") => void;
   browserVoices: BrowserVoiceOption[];
@@ -242,6 +244,8 @@ export function ReadingSettings({
   onOpenChange,
   fontSize,
   onFontSizeChange,
+  pageWidth,
+  onPageWidthChange,
   theme,
   onThemeChange,
   browserVoices,
@@ -288,101 +292,112 @@ export function ReadingSettings({
 
         <div className="px-4 sm:px-5 pb-8 sm:pb-10 max-h-[70vh] sm:max-h-[72vh] overflow-y-auto space-y-5 sm:space-y-6 scrollbar-hide">
 
-          {/* ── 排版 ── */}
-          <section>
-            <SectionLabel icon={Type} title="排版" />
-            <SettingCard>
-              {/* Font size row */}
-              <div
-                className="flex items-center justify-between px-3.5 sm:px-4 py-3 sm:py-3.5 border-b"
-                style={{ borderColor: "var(--reader-border)" }}
-              >
-                <span
-                  className="text-[13px] sm:text-[14px] font-medium"
-                  style={{ color: "var(--reader-text)" }}
-                >
-                  字体大小
-                </span>
-                <div className="flex items-center gap-2 sm:gap-2.5">
-                  <button
-                    onClick={() => fontSize > 12 && onFontSizeChange(fontSize - 1)}
-                    disabled={fontSize <= 12}
-                    className={cn(
-                      "w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer",
-                      fontSize <= 12 ? "opacity-25 cursor-not-allowed" : "hover:opacity-75 active:opacity-60"
-                    )}
-                    style={{
-                      background: "color-mix(in srgb, var(--reader-text) 18%, transparent)",
-                    }}
-                  >
-                    <Minus
-                      className="size-3 sm:size-3.5"
-                      style={{ color: "var(--reader-text)" }}
-                    />
-                  </button>
+           {/* ── 排版 ── */}
+           <section>
+             <SectionLabel icon={Type} title="排版" />
+             <SettingCard>
+               {/* Font size row */}
+               <div
+                 className="flex items-center justify-between px-3.5 sm:px-4 py-3 sm:py-3.5 border-b"
+                 style={{ borderColor: "var(--reader-border)" }}
+               >
+                 <span
+                   className="text-[13px] sm:text-[14px] font-medium"
+                   style={{ color: "var(--reader-text)" }}
+                 >
+                   字体大小
+                 </span>
+                 <div className="flex items-center gap-2 sm:gap-2.5">
+                   <button
+                     onClick={() => fontSize > 12 && onFontSizeChange(fontSize - 1)}
+                     disabled={fontSize <= 12}
+                     className={cn(
+                       "w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer",
+                       fontSize <= 12 ? "opacity-25 cursor-not-allowed" : "hover:opacity-75 active:opacity-60"
+                     )}
+                     style={{
+                       background: "color-mix(in srgb, var(--reader-text) 18%, transparent)",
+                     }}
+                   >
+                     <Minus
+                       className="size-3 sm:size-3.5"
+                       style={{ color: "var(--reader-text)" }}
+                     />
+                   </button>
 
-                  <span
-                    className="text-[14px] sm:text-[15px] font-bold tabular-nums w-8 sm:w-9 text-center"
-                    style={{ color: "var(--primary)" }}
-                  >
-                    {fontSize}
-                  </span>
+                   <span
+                     className="text-[14px] sm:text-[15px] font-bold tabular-nums w-8 sm:w-9 text-center"
+                     style={{ color: "var(--primary)" }}
+                   >
+                     {fontSize}
+                   </span>
 
-                  <button
-                    onClick={() => fontSize < 28 && onFontSizeChange(fontSize + 1)}
-                    disabled={fontSize >= 28}
-                    className={cn(
-                      "w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer",
-                      fontSize >= 28 ? "opacity-25 cursor-not-allowed" : "hover:opacity-75 active:opacity-60"
-                    )}
-                    style={{
-                      background: "color-mix(in srgb, var(--reader-text) 18%, transparent)",
-                    }}
-                  >
-                    <Plus
-                      className="size-3 sm:size-3.5"
-                      style={{ color: "var(--reader-text)" }}
-                    />
-                  </button>
-                </div>
-              </div>
+                   <button
+                     onClick={() => fontSize < 28 && onFontSizeChange(fontSize + 1)}
+                     disabled={fontSize >= 28}
+                     className={cn(
+                       "w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer",
+                       fontSize >= 28 ? "opacity-25 cursor-not-allowed" : "hover:opacity-75 active:opacity-60"
+                     )}
+                     style={{
+                       background: "color-mix(in srgb, var(--reader-text) 18%, transparent)",
+                     }}
+                   >
+                     <Plus
+                       className="size-3 sm:size-3.5"
+                       style={{ color: "var(--reader-text)" }}
+                     />
+                   </button>
+                 </div>
+               </div>
 
-              {/* Font size preview strip */}
-              <div className="flex items-end justify-between px-5 sm:px-6 py-2.5 sm:py-3">
-                {[12, 16, 20, 24, 28].map((s) => {
-                  const isActive = fontSize === s;
-                  return (
-                    <button
-                      key={s}
-                      onClick={() => onFontSizeChange(s)}
-                      className="flex flex-col items-center gap-1 sm:gap-1.5 cursor-pointer transition-transform active:scale-90 group"
-                    >
-                      <span
-                        style={{
-                          fontSize: s * 0.65,
-                          color: isActive ? "var(--primary)" : "var(--reader-text)",
-                          opacity: isActive ? 1 : 0.3,
-                          fontWeight: isActive ? 700 : 500,
-                          lineHeight: 1,
-                          transition: "all 0.15s",
-                        }}
-                      >
-                        文
-                      </span>
-                      <div
-                        className="w-1 h-1 rounded-full transition-all"
-                        style={{
-                          background: isActive ? "var(--primary)" : "var(--reader-text)",
-                          opacity: isActive ? 1 : 0.2,
-                          transform: isActive ? "scale(1.2)" : "scale(1)",
-                        }}
-                      />
-                    </button>
-                  );
-                })}
-              </div>
-            </SettingCard>
-          </section>
+               {/* Font size preview strip */}
+               <div className="flex items-end justify-between px-5 sm:px-6 py-2.5 sm:py-3 border-b" style={{ borderColor: "var(--reader-border)" }}>
+                 {[12, 16, 20, 24, 28].map((s) => {
+                   const isActive = fontSize === s;
+                   return (
+                     <button
+                       key={s}
+                       onClick={() => onFontSizeChange(s)}
+                       className="flex flex-col items-center gap-1 sm:gap-1.5 cursor-pointer transition-transform active:scale-90 group"
+                     >
+                       <span
+                         style={{
+                           fontSize: s * 0.65,
+                           color: isActive ? "var(--primary)" : "var(--reader-text)",
+                           opacity: isActive ? 1 : 0.3,
+                           fontWeight: isActive ? 700 : 500,
+                           lineHeight: 1,
+                           transition: "all 0.15s",
+                         }}
+                       >
+                         文
+                       </span>
+                       <div
+                         className="w-1 h-1 rounded-full transition-all"
+                         style={{
+                           background: isActive ? "var(--primary)" : "var(--reader-text)",
+                           opacity: isActive ? 1 : 0.2,
+                           transform: isActive ? "scale(1.2)" : "scale(1)",
+                         }}
+                       />
+                     </button>
+                   );
+                 })}
+               </div>
+
+               {/* Page width slider */}
+               <SliderRow
+                 label="页面宽度"
+                 value={pageWidth}
+                 min={600}
+                 max={1200}
+                 step={50}
+                 onChange={onPageWidthChange}
+                 noBorder
+               />
+             </SettingCard>
+           </section>
 
           {/* ── 主题 ── */}
           <section>

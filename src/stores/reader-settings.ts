@@ -4,6 +4,7 @@ import { devtools } from "zustand/middleware";
 interface ReaderSettingsState {
   fontSize: number;
   theme: "light" | "dark" | "sepia";
+  pageWidth: number;
   browserVoiceId: string;
   ttsRate: number;
   ttsPitch: number;
@@ -17,6 +18,7 @@ interface ReaderSettingsState {
 interface ReaderSettingsActions {
   setFontSize: (size: number) => void;
   setTheme: (theme: "light" | "dark" | "sepia") => void;
+  setPageWidth: (width: number) => void;
   setBrowserVoiceId: (id: string) => void;
   setTtsRate: (rate: number) => void;
   setTtsPitch: (pitch: number) => void;
@@ -31,6 +33,7 @@ interface ReaderSettingsActions {
 const DEFAULT_STATE: ReaderSettingsState = {
   fontSize: 16,
   theme: "light",
+  pageWidth: 800,
   browserVoiceId: "",
   ttsRate: 1,
   ttsPitch: 1,
@@ -50,6 +53,7 @@ export const useReaderSettingsStore = create<
 
       setFontSize: (size) => set({ fontSize: Math.min(28, Math.max(12, size)) }),
       setTheme: (theme) => set({ theme }),
+      setPageWidth: (width) => set({ pageWidth: Math.min(1200, Math.max(600, width)) }),
       setBrowserVoiceId: (browserVoiceId) => set({ browserVoiceId }),
       setTtsRate: (rate) => set({ ttsRate: Math.min(5, Math.max(1, rate)) }),
       setTtsPitch: (pitch) => set({ ttsPitch: Math.min(2, Math.max(0.5, pitch)) }),
@@ -77,6 +81,10 @@ export const useReaderSettingsStore = create<
                 ? Math.min(28, Math.max(12, settings.fontSize))
                 : DEFAULT_STATE.fontSize,
             theme: settings.theme || DEFAULT_STATE.theme,
+            pageWidth:
+              typeof settings.pageWidth === "number"
+                ? Math.min(1200, Math.max(600, settings.pageWidth))
+                : DEFAULT_STATE.pageWidth,
             browserVoiceId: settings.browserVoiceId || DEFAULT_STATE.browserVoiceId,
             ttsRate:
               typeof settings.ttsRate === "number"
@@ -115,6 +123,7 @@ export const useReaderSettingsStore = create<
             body: JSON.stringify({
               fontSize: state.fontSize,
               theme: state.theme,
+              pageWidth: state.pageWidth,
               browserVoiceId: state.browserVoiceId,
               ttsRate: state.ttsRate,
               ttsPitch: state.ttsPitch,

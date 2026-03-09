@@ -136,7 +136,7 @@ export function ProgressHistoryDialog({
                           <Clock className="h-3 w-3" />
                           {formatDate(item.createdAt)}
                         </span>
-                        <span>进度: {(item.progress * 100).toFixed(1)}%</span>
+                        <span>进度: {(item.progress * 100).toFixed(2)}%</span>
                         {item.readingDuration > 0 && (
                           <span>时长: {formatDuration(item.readingDuration)}</span>
                         )}

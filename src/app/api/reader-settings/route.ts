@@ -8,6 +8,7 @@ import { readerSettings } from "@/lib/db/schema";
 
 interface ReaderSettingsPayload {
   fontSize?: number;
+  pageWidth?: number;
   theme?: "light" | "dark" | "sepia";
   browserVoiceId?: string;
   ttsRate?: number;
@@ -19,6 +20,7 @@ interface ReaderSettingsPayload {
 
 const DEFAULTS = {
   fontSize: 16,
+  pageWidth: 800,
   theme: "light" as const,
   browserVoiceId: "",
   ttsRate: 1,
@@ -35,6 +37,7 @@ function toResponseShape(settings: typeof readerSettings.$inferSelect | null | u
 
   return {
     fontSize: settings.fontSize,
+    pageWidth: settings.pageWidth,
     theme: settings.theme,
     browserVoiceId: settings.browserVoiceId || "",
     ttsRate: settings.ttsRate,
@@ -79,6 +82,7 @@ export async function PUT(req: NextRequest) {
 
     const nextValues = {
       fontSize: Math.min(28, Math.max(12, Number(payload.fontSize ?? existing?.fontSize ?? DEFAULTS.fontSize))),
+      pageWidth: Math.min(1200, Math.max(600, Number(payload.pageWidth ?? existing?.pageWidth ?? DEFAULTS.pageWidth))),
       theme:
         payload.theme === "dark" || payload.theme === "sepia" || payload.theme === "light"
           ? payload.theme

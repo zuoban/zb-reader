@@ -55,7 +55,7 @@ export const readingProgress = sqliteTable(
     scrollRatio: real("scroll_ratio"),
     currentPage: integer("current_page"),
     totalPages: integer("total_pages"),
-    readingDuration: integer("reading_duration").default(0).notNull(),
+    readingDuration: integer("reading_duration").notNull().default(0),
     deviceId: text("device_id"),
     lastReadAt: text("last_read_at")
       .default(sql`(datetime('now'))`)
@@ -158,6 +158,7 @@ export const readerSettings = sqliteTable("reader_settings", {
     .unique()
     .references(() => users.id, { onDelete: "cascade" }),
   fontSize: integer("font_size").default(16).notNull(),
+  pageWidth: integer("page_width").default(800).notNull(),
   theme: text("theme", { enum: ["light", "dark", "sepia"] })
     .default("light")
     .notNull(),

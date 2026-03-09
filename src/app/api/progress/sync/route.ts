@@ -2,7 +2,7 @@ import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { readingProgress, progressHistory } from "@/lib/db/schema";
+import { readingProgress, progressHistory, books } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { resolveConflict, type ClientProgress } from "@/lib/conflict-resolver";
@@ -44,6 +44,14 @@ export async function POST(req: NextRequest) {
 
     if (typeof clientVersion !== "number") {
       return NextResponse.json({ error: "缺少 clientVersion 参数" }, { status: 400 });
+    }
+
+    const bookExists = await db.query.books.findFirst({
+      where: eq(books.id, bookId),
+    });
+
+    if (!bookExists) {
+      return NextResponse.json({ error: "书籍不存在" }, { status: 404 });
     }
 
     const currentProgress = await db.query.readingProgress.findFirst({

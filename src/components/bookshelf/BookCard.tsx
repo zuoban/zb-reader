@@ -126,7 +126,7 @@ export function BookCard({ book, progress = 0, lastReadAt, onDelete }: BookCardP
               <div className="flex items-center gap-2">
                 <Progress value={progress * 100} className="h-1.5 sm:h-2 flex-1" />
                 <span className="text-xs font-medium text-foreground shrink-0">
-                  {Math.round(progress * 100)}%
+                  {(progress * 100).toFixed(2)}%
                 </span>
               </div>
             </div>
