@@ -49,10 +49,14 @@ export const readingProgress = sqliteTable(
     bookId: text("book_id")
       .notNull()
       .references(() => books.id, { onDelete: "cascade" }),
+    version: integer("version").default(1).notNull(),
     progress: real("progress").default(0).notNull(),
     location: text("location"),
+    scrollRatio: real("scroll_ratio"),
     currentPage: integer("current_page"),
     totalPages: integer("total_pages"),
+    readingDuration: integer("reading_duration").default(0).notNull(),
+    deviceId: text("device_id"),
     lastReadAt: text("last_read_at")
       .default(sql`(datetime('now'))`)
       .notNull(),
@@ -67,6 +71,26 @@ export const readingProgress = sqliteTable(
     userBookUnique: unique().on(table.userId, table.bookId),
   })
 );
+
+export const progressHistory = sqliteTable("progress_history", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  bookId: text("book_id")
+    .notNull()
+    .references(() => books.id, { onDelete: "cascade" }),
+  version: integer("version").notNull(),
+  progress: real("progress").notNull(),
+  location: text("location"),
+  scrollRatio: real("scroll_ratio"),
+  readingDuration: integer("reading_duration").notNull(),
+  deviceId: text("device_id"),
+  deviceName: text("device_name"),
+  createdAt: text("created_at")
+    .default(sql`(datetime('now'))`)
+    .notNull(),
+});
 
 export const bookmarks = sqliteTable("bookmarks", {
   id: text("id").primaryKey(),
@@ -164,6 +188,8 @@ export type Book = typeof books.$inferSelect;
 export type NewBook = typeof books.$inferInsert;
 export type ReadingProgress = typeof readingProgress.$inferSelect;
 export type NewReadingProgress = typeof readingProgress.$inferInsert;
+export type ProgressHistory = typeof progressHistory.$inferSelect;
+export type NewProgressHistory = typeof progressHistory.$inferInsert;
 export type Bookmark = typeof bookmarks.$inferSelect;
 export type NewBookmark = typeof bookmarks.$inferInsert;
 export type Note = typeof notes.$inferSelect;
