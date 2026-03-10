@@ -114,6 +114,7 @@ function getConnection() {
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
       font_size INTEGER NOT NULL DEFAULT 16,
+      page_width INTEGER NOT NULL DEFAULT 800,
       theme TEXT NOT NULL DEFAULT 'light' CHECK(theme IN ('light', 'dark', 'sepia')),
       tts_engine TEXT NOT NULL DEFAULT 'browser' CHECK(tts_engine IN ('browser', 'legado')),
       browser_voice_id TEXT,
@@ -163,6 +164,11 @@ function getConnection() {
   }
   try {
     sqlite.exec(`ALTER TABLE reader_settings ADD COLUMN auto_scroll_to_active INTEGER NOT NULL DEFAULT 1;`);
+  } catch {
+    // Column already exists, ignore
+  }
+  try {
+    sqlite.exec(`ALTER TABLE reader_settings ADD COLUMN page_width INTEGER NOT NULL DEFAULT 800;`);
   } catch {
     // Column already exists, ignore
   }
