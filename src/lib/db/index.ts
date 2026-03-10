@@ -128,6 +128,20 @@ function getConnection() {
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
+
+    CREATE TABLE IF NOT EXISTS progress_history (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+      version INTEGER NOT NULL,
+      progress REAL NOT NULL,
+      location TEXT,
+      scroll_ratio REAL,
+      reading_duration INTEGER NOT NULL,
+      device_id TEXT,
+      device_name TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
   `);
 
   // Migration: Add missing columns to reader_settings (2026-03-04)
