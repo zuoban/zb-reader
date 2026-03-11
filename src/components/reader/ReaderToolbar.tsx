@@ -73,10 +73,9 @@ function ToolbarButton({
           size="icon"
           onClick={onClick}
           className={cn(
-            "cursor-pointer h-8 w-8 sm:h-9 sm:w-9 rounded-lg transition-all duration-200",
-            "hover:bg-[var(--reader-primary-light,_rgba(23,23,23,0.1))]",
-            "active:scale-95",
-            isActive && "bg-[var(--reader-primary-light,_rgba(23,23,23,0.15))] text-[var(--reader-primary,_#171717)]",
+            "cursor-pointer h-8 w-8 sm:h-9 sm:w-9 rounded-xl transition-all duration-200",
+            "hover:bg-[var(--reader-primary-light,_rgba(23,23,23,0.12))] active:scale-95",
+            isActive && "bg-[var(--reader-primary-light,_rgba(23,23,23,0.18))] text-[var(--reader-primary,_#171717)]",
             className
           )}
           style={{ color: "var(--reader-text)" }}
@@ -84,7 +83,7 @@ function ToolbarButton({
           {children}
         </Button>
       </TooltipTrigger>
-      <TooltipContent side="bottom" className="text-xs hidden sm:block">
+      <TooltipContent side="bottom" className="text-xs hidden sm:block bg-[var(--reader-card-bg)] border border-[var(--reader-border)] shadow-lg">
         {tooltip}
       </TooltipContent>
     </Tooltip>
@@ -127,12 +126,12 @@ export function ReaderToolbar({
       >
         <div
           className={cn(
-            "mx-3 mt-2 rounded-2xl border backdrop-blur-xl"
+            "mx-3 mt-2 sm:mx-4 sm:mt-3 rounded-2xl sm:rounded-3xl border backdrop-blur-xl"
           )}
           style={{
             background: "var(--reader-card-bg)",
             borderColor: "var(--reader-border)",
-            boxShadow: "0 10px 28px -18px var(--reader-shadow)",
+            boxShadow: "0 8px 32px -12px var(--reader-shadow), 0 2px 8px -2px var(--reader-shadow), inset 0 1px 0 rgba(255,255,255,0.15)",
           }}
         >
           <div className="flex items-center justify-between h-12 sm:h-14 px-1 sm:px-2">
@@ -216,11 +215,11 @@ export function ReaderToolbar({
       >
         <div className="mx-auto max-w-xl px-3 pb-3 sm:px-4 sm:pb-4">
           <div
-            className="relative rounded-2xl border backdrop-blur-2xl overflow-hidden"
+            className="relative rounded-2xl sm:rounded-3xl border backdrop-blur-2xl overflow-hidden"
             style={{
-              background: "var(--reader-card-bg, rgba(255,255,255,0.85))",
+              background: "var(--reader-card-bg, rgba(255,255,255,0.88))",
               borderColor: "var(--reader-border, rgba(23,23,23,0.08))",
-              boxShadow: "0 12px 40px -12px rgba(0,0,0,0.15), 0 4px 12px -4px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.6)",
+              boxShadow: "0 16px 48px -16px rgba(0,0,0,0.2), 0 6px 16px -6px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.5)",
             }}
           >
             {/* 进度条区域 */}
@@ -234,9 +233,9 @@ export function ReaderToolbar({
                     onClick={onPrevChapter}
                     disabled={!hasPrevChapter}
                     className={cn(
-                      "shrink-0 cursor-pointer h-9 w-9 sm:h-10 sm:w-10 rounded-xl transition-all duration-200",
-                      "hover:bg-[var(--reader-primary-light,_rgba(23,23,23,0.06))] hover:scale-105 active:scale-95",
-                      !hasPrevChapter && "opacity-25 cursor-not-allowed hover:bg-transparent hover:scale-100"
+                      "shrink-0 cursor-pointer h-9 w-9 sm:h-11 sm:w-11 rounded-xl sm:rounded-2xl transition-all duration-200",
+                      "hover:bg-[var(--reader-primary-light,_rgba(23,23,23,0.1))] hover:scale-105 active:scale-95",
+                      !hasPrevChapter && "opacity-30 cursor-not-allowed hover:bg-transparent hover:scale-100"
                     )}
                     style={{ color: "var(--reader-text, #171717)" }}
                   >
@@ -258,17 +257,17 @@ export function ReaderToolbar({
                     </span>
                   </div>
                   <div
-                    className="relative w-full h-2 sm:h-2.5 rounded-full overflow-hidden"
+                    className="relative w-full h-2.5 sm:h-3 rounded-full overflow-hidden"
                     style={{
-                      background: "var(--reader-primary-light, rgba(23,23,23,0.08))",
+                      background: "var(--reader-primary-light, rgba(23,23,23,0.1))",
                     }}
                   >
                     <div
                       className="absolute inset-y-0 left-0 rounded-full transition-all duration-500 ease-out"
                       style={{
                         width: `${progress * 100}%`,
-                        background: "linear-gradient(90deg, #171717 0%, #404040 100%)",
-                        boxShadow: "0 0 8px rgba(23,23,23,0.3)",
+                        background: "linear-gradient(90deg, var(--reader-primary, #171717) 0%, color-mix(in srgb, var(--reader-primary, #171717) 70%, #666) 100%)",
+                        boxShadow: "0 0 12px color-mix(in srgb, var(--reader-primary, #171717) 40%, transparent)",
                       }}
                     />
                   </div>
@@ -282,9 +281,9 @@ export function ReaderToolbar({
                     onClick={onNextChapter}
                     disabled={!hasNextChapter}
                     className={cn(
-                      "shrink-0 cursor-pointer h-9 w-9 sm:h-10 sm:w-10 rounded-xl transition-all duration-200",
-                      "hover:bg-[var(--reader-primary-light,_rgba(23,23,23,0.06))] hover:scale-105 active:scale-95",
-                      !hasNextChapter && "opacity-25 cursor-not-allowed hover:bg-transparent hover:scale-100"
+                      "shrink-0 cursor-pointer h-9 w-9 sm:h-11 sm:w-11 rounded-xl sm:rounded-2xl transition-all duration-200",
+                      "hover:bg-[var(--reader-primary-light,_rgba(23,23,23,0.1))] hover:scale-105 active:scale-95",
+                      !hasNextChapter && "opacity-30 cursor-not-allowed hover:bg-transparent hover:scale-100"
                     )}
                     style={{ color: "var(--reader-text, #171717)" }}
                   >

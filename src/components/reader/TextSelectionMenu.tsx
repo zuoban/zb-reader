@@ -102,7 +102,7 @@ function TextSelectionMenuInner({
   return (
     <div
       ref={menuRef}
-      className="fixed z-[60] animate-in fade-in-0 zoom-in-95 duration-150"
+      className="fixed z-[60] animate-in fade-in-0 zoom-in-95 duration-200"
       style={{
         left: position.x,
         top: position.y,
@@ -112,26 +112,26 @@ function TextSelectionMenuInner({
       <div className="relative">
         <div
           className={cn(
-            "flex items-center gap-1 rounded-xl p-1.5",
-            "backdrop-blur-xl",
+            "flex items-center gap-1.5 rounded-2xl p-1.5 sm:p-2",
+            "backdrop-blur-2xl",
             "border",
-            "shadow-lg"
+            "shadow-xl"
           )}
           style={{
             background: "var(--reader-card-bg)",
             borderColor: "var(--reader-border)",
-            boxShadow: "0 4px 16px var(--reader-shadow)",
+            boxShadow: "0 8px 24px -8px var(--reader-shadow), 0 2px 8px -2px var(--reader-shadow)",
           }}
         >
           {showColors ? (
-            <div className="flex items-center gap-2 px-1">
+            <div className="flex items-center gap-2 px-1.5">
               {highlightColors.map((color) => (
                 <button
                   key={color.value}
                   className={cn(
-                    "size-7 rounded-full border-2 border-transparent",
+                    "size-7.5 sm:size-8 rounded-xl border-2 border-transparent",
                     "transition-all duration-200",
-                    "hover:scale-125 hover:shadow-md hover:border-foreground/30",
+                    "hover:scale-125 hover:shadow-lg hover:border-foreground/30",
                     "cursor-pointer"
                   )}
                   style={{ backgroundColor: color.value }}
@@ -148,7 +148,7 @@ function TextSelectionMenuInner({
                 variant="ghost"
                 size="icon"
                 className={cn(
-                  "ml-1 h-7 w-7 rounded-lg cursor-pointer",
+                  "ml-1 h-7.5 w-7.5 sm:h-8 sm:w-8 rounded-xl cursor-pointer",
                   "transition-all duration-200"
                 )}
                 style={{ color: "var(--reader-muted-text)" }}
@@ -163,8 +163,8 @@ function TextSelectionMenuInner({
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  "gap-1.5 h-8 rounded-lg cursor-pointer",
-                  "transition-all duration-200"
+                  "gap-1.5 h-8 sm:h-9 rounded-xl cursor-pointer",
+                  "transition-all duration-200 hover:bg-[var(--reader-primary-light)]"
                 )}
                 style={{ color: "var(--reader-text)" }}
                 onClick={() => setShowColors(true)}
@@ -176,8 +176,8 @@ function TextSelectionMenuInner({
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  "gap-1.5 h-8 rounded-lg cursor-pointer",
-                  "transition-all duration-200"
+                  "gap-1.5 h-8 sm:h-9 rounded-xl cursor-pointer",
+                  "transition-all duration-200 hover:bg-[var(--reader-primary-light)]"
                 )}
                 style={{ color: "var(--reader-text)" }}
                 onClick={() => handleAction(onAddNote)}
@@ -189,8 +189,8 @@ function TextSelectionMenuInner({
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  "gap-1.5 h-8 rounded-lg cursor-pointer",
-                  "transition-all duration-200"
+                  "gap-1.5 h-8 sm:h-9 rounded-xl cursor-pointer",
+                  "transition-all duration-200 hover:bg-[var(--reader-primary-light)]"
                 )}
                 style={{ color: "var(--reader-text)" }}
                 onClick={() => handleAction(onCopy)}
@@ -204,7 +204,7 @@ function TextSelectionMenuInner({
 
         <div className="absolute left-1/2 -translate-x-1/2 top-full">
           <div
-            className="size-2.5 rotate-45 -translate-y-1.5 border-b border-r"
+            className="size-3 rotate-45 -translate-y-1.5 border-b border-r"
             style={{
               background: "var(--reader-card-bg)",
               borderColor: "var(--reader-border)",

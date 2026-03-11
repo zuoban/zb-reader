@@ -199,13 +199,14 @@ export function SidePanel({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="left"
-        className="w-[88vw] sm:w-80 p-0 backdrop-blur-xl border-r"
+        className="w-[88vw] sm:w-84 p-0 backdrop-blur-2xl border-r"
         style={{
           background: "var(--reader-card-bg)",
           borderColor: "var(--reader-border)",
+          boxShadow: "8px 0 32px -8px var(--reader-shadow)",
         }}
       >
-        <SheetHeader className="px-4 pt-4 pb-0">
+        <SheetHeader className="px-4 pt-5 pb-0">
           <SheetTitle className="sr-only">侧边栏</SheetTitle>
         </SheetHeader>
         <Tabs
@@ -216,27 +217,35 @@ export function SidePanel({
           className="flex flex-col h-full"
         >
           <TabsList
-            className="mx-4 mt-2"
-            style={{ background: "var(--reader-border)" }}
+            className="mx-4 mt-2.5"
+            style={{ 
+              background: "color-mix(in srgb, var(--reader-text) 12%, transparent)",
+              borderRadius: "12px",
+              padding: "4px",
+            }}
           >
             <TabsTrigger
               value="toc"
-              className="gap-1.5"
+              className="gap-1.5 flex-1"
               style={{
                 color: "var(--reader-muted-text)",
+                borderRadius: "8px",
                 "--tw-ring-color": "var(--reader-primary, #0891B2)",
               } as React.CSSProperties}
             >
               <List className="size-4" />
-              目录
+              <span className="hidden sm:inline">目录</span>
             </TabsTrigger>
             <TabsTrigger
               value="bookmarks"
-              className="gap-1.5"
-              style={{ color: "var(--reader-muted-text)" }}
+              className="gap-1.5 flex-1"
+              style={{ 
+                color: "var(--reader-muted-text)",
+                borderRadius: "8px",
+              }}
             >
               <Bookmark className="size-4" />
-              书签
+              <span className="hidden sm:inline">书签</span>
               {bookmarks.length > 0 && (
                 <span
                   className="ml-0.5 text-[10px] rounded-full px-1.5"
@@ -248,11 +257,14 @@ export function SidePanel({
             </TabsTrigger>
             <TabsTrigger
               value="notes"
-              className="gap-1.5"
-              style={{ color: "var(--reader-muted-text)" }}
+              className="gap-1.5 flex-1"
+              style={{ 
+                color: "var(--reader-muted-text)",
+                borderRadius: "8px",
+              }}
             >
               <StickyNote className="size-4" />
-              笔记
+              <span className="hidden sm:inline">笔记</span>
               {notes.length > 0 && (
                 <span
                   className="ml-0.5 text-[10px] rounded-full px-1.5"
@@ -315,7 +327,7 @@ export function SidePanel({
                     <div
                       key={bookmark.id}
                       className={cn(
-                        "group rounded-xl p-3 transition-colors cursor-pointer border"
+                        "group rounded-2xl p-3.5 transition-all cursor-pointer border"
                       )}
                       style={{
                         background: "var(--reader-card-bg)",
