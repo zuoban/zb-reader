@@ -115,7 +115,7 @@ const TTS_INDICATOR_CSS = `
   box-shadow: 
     0 0 0 1px var(--tts-indicator-color, #3b82f6),
     0 0 8px color-mix(in srgb, var(--tts-indicator-color, #3b82f6) 60%, transparent);
-  transition: height 0.15s ease-out, opacity 0.2s ease;
+  transition: height 0.12s ease-out, opacity 0.15s ease;
 }
 [data-tts-active='1']::before {
   content: '';

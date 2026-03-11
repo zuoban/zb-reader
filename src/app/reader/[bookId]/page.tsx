@@ -865,8 +865,14 @@ function ReaderContent() {
         audio.currentTime = 0;
         audio.src = source;
 
+        let lastProgressUpdate = 0;
+        const PROGRESS_UPDATE_INTERVAL = 200;
+
         audio.ontimeupdate = () => {
           if (!Number.isFinite(audio.duration) || audio.duration <= 0) return;
+          const now = Date.now();
+          if (now - lastProgressUpdate < PROGRESS_UPDATE_INTERVAL) return;
+          lastProgressUpdate = now;
           setTtsPlaybackProgress(
             Math.min(1, Math.max(0, audio.currentTime / audio.duration))
           );
