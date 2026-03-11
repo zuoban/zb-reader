@@ -1,3 +1,5 @@
+import { v4 as uuidv4 } from 'uuid';
+
 const DEVICE_ID_KEY = 'zb_reader_device_id';
 
 export function getDeviceId(): string {
@@ -9,7 +11,7 @@ export function getDeviceId(): string {
   
   if (!deviceId) {
     const platform = getPlatform();
-    deviceId = `${platform}-${crypto.randomUUID()}`;
+    deviceId = `${platform}-${uuidv4()}`;
     localStorage.setItem(DEVICE_ID_KEY, deviceId);
   }
   

@@ -23,11 +23,11 @@ interface TtsFloatingControlProps {
 
 function AudioWaveIndicator() {
   return (
-    <div className="flex items-center justify-center gap-0.5 h-4">
+    <div className="flex items-center justify-center gap-[2px] h-4">
       {[1, 2, 3, 4].map((i) => (
         <div
           key={i}
-          className="w-0.5 bg-current rounded-full animate-audio-wave"
+          className="w-[2px] bg-current rounded-full animate-audio-wave"
           style={{
             animationDelay: `${i * 100}ms`,
             height: "100%",
@@ -111,36 +111,24 @@ export function TtsFloatingControl({
       {isExpanded && (
         <div
           className={cn(
-            "flex items-center gap-0.5 sm:gap-1 px-1.5 py-1 mr-1",
-            "rounded-xl",
+            "flex items-center gap-1 sm:gap-1.5 px-2 py-1.5 mr-2",
+            "rounded-2xl",
             "backdrop-blur-xl",
             "border",
-            "animate-in slide-in-from-right-2 fade-in duration-200 ease-out",
+            "shadow-[0_8px_24px_-8px_rgba(0,0,0,0.15),0_4px_8px_-4px_rgba(0,0,0,0.1)]",
+            "animate-in slide-in-from-right-3 fade-in duration-300 ease-out",
             "flex-wrap justify-center max-w-[calc(100vw-5rem)]"
           )}
           style={{
-            background: "var(--reader-card-bg)",
-            borderColor: "var(--reader-border)",
-            boxShadow: "0 10px 24px -16px var(--reader-shadow)",
+            background: "var(--reader-card-bg, rgba(255,255,255,0.95))",
+            borderColor: "var(--reader-border, rgba(0,0,0,0.08))",
           }}
         >
-          <span
-            className="text-[10px] sm:text-xs font-semibold tabular-nums px-1.5"
-            style={{ color: "var(--reader-primary, #171717)" }}
-          >
-            {(progress * 100).toFixed(2)}%
-          </span>
-
-          <div
-            className="w-px h-4 mx-0.5"
-            style={{ background: "var(--reader-border)" }}
-          />
-
           {onPrev && (
             <button
               type="button"
               onClick={onPrev}
-              className="group flex size-7 sm:size-7 items-center justify-center rounded-lg transition-all duration-150 cursor-pointer active:scale-90 hover:bg-[var(--reader-primary-light,_rgba(23,23,23,0.1))]"
+              className="group flex size-7 sm:size-8 items-center justify-center rounded-xl transition-all duration-200 cursor-pointer active:scale-88 hover:scale-105 hover:bg-[var(--reader-primary-light,_rgba(23,23,23,0.08))]"
               style={{ color: "var(--reader-muted-text)" }}
               title="上一段"
             >
@@ -148,10 +136,10 @@ export function TtsFloatingControl({
             </button>
           )}
 
-<button
+          <button
             type="button"
             onClick={onToggle}
-            className="group flex size-7 sm:size-7 items-center justify-center rounded-lg shadow-sm transition-all duration-150 cursor-pointer active:scale-90"
+            className="group flex size-8 sm:size-9 items-center justify-center rounded-xl shadow-md transition-all duration-200 cursor-pointer hover:scale-105 active:scale-92"
             style={{
               background: "var(--reader-primary, #171717)",
               color: "#ffffff",
@@ -159,27 +147,27 @@ export function TtsFloatingControl({
             title={isPaused ? "播放" : "暂停"}
           >
             {isPaused ? (
-              <Play className="size-3.5 ml-0.5" />
+              <Play className="size-4 ml-0.5 transition-transform duration-150 group-hover:scale-110" />
             ) : (
-              <Pause className="size-3.5" />
+              <Pause className="size-4 transition-transform duration-150 group-hover:scale-110" />
             )}
           </button>
 
           <button
             type="button"
             onClick={onStop}
-            className="group flex size-7 sm:size-7 items-center justify-center rounded-lg transition-all duration-150 cursor-pointer active:scale-90 hover:bg-[var(--reader-primary-light,_rgba(23,23,23,0.1))]"
+            className="group flex size-7 sm:size-8 items-center justify-center rounded-xl transition-all duration-200 cursor-pointer active:scale-88 hover:scale-105 hover:bg-red-50"
             style={{ color: "var(--reader-destructive, #dc2626)" }}
             title="停止"
           >
-            <Square className="size-3" />
+            <Square className="size-3.5 transition-transform duration-150 group-hover:scale-110" />
           </button>
 
           {onNext && (
             <button
               type="button"
               onClick={onNext}
-              className="group flex size-7 sm:size-7 items-center justify-center rounded-lg transition-all duration-150 cursor-pointer active:scale-90 hover:bg-[var(--reader-primary-light,_rgba(23,23,23,0.1))]"
+              className="group flex size-7 sm:size-8 items-center justify-center rounded-xl transition-all duration-200 cursor-pointer active:scale-88 hover:scale-105 hover:bg-[var(--reader-primary-light,_rgba(23,23,23,0.08))]"
               style={{ color: "var(--reader-muted-text)" }}
               title="下一段"
             >
@@ -190,17 +178,17 @@ export function TtsFloatingControl({
           {onAutoScrollToActiveChange && (
             <>
               <div
-                className="w-px h-4 mx-0.5 hidden sm:block"
+                className="w-px h-5 mx-0.5 hidden sm:block"
                 style={{ background: "var(--reader-border)" }}
               />
               <button
                 type="button"
                 onClick={() => onAutoScrollToActiveChange(!autoScrollToActive)}
                 className={cn(
-                  "group flex size-7 sm:size-7 items-center justify-center rounded-lg transition-all duration-150 cursor-pointer active:scale-90",
+                  "group flex size-7 sm:size-8 items-center justify-center rounded-xl transition-all duration-200 cursor-pointer active:scale-88 hover:scale-105",
                   autoScrollToActive 
                     ? "shadow-sm" 
-                    : "hover:bg-[var(--reader-primary-light,_rgba(23,23,23,0.1))]"
+                    : "hover:bg-[var(--reader-primary-light,_rgba(23,23,23,0.08))]"
                 )}
                 style={{ 
                   color: autoScrollToActive 
@@ -214,7 +202,7 @@ export function TtsFloatingControl({
               >
                 <LocateFixed 
                   className={cn(
-                    "size-3.5 transition-all duration-200",
+                    "size-4 transition-all duration-200",
                     autoScrollToActive && "scale-110"
                   )} 
                 />
@@ -225,17 +213,17 @@ export function TtsFloatingControl({
           {onTtsAutoNextChapterChange && (
             <>
               <div
-                className="w-px h-4 mx-0.5 hidden sm:block"
+                className="w-px h-5 mx-0.5 hidden sm:block"
                 style={{ background: "var(--reader-border)" }}
               />
               <button
                 type="button"
                 onClick={() => onTtsAutoNextChapterChange(!ttsAutoNextChapter)}
                 className={cn(
-                  "group flex size-7 sm:size-7 items-center justify-center rounded-lg transition-all duration-150 cursor-pointer active:scale-90",
+                  "group flex size-7 sm:size-8 items-center justify-center rounded-xl transition-all duration-200 cursor-pointer active:scale-88 hover:scale-105",
                   ttsAutoNextChapter 
                     ? "shadow-sm" 
-                    : "hover:bg-[var(--reader-primary-light,_rgba(23,23,23,0.1))]"
+                    : "hover:bg-[var(--reader-primary-light,_rgba(23,23,23,0.08))]"
                 )}
                 style={{ 
                   color: ttsAutoNextChapter 
@@ -249,7 +237,7 @@ export function TtsFloatingControl({
               >
                 <ListEnd 
                   className={cn(
-                    "size-3.5 transition-all duration-200",
+                    "size-4 transition-all duration-200",
                     ttsAutoNextChapter && "scale-110"
                   )} 
                 />
@@ -260,20 +248,20 @@ export function TtsFloatingControl({
           {onToggleFullscreen && (
             <>
               <div
-                className="w-px h-4 mx-0.5 hidden sm:block"
+                className="w-px h-5 mx-0.5 hidden sm:block"
                 style={{ background: "var(--reader-border)" }}
               />
               <button
                 type="button"
                 onClick={onToggleFullscreen}
-                className="group flex size-7 sm:size-7 items-center justify-center rounded-lg transition-all duration-150 cursor-pointer active:scale-90 hover:bg-[var(--reader-primary-light,_rgba(23,23,23,0.1))]"
+                className="group flex size-7 sm:size-8 items-center justify-center rounded-xl transition-all duration-200 cursor-pointer active:scale-88 hover:scale-105 hover:bg-[var(--reader-primary-light,_rgba(23,23,23,0.08))]"
                 style={{ color: "var(--reader-muted-text)" }}
                 title={isFullscreen ? "退出全屏" : "全屏"}
               >
                 {isFullscreen ? (
-                  <Minimize className="size-3.5" />
+                  <Minimize className="size-4 transition-transform duration-150 group-hover:scale-110" />
                 ) : (
-                  <Maximize className="size-3.5" />
+                  <Maximize className="size-4 transition-transform duration-150 group-hover:scale-110" />
                 )}
               </button>
             </>
@@ -286,21 +274,23 @@ export function TtsFloatingControl({
         onClick={handleMainClick}
         className={cn(
           "group relative flex size-10 items-center justify-center rounded-full cursor-pointer",
-          "transition-all duration-200 ease-out",
-          "shadow-lg border",
-          "active:scale-95",
+          "transition-all duration-300 ease-out",
+          "shadow-[0_8px_24px_-6px_rgba(0,0,0,0.25),0_4px_8px_-4px_rgba(0,0,0,0.15)]",
+          "border",
+          "hover:shadow-[0_12px_32px_-8px_rgba(0,0,0,0.3),0_6px_12px_-6px_rgba(0,0,0,0.2)]",
+          "active:shadow-[0_4px_12px_-4px_rgba(0,0,0,0.2)]",
+          "active:scale-92",
           isExpanded && "rotate-180"
         )}
         style={{
-          background: "var(--reader-primary, #171717)",
-          borderColor: "color-mix(in srgb, var(--reader-primary, #171717) 75%, #ffffff 25%)",
+          background: `linear-gradient(135deg, var(--reader-primary, #171717) 0%, color-mix(in srgb, var(--reader-primary, #171717) 70%, #000) 100%)`,
+          borderColor: "color-mix(in srgb, var(--reader-primary, #171717) 60%, #ffffff 40%)",
           color: "#ffffff",
-          boxShadow: "0 12px 24px -14px var(--reader-shadow)",
         }}
         title="朗读控制"
       >
         <div
-          className="absolute inset-0 rounded-full transition-opacity duration-300 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100"
+          className="absolute inset-0 rounded-full transition-opacity duration-300 bg-gradient-to-br from-white/15 to-white/0 opacity-0 group-hover:opacity-100"
         />
 
         {isSpeaking && !isExpanded && <AudioWaveIndicator />}
@@ -316,7 +306,7 @@ export function TtsFloatingControl({
         {isSpeaking && (
           <span
             className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full animate-pulse"
-            style={{ background: "rgba(255,255,255,0.8)" }}
+            style={{ background: "rgba(255,255,255,0.9)" }}
           />
         )}
       </button>

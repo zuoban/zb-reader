@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { v4 as uuidv4 } from "uuid"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -12,7 +13,7 @@ export function getDeviceId(): string {
 
   let deviceId = localStorage.getItem(DEVICE_ID_KEY)
   if (!deviceId) {
-    deviceId = crypto.randomUUID()
+    deviceId = uuidv4()
     localStorage.setItem(DEVICE_ID_KEY, deviceId)
   }
   return deviceId
