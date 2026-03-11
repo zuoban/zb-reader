@@ -27,6 +27,7 @@ import {
 import { ttsAudioCache, TtsAudioLruCache } from "@/lib/ttsAudioCache";
 import { logger } from "@/lib/logger";
 import { useProgressSyncCompat } from "@/hooks/useProgressSyncCompat";
+import { useReaderSettingsStore, useDebouncedSettingsSave } from "@/stores/reader-settings";
 import { SyncIndicator } from "@/components/reader/SyncIndicator";
 import { History } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -43,7 +44,6 @@ const EpubReader = dynamic(() => import("@/components/reader/EpubReader"), {
 
 
 
-const DEFAULT_MICROSOFT_PRELOAD_COUNT = 3;
 const MAX_TTS_RETRY_COUNT = 5;
 const TTS_RETRY_DELAY_MS = 450;
 const IS_DEV = process.env.NODE_ENV !== "production";
@@ -79,23 +79,25 @@ function ReaderContent() {
   const totalPagesRef = useRef<number | undefined>(undefined);
   const [initialLocation, setInitialLocation] = useState<string | undefined>();
 
-  // Settings
-  const [fontSize, setFontSize] = useState(16);
-  const [pageWidth, setPageWidth] = useState(800);
-  const [readerTheme, setReaderTheme] = useState<"light" | "dark" | "sepia">("light");
+  // Settings from store
+  const settings = useReaderSettingsStore();
+  const fontSize = settings.fontSize;
+  const pageWidth = settings.pageWidth;
+  const readerTheme = settings.theme;
+  const selectedBrowserVoiceId = settings.browserVoiceId;
+  const ttsRate = settings.ttsRate;
+  const microsoftPreloadCount = settings.microsoftPreloadCount;
+  const ttsAutoNextChapter = settings.ttsAutoNextChapter;
+  const ttsHighlightColor = settings.ttsHighlightColor;
+  const ttsHighlightStyle = settings.ttsHighlightStyle;
+  const autoScrollToActive = settings.autoScrollToActive;
+  const debouncedSaveSettings = useDebouncedSettingsSave();
+
+  // Local settings states (browser voices, TTS state)
   const [browserVoices, setBrowserVoices] = useState<BrowserVoiceOption[]>([]);
-  const [selectedBrowserVoiceId, setSelectedBrowserVoiceId] = useState("");
-  const [ttsRate, setTtsRate] = useState(1);
-  const [microsoftPreloadCount, setMicrosoftPreloadCount] = useState(
-    DEFAULT_MICROSOFT_PRELOAD_COUNT
-  );
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [ttsPlaybackProgress, setTtsPlaybackProgress] = useState(0);
-  const [ttsAutoNextChapter, setTtsAutoNextChapter] = useState(false);
-  const [ttsHighlightColor, setTtsHighlightColor] = useState("#3b82f6");
-  const [ttsHighlightStyle, setTtsHighlightStyle] = useState<"background" | "indicator">("indicator");
-  const [autoScrollToActive, setAutoScrollToActive] = useState(true);
 
   // Side panel
   const [sidePanelOpen, setSidePanelOpen] = useState(false);
@@ -152,8 +154,6 @@ function ReaderContent() {
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const ttsSessionRef = useRef(0);
-  const settingsLoadedRef = useRef(false);
-  const settingsSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ttsResumeRef = useRef<(() => void) | null>(null);
   const [activeTtsParagraph, setActiveTtsParagraph] = useState("");
   const currentParagraphIndexRef = useRef(0);
@@ -263,127 +263,26 @@ function ReaderContent() {
     setHighlights(hl);
   }, [notes]);
 
-  // ---- Load settings from database ----
+  // ---- Load settings from store ----
   useEffect(() => {
-    const loadReaderSettings = async () => {
-      try {
-        const res = await fetch("/api/reader-settings");
-        if (!res.ok) return;
-
-        const data = (await res.json()) as {
-          settings?: {
-            fontSize?: number;
-            pageWidth?: number;
-            theme?: "light" | "dark" | "sepia";
-            browserVoiceId?: string;
-            ttsRate?: number;
-            ttsPitch?: number;
-            ttsVolume?: number;
-            microsoftPreloadCount?: number;
-            ttsAutoNextChapter?: boolean;
-            ttsHighlightColor?: string;
-            ttsHighlightStyle?: "background" | "indicator";
-            autoScrollToActive?: boolean;
-          };
-        };
-
-        const settings = data.settings;
-        if (!settings) return;
-
-        if (typeof settings.fontSize === "number") {
-          setFontSize(Math.min(28, Math.max(12, settings.fontSize)));
-        }
-        if (typeof settings.pageWidth === "number") {
-          setPageWidth(Math.min(1200, Math.max(600, settings.pageWidth)));
-        }
-        if (
-          settings.theme === "light" ||
-          settings.theme === "dark" ||
-          settings.theme === "sepia"
-        ) {
-          setReaderTheme(settings.theme);
-        }
-        if (typeof settings.browserVoiceId === "string") {
-          setSelectedBrowserVoiceId(settings.browserVoiceId);
-        }
-        if (typeof settings.ttsRate === "number") {
-          setTtsRate(Math.min(5, Math.max(1, settings.ttsRate)));
-        }
-        if (
-          typeof settings.microsoftPreloadCount === "number" &&
-          [1, 2, 3, 5].includes(settings.microsoftPreloadCount)
-        ) {
-          setMicrosoftPreloadCount(settings.microsoftPreloadCount);
-        }
-        if (typeof settings.ttsAutoNextChapter === "boolean") {
-          setTtsAutoNextChapter(settings.ttsAutoNextChapter);
-        }
-        if (typeof settings.ttsHighlightColor === "string") {
-          setTtsHighlightColor(settings.ttsHighlightColor);
-        }
-        if (settings.ttsHighlightStyle === "background" || settings.ttsHighlightStyle === "indicator") {
-          setTtsHighlightStyle(settings.ttsHighlightStyle);
-        }
-        if (typeof settings.autoScrollToActive === "boolean") {
-          setAutoScrollToActive(settings.autoScrollToActive);
-        }
-      } catch {
-        // ignore
-      } finally {
-        settingsLoadedRef.current = true;
-      }
-    };
-
-    loadReaderSettings();
-
-    return () => {
-      if (settingsSaveTimerRef.current) {
-        clearTimeout(settingsSaveTimerRef.current);
-        settingsSaveTimerRef.current = null;
-      }
-    };
+    settings.loadFromServer();
   }, []);
 
+  // Auto-save settings when they change
   useEffect(() => {
-    if (!settingsLoadedRef.current) return;
-
-    if (settingsSaveTimerRef.current) {
-      clearTimeout(settingsSaveTimerRef.current);
-      settingsSaveTimerRef.current = null;
-    }
-
-    settingsSaveTimerRef.current = setTimeout(async () => {
-      try {
-        await fetch("/api/reader-settings", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            fontSize,
-            pageWidth,
-            theme: readerTheme,
-            browserVoiceId: selectedBrowserVoiceId,
-            ttsRate,
-            microsoftPreloadCount,
-            ttsAutoNextChapter,
-            ttsHighlightColor,
-            ttsHighlightStyle,
-            autoScrollToActive,
-          }),
-        });
-      } catch {
-        // ignore
-      }
-    }, 220);
+    if (!settings.loaded) return;
+    debouncedSaveSettings();
   }, [
-    fontSize,
-    pageWidth,
-    microsoftPreloadCount,
-    readerTheme,
-    selectedBrowserVoiceId,
-    ttsRate,
-    ttsAutoNextChapter,
-    ttsHighlightColor,
-    ttsHighlightStyle,
+    settings.fontSize,
+    settings.pageWidth,
+    settings.theme,
+    settings.browserVoiceId,
+    settings.ttsRate,
+    settings.microsoftPreloadCount,
+    settings.ttsAutoNextChapter,
+    settings.ttsHighlightColor,
+    settings.ttsHighlightStyle,
+    settings.autoScrollToActive,
   ]);
 
   useEffect(() => {
@@ -452,11 +351,13 @@ function ReaderContent() {
         const data = (await res.json()) as { voices?: BrowserVoiceOption[] };
         const mapped = data.voices || [];
         setBrowserVoices(mapped);
-        setSelectedBrowserVoiceId((prev) => {
-          if (mapped.length === 0) return prev;
-          if (prev && mapped.some((voice) => voice.id === prev)) return prev;
-          return mapped[0].id;
-        });
+        const currentVoiceId = settings.browserVoiceId;
+        if (mapped.length > 0) {
+          if (currentVoiceId && mapped.some((voice) => voice.id === currentVoiceId)) {
+            return;
+          }
+          settings.setBrowserVoiceId(mapped[0].id);
+        }
       } catch {
         // ignore
       }
@@ -858,41 +759,20 @@ function ReaderContent() {
 
   // ---- Settings handlers ----
   const handleFontSizeChange = useCallback((size: number) => {
-    setFontSize(size);
-  }, []);
+    settings.setFontSize(size);
+  }, [settings]);
 
   const handlePageWidthChange = useCallback((width: number) => {
-    setPageWidth(width);
-  }, []);
+    settings.setPageWidth(width);
+  }, [settings]);
 
   const handleThemeChange = useCallback(async (theme: "light" | "dark" | "sepia") => {
-    setReaderTheme(theme);
-    
-    // Sync with next-themes and API
-    const _globalTheme = theme === "dark" ? "dark" : "light";
-    
-    try {
-      await fetch("/api/reader-settings", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ theme }),
-      });
-    } catch {
-      // ignore
-    }
-  }, []);
+    settings.setTheme(theme);
+  }, [settings]);
 
   const handleSelectedBrowserVoiceIdChange = useCallback((voiceId: string) => {
-    setSelectedBrowserVoiceId(voiceId);
-    // Save to server
-    fetch("/api/reader-settings", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ browserVoiceId: voiceId }),
-    }).catch(() => {
-      // ignore
-    });
-  }, []);
+    settings.setBrowserVoiceId(voiceId);
+  }, [settings]);
 
   const requestMicrosoftSpeech = useCallback(
     async (text: string) => {
@@ -1954,15 +1834,15 @@ function ReaderContent() {
         selectedBrowserVoiceId={selectedBrowserVoiceId}
         onSelectedBrowserVoiceIdChange={handleSelectedBrowserVoiceIdChange}
         ttsRate={ttsRate}
-        onTtsRateChange={setTtsRate}
+        onTtsRateChange={settings.setTtsRate}
         microsoftPreloadCount={microsoftPreloadCount}
-        onMicrosoftPreloadCountChange={setMicrosoftPreloadCount}
+        onMicrosoftPreloadCountChange={settings.setMicrosoftPreloadCount}
         ttsAutoNextChapter={ttsAutoNextChapter}
-        onTtsAutoNextChapterChange={setTtsAutoNextChapter}
+        onTtsAutoNextChapterChange={settings.setTtsAutoNextChapter}
         ttsHighlightColor={ttsHighlightColor}
-        onTtsHighlightColorChange={setTtsHighlightColor}
+        onTtsHighlightColorChange={settings.setTtsHighlightColor}
         ttsHighlightStyle={ttsHighlightStyle}
-        onTtsHighlightStyleChange={setTtsHighlightStyle}
+        onTtsHighlightStyleChange={settings.setTtsHighlightStyle}
       />
 
       {/* Text selection menu */}
@@ -2005,11 +1885,11 @@ function ReaderContent() {
         onPrev={handleTtsPrevParagraph}
         onNext={handleTtsNextParagraph}
         ttsAutoNextChapter={ttsAutoNextChapter}
-        onTtsAutoNextChapterChange={setTtsAutoNextChapter}
+        onTtsAutoNextChapterChange={settings.setTtsAutoNextChapter}
         isFullscreen={isFullscreen}
         onToggleFullscreen={handleToggleFullscreen}
         autoScrollToActive={autoScrollToActive}
-        onAutoScrollToActiveChange={setAutoScrollToActive}
+        onAutoScrollToActiveChange={settings.setAutoScrollToActive}
         progress={progress}
       />
 

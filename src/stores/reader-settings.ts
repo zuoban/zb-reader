@@ -12,6 +12,8 @@ interface ReaderSettingsState {
   microsoftPreloadCount: number;
   ttsHighlightStyle: "background" | "indicator";
   ttsHighlightColor: string;
+  ttsAutoNextChapter: boolean;
+  autoScrollToActive: boolean;
   loaded: boolean;
 }
 
@@ -26,6 +28,8 @@ interface ReaderSettingsActions {
   setMicrosoftPreloadCount: (count: number) => void;
   setTtsHighlightStyle: (style: "background" | "indicator") => void;
   setTtsHighlightColor: (color: string) => void;
+  setTtsAutoNextChapter: (enabled: boolean) => void;
+  setAutoScrollToActive: (enabled: boolean) => void;
   loadFromServer: () => Promise<void>;
   saveToServer: () => Promise<void>;
 }
@@ -41,6 +45,8 @@ const DEFAULT_STATE: ReaderSettingsState = {
   microsoftPreloadCount: 3,
   ttsHighlightStyle: "indicator",
   ttsHighlightColor: "#3b82f6",
+  ttsAutoNextChapter: false,
+  autoScrollToActive: true,
   loaded: false,
 };
 
@@ -62,6 +68,8 @@ export const useReaderSettingsStore = create<
         set({ microsoftPreloadCount: [1, 2, 3, 5].includes(count) ? count : 3 }),
       setTtsHighlightStyle: (style: "background" | "indicator") => set({ ttsHighlightStyle: style }),
       setTtsHighlightColor: (color) => set({ ttsHighlightColor: color }),
+      setTtsAutoNextChapter: (enabled) => set({ ttsAutoNextChapter: enabled }),
+      setAutoScrollToActive: (enabled) => set({ autoScrollToActive: enabled }),
 
       loadFromServer: async () => {
         try {
@@ -105,6 +113,8 @@ export const useReaderSettingsStore = create<
               : DEFAULT_STATE.microsoftPreloadCount,
             ttsHighlightStyle: settings.ttsHighlightStyle || DEFAULT_STATE.ttsHighlightStyle,
             ttsHighlightColor: settings.ttsHighlightColor || DEFAULT_STATE.ttsHighlightColor,
+            ttsAutoNextChapter: settings.ttsAutoNextChapter ?? DEFAULT_STATE.ttsAutoNextChapter,
+            autoScrollToActive: settings.autoScrollToActive ?? DEFAULT_STATE.autoScrollToActive,
             loaded: true,
           });
         } catch {
@@ -131,6 +141,8 @@ export const useReaderSettingsStore = create<
               microsoftPreloadCount: state.microsoftPreloadCount,
               ttsHighlightStyle: state.ttsHighlightStyle,
               ttsHighlightColor: state.ttsHighlightColor,
+              ttsAutoNextChapter: state.ttsAutoNextChapter,
+              autoScrollToActive: state.autoScrollToActive,
             }),
           });
         } catch {
