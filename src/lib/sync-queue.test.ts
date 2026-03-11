@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { SyncQueue, getSyncQueue, type SyncItem } from './sync-queue';
+import { SyncQueue, type SyncItem } from './sync-queue';
 
 describe('sync-queue', () => {
   let syncQueue: SyncQueue;

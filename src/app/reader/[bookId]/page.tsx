@@ -29,9 +29,6 @@ import { logger } from "@/lib/logger";
 import { useProgressSyncCompat } from "@/hooks/useProgressSyncCompat";
 import { useReaderSettingsStore, useDebouncedSettingsSave } from "@/stores/reader-settings";
 import { READER_THEME_STYLES } from "@/lib/reader-theme";
-import { SyncIndicator } from "@/components/reader/SyncIndicator";
-import { History } from "lucide-react";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 // Dynamic import for EpubReader (client-only, depends on browser APIs)
 const EpubReader = dynamic(() => import("@/components/reader/EpubReader"), {
@@ -60,7 +57,7 @@ function ReaderContent() {
   const router = useRouter();
   const params = useParams();
   const bookId = params.bookId as string;
-  const { data: session } = useSession();
+  useSession();
 
   const epubReaderRef = useRef<EpubReaderRef>(null);
 
@@ -148,8 +145,8 @@ function ReaderContent() {
   const progressRef = progressSync.progressRef;
   const saveProgress = progressSync.saveProgress;
   const debouncedSaveProgress = progressSync.debouncedSaveProgress;
-  const pendingSync = progressSync.pendingSync;
-  const isSyncing = progressSync.isSyncing;
+  const _pendingSync = progressSync.pendingSync;
+  const _isSyncing = progressSync.isSyncing;
 
   const currentCfiRef = useRef<string | null>(null);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -160,8 +157,8 @@ function ReaderContent() {
   const currentParagraphIndexRef = useRef(0);
   const allParagraphsRef = useRef<string[]>([]);
   const readParagraphsHashRef = useRef<Set<string>>(new Set<string>());
-  const [ttsCurrentIndex, setTtsCurrentIndex] = useState(0);
-  const [ttsTotalParagraphs, setTtsTotalParagraphs] = useState(0);
+  const ttsCurrentIndexRef = useRef(0);
+  const ttsTotalParagraphsRef = useRef(0);
 
   // 跟踪 TTS 设置的上次值，用于检测设置变化
   const prevTtsSettingsRef = useRef({ rate: ttsRate });
@@ -1004,7 +1001,7 @@ function ReaderContent() {
         }
 
         currentParagraphIndexRef.current = startIndex + i;
-        setTtsCurrentIndex(startIndex + i);
+        ttsCurrentIndexRef.current = startIndex + i;
         const paragraph = queue[i];
         setActiveTtsParagraph(paragraph);
 
@@ -1271,11 +1268,10 @@ function ReaderContent() {
 
     // 更新段落引用
     allParagraphsRef.current = paragraphs;
-    setTtsTotalParagraphs(paragraphs.length);
+    ttsTotalParagraphsRef.current = paragraphs.length;
 
-    // 确定起始索引：从当前视口内第一个可见段落开始
     currentParagraphIndexRef.current = getInitialParagraphIndex(paragraphs);
-    setTtsCurrentIndex(currentParagraphIndexRef.current);
+    ttsCurrentIndexRef.current = currentParagraphIndexRef.current;
 
     // 如果没有在朗读，设置状态为朗读
     setIsSpeaking(true);
@@ -1296,9 +1292,9 @@ function ReaderContent() {
           }
           // 翻页后，从头开始读新的一页
           currentParagraphIndexRef.current = 0;
-          setTtsCurrentIndex(0);
+          ttsCurrentIndexRef.current = 0;
           allParagraphsRef.current = paragraphs;
-          setTtsTotalParagraphs(paragraphs.length);
+          ttsTotalParagraphsRef.current = paragraphs.length;
       }
 
       // 从当前索引开始切片
@@ -1618,7 +1614,7 @@ function ReaderContent() {
     }
   }
 
-  const handleJumpToReading = useCallback(() => {
+  const _handleJumpToReading = useCallback(() => {
     if (book?.format === "epub") {
       epubReaderRef.current?.scrollToActiveParagraph();
     }

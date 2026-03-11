@@ -1,12 +1,11 @@
 import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { db, getDb, getSqlite } from "@/lib/db";
-import { readingProgress, progressHistory, books } from "@/lib/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { db, getSqlite } from "@/lib/db";
+import { readingProgress, books } from "@/lib/db/schema";
+import { eq, and } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { resolveConflict, type ClientProgress } from "@/lib/conflict-resolver";
-import { getDeviceName } from "@/lib/device";
 
 const MAX_HISTORY_COUNT = 50;
 

@@ -2,7 +2,7 @@ import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db, getSqlite } from "@/lib/db";
-import { progressHistory, readingProgress } from "@/lib/db/schema";
+import { progressHistory } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 

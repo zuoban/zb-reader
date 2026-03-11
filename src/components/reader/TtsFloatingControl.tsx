@@ -52,7 +52,7 @@ export function TtsFloatingControl({
   onToggleFullscreen,
   autoScrollToActive = true,
   onAutoScrollToActiveChange,
-  progress = 0,
+  progress: _progress = 0,
 }: TtsFloatingControlProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isAutoTransparent, setIsAutoTransparent] = useState(false);

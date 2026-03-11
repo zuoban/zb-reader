@@ -16,7 +16,6 @@ import {
   History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
 import {
   Tooltip,
   TooltipContent,
@@ -93,8 +92,8 @@ function ToolbarButton({
 export function ReaderToolbar({
   visible,
   title,
-  currentPage,
-  totalPages,
+  currentPage: _currentPage,
+  totalPages: _totalPages,
   progress,
   isBookmarked,
   isFullscreen,
@@ -107,9 +106,9 @@ export function ReaderToolbar({
   onToggleTts,
   onToggleFullscreen,
   isSpeaking,
-  onProgressChange,
-  onPrevPage,
-  onNextPage,
+  onProgressChange: _onProgressChange,
+  onPrevPage: _onPrevPage,
+  onNextPage: _onNextPage,
   onPrevChapter,
   onNextChapter,
   hasPrevChapter,

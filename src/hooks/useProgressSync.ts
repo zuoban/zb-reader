@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { getLocalProgressManager } from "@/lib/local-progress";
-import { ReadingTracker } from "@/lib/reading-tracker";
 import type { ProgressUpdate } from "@/lib/local-progress";
 import type { ProgressHistory } from "@/lib/db/schema";
 
