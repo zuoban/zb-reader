@@ -1,7 +1,7 @@
 import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { db, getSqlite } from "@/lib/db";
 import { progressHistory, readingProgress } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
@@ -31,76 +31,89 @@ export async function POST(req: NextRequest) {
     }
 
     const now = new Date().toISOString();
-    const newVersion = await db.transaction(async (tx) => {
-      const [current] = await tx
-        .select()
-        .from(readingProgress)
-        .where(
-          and(
-            eq(readingProgress.userId, session.user.id),
-            eq(readingProgress.bookId, historyRecord.bookId)
-          )
-        )
-        .limit(1);
+    const sqlite = getSqlite();
+    let newVersion = 0;
+
+    const transaction = sqlite.transaction(() => {
+      const current = sqlite
+        .prepare("SELECT * FROM reading_progress WHERE user_id = ? AND book_id = ?")
+        .get(session.user.id, historyRecord.bookId) as
+        | {
+            id: string;
+            book_id: string;
+            version: number;
+            progress: number;
+            location: string | null;
+            scroll_ratio: number | null;
+            reading_duration: number;
+            device_id: string | null;
+          }
+        | undefined;
 
       if (current) {
-        await tx.insert(progressHistory).values({
-          id: uuidv4(),
-          userId: session.user.id,
-          bookId: current.bookId,
-          version: current.version,
-          progress: current.progress,
-          location: current.location,
-          scrollRatio: current.scrollRatio,
-          readingDuration: current.readingDuration,
-          deviceId: current.deviceId,
-          deviceName: null,
-          createdAt: now,
-        });
-
-        const newVersion = current.version + 1;
-
-        await tx
-          .update(readingProgress)
-          .set({
-            version: newVersion,
-            progress: historyRecord.progress,
-            location: historyRecord.location,
-            scrollRatio: historyRecord.scrollRatio,
-            readingDuration: historyRecord.readingDuration,
-            deviceId: historyRecord.deviceId,
-            lastReadAt: now,
-            updatedAt: now,
-          })
-          .where(
-            and(
-              eq(readingProgress.userId, session.user.id),
-              eq(readingProgress.bookId, historyRecord.bookId)
-            )
+        sqlite
+          .prepare(
+            `INSERT INTO progress_history (id, user_id, book_id, version, progress, location, scroll_ratio, reading_duration, device_id, device_name, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+          )
+          .run(
+            uuidv4(),
+            session.user.id,
+            current.book_id,
+            current.version,
+            current.progress,
+            current.location,
+            current.scroll_ratio,
+            current.reading_duration,
+            current.device_id,
+            null,
+            now
           );
 
-        return newVersion;
+        newVersion = current.version + 1;
+
+        sqlite
+          .prepare(
+            `UPDATE reading_progress SET version = ?, progress = ?, location = ?, scroll_ratio = ?, reading_duration = ?, device_id = ?, last_read_at = ?, updated_at = ? WHERE user_id = ? AND book_id = ?`
+          )
+          .run(
+            newVersion,
+            historyRecord.progress,
+            historyRecord.location,
+            historyRecord.scrollRatio,
+            historyRecord.readingDuration,
+            historyRecord.deviceId,
+            now,
+            now,
+            session.user.id,
+            historyRecord.bookId
+          );
       } else {
-        const newVersion = 1;
+        newVersion = 1;
 
-        await tx.insert(readingProgress).values({
-          id: uuidv4(),
-          userId: session.user.id,
-          bookId: historyRecord.bookId,
-          version: newVersion,
-          progress: historyRecord.progress,
-          location: historyRecord.location,
-          scrollRatio: historyRecord.scrollRatio,
-          readingDuration: historyRecord.readingDuration,
-          deviceId: historyRecord.deviceId,
-          lastReadAt: now,
-          createdAt: now,
-          updatedAt: now,
-        });
-
-        return newVersion;
+        sqlite
+          .prepare(
+            `INSERT INTO reading_progress (id, user_id, book_id, version, progress, location, scroll_ratio, reading_duration, device_id, last_read_at, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+          )
+          .run(
+            uuidv4(),
+            session.user.id,
+            historyRecord.bookId,
+            newVersion,
+            historyRecord.progress,
+            historyRecord.location,
+            historyRecord.scrollRatio,
+            historyRecord.readingDuration,
+            historyRecord.deviceId,
+            now,
+            now,
+            now
+          );
       }
     });
+
+    transaction();
 
     logger.info("api", "[Progress Restore] Restored", {
       userId: session.user.id,

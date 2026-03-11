@@ -1,7 +1,7 @@
 import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { db, getDb, getSqlite } from "@/lib/db";
 import { readingProgress, progressHistory, books } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
@@ -136,93 +136,89 @@ export async function POST(req: NextRequest) {
     const newVersion = currentProgress.version + 1;
     const winner = resolution.winner;
 
-    await db.transaction(async (tx) => {
-      await tx.insert(progressHistory).values({
-        id: uuidv4(),
-        userId: session.user.id,
-        bookId,
-        version: currentProgress.version,
-        progress: currentProgress.progress,
-        location: currentProgress.location,
-        scrollRatio: currentProgress.scrollRatio,
-        readingDuration: currentProgress.readingDuration,
-        deviceId: currentProgress.deviceId,
-        deviceName: null,
-        createdAt: now,
-      });
+    const sqlite = getSqlite();
+    const transaction = sqlite.transaction(() => {
+      sqlite
+        .prepare(
+          `INSERT INTO progress_history (id, user_id, book_id, version, progress, location, scroll_ratio, reading_duration, device_id, device_name, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        )
+        .run(
+          uuidv4(),
+          session.user.id,
+          bookId,
+          currentProgress.version,
+          currentProgress.progress,
+          currentProgress.location,
+          currentProgress.scrollRatio,
+          currentProgress.readingDuration,
+          currentProgress.deviceId,
+          null,
+          now
+        );
 
-      await tx.insert(progressHistory).values({
-        id: uuidv4(),
-        userId: session.user.id,
-        bookId,
-        version: clientVersion,
-        progress: clientPayload.progress,
-        location: clientPayload.location,
-        scrollRatio: clientPayload.scrollRatio,
-        readingDuration: clientPayload.readingDuration,
-        deviceId: clientPayload.deviceId,
-        deviceName: null,
-        createdAt: now,
-      });
+      sqlite
+        .prepare(
+          `INSERT INTO progress_history (id, user_id, book_id, version, progress, location, scroll_ratio, reading_duration, device_id, device_name, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        )
+        .run(
+          uuidv4(),
+          session.user.id,
+          bookId,
+          clientVersion,
+          clientPayload.progress,
+          clientPayload.location,
+          clientPayload.scrollRatio,
+          clientPayload.readingDuration,
+          clientPayload.deviceId,
+          null,
+          now
+        );
 
       const winnerLocation = "location" in winner ? winner.location : currentProgress.location;
       const winnerScrollRatio = "scrollRatio" in winner ? winner.scrollRatio : currentProgress.scrollRatio;
       const winnerReadingDuration = "readingDuration" in winner ? winner.readingDuration : currentProgress.readingDuration;
       const winnerDeviceId = "deviceId" in winner ? winner.deviceId : currentProgress.deviceId;
 
-      await tx
-        .update(readingProgress)
-        .set({
-          version: newVersion,
-          progress: winner.progress,
-          location: winnerLocation,
-          scrollRatio: winnerScrollRatio,
-          currentPage: currentPage ?? currentProgress.currentPage,
-          totalPages: totalPages ?? currentProgress.totalPages,
-          readingDuration: winnerReadingDuration,
-          deviceId: winnerDeviceId,
-          lastReadAt: now,
-          updatedAt: now,
-        })
-        .where(
-          and(
-            eq(readingProgress.userId, session.user.id),
-            eq(readingProgress.bookId, bookId)
-          )
+      sqlite
+        .prepare(
+          `UPDATE reading_progress SET version = ?, progress = ?, location = ?, scroll_ratio = ?, current_page = ?, total_pages = ?, reading_duration = ?, device_id = ?, last_read_at = ?, updated_at = ? WHERE user_id = ? AND book_id = ?`
+        )
+        .run(
+          newVersion,
+          winner.progress,
+          winnerLocation,
+          winnerScrollRatio,
+          currentPage ?? currentProgress.currentPage,
+          totalPages ?? currentProgress.totalPages,
+          winnerReadingDuration,
+          winnerDeviceId,
+          now,
+          now,
+          session.user.id,
+          bookId
         );
 
-      const historyCount = await tx
-        .select({ count: progressHistory.id })
-        .from(progressHistory)
-        .where(
-          and(
-            eq(progressHistory.userId, session.user.id),
-            eq(progressHistory.bookId, bookId)
-          )
-        );
+      const historyCount = sqlite
+        .prepare("SELECT COUNT(*) as count FROM progress_history WHERE user_id = ? AND book_id = ?")
+        .get(session.user.id, bookId) as { count: number };
 
-      if (historyCount.length > MAX_HISTORY_COUNT) {
-        const toDelete = historyCount.length - MAX_HISTORY_COUNT;
-        const oldRecords = await tx
-          .select({ id: progressHistory.id })
-          .from(progressHistory)
-          .where(
-            and(
-              eq(progressHistory.userId, session.user.id),
-              eq(progressHistory.bookId, bookId)
-            )
+      if (historyCount.count > MAX_HISTORY_COUNT) {
+        const toDelete = historyCount.count - MAX_HISTORY_COUNT;
+        const oldRecords = sqlite
+          .prepare(
+            `SELECT id FROM progress_history WHERE user_id = ? AND book_id = ? ORDER BY created_at ASC LIMIT ? OFFSET ?`
           )
-          .orderBy(desc(progressHistory.createdAt))
-          .limit(toDelete)
-          .offset(MAX_HISTORY_COUNT);
+          .all(session.user.id, bookId, toDelete, MAX_HISTORY_COUNT) as { id: string }[];
 
         for (const record of oldRecords) {
-          await tx
-            .delete(progressHistory)
-            .where(eq(progressHistory.id, record.id));
+          sqlite.prepare("DELETE FROM progress_history WHERE id = ?").run(record.id);
         }
       }
     });
+
+    transaction();
 
     logger.info("api", "[Progress Sync] Conflict resolved", {
       userId: session.user.id,

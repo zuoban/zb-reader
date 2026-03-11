@@ -314,6 +314,10 @@ export const db = new Proxy({} as ReturnType<typeof drizzle<typeof schema>>, {
   },
 });
 
+export function getDb() {
+  return getConnection().db;
+}
+
 export function getSqlite() {
   return getConnection().sqlite;
 }
