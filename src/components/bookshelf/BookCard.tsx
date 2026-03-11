@@ -12,7 +12,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { BookOpen, MoreVertical, Trash2 } from "lucide-react";
 import type { Book } from "@/lib/db/schema";
-import { formatBytes } from "@/lib/book-cache";
+import { formatBytes } from "@/lib/utils";
 
 interface BookCardProps {
   book: Book;
