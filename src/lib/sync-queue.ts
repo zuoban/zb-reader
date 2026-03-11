@@ -115,6 +115,10 @@ export class SyncQueue {
     return this.queue.length;
   }
 
+  isSyncing(): boolean {
+    return this.syncing;
+  }
+
   getPendingItems(): SyncItem[] {
     return [...this.queue];
   }

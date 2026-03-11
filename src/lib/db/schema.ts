@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real, unique } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, unique, index } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 
 export const users = sqliteTable("users", {
@@ -69,6 +69,8 @@ export const readingProgress = sqliteTable(
   },
   (table) => ({
     userBookUnique: unique().on(table.userId, table.bookId),
+    userIdIdx: index("idx_reading_progress_user_id").on(table.userId),
+    lastReadAtIdx: index("idx_reading_progress_last_read_at").on(table.lastReadAt),
   })
 );
 

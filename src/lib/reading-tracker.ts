@@ -10,19 +10,22 @@ export class ReadingTracker {
   private onAccumulate?: (duration: number) => void;
   private intervalId: ReturnType<typeof setInterval> | null = null;
   private isTracking = false;
+  private boundVisibilityHandler: () => void;
 
   constructor(options: ReadingTrackerOptions = {}) {
     this.accumulateInterval = options.accumulateInterval ?? 30000;
     this.onAccumulate = options.onAccumulate;
 
+    this.boundVisibilityHandler = () => {
+      if (document.visibilityState === "visible") {
+        this.resume();
+      } else {
+        this.pause();
+      }
+    };
+
     if (typeof window !== "undefined") {
-      document.addEventListener("visibilitychange", () => {
-        if (document.visibilityState === "visible") {
-          this.resume();
-        } else {
-          this.pause();
-        }
-      });
+      document.addEventListener("visibilitychange", this.boundVisibilityHandler);
     }
   }
 
@@ -102,5 +105,8 @@ export class ReadingTracker {
   destroy(): void {
     this.pause();
     this.onAccumulate = undefined;
+    if (typeof window !== "undefined") {
+      document.removeEventListener("visibilitychange", this.boundVisibilityHandler);
+    }
   }
 }

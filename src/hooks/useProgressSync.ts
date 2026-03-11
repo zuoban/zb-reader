@@ -6,6 +6,14 @@ import { ReadingTracker } from "@/lib/reading-tracker";
 import type { ProgressUpdate } from "@/lib/local-progress";
 import type { ProgressHistory } from "@/lib/db/schema";
 
+interface ProgressQueueEventDetail {
+  pendingCount: number;
+}
+
+interface ProgressSyncStateEventDetail {
+  syncing: boolean;
+}
+
 export interface UseProgressSyncReturn {
   localVersion: number;
   serverVersion: number;
@@ -34,13 +42,15 @@ export function useProgressSync(bookId: string): UseProgressSyncReturn {
 
     const handleQueueChange = (e: Event) => {
       if (e instanceof CustomEvent) {
-        setPendingSync((e as any).detail.pendingCount > 0);
+        const detail = e.detail as ProgressQueueEventDetail;
+        setPendingSync(detail.pendingCount > 0);
       }
     };
 
     const handleSyncState = (e: Event) => {
       if (e instanceof CustomEvent) {
-        setIsSyncing((e as any).detail.syncing);
+        const detail = e.detail as ProgressSyncStateEventDetail;
+        setIsSyncing(detail.syncing);
       }
     };
 

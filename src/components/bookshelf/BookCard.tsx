@@ -12,6 +12,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { BookOpen, MoreVertical, Trash2 } from "lucide-react";
 import type { Book } from "@/lib/db/schema";
+import { formatBytes } from "@/lib/book-cache";
 
 interface BookCardProps {
   book: Book;
@@ -21,12 +22,6 @@ interface BookCardProps {
 }
 
 export function BookCard({ book, progress = 0, lastReadAt, onDelete }: BookCardProps) {
-  const formatSize = (bytes: number) => {
-    if (bytes < 1024) return bytes + " B";
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
-    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
-  };
-
   const formatLastRead = (dateStr?: string) => {
     if (!dateStr) return null;
     const date = new Date(dateStr);
@@ -149,7 +144,7 @@ export function BookCard({ book, progress = 0, lastReadAt, onDelete }: BookCardP
               </p>
             )}
             <p className="text-xs text-muted-foreground mt-0.5 hidden sm:block">
-              {formatSize(book.fileSize)}
+              {formatBytes(book.fileSize)}
             </p>
           </div>
 

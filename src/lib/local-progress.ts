@@ -7,6 +7,14 @@ const DB_NAME = "zb-reader-progress";
 const DB_VERSION = 1;
 const PROGRESS_STORE = "progress";
 
+interface ProgressQueueEventDetail {
+  pendingCount: number;
+}
+
+interface ProgressSyncStateEventDetail {
+  syncing: boolean;
+}
+
 export interface LocalProgress {
   bookId: string;
   version: number;
@@ -224,13 +232,16 @@ export class LocalProgressManager {
   }
 
   isSyncing(): boolean {
-    return (this.syncQueue as any).syncing || false;
+    return this.syncQueue.isSyncing();
   }
 
   onQueueChange(callback: (count: number) => void): () => void {
     const handler = (e: Event) => {
-      if (e instanceof CustomEvent && e.type === "progress-queue-change") {
-        callback((e as any).detail.pendingCount);
+      if (e instanceof CustomEvent) {
+        const detail = e.detail as ProgressQueueEventDetail;
+        if (detail?.pendingCount !== undefined) {
+          callback(detail.pendingCount);
+        }
       }
     };
 
@@ -242,8 +253,11 @@ export class LocalProgressManager {
 
   onSyncStateChange(callback: (syncing: boolean) => void): () => void {
     const handler = (e: Event) => {
-      if (e instanceof CustomEvent && e.type === "progress-sync-state") {
-        callback((e as any).detail.syncing);
+      if (e instanceof CustomEvent) {
+        const detail = e.detail as ProgressSyncStateEventDetail;
+        if (detail?.syncing !== undefined) {
+          callback(detail.syncing);
+        }
       }
     };
 

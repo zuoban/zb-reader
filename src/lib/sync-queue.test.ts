@@ -3,9 +3,13 @@ import { SyncQueue, getSyncQueue, type SyncItem } from './sync-queue';
 
 describe('sync-queue', () => {
   let syncQueue: SyncQueue;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockSyncFn: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockOnSyncComplete: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockOnSyncError: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockOnQueueChange: any;
 
   beforeEach(() => {
