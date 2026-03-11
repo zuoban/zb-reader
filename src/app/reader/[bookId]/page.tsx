@@ -342,6 +342,8 @@ function ReaderContent() {
   }, []);
 
   useEffect(() => {
+    if (!settings.loaded) return;
+
     const loadVoices = async () => {
       try {
         const res = await fetch("/api/tts/microsoft/voices");
@@ -362,7 +364,7 @@ function ReaderContent() {
     };
 
     loadVoices();
-  }, []);
+  }, [settings.loaded]);
 
   // Progress saving is now handled by useProgressSyncCompat hook
   // Use saveProgress() and debouncedSaveProgress() from the hook
