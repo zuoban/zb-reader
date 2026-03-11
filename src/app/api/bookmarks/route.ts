@@ -56,19 +56,17 @@ export async function POST(req: NextRequest) {
 
     const id = uuidv4();
 
-    await db.insert(bookmarks).values({
-      id,
-      userId: session.user.id,
-      bookId,
-      location: typeof location === "string" ? location : JSON.stringify(location),
-      label: label || `书签 ${new Date().toLocaleString("zh-CN")}`,
-      pageNumber,
-      progress,
-    });
-
-    const bookmark = await db.query.bookmarks.findFirst({
-      where: eq(bookmarks.id, id),
-    });
+    const [bookmark] = await db.insert(bookmarks)
+      .values({
+        id,
+        userId: session.user.id,
+        bookId,
+        location: typeof location === "string" ? location : JSON.stringify(location),
+        label: label || `书签 ${new Date().toLocaleString("zh-CN")}`,
+        pageNumber,
+        progress,
+      })
+      .returning();
 
     return NextResponse.json({ bookmark }, { status: 201 });
   } catch (error) {

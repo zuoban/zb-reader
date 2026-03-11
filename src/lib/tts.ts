@@ -128,7 +128,8 @@ function evaluateArithmeticExpression(
   }
 
   try {
-    const value = Function(`"use strict"; return (${replaced});`)() as number;
+    const tokens = replaced.match(/[0-9.]+|[+\-*/()]/g) ?? [];
+    const value = evaluateSimpleExpression(tokens);
     if (typeof value === "number" && Number.isFinite(value)) {
       return String(value);
     }
@@ -136,6 +137,53 @@ function evaluateArithmeticExpression(
   } catch {
     return expression;
   }
+}
+
+function evaluateSimpleExpression(tokens: string[]): number {
+  let index = 0;
+
+  function parseTerm(): number {
+    let value = parseFactor();
+    while (tokens[index] === "*" || tokens[index] === "/") {
+      const op = tokens[index++];
+      const right = parseFactor();
+      if (op === "*") {
+        value *= right;
+      } else {
+        value /= right;
+      }
+    }
+    return value;
+  }
+
+  function parseFactor(): number {
+    let value = parsePrimary();
+    while (tokens[index] === "+" || tokens[index] === "-") {
+      const op = tokens[index++];
+      const right = parsePrimary();
+      if (op === "+") {
+        value += right;
+      } else {
+        value -= right;
+      }
+    }
+    return value;
+  }
+
+  function parsePrimary(): number {
+    const token = tokens[index++];
+    if (token === undefined) return 0;
+    if (token === "(") {
+      const value = parseTerm();
+      if (tokens[index] === ")") {
+        index++;
+      }
+      return value;
+    }
+    return parseFloat(token);
+  }
+
+  return parseTerm();
 }
 
 function evaluateLegadoExpression(

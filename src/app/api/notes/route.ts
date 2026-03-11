@@ -54,21 +54,19 @@ export async function POST(req: NextRequest) {
 
     const id = uuidv4();
 
-    await db.insert(notes).values({
-      id,
-      userId: session.user.id,
-      bookId,
-      location: typeof location === "string" ? location : JSON.stringify(location),
-      selectedText,
-      content,
-      color: color || "yellow",
-      pageNumber,
-      progress,
-    });
-
-    const note = await db.query.notes.findFirst({
-      where: eq(notes.id, id),
-    });
+    const [note] = await db.insert(notes)
+      .values({
+        id,
+        userId: session.user.id,
+        bookId,
+        location: typeof location === "string" ? location : JSON.stringify(location),
+        selectedText,
+        content,
+        color: color || "yellow",
+        pageNumber,
+        progress,
+      })
+      .returning();
 
     return NextResponse.json({ note }, { status: 201 });
   } catch (error) {
