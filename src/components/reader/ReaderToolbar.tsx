@@ -83,7 +83,7 @@ function ToolbarButton({
           {children}
         </Button>
       </TooltipTrigger>
-      <TooltipContent side="bottom" className="text-xs hidden sm:block bg-[var(--reader-card-bg)] border border-[var(--reader-border)] shadow-lg">
+      <TooltipContent side="bottom" className="text-xs hidden sm:block">
         {tooltip}
       </TooltipContent>
     </Tooltip>
