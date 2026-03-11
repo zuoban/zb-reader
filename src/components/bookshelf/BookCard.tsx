@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { memo } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ interface BookCardProps {
 }
 
 export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt, onDelete }: BookCardProps) {
+  const router = useRouter();
   const formatLastRead = (dateStr?: string) => {
     if (!dateStr) return null;
     const date = new Date(dateStr);
@@ -42,9 +44,13 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
     return date.toLocaleDateString("zh-CN", { month: "short", day: "numeric" });
   };
 
+  const handleMouseEnter = () => {
+    router.prefetch(`/reader/${book.id}`);
+  };
+
   return (
     <Card className="group relative overflow-hidden rounded-2xl border-border/70 py-0 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
-      <Link href={`/reader/${book.id}`} className="block cursor-pointer">
+      <Link href={`/reader/${book.id}`} className="block cursor-pointer" onMouseEnter={handleMouseEnter}>
         <div className="aspect-[3/4] bg-muted relative overflow-hidden">
           {book.cover ? (
             <Image
