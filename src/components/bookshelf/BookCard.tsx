@@ -47,7 +47,7 @@ export function BookCard({ book, progress = 0, lastReadAt, onDelete }: BookCardP
           {book.cover ? (
             <img
               src={`/api/books/${book.id}/cover`}
-              alt={book.title}
+              alt={book.title || "书籍封面"}
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               loading="lazy"
             />
@@ -148,11 +148,12 @@ export function BookCard({ book, progress = 0, lastReadAt, onDelete }: BookCardP
             </p>
           </div>
 
-          <DropdownMenu>
+            <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
+                aria-label="菜单"
                 className="-mr-2 h-8 w-8 shrink-0 border border-transparent transition-all duration-200 hover:border-border/90 hover:bg-accent sm:opacity-0 sm:group-hover:opacity-100"
               >
                 <MoreVertical className="h-4 w-4" />

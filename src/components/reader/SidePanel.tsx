@@ -352,6 +352,7 @@ export function SidePanel({
                           <Button
                             variant="ghost"
                             size="icon"
+                            aria-label="保存"
                             className="h-8 w-8 rounded-lg cursor-pointer"
                             style={{ color: "var(--reader-primary, #0891B2)" }}
                             onClick={() => {
@@ -367,6 +368,7 @@ export function SidePanel({
                           <Button
                             variant="ghost"
                             size="icon"
+                            aria-label="取消"
                             className="h-8 w-8 rounded-lg cursor-pointer"
                             style={{ color: "var(--reader-muted-text)" }}
                             onClick={() => setEditingBookmarkId(null)}
@@ -393,6 +395,7 @@ export function SidePanel({
                               <Button
                                 variant="ghost"
                                 size="icon"
+                                aria-label="编辑"
                                 className="h-7 w-7 rounded-lg cursor-pointer"
                                 style={{ color: "var(--reader-muted-text)" }}
                                 onClick={(e) => {
@@ -406,6 +409,7 @@ export function SidePanel({
                               <Button
                                 variant="ghost"
                                 size="icon"
+                                aria-label="删除"
                                 className="h-7 w-7 rounded-lg cursor-pointer"
                                 style={{ color: "var(--reader-destructive, #ef4444)" }}
                                 onClick={(e) => {
@@ -571,6 +575,7 @@ export function SidePanel({
                               <Button
                                 variant="ghost"
                                 size="icon"
+                                aria-label="编辑"
                                 className="h-7 w-7 rounded-lg cursor-pointer"
                                 style={{ color: "var(--reader-muted-text)" }}
                                 onClick={(e) => {
@@ -585,6 +590,7 @@ export function SidePanel({
                               <Button
                                 variant="ghost"
                                 size="icon"
+                                aria-label="删除"
                                 className="h-7 w-7 rounded-lg cursor-pointer"
                                 style={{ color: "var(--reader-destructive, #ef4444)" }}
                                 onClick={(e) => {

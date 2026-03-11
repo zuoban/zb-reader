@@ -147,6 +147,7 @@ function TextSelectionMenuInner({
               <Button
                 variant="ghost"
                 size="icon"
+                aria-label="关闭"
                 className={cn(
                   "ml-1 h-7.5 w-7.5 sm:h-8 sm:w-8 rounded-xl cursor-pointer",
                   "transition-all duration-200"
