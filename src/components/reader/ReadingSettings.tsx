@@ -37,6 +37,8 @@ interface ReadingSettingsProps {
   onTtsAutoNextChapterChange: (value: boolean) => void;
   ttsHighlightColor: string;
   onTtsHighlightColorChange: (color: string) => void;
+  ttsHighlightStyle: "background" | "indicator";
+  onTtsHighlightStyleChange: (style: "background" | "indicator") => void;
 }
 
 const themeOptions = [
@@ -259,6 +261,8 @@ export function ReadingSettings({
   onTtsAutoNextChapterChange,
   ttsHighlightColor,
   onTtsHighlightColorChange,
+  ttsHighlightStyle,
+  onTtsHighlightStyleChange,
 }: ReadingSettingsProps) {
   const themeBg = theme === "light" ? "#ffffff" : theme === "dark" ? "#1e293b" : "#f4ecd8";
 
@@ -512,6 +516,32 @@ export function ReadingSettings({
                     style={{ background: "var(--reader-card-bg)" }}
                   />
                 </button>
+              </SettingRow>
+
+              <SettingRow label="高亮样式" noBorder>
+                <div className="flex gap-1.5 p-0.5 rounded-lg" style={{ background: "color-mix(in srgb, var(--reader-text) 8%, transparent)" }}>
+                  {[
+                    { value: "indicator" as const, label: "指示条" },
+                    { value: "background" as const, label: "背景" },
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => onTtsHighlightStyleChange(option.value)}
+                      className={cn(
+                        "px-2.5 py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer",
+                        ttsHighlightStyle === option.value
+                          ? "shadow-sm"
+                          : "opacity-60 hover:opacity-80"
+                      )}
+                      style={{
+                        background: ttsHighlightStyle === option.value ? "var(--reader-card-bg)" : "transparent",
+                        color: "var(--reader-text)",
+                      }}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
               </SettingRow>
 
               <SettingRow label="高亮颜色" noBorder>

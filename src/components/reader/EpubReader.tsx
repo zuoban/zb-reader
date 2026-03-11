@@ -97,27 +97,57 @@ const TTS_INDICATOR_CSS = `
 }
 [data-tts-active='1'] .tts-progress-track {
   position: absolute;
-  left: -8px;
-  top: 0.2em;
-  bottom: 0.2em;
-  width: 4px;
-  border-radius: 2px;
-  background: rgba(148, 163, 184, 0.3);
+  left: -10px;
+  top: 0.15em;
+  bottom: 0.15em;
+  width: 3px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--tts-indicator-color, #3b82f6) 25%, transparent);
+  opacity: 0.5;
 }
 [data-tts-active='1'] .tts-progress-fill {
   position: absolute;
-  left: -8px;
-  top: 0.2em;
-  width: 4px;
-  border-radius: 2px;
+  left: -10px;
+  top: 0.15em;
+  width: 3px;
+  border-radius: 3px;
   background: var(--tts-indicator-color, #3b82f6);
-  animation: tts-pulse 1.5s ease-in-out infinite;
-  box-shadow: 0 0 4px var(--tts-indicator-color, #3b82f6);
-  transition: height 0.1s ease-out;
+  box-shadow: 
+    0 0 0 1px var(--tts-indicator-color, #3b82f6),
+    0 0 8px color-mix(in srgb, var(--tts-indicator-color, #3b82f6) 60%, transparent);
+  transition: height 0.15s ease-out, opacity 0.2s ease;
+}
+[data-tts-active='1']::before {
+  content: '';
+  position: absolute;
+  left: -14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--tts-indicator-color, #3b82f6);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  box-shadow: 0 0 6px var(--tts-indicator-color, #3b82f6);
+}
+[data-tts-active='1'] .tts-progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 3px;
+  background: linear-gradient(180deg, 
+    color-mix(in srgb, white 30%, transparent) 0%, 
+    transparent 50%,
+    color-mix(in srgb, black 20%, transparent) 100%
+  );
 }
 @keyframes tts-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.02); }
 }
 `;
 
@@ -455,6 +485,10 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         element.style.backgroundSize = "";
         element.style.backgroundRepeat = "";
         element.style.paddingBottom = "";
+        element.style.marginLeft = "";
+        element.style.marginRight = "";
+        element.style.background = "";
+        element.style.color = "";
 
         const progressTrack = element.querySelector(".tts-progress-track");
         const progressFill = element.querySelector(".tts-progress-fill");
@@ -542,10 +576,31 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       const progressPercent = Math.min(100, Math.max(0, ttsPlaybackProgress * 100));
       
       if (ttsHighlightStyle === "background") {
-        activeElement.style.background = `linear-gradient(180deg, ${ttsHighlightColor}33 ${progressPercent}%, transparent ${progressPercent}%)`;
-        activeElement.style.borderRadius = "4px";
-        activeElement.style.padding = "2px 4px";
-        activeElement.style.boxShadow = `0 0 0 2px ${ttsHighlightColor}40`;
+        const rgbColor = ttsHighlightColor.startsWith("#") 
+          ? ttsHighlightColor 
+          : "#3b82f6";
+        const r = parseInt(rgbColor.slice(1, 3), 16);
+        const g = parseInt(rgbColor.slice(3, 5), 16);
+        const b = parseInt(rgbColor.slice(5, 7), 16);
+        
+        activeElement.style.background = `linear-gradient(180deg, 
+          rgba(${r}, ${g}, ${b}, 0.12) 0%, 
+          rgba(${r}, ${g}, ${b}, 0.08) ${progressPercent}%,
+          rgba(${r}, ${g}, ${b}, 0.15) ${progressPercent}%,
+          rgba(${r}, ${g}, ${b}, 0.05) 100%
+        )`;
+        activeElement.style.borderRadius = "6px";
+        activeElement.style.padding = "4px 8px";
+        activeElement.style.marginLeft = "-8px";
+        activeElement.style.marginRight = "-8px";
+        activeElement.style.boxShadow = `
+          inset 0 1px 0 color-mix(in srgb, ${ttsHighlightColor} 20%, transparent),
+          inset 0 -1px 0 color-mix(in srgb, ${ttsHighlightColor} 15%, transparent),
+          0 0 0 1px color-mix(in srgb, ${ttsHighlightColor} 30%, transparent),
+          0 2px 8px color-mix(in srgb, ${ttsHighlightColor} 20%, transparent)
+        `;
+        activeElement.style.transition = "all 0.25s ease";
+        activeElement.style.color = `color-mix(in srgb, ${ttsHighlightColor} 90%, currentColor)`;
       } else {
         activeElement.style.backgroundColor = "";
         activeElement.style.borderRadius = "";
@@ -556,6 +611,9 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         activeElement.style.backgroundSize = "";
         activeElement.style.backgroundRepeat = "";
         activeElement.style.paddingBottom = "";
+        activeElement.style.marginLeft = "";
+        activeElement.style.marginRight = "";
+        activeElement.style.color = "";
         activeElement.style.setProperty("--tts-indicator-color", ttsHighlightColor);
       }
     }, [activeTtsParagraph, normalizeText, theme, ttsHighlightStyle, ttsHighlightColor]);

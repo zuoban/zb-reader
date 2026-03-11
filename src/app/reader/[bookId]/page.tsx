@@ -94,6 +94,7 @@ function ReaderContent() {
   const [ttsPlaybackProgress, setTtsPlaybackProgress] = useState(0);
   const [ttsAutoNextChapter, setTtsAutoNextChapter] = useState(false);
   const [ttsHighlightColor, setTtsHighlightColor] = useState("#3b82f6");
+  const [ttsHighlightStyle, setTtsHighlightStyle] = useState<"background" | "indicator">("indicator");
   const [autoScrollToActive, setAutoScrollToActive] = useState(true);
 
   // Side panel
@@ -281,6 +282,7 @@ function ReaderContent() {
             microsoftPreloadCount?: number;
             ttsAutoNextChapter?: boolean;
             ttsHighlightColor?: string;
+            ttsHighlightStyle?: "background" | "indicator";
             autoScrollToActive?: boolean;
           };
         };
@@ -318,6 +320,9 @@ function ReaderContent() {
         }
         if (typeof settings.ttsHighlightColor === "string") {
           setTtsHighlightColor(settings.ttsHighlightColor);
+        }
+        if (settings.ttsHighlightStyle === "background" || settings.ttsHighlightStyle === "indicator") {
+          setTtsHighlightStyle(settings.ttsHighlightStyle);
         }
         if (typeof settings.autoScrollToActive === "boolean") {
           setAutoScrollToActive(settings.autoScrollToActive);
@@ -360,6 +365,8 @@ function ReaderContent() {
             ttsRate,
             microsoftPreloadCount,
             ttsAutoNextChapter,
+            ttsHighlightColor,
+            ttsHighlightStyle,
             autoScrollToActive,
           }),
         });
@@ -375,7 +382,8 @@ function ReaderContent() {
     selectedBrowserVoiceId,
     ttsRate,
     ttsAutoNextChapter,
-    autoScrollToActive,
+    ttsHighlightColor,
+    ttsHighlightStyle,
   ]);
 
   useEffect(() => {
@@ -1861,6 +1869,7 @@ function ReaderContent() {
             activeTtsParagraph={activeTtsParagraph}
             ttsPlaybackProgress={ttsPlaybackProgress}
             ttsHighlightColor={ttsHighlightColor}
+            ttsHighlightStyle={ttsHighlightStyle}
             autoScrollToActive={autoScrollToActive}
           />
         )}
@@ -1952,6 +1961,8 @@ function ReaderContent() {
         onTtsAutoNextChapterChange={setTtsAutoNextChapter}
         ttsHighlightColor={ttsHighlightColor}
         onTtsHighlightColorChange={setTtsHighlightColor}
+        ttsHighlightStyle={ttsHighlightStyle}
+        onTtsHighlightStyleChange={setTtsHighlightStyle}
       />
 
       {/* Text selection menu */}
