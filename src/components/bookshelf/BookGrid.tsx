@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import type { Book } from "@/lib/db/schema";
 import { BookCard } from "./BookCard";
 import { BookOpen, Upload } from "lucide-react";
@@ -11,7 +12,7 @@ interface BookGridProps {
   onDelete: (id: string) => void;
 }
 
-export function BookGrid({ books, progressMap, lastReadAtMap, onDelete }: BookGridProps) {
+export const BookGrid = memo(function BookGrid({ books, progressMap, lastReadAtMap, onDelete }: BookGridProps) {
   if (books.length === 0) {
     return (
       <div className="section-shell flex flex-col items-center justify-center py-20">
@@ -43,4 +44,4 @@ export function BookGrid({ books, progressMap, lastReadAtMap, onDelete }: BookGr
       ))}
     </div>
   );
-}
+});

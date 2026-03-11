@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
+import { memo } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,7 +23,7 @@ interface BookCardProps {
   onDelete: (id: string) => void;
 }
 
-export function BookCard({ book, progress = 0, lastReadAt, onDelete }: BookCardProps) {
+export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt, onDelete }: BookCardProps) {
   const formatLastRead = (dateStr?: string) => {
     if (!dateStr) return null;
     const date = new Date(dateStr);
@@ -45,11 +47,12 @@ export function BookCard({ book, progress = 0, lastReadAt, onDelete }: BookCardP
       <Link href={`/reader/${book.id}`} className="block cursor-pointer">
         <div className="aspect-[3/4] bg-muted relative overflow-hidden">
           {book.cover ? (
-            <img
+            <Image
               src={`/api/books/${book.id}/cover`}
               alt={book.title || "书籍封面"}
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-              loading="lazy"
+              fill
+              sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
             />
           ) : (
             <div className="w-full h-full relative overflow-hidden">
@@ -179,4 +182,4 @@ export function BookCard({ book, progress = 0, lastReadAt, onDelete }: BookCardP
       </div>
     </Card>
   );
-}
+});
