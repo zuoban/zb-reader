@@ -15,29 +15,35 @@ export const users = sqliteTable("users", {
     .notNull(),
 });
 
-export const books = sqliteTable("books", {
-  id: text("id").primaryKey(),
-  title: text("title").notNull(),
-  author: text("author").default("未知作者"),
-  cover: text("cover"),
-  filePath: text("file_path").notNull(),
-  fileSize: integer("file_size").notNull(),
-  format: text("format", { enum: ["epub"] }).notNull(),
-  description: text("description"),
-  isbn: text("isbn"),
-  publisher: text("publisher"),
-  publishDate: text("publish_date"),
-  language: text("language"),
-  uploaderId: text("uploader_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  createdAt: text("created_at")
-    .default(sql`(datetime('now'))`)
-    .notNull(),
-  updatedAt: text("updated_at")
-    .default(sql`(datetime('now'))`)
-    .notNull(),
-});
+export const books = sqliteTable(
+  "books",
+  {
+    id: text("id").primaryKey(),
+    title: text("title").notNull(),
+    author: text("author").default("未知作者"),
+    cover: text("cover"),
+    filePath: text("file_path").notNull(),
+    fileSize: integer("file_size").notNull(),
+    format: text("format", { enum: ["epub"] }).notNull(),
+    description: text("description"),
+    isbn: text("isbn"),
+    publisher: text("publisher"),
+    publishDate: text("publish_date"),
+    language: text("language"),
+    uploaderId: text("uploader_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: text("created_at")
+      .default(sql`(datetime('now'))`)
+      .notNull(),
+    updatedAt: text("updated_at")
+      .default(sql`(datetime('now'))`)
+      .notNull(),
+  },
+  (table) => ({
+    uploaderIdIdx: index("idx_books_uploader_id").on(table.uploaderId),
+  })
+);
 
 export const readingProgress = sqliteTable(
   "reading_progress",
@@ -74,67 +80,86 @@ export const readingProgress = sqliteTable(
   })
 );
 
-export const progressHistory = sqliteTable("progress_history", {
-  id: text("id").primaryKey(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  bookId: text("book_id")
-    .notNull()
-    .references(() => books.id, { onDelete: "cascade" }),
-  version: integer("version").notNull(),
-  progress: real("progress").notNull(),
-  location: text("location"),
-  scrollRatio: real("scroll_ratio"),
-  readingDuration: integer("reading_duration").notNull(),
-  deviceId: text("device_id"),
-  deviceName: text("device_name"),
-  createdAt: text("created_at")
-    .default(sql`(datetime('now'))`)
-    .notNull(),
-});
+export const progressHistory = sqliteTable(
+  "progress_history",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    bookId: text("book_id")
+      .notNull()
+      .references(() => books.id, { onDelete: "cascade" }),
+    version: integer("version").notNull(),
+    progress: real("progress").notNull(),
+    location: text("location"),
+    scrollRatio: real("scroll_ratio"),
+    readingDuration: integer("reading_duration").notNull(),
+    deviceId: text("device_id"),
+    deviceName: text("device_name"),
+    createdAt: text("created_at")
+      .default(sql`(datetime('now'))`)
+      .notNull(),
+  },
+  (table) => ({
+    userBookIdx: index("idx_progress_history_user_book").on(table.userId, table.bookId),
+    createdAtIdx: index("idx_progress_history_created_at").on(table.createdAt),
+  })
+);
 
-export const bookmarks = sqliteTable("bookmarks", {
-  id: text("id").primaryKey(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  bookId: text("book_id")
-    .notNull()
-    .references(() => books.id, { onDelete: "cascade" }),
-  location: text("location").notNull(),
-  label: text("label"),
-  pageNumber: integer("page_number"),
-  progress: real("progress"),
-  createdAt: text("created_at")
-    .default(sql`(datetime('now'))`)
-    .notNull(),
-  updatedAt: text("updated_at")
-    .default(sql`(datetime('now'))`)
-    .notNull(),
-});
+export const bookmarks = sqliteTable(
+  "bookmarks",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    bookId: text("book_id")
+      .notNull()
+      .references(() => books.id, { onDelete: "cascade" }),
+    location: text("location").notNull(),
+    label: text("label"),
+    pageNumber: integer("page_number"),
+    progress: real("progress"),
+    createdAt: text("created_at")
+      .default(sql`(datetime('now'))`)
+      .notNull(),
+    updatedAt: text("updated_at")
+      .default(sql`(datetime('now'))`)
+      .notNull(),
+  },
+  (table) => ({
+    userBookIdx: index("idx_bookmarks_user_book").on(table.userId, table.bookId),
+  })
+);
 
-export const notes = sqliteTable("notes", {
-  id: text("id").primaryKey(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  bookId: text("book_id")
-    .notNull()
-    .references(() => books.id, { onDelete: "cascade" }),
-  location: text("location").notNull(),
-  selectedText: text("selected_text"),
-  content: text("content"),
-  color: text("color").default("yellow"),
-  pageNumber: integer("page_number"),
-  progress: real("progress"),
-  createdAt: text("created_at")
-    .default(sql`(datetime('now'))`)
-    .notNull(),
-  updatedAt: text("updated_at")
-    .default(sql`(datetime('now'))`)
-    .notNull(),
-});
+export const notes = sqliteTable(
+  "notes",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    bookId: text("book_id")
+      .notNull()
+      .references(() => books.id, { onDelete: "cascade" }),
+    location: text("location").notNull(),
+    selectedText: text("selected_text"),
+    content: text("content"),
+    color: text("color").default("yellow"),
+    pageNumber: integer("page_number"),
+    progress: real("progress"),
+    createdAt: text("created_at")
+      .default(sql`(datetime('now'))`)
+      .notNull(),
+    updatedAt: text("updated_at")
+      .default(sql`(datetime('now'))`)
+      .notNull(),
+  },
+  (table) => ({
+    userBookIdx: index("idx_notes_user_book").on(table.userId, table.bookId),
+  })
+);
 
 export const ttsConfigs = sqliteTable("tts_configs", {
   id: text("id").primaryKey(),

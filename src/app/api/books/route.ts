@@ -2,15 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { books, readingProgress } from "@/lib/db/schema";
-import { eq, and, like, or, desc, inArray, count } from "drizzle-orm";
+import { eq, and, like, or, desc, inArray, count, sql } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { saveBookFile, saveCoverImage } from "@/lib/storage";
 import { logger } from "@/lib/logger";
+import { unauthorized, badRequest, serverError } from "@/lib/api-utils";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return unauthorized();
   }
 
   const { searchParams } = new URL(req.url);
@@ -33,64 +34,77 @@ export async function GET(req: NextRequest) {
       )!;
     }
 
-    const [result, totalResult] = await Promise.all([
-      db
-        .select()
-        .from(books)
-        .where(whereClause)
-        .orderBy(desc(books.updatedAt))
-        .limit(limit)
-        .offset(offset),
-      db
-        .select({ count: count() })
-        .from(books)
-        .where(whereClause),
-    ]);
+    // 使用 leftJoin 在单次查询中获取书籍和进度
+    const result = await db
+      .select({
+        book: books,
+        progress: readingProgress.progress,
+        lastReadAt: readingProgress.lastReadAt,
+      })
+      .from(books)
+      .leftJoin(
+        readingProgress,
+        and(
+          eq(readingProgress.bookId, books.id),
+          eq(readingProgress.userId, session.user.id)
+        )
+      )
+      .where(whereClause)
+      .orderBy(desc(books.updatedAt))
+      .limit(limit)
+      .offset(offset);
+
+    const totalResult = await db
+      .select({ count: count() })
+      .from(books)
+      .where(whereClause);
 
     const total = totalResult[0]?.count ?? 0;
 
     if (!withProgress || result.length === 0) {
-      return NextResponse.json({ books: result, total, page, limit });
+      return NextResponse.json({
+        books: result.map((r) => r.book),
+        total,
+        page,
+        limit,
+      });
     }
 
-    const bookIds = result.map((b) => b.id);
-    const progressRecords = await db
-      .select()
-      .from(readingProgress)
-      .where(
-        and(
-          eq(readingProgress.userId, session.user.id),
-          inArray(readingProgress.bookId, bookIds)
-        )
-      );
-
+    // 构建进度映射
     const progressMap: Record<string, number> = {};
     const lastReadAtMap: Record<string, string> = {};
-    progressRecords.forEach((p) => {
-      progressMap[p.bookId] = p.progress;
-      lastReadAtMap[p.bookId] = p.lastReadAt;
-      logger.debug('books', 'Progress record', {
-        bookId: p.bookId,
-        progress: p.progress,
-        currentPage: p.currentPage,
-        totalPages: p.totalPages,
-      });
+    result.forEach((r) => {
+      if (r.progress !== null && r.progress !== undefined) {
+        progressMap[r.book.id] = r.progress;
+        lastReadAtMap[r.book.id] = r.lastReadAt ?? "";
+        logger.debug("books", "Progress record", {
+          bookId: r.book.id,
+          progress: r.progress,
+        });
+      }
     });
 
-    logger.debug('books', 'Final progressMap', progressMap);
-    logger.debug('books', 'Final lastReadAtMap', lastReadAtMap);
+    logger.debug("books", "Final progressMap", progressMap);
+    logger.debug("books", "Final lastReadAtMap", lastReadAtMap);
 
-    return NextResponse.json({ books: result, progressMap, lastReadAtMap, total, page, limit });
+    return NextResponse.json({
+      books: result.map((r) => r.book),
+      progressMap,
+      lastReadAtMap,
+      total,
+      page,
+      limit,
+    });
   } catch (error) {
     logger.error("books", "Failed to get books", error);
-    return NextResponse.json({ error: "获取书籍失败" }, { status: 500 });
+    return serverError("获取书籍失败");
   }
 }
 
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return unauthorized();
   }
 
   try {
@@ -98,7 +112,7 @@ export async function POST(req: NextRequest) {
     const file = formData.get("file") as File | null;
 
     if (!file) {
-      return NextResponse.json({ error: "请选择文件" }, { status: 400 });
+      return badRequest("请选择文件");
     }
 
     const fileName = file.name;
@@ -106,10 +120,7 @@ export async function POST(req: NextRequest) {
     const validFormats = ["epub"];
 
     if (!ext || !validFormats.includes(ext)) {
-      return NextResponse.json(
-        { error: "不支持的文件格式，仅支持 EPUB" },
-        { status: 400 }
-      );
+      return badRequest("不支持的文件格式，仅支持 EPUB");
     }
 
     const bookId = uuidv4();
@@ -152,7 +163,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ book }, { status: 201 });
   } catch (error) {
     logger.error("books", "Failed to upload book", error);
-    return NextResponse.json({ error: "上传失败" }, { status: 500 });
+    return serverError("上传失败");
   }
 }
 

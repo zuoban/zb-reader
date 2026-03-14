@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { readerSettings } from "@/lib/db/schema";
+import { unauthorized, serverError } from "@/lib/api-utils";
 
 interface ReaderSettingsPayload {
   fontSize?: number;
@@ -51,7 +52,7 @@ function toResponseShape(settings: typeof readerSettings.$inferSelect | null | u
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return unauthorized();
   }
 
   try {
@@ -62,14 +63,14 @@ export async function GET() {
     return NextResponse.json({ settings: toResponseShape(settings) });
   } catch (error) {
     logger.error("api", "Get reader settings error:", error);
-    return NextResponse.json({ error: "获取阅读设置失败" }, { status: 500 });
+    return serverError("获取阅读设置失败");
   }
 }
 
 export async function PUT(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return unauthorized();
   }
 
   try {
@@ -130,6 +131,6 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ settings: toResponseShape(updated) });
   } catch (error) {
     logger.error("api", "Update reader settings error:", error);
-    return NextResponse.json({ error: "更新阅读设置失败" }, { status: 500 });
+    return serverError("更新阅读设置失败");
   }
 }

@@ -5,18 +5,19 @@ import { db, getSqlite } from "@/lib/db";
 import { progressHistory } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
+import { unauthorized, badRequest, notFound, serverError } from "@/lib/api-utils";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return unauthorized();
   }
 
   try {
     const { historyId } = await req.json();
 
     if (!historyId) {
-      return NextResponse.json({ error: "缺少 historyId 参数" }, { status: 400 });
+      return badRequest("缺少 historyId 参数");
     }
 
     const historyRecord = await db.query.progressHistory.findFirst({
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (!historyRecord) {
-      return NextResponse.json({ error: "历史记录不存在" }, { status: 404 });
+      return notFound("历史记录不存在");
     }
 
     const now = new Date().toISOString();
@@ -134,6 +135,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     logger.error("api", "[Progress Restore] Error:", error);
-    return NextResponse.json({ error: "恢复失败" }, { status: 500 });
+    return serverError("恢复失败");
   }
 }

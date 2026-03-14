@@ -71,7 +71,7 @@ export default function BookshelfPage() {
     return () => clearTimeout(timer);
   }, [fetchBooks, search]);
 
-  const handleDelete = async (bookId: string) => {
+  const handleDelete = useCallback(async (bookId: string) => {
     if (!confirm("确定要删除这本书吗？")) return;
 
     try {
@@ -85,7 +85,7 @@ export default function BookshelfPage() {
     } catch {
       toast.error("删除失败");
     }
-  };
+  }, []);
 
   return (
     <div className="min-h-screen">

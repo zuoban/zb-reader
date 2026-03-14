@@ -5,18 +5,19 @@ import { db } from "@/lib/db";
 import { notes } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
+import { unauthorized, badRequest, serverError } from "@/lib/api-utils";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return unauthorized();
   }
 
   const { searchParams } = new URL(req.url);
   const bookId = searchParams.get("bookId");
 
   if (!bookId) {
-    return NextResponse.json({ error: "缺少 bookId 参数" }, { status: 400 });
+    return badRequest("缺少 bookId 参数");
   }
 
   try {
@@ -31,14 +32,14 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ notes: result });
   } catch (error) {
     logger.error("api", "Get notes error:", error);
-    return NextResponse.json({ error: "获取笔记失败" }, { status: 500 });
+    return serverError("获取笔记失败");
   }
 }
 
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return unauthorized();
   }
 
   try {
@@ -46,10 +47,7 @@ export async function POST(req: NextRequest) {
       await req.json();
 
     if (!bookId || !location) {
-      return NextResponse.json(
-        { error: "缺少必要参数" },
-        { status: 400 }
-      );
+      return badRequest("缺少必要参数");
     }
 
     const id = uuidv4();
@@ -71,6 +69,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ note }, { status: 201 });
   } catch (error) {
     logger.error("api", "Create note error:", error);
-    return NextResponse.json({ error: "创建笔记失败" }, { status: 500 });
+    return serverError("创建笔记失败");
   }
 }

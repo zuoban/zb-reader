@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import path from "path";
 import fs from "fs";
+import { unauthorized, forbidden, notFound, serverError } from "@/lib/api-utils";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const AVATAR_DIR = path.join(DATA_DIR, "avatars");
@@ -13,13 +14,13 @@ export async function GET(
 ) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return unauthorized();
   }
 
   const { userId } = await params;
 
   if (userId !== session.user.id) {
-    return NextResponse.json({ error: "无权访问" }, { status: 403 });
+    return forbidden();
   }
 
   try {
@@ -40,9 +41,9 @@ export async function GET(
       }
     }
 
-    return NextResponse.json({ error: "头像不存在" }, { status: 404 });
+    return notFound("头像不存在");
   } catch (error) {
     logger.error("api", "获取头像失败:", error);
-    return NextResponse.json({ error: "获取头像失败" }, { status: 500 });
+    return serverError("获取头像失败");
   }
 }

@@ -6,11 +6,12 @@ import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { sql } from "drizzle-orm";
+import { unauthorized, notFound, badRequest, serverError } from "@/lib/api-utils";
 
 export async function GET(_req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return unauthorized();
   }
 
   try {
@@ -19,7 +20,7 @@ export async function GET(_req: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json({ error: "用户不存在" }, { status: 404 });
+      return notFound("用户不存在");
     }
 
     const avatarUrl = user.avatar ? `/api/user/avatar/${user.id}` : null;
@@ -35,14 +36,14 @@ export async function GET(_req: NextRequest) {
     });
   } catch (error) {
     logger.error("api", "获取用户信息失败:", error);
-    return NextResponse.json({ error: "获取用户信息失败" }, { status: 500 });
+    return serverError("获取用户信息失败");
   }
 }
 
 export async function PATCH(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return unauthorized();
   }
 
   try {
@@ -54,10 +55,7 @@ export async function PATCH(req: NextRequest) {
 
     if (username !== undefined) {
       if (username.length < 2 || username.length > 20) {
-        return NextResponse.json(
-          { error: "用户名长度应在 2-20 个字符之间" },
-          { status: 400 }
-        );
+        return badRequest("用户名长度应在 2-20 个字符之间");
       }
 
       const existingUser = await db.query.users.findFirst({
@@ -77,10 +75,7 @@ export async function PATCH(req: NextRequest) {
     if (email !== undefined) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
-        return NextResponse.json(
-          { error: "邮箱格式不正确" },
-          { status: 400 }
-        );
+        return badRequest("邮箱格式不正确");
       }
 
       const existingUser = await db.query.users.findFirst({
@@ -99,10 +94,7 @@ export async function PATCH(req: NextRequest) {
 
     if (password !== undefined) {
       if (password.length < 6) {
-        return NextResponse.json(
-          { error: "密码长度至少 6 个字符" },
-          { status: 400 }
-        );
+        return badRequest("密码长度至少 6 个字符");
       }
 
       updates.password = await bcrypt.hash(password, 12);
@@ -122,7 +114,7 @@ export async function PATCH(req: NextRequest) {
     });
 
     if (!updatedUser) {
-      return NextResponse.json({ error: "用户不存在" }, { status: 404 });
+      return notFound("用户不存在");
     }
 
     return NextResponse.json({
@@ -136,6 +128,6 @@ export async function PATCH(req: NextRequest) {
     });
   } catch (error) {
     logger.error("api", "更新用户信息失败:", error);
-    return NextResponse.json({ error: "更新用户信息失败" }, { status: 500 });
+    return serverError("更新用户信息失败");
   }
 }

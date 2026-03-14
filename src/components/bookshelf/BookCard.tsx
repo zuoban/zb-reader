@@ -17,6 +17,25 @@ import { BookOpen, MoreVertical, Trash2 } from "lucide-react";
 import type { Book } from "@/lib/db/schema";
 import { formatBytes } from "@/lib/utils";
 
+// 格式化最后阅读时间
+function formatLastRead(dateStr?: string): string | null {
+  if (!dateStr) return null;
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return "刚刚";
+  if (diffMins < 60) return `${diffMins}分钟前`;
+  if (diffHours < 24) return `${diffHours}小时前`;
+  if (diffDays === 1) return "昨天";
+  if (diffDays < 7) return `${diffDays}天前`;
+
+  return date.toLocaleDateString("zh-CN", { month: "short", day: "numeric" });
+}
+
 interface BookCardProps {
   book: Book;
   progress?: number;
@@ -26,23 +45,6 @@ interface BookCardProps {
 
 export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt, onDelete }: BookCardProps) {
   const router = useRouter();
-  const formatLastRead = (dateStr?: string) => {
-    if (!dateStr) return null;
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return "刚刚";
-    if (diffMins < 60) return `${diffMins}分钟前`;
-    if (diffHours < 24) return `${diffHours}小时前`;
-    if (diffDays === 1) return "昨天";
-    if (diffDays < 7) return `${diffDays}天前`;
-    
-    return date.toLocaleDateString("zh-CN", { month: "short", day: "numeric" });
-  };
 
   const handleMouseEnter = () => {
     router.prefetch(`/reader/${book.id}`);

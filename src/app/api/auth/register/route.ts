@@ -5,38 +5,38 @@ import { eq, or } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
 import { logger } from "@/lib/logger";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { badRequest, serverError } from "@/lib/api-utils";
 
 export async function POST(req: NextRequest) {
+  // 速率限制检查：每分钟 3 次
+  const rateLimitResponse = checkRateLimit(req, {
+    limit: 3,
+    window: 60,
+    message: "注册请求过于频繁，请1分钟后再试",
+  });
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
+
   try {
     const { username, email, password } = await req.json();
 
     if (!username || !email || !password) {
-      return NextResponse.json(
-        { error: "用户名、邮箱和密码不能为空" },
-        { status: 400 }
-      );
+      return badRequest("用户名、邮箱和密码不能为空");
     }
 
     if (username.length < 2 || username.length > 20) {
-      return NextResponse.json(
-        { error: "用户名长度应在 2-20 个字符之间" },
-        { status: 400 }
-      );
+      return badRequest("用户名长度应在 2-20 个字符之间");
     }
 
     if (password.length < 6) {
-      return NextResponse.json(
-        { error: "密码长度至少 6 个字符" },
-        { status: 400 }
-      );
+      return badRequest("密码长度至少 6 个字符");
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: "邮箱格式不正确" },
-        { status: 400 }
-      );
+      return badRequest("邮箱格式不正确");
     }
 
     // Check if username or email already exists
@@ -73,9 +73,6 @@ export async function POST(req: NextRequest) {
     );
   } catch (error) {
     logger.error("register", "注册失败", error);
-    return NextResponse.json(
-      { error: "注册失败，请稍后再试" },
-      { status: 500 }
-    );
+    return serverError("注册失败，请稍后再试");
   }
 }

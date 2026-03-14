@@ -4,18 +4,19 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { readingProgress } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
+import { unauthorized, badRequest, serverError } from "@/lib/api-utils";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return unauthorized();
   }
 
   const { searchParams } = new URL(req.url);
   const bookId = searchParams.get("bookId");
 
   if (!bookId) {
-    return NextResponse.json({ error: "缺少 bookId 参数" }, { status: 400 });
+    return badRequest("缺少 bookId 参数");
   }
 
   try {
@@ -44,6 +45,6 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     logger.error("api", "Get progress error:", error);
-    return NextResponse.json({ error: "获取进度失败" }, { status: 500 });
+    return serverError("获取进度失败");
   }
 }

@@ -6,13 +6,14 @@ import { readingProgress, books } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { resolveConflict, type ClientProgress } from "@/lib/conflict-resolver";
+import { unauthorized, badRequest, notFound, serverError } from "@/lib/api-utils";
 
 const MAX_HISTORY_COUNT = 50;
 
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return unauthorized();
   }
 
   try {
@@ -38,11 +39,11 @@ export async function POST(req: NextRequest) {
     });
 
     if (!bookId) {
-      return NextResponse.json({ error: "缺少 bookId 参数" }, { status: 400 });
+      return badRequest("缺少 bookId 参数");
     }
 
     if (typeof clientVersion !== "number") {
-      return NextResponse.json({ error: "缺少 clientVersion 参数" }, { status: 400 });
+      return badRequest("缺少 clientVersion 参数");
     }
 
     const bookExists = await db.query.books.findFirst({
@@ -50,7 +51,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (!bookExists) {
-      return NextResponse.json({ error: "书籍不存在" }, { status: 404 });
+      return notFound("书籍不存在");
     }
 
     const currentProgress = await db.query.readingProgress.findFirst({
@@ -237,6 +238,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     logger.error("api", "[Progress Sync] Error:", error);
-    return NextResponse.json({ error: "同步失败" }, { status: 500 });
+    return serverError("同步失败");
   }
 }

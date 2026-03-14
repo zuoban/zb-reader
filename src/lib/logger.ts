@@ -8,8 +8,10 @@ function formatMessage(level: LogLevel, context: string): string {
 
 function shouldLog(level: LogLevel): boolean {
   if (process.env.NODE_ENV === "production") {
-    return level === "error";
+    // 生产环境记录 warn 和 error 级别
+    return level === "warn" || level === "error";
   }
+  // 开发环境记录所有级别
   return true;
 }
 

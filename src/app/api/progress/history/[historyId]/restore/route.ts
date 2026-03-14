@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { readingProgress, progressHistory } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
+import { unauthorized, notFound, serverError } from "@/lib/api-utils";
 
 export async function POST(
   req: NextRequest,
@@ -11,7 +12,7 @@ export async function POST(
 ) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return unauthorized();
   }
 
   const { historyId } = await params;
@@ -29,7 +30,7 @@ export async function POST(
       .limit(1);
 
     if (history.length === 0) {
-      return NextResponse.json({ error: "历史记录不存在" }, { status: 404 });
+      return notFound("历史记录不存在");
     }
 
     const historyItem = history[0];
@@ -75,6 +76,6 @@ export async function POST(
     });
   } catch (error) {
     logger.error("api", "[Progress History Restore] Error:", error);
-    return NextResponse.json({ error: "恢复失败" }, { status: 500 });
+    return serverError("恢复失败");
   }
 }

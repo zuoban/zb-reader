@@ -302,7 +302,9 @@ function ReaderContent() {
     
     // Release wake lock
     if (wakeLockRef.current) {
-      wakeLockRef.current.release().catch(() => {});
+      wakeLockRef.current.release().catch((err) => {
+        logger.warn("reader", "Failed to release wake lock", err);
+      });
       wakeLockRef.current = null;
     }
     
@@ -1236,7 +1238,9 @@ function ReaderContent() {
     if (isSpeaking) {
       if (isPaused) {
         if (currentAudioRef.current) {
-          currentAudioRef.current.play().catch(() => {});
+          currentAudioRef.current.play().catch((err) => {
+            logger.warn("tts", "Failed to resume audio", err);
+          });
         }
         setIsPaused(false);
       } else {

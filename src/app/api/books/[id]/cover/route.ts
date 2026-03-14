@@ -6,6 +6,7 @@ import { eq, and } from "drizzle-orm";
 import { getCoverFilePath, coverExists } from "@/lib/storage";
 import { logger } from "@/lib/logger";
 import fs from "fs";
+import { unauthorized, notFound, serverError } from "@/lib/api-utils";
 
 export async function GET(
   _req: NextRequest,
@@ -13,7 +14,7 @@ export async function GET(
 ) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return unauthorized();
   }
 
   const { id } = await params;
@@ -24,11 +25,11 @@ export async function GET(
     });
 
     if (!book || !book.cover) {
-      return NextResponse.json({ error: "封面不存在" }, { status: 404 });
+      return notFound("封面不存在");
     }
 
     if (!coverExists(book.cover)) {
-      return NextResponse.json({ error: "封面文件不存在" }, { status: 404 });
+      return notFound("封面文件不存在");
     }
 
     const coverPath = getCoverFilePath(book.cover);
@@ -42,6 +43,6 @@ export async function GET(
     });
   } catch (error) {
     logger.error("book-cover", "Failed to get cover", error);
-    return NextResponse.json({ error: "获取封面失败" }, { status: 500 });
+    return serverError("获取封面失败");
   }
 }

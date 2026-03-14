@@ -6,6 +6,7 @@ import { eq, and } from "drizzle-orm";
 import { getBookFilePath, bookFileExists } from "@/lib/storage";
 import { logger } from "@/lib/logger";
 import fs from "fs";
+import { unauthorized, notFound, serverError } from "@/lib/api-utils";
 
 export async function GET(
   _req: NextRequest,
@@ -13,7 +14,7 @@ export async function GET(
 ) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return unauthorized();
   }
 
   const { id } = await params;
@@ -24,11 +25,11 @@ export async function GET(
     });
 
     if (!book) {
-      return NextResponse.json({ error: "书籍不存在" }, { status: 404 });
+      return notFound("书籍不存在");
     }
 
     if (!bookFileExists(book.filePath)) {
-      return NextResponse.json({ error: "文件不存在" }, { status: 404 });
+      return notFound("文件不存在");
     }
 
     const filePath = getBookFilePath(book.filePath);
@@ -48,6 +49,6 @@ export async function GET(
     });
   } catch (error) {
     logger.error("book-file", "Failed to get book file", error);
-    return NextResponse.json({ error: "获取文件失败" }, { status: 500 });
+    return serverError("获取文件失败");
   }
 }

@@ -5,6 +5,7 @@ import { books } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { deleteBookFile, deleteCoverImage } from "@/lib/storage";
 import { logger } from "@/lib/logger";
+import { unauthorized, notFound, serverError } from "@/lib/api-utils";
 
 export async function GET(
   _req: NextRequest,
@@ -12,7 +13,7 @@ export async function GET(
 ) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return unauthorized();
   }
 
   const { id } = await params;
@@ -23,13 +24,13 @@ export async function GET(
     });
 
     if (!book) {
-      return NextResponse.json({ error: "书籍不存在" }, { status: 404 });
+      return notFound("书籍不存在");
     }
 
     return NextResponse.json({ book });
   } catch (error) {
     logger.error("book", "Failed to get book", error);
-    return NextResponse.json({ error: "获取书籍失败" }, { status: 500 });
+    return serverError("获取书籍失败");
   }
 }
 
@@ -39,7 +40,7 @@ export async function DELETE(
 ) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return unauthorized();
   }
 
   const { id } = await params;
@@ -50,7 +51,7 @@ export async function DELETE(
     });
 
     if (!book) {
-      return NextResponse.json({ error: "书籍不存在" }, { status: 404 });
+      return notFound("书籍不存在");
     }
 
     deleteBookFile(book.filePath);
@@ -63,6 +64,6 @@ export async function DELETE(
     return NextResponse.json({ message: "删除成功" });
   } catch (error) {
     logger.error("book", "Failed to delete book", error);
-    return NextResponse.json({ error: "删除失败" }, { status: 500 });
+    return serverError("删除失败");
   }
 }

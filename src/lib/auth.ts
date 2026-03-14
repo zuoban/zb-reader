@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
+import { checkFailedLoginLimit, resetFailedLoginCount } from "@/lib/rate-limit";
 
 declare module "next-auth" {
   interface Session {
@@ -46,6 +47,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
 
         const login = credentials.login as string;
+
+        // 检查登录失败次数限制（5次失败后锁定5分钟）
+        const lockRemaining = checkFailedLoginLimit(login);
+        if (lockRemaining !== null) {
+          throw new Error(`登录尝试过多，请 ${lockRemaining} 秒后重试`);
+        }
+
         const password = credentials.password as string;
 
         const user = await db.query.users.findFirst({
@@ -62,6 +70,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (!isValid) {
           return null;
         }
+
+        // 登录成功，重置失败计数
+        resetFailedLoginCount(login);
 
         return {
           id: user.id,
@@ -96,6 +107,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       session.user.email = token.email as string;
       session.user.avatar = token.avatar as string | null;
       return session;
+    },
+  },
+  events: {
+    async signIn({ user }) {
+      // 登录成功时重置失败计数（如果用户存在）
+      // 注意：由于登录成功后用户信息已经返回，前端可以处理重置
     },
   },
   pages: {

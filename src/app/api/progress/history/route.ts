@@ -4,11 +4,12 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { progressHistory } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
+import { unauthorized, badRequest, serverError } from "@/lib/api-utils";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return unauthorized();
   }
 
   const { searchParams } = new URL(req.url);
@@ -16,7 +17,7 @@ export async function GET(req: NextRequest) {
   const limit = Math.min(parseInt(searchParams.get("limit") || "50"), 50);
 
   if (!bookId) {
-    return NextResponse.json({ error: "缺少 bookId 参数" }, { status: 400 });
+    return badRequest("缺少 bookId 参数");
   }
 
   try {
@@ -48,6 +49,6 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     logger.error("api", "[Progress History] Error:", error);
-    return NextResponse.json({ error: "获取历史失败" }, { status: 500 });
+    return serverError("获取历史失败");
   }
 }

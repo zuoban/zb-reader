@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { notes } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
+import { unauthorized, notFound, serverError } from "@/lib/api-utils";
 
 export async function PUT(
   req: NextRequest,
@@ -11,7 +12,7 @@ export async function PUT(
 ) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return unauthorized();
   }
 
   const { id } = await params;
@@ -24,7 +25,7 @@ export async function PUT(
     });
 
     if (!note) {
-      return NextResponse.json({ error: "笔记不存在" }, { status: 404 });
+      return notFound("笔记不存在");
     }
 
     const now = new Date().toISOString().replace("T", " ").replace("Z", "");
@@ -45,7 +46,7 @@ export async function PUT(
     return NextResponse.json({ note: updated });
   } catch (error) {
     logger.error("api", "Update note error:", error);
-    return NextResponse.json({ error: "更新笔记失败" }, { status: 500 });
+    return serverError("更新笔记失败");
   }
 }
 
@@ -55,7 +56,7 @@ export async function DELETE(
 ) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return unauthorized();
   }
 
   const { id } = await params;
@@ -66,7 +67,7 @@ export async function DELETE(
     });
 
     if (!note) {
-      return NextResponse.json({ error: "笔记不存在" }, { status: 404 });
+      return notFound("笔记不存在");
     }
 
     await db.delete(notes).where(eq(notes.id, id));
@@ -74,6 +75,6 @@ export async function DELETE(
     return NextResponse.json({ message: "删除成功" });
   } catch (error) {
     logger.error("api", "Delete note error:", error);
-    return NextResponse.json({ error: "删除笔记失败" }, { status: 500 });
+    return serverError("删除笔记失败");
   }
 }

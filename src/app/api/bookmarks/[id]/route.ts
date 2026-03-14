@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { bookmarks } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
+import { unauthorized, notFound, serverError } from "@/lib/api-utils";
 
 export async function PUT(
   req: NextRequest,
@@ -11,7 +12,7 @@ export async function PUT(
 ) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return unauthorized();
   }
 
   const { id } = await params;
@@ -27,7 +28,7 @@ export async function PUT(
     });
 
     if (!bookmark) {
-      return NextResponse.json({ error: "书签不存在" }, { status: 404 });
+      return notFound("书签不存在");
     }
 
     const now = new Date().toISOString().replace("T", " ").replace("Z", "");
@@ -44,7 +45,7 @@ export async function PUT(
     return NextResponse.json({ bookmark: updated });
   } catch (error) {
     logger.error("api", "Update bookmark error:", error);
-    return NextResponse.json({ error: "更新书签失败" }, { status: 500 });
+    return serverError("更新书签失败");
   }
 }
 
@@ -54,7 +55,7 @@ export async function DELETE(
 ) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return unauthorized();
   }
 
   const { id } = await params;
@@ -68,7 +69,7 @@ export async function DELETE(
     });
 
     if (!bookmark) {
-      return NextResponse.json({ error: "书签不存在" }, { status: 404 });
+      return notFound("书签不存在");
     }
 
     await db.delete(bookmarks).where(eq(bookmarks.id, id));
@@ -76,6 +77,6 @@ export async function DELETE(
     return NextResponse.json({ message: "删除成功" });
   } catch (error) {
     logger.error("api", "Delete bookmark error:", error);
-    return NextResponse.json({ error: "删除书签失败" }, { status: 500 });
+    return serverError("删除书签失败");
   }
 }
