@@ -176,10 +176,9 @@ export async function POST(req: NextRequest) {
           now
         );
 
-      const winnerLocation = "location" in winner ? winner.location : currentProgress.location;
-      const winnerScrollRatio = "scrollRatio" in winner ? winner.scrollRatio : currentProgress.scrollRatio;
-      const winnerReadingDuration = "readingDuration" in winner ? winner.readingDuration : currentProgress.readingDuration;
-      const winnerDeviceId = "deviceId" in winner ? winner.deviceId : currentProgress.deviceId;
+      // 始终使用客户端的最新位置（用户当前正在阅读的位置），而不是服务器上的旧位置
+      // 只有阅读时长可能保留较长的那个
+      const finalReadingDuration = (winner as { readingDuration?: number }).readingDuration ?? clientPayload.readingDuration;
 
       sqlite
         .prepare(
@@ -187,13 +186,13 @@ export async function POST(req: NextRequest) {
         )
         .run(
           newVersion,
-          winner.progress,
-          winnerLocation,
-          winnerScrollRatio,
+          clientPayload.progress,  // 始终使用客户端的进度
+          clientPayload.location,  // 始终使用客户端的位置
+          clientPayload.scrollRatio,  // 始终使用客户端的滚动比例
           currentPage ?? currentProgress.currentPage,
           totalPages ?? currentProgress.totalPages,
-          winnerReadingDuration,
-          winnerDeviceId,
+          finalReadingDuration,
+          clientPayload.deviceId,
           now,
           now,
           session.user.id,

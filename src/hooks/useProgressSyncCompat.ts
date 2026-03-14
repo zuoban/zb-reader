@@ -56,7 +56,7 @@ export function useProgressSyncCompat(bookId: string) {
       }
 
       try {
-        updateProgress(
+        await updateProgress(
           {
             progress: progressRef.current,
             location: currentLocationRef.current,
