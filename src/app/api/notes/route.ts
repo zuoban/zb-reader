@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
 
     const id = uuidv4();
 
-    const [note] = await db.insert(notes)
+    await db.insert(notes)
       .values({
         id,
         userId: session.user.id,
@@ -63,8 +63,11 @@ export async function POST(req: NextRequest) {
         color: color || "yellow",
         pageNumber,
         progress,
-      })
-      .returning();
+      });
+
+    const note = await db.query.notes.findFirst({
+      where: eq(notes.id, id),
+    });
 
     return NextResponse.json({ note }, { status: 201 });
   } catch (error) {

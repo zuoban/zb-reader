@@ -13,11 +13,23 @@ describe('sync-queue', () => {
   let mockOnQueueChange: any;
 
   beforeEach(() => {
+    const storage = new Map<string, string>();
     vi.stubGlobal('localStorage', {
-      getItem: vi.fn(() => null),
-      setItem: vi.fn(),
-      removeItem: vi.fn(),
-      clear: vi.fn(),
+      getItem: vi.fn((key: string) => storage.get(key) ?? null),
+      setItem: vi.fn((key: string, value: string) => {
+        storage.set(key, String(value));
+      }),
+      removeItem: vi.fn((key: string) => {
+        storage.delete(key);
+      }),
+      clear: vi.fn(() => {
+        storage.clear();
+      }),
+    });
+
+    Object.defineProperty(window.navigator, "onLine", {
+      value: false,
+      configurable: true,
     });
 
     mockSyncFn = vi.fn().mockResolvedValue(undefined);
@@ -110,6 +122,11 @@ describe('sync-queue', () => {
       const item = createSyncItem();
       syncQueue.enqueue(item);
 
+      Object.defineProperty(window.navigator, "onLine", {
+        value: true,
+        configurable: true,
+      });
+
       await syncQueue.sync();
 
       expect(mockSyncFn).toHaveBeenCalledWith(item);
@@ -126,6 +143,11 @@ describe('sync-queue', () => {
       syncQueue.enqueue(item2);
       syncQueue.enqueue(item3);
 
+      Object.defineProperty(window.navigator, "onLine", {
+        value: true,
+        configurable: true,
+      });
+
       await syncQueue.sync();
 
       expect(mockSyncFn).toHaveBeenCalledTimes(3);
@@ -134,14 +156,23 @@ describe('sync-queue', () => {
       expect(mockSyncFn).toHaveBeenNthCalledWith(3, item3);
     });
 
-    it('should stop syncing on error after max retries', { timeout: 10000 }, async () => {
+    it('should stop syncing on error after max retries', async () => {
+      vi.useFakeTimers();
       const error = new Error('Sync failed');
       mockSyncFn.mockRejectedValue(error);
 
       const item = createSyncItem();
       await syncQueue.enqueue(item);
 
-      await syncQueue.sync();
+      Object.defineProperty(window.navigator, "onLine", {
+        value: true,
+        configurable: true,
+      });
+
+      const syncPromise = syncQueue.sync();
+      await vi.runAllTimersAsync();
+      await syncPromise;
+      vi.useRealTimers();
 
       expect(mockSyncFn).toHaveBeenCalledTimes(5);
       expect(mockOnSyncError).toHaveBeenCalledWith(error);
@@ -157,6 +188,11 @@ describe('sync-queue', () => {
       const item = createSyncItem();
       syncQueue.enqueue(item);
 
+      Object.defineProperty(window.navigator, "onLine", {
+        value: true,
+        configurable: true,
+      });
+
       const startTime = Date.now();
       await syncQueue.sync();
       const duration = Date.now() - startTime;
@@ -166,9 +202,14 @@ describe('sync-queue', () => {
       expect(duration).toBeGreaterThanOrEqual(2500);
     });
 
-    it('should not sync when already syncing', { timeout: 10000 }, async () => {
-      let resolveSync: (value?: unknown) => void = () => {};
-      mockSyncFn.mockImplementation(() => new Promise(resolve => { resolveSync = resolve; }));
+    it('should not sync when already syncing', async () => {
+      let resolveFirst: (value?: unknown) => void = () => {};
+      let callCount = 0;
+      const firstPromise = new Promise(resolve => { resolveFirst = resolve; });
+      mockSyncFn.mockImplementation(() => {
+        callCount += 1;
+        return callCount === 1 ? firstPromise : Promise.resolve();
+      });
 
       const item1 = createSyncItem({ bookId: 'book-1' });
       const item2 = createSyncItem({ bookId: 'book-2' });
@@ -176,10 +217,15 @@ describe('sync-queue', () => {
       await syncQueue.enqueue(item1);
       await syncQueue.enqueue(item2);
 
+      Object.defineProperty(window.navigator, "onLine", {
+        value: true,
+        configurable: true,
+      });
+
       const syncPromise1 = syncQueue.sync();
       const syncPromise2 = syncQueue.sync();
 
-      resolveSync!();
+      resolveFirst();
 
       await Promise.all([syncPromise1, syncPromise2]);
 
@@ -192,6 +238,11 @@ describe('sync-queue', () => {
 
       syncQueue.enqueue(item1);
       syncQueue.enqueue(item2);
+
+      Object.defineProperty(window.navigator, "onLine", {
+        value: true,
+        configurable: true,
+      });
 
       await syncQueue.sync();
 

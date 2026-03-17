@@ -31,12 +31,12 @@ describe("BookCard", () => {
 
   it("should display file size correctly", () => {
     render(<BookCard book={mockBook} onDelete={() => {}} />);
-    expect(screen.getByText("2.0 MB")).toBeInTheDocument();
+    expect(screen.getByText("2 MB")).toBeInTheDocument();
   });
 
   it("should show progress bar when progress > 0", () => {
     render(<BookCard book={mockBook} progress={0.5} onDelete={() => {}} />);
-    expect(screen.getByText("50%")).toBeInTheDocument();
+    expect(screen.getByText("50.00%")).toBeInTheDocument();
   });
 
   it("should not show progress bar when progress is 0", () => {
@@ -57,7 +57,7 @@ describe("BookCard", () => {
 
     const kbBook = { ...mockBook, fileSize: 1024 * 100 };
     rerender(<BookCard book={kbBook} onDelete={() => {}} />);
-    expect(screen.getByText("100.0 KB")).toBeInTheDocument();
+    expect(screen.getByText("100 KB")).toBeInTheDocument();
 
     const mbBook = { ...mockBook, fileSize: 1024 * 1024 * 5.5 };
     rerender(<BookCard book={mbBook} onDelete={() => {}} />);

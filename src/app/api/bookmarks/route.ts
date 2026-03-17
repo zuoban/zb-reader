@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
 
     const id = uuidv4();
 
-    const [bookmark] = await db.insert(bookmarks)
+    await db.insert(bookmarks)
       .values({
         id,
         userId: session.user.id,
@@ -63,8 +63,11 @@ export async function POST(req: NextRequest) {
         label: label || `书签 ${new Date().toLocaleString("zh-CN")}`,
         pageNumber,
         progress,
-      })
-      .returning();
+      });
+
+    const bookmark = await db.query.bookmarks.findFirst({
+      where: eq(bookmarks.id, id),
+    });
 
     return NextResponse.json({ bookmark }, { status: 201 });
   } catch (error) {

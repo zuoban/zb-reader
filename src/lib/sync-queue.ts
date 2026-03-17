@@ -95,6 +95,9 @@ export class SyncQueue {
               bookId: item.bookId,
             });
             this.onSyncError?.(error instanceof Error ? error : new Error(String(error)));
+            this.queue.shift();
+            await this.persistQueue();
+            this.notifyQueueChange();
             break;
           }
 
