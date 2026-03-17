@@ -10,7 +10,19 @@ const mockSelect = vi.fn(() => ({
   })),
 }));
 const mockInsert = vi.fn(() => ({
-  values: vi.fn().mockResolvedValue(undefined),
+  values: vi.fn(() => ({
+    returning: vi.fn().mockResolvedValue([{
+      id: "bookmark-1",
+      userId: "user-1",
+      bookId: "book-1",
+      location: "chapter-1",
+      label: "Test Bookmark",
+      pageNumber: 10,
+      progress: 25.5,
+      createdAt: "2024-01-01 00:00:00",
+      updatedAt: "2024-01-01 00:00:00",
+    }]),
+  })),
 }));
 
 vi.mock("@/lib/auth", () => ({

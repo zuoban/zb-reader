@@ -131,6 +131,7 @@ export class SyncQueue {
 
   private async persistQueue(): Promise<void> {
     if (typeof window === 'undefined') return;
+    if (!localStorage?.setItem) return;
 
     try {
       localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(this.queue));
@@ -141,6 +142,7 @@ export class SyncQueue {
 
   private loadFromStorage(): void {
     if (typeof window === 'undefined') return;
+    if (!localStorage?.getItem) return;
 
     try {
       const stored = localStorage.getItem(SYNC_QUEUE_KEY);

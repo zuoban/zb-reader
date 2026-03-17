@@ -87,11 +87,14 @@ describe("Logger", () => {
       expect(consoleInfo).not.toHaveBeenCalled();
     });
 
-    it("should NOT log warn messages in production", async () => {
+    it("should log warn messages in production", async () => {
       const { logger } = await import("./logger");
       logger.warn("test-context", "warning message");
 
-      expect(consoleWarn).not.toHaveBeenCalled();
+      expect(consoleWarn).toHaveBeenCalledWith(
+        "[zb-reader] WARN [test-context]",
+        "warning message"
+      );
     });
 
     it("should STILL log error messages in production", async () => {

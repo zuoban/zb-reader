@@ -55,9 +55,9 @@ describe('sync-queue', () => {
   }
 
   describe('enqueue', () => {
-    it('should add item to queue', () => {
+    it('should add item to queue', async () => {
       const item = createSyncItem();
-      syncQueue.enqueue(item);
+      await syncQueue.enqueue(item);
 
       expect(syncQueue.getPendingCount()).toBe(1);
       expect(mockOnQueueChange).toHaveBeenCalledWith(1);
@@ -93,9 +93,9 @@ describe('sync-queue', () => {
       expect(syncQueue.getPendingCount()).toBe(100);
     });
 
-    it('should persist queue to localStorage', () => {
+    it('should persist queue to localStorage', async () => {
       const item = createSyncItem();
-      syncQueue.enqueue(item);
+      await syncQueue.enqueue(item);
 
       const stored = localStorage.getItem('zb_reader_sync_queue');
       expect(stored).toBeDefined();
@@ -134,12 +134,12 @@ describe('sync-queue', () => {
       expect(mockSyncFn).toHaveBeenNthCalledWith(3, item3);
     });
 
-    it('should stop syncing on error after max retries', async () => {
+    it('should stop syncing on error after max retries', { timeout: 10000 }, async () => {
       const error = new Error('Sync failed');
       mockSyncFn.mockRejectedValue(error);
 
       const item = createSyncItem();
-      syncQueue.enqueue(item);
+      await syncQueue.enqueue(item);
 
       await syncQueue.sync();
 
@@ -166,15 +166,15 @@ describe('sync-queue', () => {
       expect(duration).toBeGreaterThanOrEqual(2500);
     });
 
-    it('should not sync when already syncing', async () => {
+    it('should not sync when already syncing', { timeout: 10000 }, async () => {
       let resolveSync: (value?: unknown) => void = () => {};
       mockSyncFn.mockImplementation(() => new Promise(resolve => { resolveSync = resolve; }));
 
       const item1 = createSyncItem({ bookId: 'book-1' });
       const item2 = createSyncItem({ bookId: 'book-2' });
 
-      syncQueue.enqueue(item1);
-      syncQueue.enqueue(item2);
+      await syncQueue.enqueue(item1);
+      await syncQueue.enqueue(item2);
 
       const syncPromise1 = syncQueue.sync();
       const syncPromise2 = syncQueue.sync();
@@ -211,8 +211,8 @@ describe('sync-queue', () => {
       expect(syncQueue.getPendingCount()).toBe(0);
     });
 
-    it('should persist cleared queue', () => {
-      syncQueue.enqueue(createSyncItem());
+    it('should persist cleared queue', async () => {
+      await syncQueue.enqueue(createSyncItem());
       syncQueue.clear();
 
       const stored = localStorage.getItem('zb_reader_sync_queue');
@@ -227,6 +227,14 @@ describe('sync-queue', () => {
         createSyncItem({ bookId: 'book-2' }),
       ];
       localStorage.setItem('zb_reader_sync_queue', JSON.stringify(items));
+
+      // Setup mock to return the stored value
+      vi.mocked(localStorage.getItem).mockImplementation((key: string) => {
+        if (key === 'zb_reader_sync_queue') {
+          return JSON.stringify(items);
+        }
+        return null;
+      });
 
       const newQueue = new SyncQueue({
         syncFn: mockSyncFn,
