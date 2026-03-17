@@ -12,16 +12,11 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return unauthorized();
-  }
-
   const { id } = await params;
 
   try {
     const book = await db.query.books.findFirst({
-      where: and(eq(books.id, id), eq(books.uploaderId, session.user.id)),
+      where: eq(books.id, id),
     });
 
     if (!book || !book.cover) {
