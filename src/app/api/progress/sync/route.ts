@@ -103,6 +103,9 @@ export async function POST(req: NextRequest) {
     if (clientVersion === currentProgress.version) {
       const newVersion = currentProgress.version + 1;
 
+      // 累加阅读时长而不是覆盖
+      const newReadingDuration = (currentProgress.readingDuration || 0) + (clientPayload.readingDuration || 0);
+
       await db
         .update(readingProgress)
         .set({
@@ -112,7 +115,7 @@ export async function POST(req: NextRequest) {
           scrollRatio: clientPayload.scrollRatio,
           currentPage: currentPage ?? null,
           totalPages: totalPages ?? null,
-          readingDuration: clientPayload.readingDuration,
+          readingDuration: newReadingDuration,
           deviceId: clientPayload.deviceId,
           lastReadAt: now,
           updatedAt: now,
@@ -177,8 +180,8 @@ export async function POST(req: NextRequest) {
         );
 
       // 始终使用客户端的最新位置（用户当前正在阅读的位置），而不是服务器上的旧位置
-      // 只有阅读时长可能保留较长的那个
-      const finalReadingDuration = (winner as { readingDuration?: number }).readingDuration ?? clientPayload.readingDuration;
+      // 阅读时长需要累加而不是选择较长的
+      const finalReadingDuration = (currentProgress.readingDuration || 0) + (clientPayload.readingDuration || 0);
 
       sqlite
         .prepare(

@@ -125,16 +125,17 @@ export function ReaderToolbar({
           visible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
         )}
       >
-        <div
-          className={cn(
-            "mx-3 mt-2 sm:mx-4 sm:mt-3 rounded-2xl border backdrop-blur-xl"
-          )}
-          style={{
-            background: "var(--reader-card-bg)",
-            borderColor: "var(--reader-border)",
-            boxShadow: "0 4px 16px -4px var(--reader-shadow), 0 2px 8px -2px var(--reader-shadow)",
-          }}
-        >
+        <div className="mx-auto max-w-4xl px-3 pt-3 sm:px-4 sm:pt-4">
+          <div
+            className={cn(
+              "rounded-2xl border backdrop-blur-xl"
+            )}
+            style={{
+              background: "var(--reader-card-bg)",
+              borderColor: "var(--reader-border)",
+              boxShadow: "0 4px 16px -4px var(--reader-shadow), 0 2px 8px -2px var(--reader-shadow)",
+            }}
+          >
           <div className="flex items-center justify-between h-12 sm:h-14 px-1 sm:px-2">
             <div className="flex items-center gap-0.5 sm:gap-1">
               <ToolbarButton onClick={onBack} tooltip="返回书架">
@@ -205,6 +206,7 @@ export function ReaderToolbar({
               {rightContent}
             </div>
           </div>
+          </div>
         </div>
       </div>
 
@@ -214,7 +216,7 @@ export function ReaderToolbar({
           visible ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
         )}
       >
-        <div className="mx-auto max-w-xl px-3 pb-3 sm:px-4 sm:pb-4">
+        <div className="mx-auto max-w-4xl px-3 pb-3 sm:px-4 sm:pb-4">
           <div
             className="relative rounded-2xl border backdrop-blur-xl overflow-hidden"
             style={{
