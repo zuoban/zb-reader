@@ -25,7 +25,7 @@ export const READER_THEME_STYLES: Record<string, ReaderThemeStyle> = {
     destructive: "#ef4444",
   },
   dark: {
-    bg: "bg-background",
+    bg: "bg-[#09090b]",
     solidBg: "#09090b",
     cardBg: "rgba(9, 9, 11, 0.95)",
     text: "#fafafa",

@@ -124,7 +124,7 @@ function TocItemRow({
           )}
           style={{
             paddingLeft: `${level * 12 + 8}px`,
-            color: isActive ? "var(--reader-primary)" : "#09090b",
+            color: isActive ? "var(--reader-primary)" : "var(--reader-text)",
             background: isActive ? "var(--reader-primary-light)" : "transparent",
           }}
           onClick={() => {
@@ -194,7 +194,8 @@ export function SidePanel({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="left"
-        className="w-[88vw] sm:w-84 p-0 border-r bg-white dark:bg-zinc-950"
+        className="w-[88vw] sm:w-84 p-0 border-r"
+        style={{ background: "var(--reader-bg)" }}
       >
         <SheetHeader className="px-4 pt-5 pb-0">
           <SheetTitle className="sr-only">侧边栏</SheetTitle>
