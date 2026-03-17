@@ -130,8 +130,8 @@ export function Navbar({ onUploadClick }: NavbarProps) {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  onClick={() => signOut({ callbackUrl: "/login" })}
+                <DropdownMenuItem
+                  onClick={() => signOut({ callbackUrl: `${window.location.origin}/login` })}
                   className="cursor-pointer text-destructive focus:text-destructive"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
