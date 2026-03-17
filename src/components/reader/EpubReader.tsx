@@ -73,20 +73,20 @@ const THEME_STYLES: Record<
 > = {
   light: {
     body: {
-      background: "#ffffff",
-      color: "#000000",
+      background: "hsl(0 0% 100%)",
+      color: "hsl(240 10% 3.9%)",
     },
   },
   dark: {
     body: {
-      background: "#1a1a2e",
-      color: "#eeeeee",
+      background: "hsl(240 10% 3.9%)",
+      color: "hsl(0 0% 98%)",
     },
   },
   sepia: {
     body: {
-      background: "#f4ecd8",
-      color: "#5b4636",
+      background: "#F5F1E8",
+      color: "#5B4636",
     },
   },
 };

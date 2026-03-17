@@ -101,9 +101,8 @@ function TocItemRow({
         {hasChildren ? (
           <button
             className={cn(
-              "shrink-0 p-1 rounded-lg transition-colors cursor-pointer"
+              "shrink-0 p-1 rounded-lg transition-colors duration-150 cursor-pointer hover:bg-[var(--reader-primary-light)] text-muted-foreground"
             )}
-            style={{ color: "var(--reader-muted-text)" }}
             onClick={(e) => {
               e.stopPropagation();
               setExpanded(!expanded);
@@ -121,16 +120,12 @@ function TocItemRow({
 
         <button
           className={cn(
-            "flex-1 text-left px-2 py-1.5 rounded-lg text-sm transition-colors truncate cursor-pointer"
+            "flex-1 text-left px-2 py-1.5 rounded-lg text-sm transition-colors duration-150 truncate cursor-pointer hover:bg-accent"
           )}
           style={{
             paddingLeft: `${level * 12 + 8}px`,
-            color: isActive
-              ? "var(--reader-primary, #0891B2)"
-              : "var(--reader-text)",
-            background: isActive
-              ? "var(--reader-primary-light, rgba(8,145,178,0.1))"
-              : "transparent",
+            color: isActive ? "var(--reader-primary)" : "#09090b",
+            background: isActive ? "var(--reader-primary-light)" : "transparent",
           }}
           onClick={() => {
             onTocItemClick(item.href);
@@ -199,12 +194,7 @@ export function SidePanel({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="left"
-        className="w-[88vw] sm:w-84 p-0 backdrop-blur-2xl border-r"
-        style={{
-          background: "var(--reader-card-bg)",
-          borderColor: "var(--reader-border)",
-          boxShadow: "8px 0 32px -8px var(--reader-shadow)",
-        }}
+        className="w-[88vw] sm:w-84 p-0 border-r bg-white dark:bg-zinc-950"
       >
         <SheetHeader className="px-4 pt-5 pb-0">
           <SheetTitle className="sr-only">侧边栏</SheetTitle>
@@ -214,35 +204,21 @@ export function SidePanel({
           onValueChange={(v) =>
             onTabChange(v as "toc" | "bookmarks" | "notes")
           }
-          className="flex flex-col h-full"
+          className="flex flex-col h-full bg-transparent"
         >
           <TabsList
-            className="mx-4 mt-2.5"
-            style={{ 
-              background: "color-mix(in srgb, var(--reader-text) 12%, transparent)",
-              borderRadius: "12px",
-              padding: "4px",
-            }}
+            className="mx-4 mt-2.5 bg-muted"
           >
             <TabsTrigger
               value="toc"
-              className="gap-1.5 flex-1"
-              style={{
-                color: "var(--reader-muted-text)",
-                borderRadius: "8px",
-                "--tw-ring-color": "var(--reader-primary, #0891B2)",
-              } as React.CSSProperties}
+              className="gap-1.5 flex-1 text-muted-foreground"
             >
               <List className="size-4" />
               <span className="hidden sm:inline">目录</span>
             </TabsTrigger>
             <TabsTrigger
               value="bookmarks"
-              className="gap-1.5 flex-1"
-              style={{ 
-                color: "var(--reader-muted-text)",
-                borderRadius: "8px",
-              }}
+              className="gap-1.5 flex-1 text-muted-foreground"
             >
               <Bookmark className="size-4" />
               <span className="hidden sm:inline">书签</span>
@@ -257,11 +233,7 @@ export function SidePanel({
             </TabsTrigger>
             <TabsTrigger
               value="notes"
-              className="gap-1.5 flex-1"
-              style={{ 
-                color: "var(--reader-muted-text)",
-                borderRadius: "8px",
-              }}
+              className="gap-1.5 flex-1 text-muted-foreground"
             >
               <StickyNote className="size-4" />
               <span className="hidden sm:inline">笔记</span>
@@ -276,21 +248,19 @@ export function SidePanel({
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="toc" className="mt-0 flex-1 overflow-hidden">
+          <TabsContent value="toc" className="mt-0 flex-1 overflow-hidden bg-transparent">
             <ScrollArea className="h-full">
-              <div className="p-3">
+              <div className="p-3" style={{ background: "transparent" }}>
                 {toc.length === 0 ? (
                   <p
-                    className="text-sm text-center py-8"
-                    style={{ color: "var(--reader-muted-text)" }}
+                    className="text-sm text-center py-8 text-muted-foreground"
                   >
                     暂无目录
                   </p>
                 ) : (
                   <>
                     <p
-                      className="text-xs px-2 mb-2"
-                      style={{ color: "var(--reader-muted-text)" }}
+                      className="text-xs px-2 mb-2 text-muted-foreground"
                     >
                       共 {countTocItems(toc)} 章
                     </p>
@@ -311,14 +281,13 @@ export function SidePanel({
 
           <TabsContent
             value="bookmarks"
-            className="mt-0 flex-1 overflow-hidden"
+            className="mt-0 flex-1 overflow-hidden bg-transparent"
           >
             <ScrollArea className="h-full">
-              <div className="p-4 space-y-2">
+              <div className="p-4 space-y-2" style={{ background: "transparent" }}>
                 {bookmarks.length === 0 ? (
                   <p
-                    className="text-sm text-center py-8"
-                    style={{ color: "var(--reader-muted-text)" }}
+                    className="text-sm text-center py-8 text-muted-foreground"
                   >
                     暂无书签
                   </p>
@@ -327,7 +296,7 @@ export function SidePanel({
                     <div
                       key={bookmark.id}
                       className={cn(
-                        "group rounded-2xl p-3.5 transition-all cursor-pointer border"
+                        "group rounded-2xl p-3.5 transition-colors duration-150 cursor-pointer border hover:border-[var(--reader-primary)]"
                       )}
                       style={{
                         background: "var(--reader-card-bg)",
@@ -354,7 +323,7 @@ export function SidePanel({
                             size="icon"
                             aria-label="保存"
                             className="h-8 w-8 rounded-lg cursor-pointer"
-                            style={{ color: "var(--reader-primary, #0891B2)" }}
+                            style={{ color: "var(--reader-primary)" }}
                             onClick={() => {
                               onBookmarkEdit(
                                 bookmark.id,
@@ -386,8 +355,7 @@ export function SidePanel({
                         >
                           <div className="flex items-start justify-between">
                             <p
-                              className="text-sm font-medium truncate flex-1"
-                              style={{ color: "var(--reader-text)" }}
+                              className="text-sm font-medium truncate flex-1 text-foreground"
                             >
                               {bookmark.label}
                             </p>
@@ -422,16 +390,10 @@ export function SidePanel({
                             </div>
                           </div>
                           <div className="flex items-center gap-2 mt-1">
-                            <span
-                              className="text-xs"
-                              style={{ color: "var(--reader-muted-text)" }}
-                            >
+                            <span className="text-xs text-muted-foreground">
                               {(bookmark.progress * 100).toFixed(2)}%
                             </span>
-                            <span
-                              className="text-xs"
-                              style={{ color: "var(--reader-muted-text)" }}
-                            >
+                            <span className="text-xs text-muted-foreground">
                               {formatDate(bookmark.createdAt)}
                             </span>
                           </div>
@@ -444,13 +406,12 @@ export function SidePanel({
             </ScrollArea>
           </TabsContent>
 
-          <TabsContent value="notes" className="mt-0 flex-1 overflow-hidden">
+          <TabsContent value="notes" className="mt-0 flex-1 overflow-hidden bg-transparent">
             <ScrollArea className="h-full">
-              <div className="p-4 space-y-2">
+              <div className="p-4 space-y-2" style={{ background: "transparent" }}>
                 {notes.length === 0 ? (
                   <p
-                    className="text-sm text-center py-8"
-                    style={{ color: "var(--reader-muted-text)" }}
+                    className="text-sm text-center py-8 text-muted-foreground"
                   >
                     暂无笔记
                   </p>
@@ -469,10 +430,9 @@ export function SidePanel({
                       {editingNoteId === note.id ? (
                         <div className="space-y-2">
                           <div
-                            className="text-xs pl-2 border-l-2 line-clamp-2 rounded"
+                            className="text-xs pl-2 border-l-2 line-clamp-2 rounded text-muted-foreground"
                             style={{
                               borderColor: editingNoteColor,
-                              color: "var(--reader-muted-text)",
                             }}
                           >
                             {note.selectedText}
@@ -482,10 +442,7 @@ export function SidePanel({
                               <button
                                 key={c}
                                 className={cn(
-                                  "size-5 rounded-full border-2 transition-transform cursor-pointer",
-                                  editingNoteColor === c
-                                    ? "scale-110"
-                                    : "border-transparent hover:scale-105"
+                                  "size-5 rounded-full border-2 transition-colors duration-150 cursor-pointer hover:opacity-90"
                                 )}
                                 style={{
                                   backgroundColor: c,
@@ -525,7 +482,7 @@ export function SidePanel({
                               size="sm"
                               className="rounded-lg cursor-pointer"
                               style={{
-                                background: "var(--reader-primary, #0891B2)",
+                                background: "var(--reader-primary)",
                                 color: "#ffffff",
                               }}
                               onClick={() => {
@@ -550,25 +507,20 @@ export function SidePanel({
                           }}
                         >
                           <div
-                            className="text-xs pl-2 border-l-2 line-clamp-2 mb-1.5 rounded"
+                            className="text-xs pl-2 border-l-2 line-clamp-2 mb-1.5 rounded text-muted-foreground"
                             style={{
                               borderColor: note.color,
-                              color: "var(--reader-muted-text)",
                             }}
                           >
                             {note.selectedText}
                           </div>
                           <p
-                            className="text-sm line-clamp-3"
-                            style={{ color: "var(--reader-text)" }}
+                            className="text-sm line-clamp-3 text-foreground"
                           >
                             {note.content}
                           </p>
                           <div className="flex items-center justify-between mt-2">
-                            <span
-                              className="text-xs"
-                              style={{ color: "var(--reader-muted-text)" }}
-                            >
+                            <span className="text-xs text-muted-foreground">
                               {formatDate(note.createdAt)}
                             </span>
                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

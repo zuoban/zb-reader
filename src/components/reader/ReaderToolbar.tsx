@@ -73,9 +73,9 @@ function ToolbarButton({
           size="icon"
           onClick={onClick}
           className={cn(
-            "cursor-pointer h-8 w-8 sm:h-9 sm:w-9 rounded-xl transition-all duration-200",
-            "hover:bg-[var(--reader-primary-light,_rgba(23,23,23,0.12))] active:scale-95",
-            isActive && "bg-[var(--reader-primary-light,_rgba(23,23,23,0.18))] text-[var(--reader-primary,_#171717)]",
+            "cursor-pointer h-8 w-8 sm:h-9 sm:w-9 rounded-xl transition-colors duration-150",
+            "hover:bg-[var(--reader-primary-light)] hover:text-[var(--reader-primary)]",
+            isActive && "bg-[var(--reader-primary-light)] text-[var(--reader-primary)]",
             className
           )}
           style={{ color: "var(--reader-text)" }}
@@ -127,12 +127,12 @@ export function ReaderToolbar({
       >
         <div
           className={cn(
-            "mx-3 mt-2 sm:mx-4 sm:mt-3 rounded-2xl sm:rounded-3xl border backdrop-blur-xl"
+            "mx-3 mt-2 sm:mx-4 sm:mt-3 rounded-2xl border backdrop-blur-xl"
           )}
           style={{
             background: "var(--reader-card-bg)",
             borderColor: "var(--reader-border)",
-            boxShadow: "0 8px 32px -12px var(--reader-shadow), 0 2px 8px -2px var(--reader-shadow), inset 0 1px 0 rgba(255,255,255,0.15)",
+            boxShadow: "0 4px 16px -4px var(--reader-shadow), 0 2px 8px -2px var(--reader-shadow)",
           }}
         >
           <div className="flex items-center justify-between h-12 sm:h-14 px-1 sm:px-2">
@@ -216,11 +216,11 @@ export function ReaderToolbar({
       >
         <div className="mx-auto max-w-xl px-3 pb-3 sm:px-4 sm:pb-4">
           <div
-            className="relative rounded-2xl sm:rounded-3xl border backdrop-blur-2xl overflow-hidden"
+            className="relative rounded-2xl border backdrop-blur-xl overflow-hidden"
             style={{
-              background: "var(--reader-card-bg, rgba(255,255,255,0.88))",
-              borderColor: "var(--reader-border, rgba(23,23,23,0.08))",
-              boxShadow: "0 16px 48px -16px rgba(0,0,0,0.2), 0 6px 16px -6px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.5)",
+              background: "var(--reader-card-bg)",
+              borderColor: "var(--reader-border)",
+              boxShadow: "0 4px 16px -4px var(--reader-shadow), 0 2px 8px -2px var(--reader-shadow)",
             }}
           >
             {/* 进度条区域 */}

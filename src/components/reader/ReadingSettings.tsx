@@ -54,7 +54,6 @@ function SettingCard({ children, className }: { children: React.ReactNode; class
       style={{
         background: "var(--reader-card-bg)",
         border: "1px solid var(--reader-border)",
-        boxShadow: "0 4px 16px -4px var(--reader-shadow), inset 0 1px 0 rgba(255,255,255,0.1)",
       }}
     >
       {children}
@@ -188,12 +187,11 @@ function SliderRow({
           onChange={(e) => onChange(Number(e.target.value))}
         />
         <div
-          className="absolute w-5 sm:w-5.5 h-5 sm:h-5.5 rounded-full pointer-events-none transition-shadow duration-200"
+          className="absolute w-5 sm:w-5.5 h-5 sm:h-5.5 rounded-full pointer-events-none transition-transform duration-150"
           style={{
             left: `calc(${percentage}% - 10px)`,
             background: "var(--reader-card-bg)",
             border: "2.5px solid var(--reader-primary)",
-            boxShadow: "0 2px 8px color-mix(in srgb, var(--reader-primary) 40%, transparent)",
           }}
         />
       </div>
@@ -414,18 +412,13 @@ export function ReadingSettings({
                   <button
                     key={option.value}
                     onClick={() => onThemeChange(option.value)}
-                    className="flex-1 flex flex-col items-center gap-2.5 sm:gap-3 pt-4 sm:pt-5 pb-3 sm:pb-3.5 rounded-2xl sm:rounded-3xl transition-all cursor-pointer relative"
+                    className="flex-1 flex flex-col items-center gap-2.5 sm:gap-3 pt-4 sm:pt-5 pb-3 sm:pb-3.5 rounded-2xl sm:rounded-3xl transition-colors duration-150 cursor-pointer relative"
                     style={{
                       background: option.bg,
                       border: isActive
                         ? "2.5px solid var(--primary)"
                         : `2px solid ${option.borderColor}`,
-                      opacity: isActive ? 1 : 0.8,
-                      transform: isActive ? "scale(1.03)" : "scale(1)",
-                      boxShadow: isActive
-                        ? "0 8px 24px color-mix(in srgb, var(--primary) 25%, transparent), inset 0 1px 0 rgba(255,255,255,0.3)"
-                        : "0 2px 8px rgba(0,0,0,0.06)",
-                      transition: "all 0.2s ease",
+                      opacity: isActive ? 1 : 0.85,
                     }}
                   >
                     {/* Active checkmark */}

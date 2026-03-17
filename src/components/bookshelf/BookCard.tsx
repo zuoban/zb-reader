@@ -52,7 +52,7 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
   };
 
   return (
-    <Card className="group relative overflow-hidden rounded-2xl border-border/70 py-0 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
+    <Card className="group relative overflow-hidden rounded-2xl border-border/70 py-0 transition-colors duration-150 hover:border-primary/40">
       <Link href={`/reader/${book.id}`} className="block cursor-pointer" onMouseEnter={handleMouseEnter}>
         <div className="aspect-[3/4] bg-muted relative overflow-hidden">
           {book.cover ? (
@@ -61,7 +61,7 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
               alt={book.title || "书籍封面"}
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
+              className="object-cover transition-transform duration-150 group-hover:scale-105"
             />
           ) : (
             <div className="w-full h-full relative overflow-hidden">
@@ -79,11 +79,9 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
               {/* 书本主体 */}
               <div className="absolute inset-0 flex items-center justify-center p-6">
                 <div className="relative">
-                  {/* 书本阴影 */}
-                  <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-28 h-4 bg-gradient-to-r from-transparent via-slate-400/20 to-transparent blur-sm rounded-full" />
-                  
+
                   {/* 书本封面 */}
-                  <div className="relative w-[4.5rem] h-[6.5rem] sm:w-24 sm:h-[8.5rem] rounded-r-md rounded-l-sm shadow-xl transform transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-1 group-hover:shadow-2xl overflow-hidden">
+                  <div className="relative w-[4.5rem] h-[6.5rem] sm:w-24 sm:h-[8.5rem] rounded-r-md rounded-l-sm transform transition-transform duration-150 group-hover:scale-105 overflow-hidden">
                     {/* 封面渐变 */}
                     <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 dark:from-indigo-600 dark:via-purple-600 dark:to-pink-600" />
                     
