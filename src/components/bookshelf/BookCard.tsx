@@ -15,7 +15,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { BookOpen, MoreVertical, Trash2 } from "lucide-react";
 import type { Book } from "@/lib/db/schema";
-import { formatBytes } from "@/lib/utils";
+import { formatBytes, formatDuration } from "@/lib/utils";
 
 // 格式化最后阅读时间
 function formatLastRead(dateStr?: string): string | null {
@@ -40,10 +40,11 @@ interface BookCardProps {
   book: Book;
   progress?: number;
   lastReadAt?: string;
+  readingDuration?: number;
   onDelete: (id: string) => void;
 }
 
-export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt, onDelete }: BookCardProps) {
+export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt, readingDuration, onDelete }: BookCardProps) {
   const router = useRouter();
 
   const handleMouseEnter = () => {
@@ -152,6 +153,11 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
             {lastReadAt && (
               <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
                 {formatLastRead(lastReadAt)}
+              </p>
+            )}
+            {readingDuration !== undefined && readingDuration > 0 && (
+              <p className="text-xs text-muted-foreground mt-0.5">
+                已读 {formatDuration(readingDuration)}
               </p>
             )}
             <p className="text-xs text-muted-foreground mt-0.5 hidden sm:block">

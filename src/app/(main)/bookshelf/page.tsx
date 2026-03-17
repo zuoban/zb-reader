@@ -9,6 +9,7 @@ import { UploadDialog } from "@/components/bookshelf/UploadDialog";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import type { Book } from "@/lib/db/schema";
+import { formatDuration } from "@/lib/utils";
 
 const SKELETON_COUNT = 8;
 
@@ -16,6 +17,7 @@ export default function BookshelfPage() {
   const [books, setBooks] = useState<Book[]>([]);
   const [progressMap, setProgressMap] = useState<Record<string, number>>({});
   const [lastReadAtMap, setLastReadAtMap] = useState<Record<string, string>>({});
+  const [readingDurationMap, setReadingDurationMap] = useState<Record<string, number>>({});
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -55,6 +57,7 @@ export default function BookshelfPage() {
         setBooks(data.books);
         setProgressMap(data.progressMap || {});
         setLastReadAtMap(data.lastReadAtMap || {});
+        setReadingDurationMap(data.readingDurationMap || {});
       }
     } catch {
       toast.error("获取书籍失败");
@@ -105,7 +108,7 @@ export default function BookshelfPage() {
                 <SearchBar value={search} onChange={setSearch} />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <div className="rounded-xl border border-border/80 bg-card/80 px-3 py-2.5">
                 <p className="text-xs text-muted-foreground">书籍总数</p>
                 <p className="mt-1 text-lg font-semibold">{books.length}</p>
@@ -116,10 +119,16 @@ export default function BookshelfPage() {
                   {Object.values(progressMap).filter((v) => v > 0 && v < 1).length}
                 </p>
               </div>
-              <div className="rounded-xl border border-border/80 bg-card/80 px-3 py-2.5 col-span-2 sm:col-span-1">
+              <div className="rounded-xl border border-border/80 bg-card/80 px-3 py-2.5">
                 <p className="text-xs text-muted-foreground">已完成</p>
                 <p className="mt-1 text-lg font-semibold">
                   {Object.values(progressMap).filter((v) => v >= 1).length}
+                </p>
+              </div>
+              <div className="rounded-xl border border-border/80 bg-card/80 px-3 py-2.5">
+                <p className="text-xs text-muted-foreground">总阅读时长</p>
+                <p className="mt-1 text-lg font-semibold">
+                  {formatDuration(Object.values(readingDurationMap).reduce((sum, d) => sum + d, 0))}
                 </p>
               </div>
             </div>
@@ -137,6 +146,7 @@ export default function BookshelfPage() {
             books={books}
             progressMap={progressMap}
             lastReadAtMap={lastReadAtMap}
+            readingDurationMap={readingDurationMap}
             onDelete={handleDelete}
           />
         )}

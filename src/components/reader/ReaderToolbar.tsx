@@ -22,7 +22,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
+import { cn, formatDuration } from "@/lib/utils";
 
 interface ReaderToolbarProps {
   visible: boolean;
@@ -30,6 +30,7 @@ interface ReaderToolbarProps {
   currentPage?: number;
   totalPages?: number;
   progress: number;
+  readingDuration?: number;
   isBookmarked: boolean;
   isFullscreen: boolean;
   onBack: () => void;
@@ -95,6 +96,7 @@ export function ReaderToolbar({
   currentPage: _currentPage,
   totalPages: _totalPages,
   progress,
+  readingDuration,
   isBookmarked,
   isFullscreen,
   onBack,
@@ -248,12 +250,19 @@ export function ReaderToolbar({
                     <span className="text-[10px] sm:text-xs font-medium tracking-wider uppercase" style={{ color: "var(--reader-muted-text, #737373)" }}>
                       阅读进度
                     </span>
-                    <span
-                      className="text-xs sm:text-sm font-semibold tabular-nums"
-                      style={{ color: "var(--reader-primary, #171717)" }}
-                    >
-                      {(progress * 100).toFixed(2)}%
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {readingDuration !== undefined && readingDuration > 0 && (
+                        <span className="text-[10px] sm:text-xs text-muted-foreground">
+                          已读 {formatDuration(readingDuration)}
+                        </span>
+                      )}
+                      <span
+                        className="text-xs sm:text-sm font-semibold tabular-nums"
+                        style={{ color: "var(--reader-primary, #171717)" }}
+                      >
+                        {(progress * 100).toFixed(2)}%
+                      </span>
+                    </div>
                   </div>
                   <div
                     className="relative w-full h-2.5 sm:h-3 rounded-full overflow-hidden"

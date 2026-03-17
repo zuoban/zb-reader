@@ -114,5 +114,6 @@ export function useProgressSyncCompat(bookId: string) {
     pendingSync,
     isSyncing,
     forceSync,
+    accumulatedDuration,
   };
 }

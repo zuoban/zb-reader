@@ -9,10 +9,11 @@ interface BookGridProps {
   books: Book[];
   progressMap: Record<string, number>;
   lastReadAtMap: Record<string, string>;
+  readingDurationMap?: Record<string, number>;
   onDelete: (id: string) => void;
 }
 
-export const BookGrid = memo(function BookGrid({ books, progressMap, lastReadAtMap, onDelete }: BookGridProps) {
+export const BookGrid = memo(function BookGrid({ books, progressMap, lastReadAtMap, readingDurationMap, onDelete }: BookGridProps) {
   if (books.length === 0) {
     return (
       <div className="section-shell flex flex-col items-center justify-center py-20">
@@ -39,6 +40,7 @@ export const BookGrid = memo(function BookGrid({ books, progressMap, lastReadAtM
           book={book}
           progress={progressMap[book.id] || 0}
           lastReadAt={lastReadAtMap[book.id]}
+          readingDuration={readingDurationMap?.[book.id]}
           onDelete={onDelete}
         />
       ))}

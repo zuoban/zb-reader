@@ -147,6 +147,7 @@ function ReaderContent() {
   const debouncedSaveProgress = progressSync.debouncedSaveProgress;
   const _pendingSync = progressSync.pendingSync;
   const _isSyncing = progressSync.isSyncing;
+  const accumulatedDuration = progressSync.accumulatedDuration;
 
   const currentCfiRef = useRef<string | null>(null);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -1718,6 +1719,7 @@ function ReaderContent() {
         currentPage={currentPage}
         totalPages={totalPages}
         progress={progress}
+        readingDuration={accumulatedDuration}
         isBookmarked={isCurrentBookmarked}
         isFullscreen={isFullscreen}
         onBack={handleBack}
