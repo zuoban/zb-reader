@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { Pause, Play, Square, SkipBack, SkipForward, LocateFixed, ListEnd, Maximize, Minimize } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -55,46 +55,10 @@ export function TtsFloatingControl({
   progress: _progress = 0,
 }: TtsFloatingControlProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isAutoTransparent, setIsAutoTransparent] = useState(false);
-  const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const clearFadeTimer = useCallback(() => {
-    if (!fadeTimerRef.current) return;
-    clearTimeout(fadeTimerRef.current);
-    fadeTimerRef.current = null;
-  }, []);
-
-  const scheduleAutoTransparent = useCallback(() => {
-    clearFadeTimer();
-
-    if (!isSpeaking || isExpanded) {
-      setTimeout(() => {
-        setIsAutoTransparent(false);
-      }, 0);
-      return;
-    }
-
-    fadeTimerRef.current = setTimeout(() => {
-      setIsAutoTransparent(true);
-    }, 1800);
-  }, [clearFadeTimer, isExpanded, isSpeaking]);
-
-  const handleInteraction = useCallback(() => {
-    if (isAutoTransparent) {
-      setIsAutoTransparent(false);
-    }
-    scheduleAutoTransparent();
-  }, [isAutoTransparent, scheduleAutoTransparent]);
-
-  useEffect(() => {
-    scheduleAutoTransparent();
-    return () => clearFadeTimer();
-  }, [clearFadeTimer, scheduleAutoTransparent]);
 
   const handleMainClick = useCallback(() => {
-    handleInteraction();
     setIsExpanded((prev) => !prev);
-  }, [handleInteraction]);
+  }, []);
 
   return (
     <div
@@ -103,10 +67,8 @@ export function TtsFloatingControl({
         "flex items-center",
         "transition-all duration-300 ease-out",
         !isSpeaking && "pointer-events-none opacity-0 translate-y-2",
-        isSpeaking && "opacity-100 translate-y-0",
-        isAutoTransparent && isSpeaking && !isExpanded && "opacity-30 scale-95"
+        isSpeaking && "opacity-100 translate-y-0"
       )}
-      onPointerEnter={handleInteraction}
     >
       {isExpanded && (
         <div
