@@ -300,6 +300,11 @@ function ReaderContent() {
     setTtsPlaybackProgress(0);
     setIsSpeaking(false);
     setIsPaused(false);
+
+    // Scroll current paragraph to top when stopping
+    if (book?.format === "epub" && autoScrollToActive) {
+      epubReaderRef.current?.scrollToActiveParagraph();
+    }
     
     // Release wake lock
     if (wakeLockRef.current) {
@@ -314,7 +319,7 @@ function ReaderContent() {
       navigator.mediaSession.playbackState = "none";
       mediaSessionSetupRef.current = false;
     }
-  }, []);
+  }, [book?.format, autoScrollToActive]);
 
   const setupMediaSession = useCallback(() => {
     if (!("mediaSession" in navigator)) return;

@@ -429,7 +429,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         }
 
         const absoluteTop = iframeOffsetTop + elementOffsetTop;
-        const targetScrollTop = absoluteTop - epubContainer.clientHeight * 0.25;
+        const targetScrollTop = absoluteTop;
         epubContainer.scrollTo({ top: Math.max(0, targetScrollTop), behavior: "smooth" });
       },
     }));
