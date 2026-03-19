@@ -11,6 +11,13 @@ export class ReadingTracker {
   private intervalId: ReturnType<typeof setInterval> | null = null;
   private isTracking = false;
   private boundVisibilityHandler: () => void;
+  
+  // 用户活跃度检测相关
+  private lastActivityTime: number = Date.now();
+  private activityTimeout: number = 3 * 60 * 1000; // 3分钟
+  private activityCheckInterval: ReturnType<typeof setInterval> | null = null;
+  private throttleTimer: ReturnType<typeof setTimeout> | null = null;
+  private activityListeners: Array<{ event: string; handler: EventListener }> = [];
 
   constructor(options: ReadingTrackerOptions = {}) {
     this.accumulateInterval = options.accumulateInterval ?? 30000;
@@ -29,15 +36,73 @@ export class ReadingTracker {
     }
   }
 
+  private setupActivityListeners(): void {
+    if (typeof window === "undefined") return;
+
+    const events = ["mousemove", "keydown", "scroll", "touchstart"];
+    const throttledHandler = () => this.handleActivity();
+
+    events.forEach((event) => {
+      const handler = throttledHandler as EventListener;
+      document.addEventListener(event, handler, { passive: true });
+      this.activityListeners.push({ event, handler });
+    });
+  }
+
+  private handleActivity(): void {
+    if (this.throttleTimer) return;
+
+    this.lastActivityTime = Date.now();
+
+    // 如果之前因无活动暂停，现在恢复
+    if (!this.isTracking && this.intervalId === null) {
+      this.resume();
+    }
+
+    this.throttleTimer = setTimeout(() => {
+      this.throttleTimer = null;
+    }, 1000);
+  }
+
+  private checkActivity(): void {
+    if (!this.isTracking) return;
+
+    const now = Date.now();
+    const timeSinceActivity = now - this.lastActivityTime;
+
+    if (timeSinceActivity > this.activityTimeout) {
+      this.pause();
+    }
+  }
+
+  private removeActivityListeners(): void {
+    this.activityListeners.forEach(({ event, handler }) => {
+      document.removeEventListener(event, handler);
+    });
+    this.activityListeners = [];
+
+    if (this.throttleTimer) {
+      clearTimeout(this.throttleTimer);
+      this.throttleTimer = null;
+    }
+  }
+
   start(): void {
     if (this.isTracking) return;
 
     this.isTracking = true;
     this.startTime = Date.now();
+    this.lastActivityTime = Date.now();
 
     this.intervalId = setInterval(() => {
       this.accumulate();
     }, this.accumulateInterval);
+
+    this.activityCheckInterval = setInterval(() => {
+      this.checkActivity();
+    }, 30000);
+
+    this.setupActivityListeners();
   }
 
   pause(): number {
@@ -46,7 +111,8 @@ export class ReadingTracker {
     }
 
     const elapsed = (Date.now() - this.startTime) / 1000;
-    this.accumulated += elapsed;
+    const cappedElapsed = Math.min(elapsed, 300);
+    this.accumulated += cappedElapsed;
     this.startTime = null;
     this.isTracking = false;
 
@@ -55,7 +121,12 @@ export class ReadingTracker {
       this.intervalId = null;
     }
 
-    return elapsed;
+    if (this.activityCheckInterval !== null) {
+      clearInterval(this.activityCheckInterval);
+      this.activityCheckInterval = null;
+    }
+
+    return cappedElapsed;
   }
 
   resume(): void {
@@ -63,6 +134,7 @@ export class ReadingTracker {
 
     this.isTracking = true;
     this.startTime = Date.now();
+    this.lastActivityTime = Date.now();
 
     if (this.intervalId !== null) {
       clearInterval(this.intervalId);
@@ -71,12 +143,25 @@ export class ReadingTracker {
     this.intervalId = setInterval(() => {
       this.accumulate();
     }, this.accumulateInterval);
+
+    if (this.activityCheckInterval !== null) {
+      clearInterval(this.activityCheckInterval);
+    }
+
+    this.activityCheckInterval = setInterval(() => {
+      this.checkActivity();
+    }, 30000);
+
+    if (this.activityListeners.length === 0) {
+      this.setupActivityListeners();
+    }
   }
 
   getAccumulated(): number {
     let total = this.accumulated;
     if (this.isTracking && this.startTime !== null) {
-      total += (Date.now() - this.startTime) / 1000;
+      const elapsed = (Date.now() - this.startTime) / 1000;
+      total += Math.min(elapsed, 300);
     }
     return Math.floor(total);
   }
@@ -96,7 +181,9 @@ export class ReadingTracker {
 
     const now = Date.now();
     const elapsed = (now - this.startTime) / 1000;
-    this.accumulated += elapsed;
+    const cappedElapsed = Math.min(elapsed, 300);
+    
+    this.accumulated += cappedElapsed;
     this.startTime = now;
 
     this.onAccumulate?.(Math.floor(this.accumulated));
@@ -104,7 +191,9 @@ export class ReadingTracker {
 
   destroy(): void {
     this.pause();
+    this.removeActivityListeners();
     this.onAccumulate = undefined;
+    
     if (typeof window !== "undefined") {
       document.removeEventListener("visibilitychange", this.boundVisibilityHandler);
     }
