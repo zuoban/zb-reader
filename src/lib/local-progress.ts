@@ -28,6 +28,7 @@ export interface LocalProgress {
   updatedAt: string;
   dirty: boolean;
   syncVersion: number;
+  lastSyncReadingDuration: number;
 }
 
 export interface ProgressUpdate {
@@ -67,7 +68,27 @@ export class LocalProgressManager {
           })
         );
       },
+      onSyncComplete: async () => {
+        // 同步成功后，更新所有书籍的 lastSyncReadingDuration
+        await this.updateLastSyncReadingDuration();
+      },
     });
+  }
+
+  private async updateLastSyncReadingDuration(): Promise<void> {
+    if (!this.db) return;
+
+    try {
+      const allProgress = await this.db.getAll(PROGRESS_STORE);
+      for (const progress of allProgress) {
+        await this.db.put(PROGRESS_STORE, {
+          ...progress,
+          lastSyncReadingDuration: progress.readingDuration,
+        });
+      }
+    } catch (error) {
+      logger.error("local-progress", "Failed to update lastSyncReadingDuration", error);
+    }
   }
 
   private async initDB(): Promise<void> {
@@ -122,6 +143,7 @@ export class LocalProgressManager {
         updatedAt: data.progress.updatedAt || new Date().toISOString(),
         dirty: false,
         syncVersion: data.progress.version || 1,
+        lastSyncReadingDuration: data.progress.readingDuration || 0,
       };
 
       await this.initPromise;
@@ -161,6 +183,7 @@ export class LocalProgressManager {
           updatedAt: new Date().toISOString(),
           dirty: false,
           syncVersion: 0,
+          lastSyncReadingDuration: 0,
         };
       }
 
@@ -184,13 +207,19 @@ export class LocalProgressManager {
 
       await this.db.put(PROGRESS_STORE, updated);
 
+      // 计算阅读时长增量（本次同步周期内增加的时长）
+      const readingDurationDelta = Math.max(
+        0,
+        (update.readingDuration ?? current.readingDuration) - current.lastSyncReadingDuration
+      );
+
       const syncItem: SyncItem = {
         bookId,
         clientVersion: updated.version,
         progress: updated.progress,
         location: updated.location,
         scrollRatio: updated.scrollRatio,
-        readingDuration: updated.readingDuration,
+        readingDuration: readingDurationDelta,
         deviceId: updated.deviceId,
         clientTimestamp: now,
         currentPage: updated.currentPage,
