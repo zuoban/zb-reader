@@ -45,6 +45,8 @@ const EpubReader = dynamic(() => import("@/components/reader/EpubReader"), {
 const MAX_TTS_RETRY_COUNT = 5;
 const TTS_RETRY_DELAY_MS = 450;
 const IS_DEV = process.env.NODE_ENV !== "production";
+const IDLE_TIMEOUT_MS = 3 * 60 * 1000;
+const IDLE_WARNING_MS = 60 * 1000;
 
 interface TocItem {
   label: string;
@@ -167,6 +169,11 @@ function ReaderContent() {
   // Wake Lock for preventing screen sleep during TTS
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   const mediaSessionSetupRef = useRef(false);
+
+  // Idle timeout
+  const [idleCountdown, setIdleCountdown] = useState<number | null>(null);
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const idleWarningRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const wait = useCallback((ms: number) => {
     return new Promise<void>((resolve) => {
@@ -443,6 +450,78 @@ function ReaderContent() {
       router.push("/bookshelf");
     }
   }, [saveProgress, router]);
+
+  // ---- Idle timeout: 5 minutes no activity -> return to bookshelf ----
+  const resetIdleTimer = useCallback(() => {
+    if (idleTimerRef.current) {
+      clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = null;
+    }
+    if (idleWarningRef.current) {
+      clearTimeout(idleWarningRef.current);
+      idleWarningRef.current = null;
+    }
+    setIdleCountdown(null);
+
+    // Warning: 1 minute before timeout
+    idleWarningRef.current = setTimeout(() => {
+      setIdleCountdown(60);
+    }, IDLE_TIMEOUT_MS - IDLE_WARNING_MS);
+
+    // Timeout: return to bookshelf
+    idleTimerRef.current = setTimeout(() => {
+      handleBack();
+    }, IDLE_TIMEOUT_MS);
+  }, [handleBack]);
+
+  useEffect(() => {
+    // Disable idle timeout during TTS
+    if (isSpeaking) {
+      if (idleTimerRef.current) {
+        clearTimeout(idleTimerRef.current);
+        idleTimerRef.current = null;
+      }
+      if (idleWarningRef.current) {
+        clearTimeout(idleWarningRef.current);
+        idleWarningRef.current = null;
+      }
+      setIdleCountdown(null);
+      return;
+    }
+
+    const events = ['mousedown', 'scroll', 'keydown', 'touchstart', 'mousemove'];
+    events.forEach((e) => document.addEventListener(e, resetIdleTimer));
+    resetIdleTimer();
+
+    return () => {
+      if (idleTimerRef.current) {
+        clearTimeout(idleTimerRef.current);
+        idleTimerRef.current = null;
+      }
+      if (idleWarningRef.current) {
+        clearTimeout(idleWarningRef.current);
+        idleWarningRef.current = null;
+      }
+      events.forEach((e) => document.removeEventListener(e, resetIdleTimer));
+    };
+  }, [isSpeaking, resetIdleTimer]);
+
+  // Countdown display
+  useEffect(() => {
+    if (idleCountdown === null || idleCountdown <= 0) return;
+
+    const interval = setInterval(() => {
+      setIdleCountdown((prev) => {
+        if (prev === null || prev <= 1) {
+          clearInterval(interval);
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [idleCountdown]);
 
   // ---- Esc key to go back ----
   useEffect(() => {
@@ -1855,6 +1934,22 @@ function ReaderContent() {
         onAutoScrollToActiveChange={settings.setAutoScrollToActive}
         progress={progress}
       />
+
+      {/* Idle countdown warning */}
+      {idleCountdown !== null && idleCountdown > 0 && (
+        <div
+          className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-full shadow-lg animate-pulse"
+          style={{
+            background: "var(--reader-card-bg)",
+            border: "1px solid var(--reader-border)",
+            color: "var(--reader-text)",
+          }}
+        >
+          <span className="text-sm font-medium">
+            即将返回书架 ({idleCountdown}秒)
+          </span>
+        </div>
+      )}
 
       <Toaster />
     </div>
