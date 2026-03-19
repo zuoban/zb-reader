@@ -90,6 +90,13 @@ export default function BookshelfPage() {
     }
   }, []);
 
+  const handleDurationUpdate = useCallback((bookId: string, newDuration: number) => {
+    setReadingDurationMap((prev) => ({
+      ...prev,
+      [bookId]: newDuration,
+    }));
+  }, []);
+
   return (
     <div className="min-h-screen">
       <Navbar onUploadClick={() => setUploadOpen(true)} />
@@ -148,6 +155,7 @@ export default function BookshelfPage() {
             lastReadAtMap={lastReadAtMap}
             readingDurationMap={readingDurationMap}
             onDelete={handleDelete}
+            onDurationUpdate={handleDurationUpdate}
           />
         )}
       </main>

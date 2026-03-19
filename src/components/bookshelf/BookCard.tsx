@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { memo } from "react";
+import { memo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,9 +13,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
-import { BookOpen, MoreVertical, Trash2 } from "lucide-react";
+import { BookOpen, MoreVertical, Trash2, Clock } from "lucide-react";
 import type { Book } from "@/lib/db/schema";
 import { formatBytes, formatDuration } from "@/lib/utils";
+import { SetReadingDurationDialog } from "./SetReadingDurationDialog";
 
 // 格式化最后阅读时间
 function formatLastRead(dateStr?: string): string | null {
@@ -42,10 +43,13 @@ interface BookCardProps {
   lastReadAt?: string;
   readingDuration?: number;
   onDelete: (id: string) => void;
+  onDurationUpdate?: (id: string, newDuration: number) => void;
 }
 
-export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt, readingDuration, onDelete }: BookCardProps) {
+export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt, readingDuration = 0, onDelete, onDurationUpdate }: BookCardProps) {
   const router = useRouter();
+  const [showDurationDialog, setShowDurationDialog] = useState(false);
+  const [localDuration, setLocalDuration] = useState(readingDuration);
 
   const handleMouseEnter = () => {
     router.prefetch(`/reader/${book.id}`);
@@ -155,7 +159,7 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
             )}
             {readingDuration !== undefined && readingDuration > 0 && (
               <p className="text-xs text-muted-foreground mt-0.5">
-                已读 {formatDuration(readingDuration)}
+                已读 {formatDuration(localDuration || readingDuration)}
               </p>
             )}
             <p className="text-xs text-muted-foreground mt-0.5 hidden sm:block">
@@ -182,6 +186,13 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => setShowDurationDialog(true)}
+              >
+                <Clock className="h-4 w-4" />
+                <span>设置时长</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
                 className="cursor-pointer text-destructive focus:text-destructive"
                 onClick={() => onDelete(book.id)}
               >
@@ -192,6 +203,18 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
           </DropdownMenu>
         </div>
       </div>
+
+      <SetReadingDurationDialog
+        open={showDurationDialog}
+        onOpenChange={setShowDurationDialog}
+        bookId={book.id}
+        bookTitle={book.title || "未知书籍"}
+        currentDuration={localDuration}
+        onSuccess={(newDuration) => {
+          setLocalDuration(newDuration);
+          onDurationUpdate?.(book.id, newDuration);
+        }}
+      />
     </Card>
   );
 });
