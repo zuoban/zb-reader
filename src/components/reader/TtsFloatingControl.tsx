@@ -1,17 +1,19 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { Pause, Play, Square, SkipBack, SkipForward, LocateFixed, ListEnd, Maximize, Minimize } from "lucide-react";
+import { BookOpen, Pause, Play, Square, SkipBack, SkipForward, LocateFixed, ListEnd, Maximize, Minimize } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TtsFloatingControlProps {
   isSpeaking: boolean;
+  hidden?: boolean;
   isPaused?: boolean;
   onToggle: () => void;
   onStop: () => void;
   onPrev?: () => void;
   onNext?: () => void;
   onJumpToPosition?: () => void;
+  onOpenImmersiveView?: () => void;
   ttsAutoNextChapter?: boolean;
   onTtsAutoNextChapterChange?: (value: boolean) => void;
   isFullscreen?: boolean;
@@ -40,12 +42,14 @@ function AudioWaveIndicator() {
 
 export function TtsFloatingControl({
   isSpeaking,
+  hidden = false,
   isPaused = false,
   onToggle,
   onStop,
   onPrev,
   onNext,
   onJumpToPosition: _onJumpToPosition,
+  onOpenImmersiveView,
   ttsAutoNextChapter = false,
   onTtsAutoNextChapterChange,
   isFullscreen = false,
@@ -60,14 +64,19 @@ export function TtsFloatingControl({
     setIsExpanded((prev) => !prev);
   }, []);
 
+  const handleOpenImmersiveView = useCallback(() => {
+    onOpenImmersiveView?.();
+    setIsExpanded(false);
+  }, [onOpenImmersiveView]);
+
   return (
     <div
       className={cn(
         "fixed bottom-5 right-3 sm:bottom-6 sm:right-4 z-50",
         "flex items-center",
         "transition-all duration-300 ease-out",
-        !isSpeaking && "pointer-events-none opacity-0 translate-y-2",
-        isSpeaking && "opacity-100 translate-y-0"
+        (hidden || !isSpeaking) && "pointer-events-none opacity-0 translate-y-2",
+        !hidden && isSpeaking && "opacity-100 translate-y-0"
       )}
     >
       {isExpanded && (
@@ -199,6 +208,24 @@ export function TtsFloatingControl({
                 {ttsAutoNextChapter && (
                   <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[var(--reader-primary,#171717)]" />
                 )}
+              </button>
+            </>
+          )}
+
+          {onOpenImmersiveView && (
+            <>
+              <div
+                className="w-px h-5 mx-0.5 hidden sm:block"
+                style={{ background: "var(--reader-border)" }}
+              />
+              <button
+                type="button"
+                onClick={handleOpenImmersiveView}
+                className="group flex size-7 sm:size-8 items-center justify-center rounded-xl transition-all duration-200 cursor-pointer active:scale-88 hover:scale-105 border border-[color-mix(in_srgb,var(--reader-border)_50%,_transparent)] hover:bg-[color-mix(in_srgb,_var(--reader-primary,_#171717)_15%,_transparent)]"
+                style={{ color: "var(--reader-text, #09090b)", background: "color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.9)) 15%, transparent)" }}
+                title="沉浸朗读"
+              >
+                <BookOpen className="size-4 transition-transform duration-150 group-hover:scale-110" />
               </button>
             </>
           )}

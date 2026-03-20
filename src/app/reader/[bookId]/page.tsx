@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { SessionProvider, useSession } from "next-auth/react";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
@@ -10,6 +10,7 @@ import { ReaderErrorBoundary } from "@/components/reader/ReaderErrorBoundary";
 import { ReaderToolbar } from "@/components/reader/ReaderToolbar";
 import { SidePanel } from "@/components/reader/SidePanel";
 import { ReadingSettings } from "@/components/reader/ReadingSettings";
+import { FullscreenTtsView } from "@/components/reader/FullscreenTtsView";
 import { TextSelectionMenu } from "@/components/reader/TextSelectionMenu";
 import { NoteEditor } from "@/components/reader/NoteEditor";
 import { TtsFloatingControl } from "@/components/reader/TtsFloatingControl";
@@ -55,6 +56,30 @@ interface TocItem {
   subitems?: TocItem[];
 }
 
+function normalizeTocHref(href?: string) {
+  if (!href) return "";
+  return href.split("#")[0]?.trim().toLowerCase() ?? "";
+}
+
+function findCurrentChapterTitle(items: TocItem[], currentHref?: string): string | undefined {
+  const targetHref = normalizeTocHref(currentHref);
+  if (!targetHref) return undefined;
+
+  for (const item of items) {
+    const itemHref = normalizeTocHref(item.href);
+    if (itemHref === targetHref || (itemHref && targetHref.startsWith(itemHref))) {
+      return item.label;
+    }
+
+    if (item.subitems?.length) {
+      const nestedMatch = findCurrentChapterTitle(item.subitems, currentHref);
+      if (nestedMatch) return nestedMatch;
+    }
+  }
+
+  return undefined;
+}
+
 function ReaderContent() {
   const router = useRouter();
   const params = useParams();
@@ -97,6 +122,7 @@ function ReaderContent() {
   const [browserVoices, setBrowserVoices] = useState<BrowserVoiceOption[]>([]);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [isTtsViewOpen, setIsTtsViewOpen] = useState(false);
   const [ttsPlaybackProgress, setTtsPlaybackProgress] = useState(0);
 
   // Side panel
@@ -174,6 +200,14 @@ function ReaderContent() {
   const [idleCountdown, setIdleCountdown] = useState<number | null>(null);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const idleWarningRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const currentChapterTitle = useMemo(() => {
+    return findCurrentChapterTitle(toc, currentHref) ?? book?.title;
+  }, [book?.title, currentHref, toc]);
+
+  const handleBackToReader = useCallback(() => {
+    setIsTtsViewOpen(false);
+  }, []);
 
   const wait = useCallback((ms: number) => {
     return new Promise<void>((resolve) => {
@@ -307,12 +341,13 @@ function ReaderContent() {
     setTtsPlaybackProgress(0);
     setIsSpeaking(false);
     setIsPaused(false);
+    setIsTtsViewOpen(false);
 
     // Scroll current paragraph to top when stopping
     if (book?.format === "epub" && autoScrollToActive) {
       epubReaderRef.current?.scrollToActiveParagraph();
     }
-    
+
     // Release wake lock
     if (wakeLockRef.current) {
       wakeLockRef.current.release().catch((err) => {
@@ -320,7 +355,7 @@ function ReaderContent() {
       });
       wakeLockRef.current = null;
     }
-    
+
     // Clear media session
     if ("mediaSession" in navigator && mediaSessionSetupRef.current) {
       navigator.mediaSession.playbackState = "none";
@@ -1275,7 +1310,7 @@ function ReaderContent() {
 
   const tryAutoTurnPage = useCallback(
     async (sessionId: number): Promise<boolean> => {
-      if (!book) return false;
+      if (!book || !ttsAutoNextChapter) return false;
 
       const previousIdentity = getPageIdentity();
       const _previousHref = currentHref;
@@ -1316,28 +1351,46 @@ function ReaderContent() {
 
       return waitForPageChange(previousIdentity, sessionId);
     },
-    [book, currentPage, currentHref, getPageIdentity, totalPages, waitForPageChange]
+    [book, currentPage, currentHref, getPageIdentity, totalPages, ttsAutoNextChapter, waitForPageChange]
   );
+
+  const handlePauseTts = useCallback(() => {
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+    }
+    setIsPaused(true);
+
+    if ("mediaSession" in navigator && mediaSessionSetupRef.current) {
+      navigator.mediaSession.playbackState = "paused";
+    }
+  }, []);
+
+  const handleResumeTts = useCallback(() => {
+    if (currentAudioRef.current) {
+      currentAudioRef.current.play().catch((err) => {
+        logger.warn("tts", "Failed to resume audio", err);
+      });
+    }
+    setIsPaused(false);
+    setIsTtsViewOpen(true);
+
+    if ("mediaSession" in navigator && mediaSessionSetupRef.current) {
+      navigator.mediaSession.playbackState = "playing";
+    }
+  }, []);
 
   const handleToggleTts = useCallback(async () => {
     if (isSpeaking) {
       if (isPaused) {
-        if (currentAudioRef.current) {
-          currentAudioRef.current.play().catch((err) => {
-            logger.warn("tts", "Failed to resume audio", err);
-          });
-        }
-        setIsPaused(false);
+        handleResumeTts();
       } else {
-        if (currentAudioRef.current) {
-          currentAudioRef.current.pause();
-        }
-        setIsPaused(true);
+        handlePauseTts();
       }
       return;
     }
 
     if (ttsResumeRef.current) {
+      setIsTtsViewOpen(true);
       setIsSpeaking(true);
       const resume = ttsResumeRef.current;
       ttsResumeRef.current = null;
@@ -1351,7 +1404,7 @@ function ReaderContent() {
 
     // 获取当前页面的段落
     let paragraphs = getReadableParagraphs();
-    
+
     // 如果获取不到，稍作等待重试（可能页面刚加载）
     if (paragraphs.length === 0) {
       await new Promise((resolve) => setTimeout(resolve, 220));
@@ -1370,7 +1423,8 @@ function ReaderContent() {
     currentParagraphIndexRef.current = getInitialParagraphIndex(paragraphs);
     ttsCurrentIndexRef.current = currentParagraphIndexRef.current;
 
-    // 如果没有在朗读，设置状态为朗读
+    setIsTtsViewOpen(true);
+    setToolbarVisible(false);
     setIsSpeaking(true);
 
     // 开始朗读循环
@@ -1403,8 +1457,8 @@ function ReaderContent() {
           const moved = await tryAutoTurnPage(sessionId);
           if (!moved) break;
           // 翻页后清空当前段落，以便下一次循环重新获取
-          paragraphs = []; 
-          continue; 
+          paragraphs = [];
+          continue;
       }
 
       try {
@@ -1433,11 +1487,14 @@ function ReaderContent() {
     if (ttsSessionRef.current === sessionId) {
       setActiveTtsParagraph("");
       setIsSpeaking(false);
+      setIsTtsViewOpen(false);
     }
   }, [
     book,
     getInitialParagraphIndex,
     getReadableParagraphs,
+    handlePauseTts,
+    handleResumeTts,
     isPaused,
     isSpeaking,
     speakWithBrowserParagraphs,
@@ -1452,62 +1509,48 @@ function ReaderContent() {
   }, [stopSpeaking]);
 
   const handleTtsPrevParagraph = useCallback(() => {
-    // 如果没有可读段落，尝试获取一下（首次未开始朗读时可能为空）
     let paragraphs = allParagraphsRef.current;
     if (paragraphs.length === 0) {
       paragraphs = getReadableParagraphs();
       allParagraphsRef.current = paragraphs;
     }
-    
+
     if (paragraphs.length === 0) return;
 
     const newIndex = Math.max(0, currentParagraphIndexRef.current - 1);
-    
-    // 如果已经在最前，或者没有变化，则不处理
+
     if (newIndex === currentParagraphIndexRef.current && currentParagraphIndexRef.current === 0) return;
 
-    // 1. 停止当前的朗读
+    const shouldResumePlayback = isSpeaking && !isPaused;
+
     ttsSessionRef.current += 1;
     const sessionId = ttsSessionRef.current;
-    
+    ttsResumeRef.current = null;
+
     if (currentAudioRef.current) {
       currentAudioRef.current.pause();
       currentAudioRef.current.currentTime = 0;
     }
 
-    // 2. 更新位置
     currentParagraphIndexRef.current = newIndex;
-    
-      // 3. 仅更新高亮，不自动播放。
-    // 但是这里有个问题：如果之前正在播放，用户期望的是切歌（切段）继续播？
-    // 还是仅仅移动光标？
-    // 通常 "上一首/下一首" 意味着切歌并播放。
-    // 但用户说 "控制开始阅读的位置"，可能意味着 "调整位置" 而非 "立即播放"。
-    // 不过考虑到这是 TTS，如果正在读，切段通常期望继续读。
-    // 如果没在读，切段只是移动光标。
-    
-    const wasSpeaking = isSpeaking;
+    ttsCurrentIndexRef.current = newIndex;
     setActiveTtsParagraph(paragraphs[newIndex]);
+    setTtsPlaybackProgress(0);
 
-    if (wasSpeaking) {
-       // 如果之前在读，则继续读
-        const startParagraphs = paragraphs.slice(newIndex);
-        
-        setTimeout(() => {
-          if (ttsSessionRef.current !== sessionId) return;
-
-          // 确保设置 isSpeaking 为 true，否则 speak 函数可能会因为状态不对而退出或者 UI 状态不对
-          setIsSpeaking(true);
-
-          speakWithBrowserParagraphs(startParagraphs, sessionId, newIndex);
-        }, 10);
-    } else {
-        // 如果之前没在读，就只停留在那里，高亮已经更新
-        // 不需要做额外操作，只需要保证 session ID 变了阻止之前的逻辑即可
-        // 但这里 activeTtsParagraph 是状态，可能会被之前的逻辑清空？
-        // 不会，因为 session ID 变了。
+    if (!shouldResumePlayback) {
+      setIsSpeaking(true);
+      setIsPaused(true);
+      return;
     }
-  }, [getReadableParagraphs, isSpeaking, speakWithBrowserParagraphs]);
+
+    const startParagraphs = paragraphs.slice(newIndex);
+    setTimeout(() => {
+      if (ttsSessionRef.current !== sessionId) return;
+      setIsSpeaking(true);
+      setIsPaused(false);
+      void speakWithBrowserParagraphs(startParagraphs, sessionId, newIndex);
+    }, 10);
+  }, [getReadableParagraphs, isPaused, isSpeaking, speakWithBrowserParagraphs]);
 
   const handleTtsNextParagraph = useCallback(() => {
     let paragraphs = allParagraphsRef.current;
@@ -1522,34 +1565,39 @@ function ReaderContent() {
       paragraphs.length - 1,
       currentParagraphIndexRef.current + 1
     );
-    
+
     if (newIndex === currentParagraphIndexRef.current && currentParagraphIndexRef.current === paragraphs.length - 1) return;
+
+    const shouldResumePlayback = isSpeaking && !isPaused;
 
     ttsSessionRef.current += 1;
     const sessionId = ttsSessionRef.current;
-    
+    ttsResumeRef.current = null;
+
     if (currentAudioRef.current) {
       currentAudioRef.current.pause();
       currentAudioRef.current.currentTime = 0;
     }
 
     currentParagraphIndexRef.current = newIndex;
-    
-    const wasSpeaking = isSpeaking;
+    ttsCurrentIndexRef.current = newIndex;
     setActiveTtsParagraph(paragraphs[newIndex]);
+    setTtsPlaybackProgress(0);
 
-    if (wasSpeaking) {
-        const startParagraphs = paragraphs.slice(newIndex);
-        
-        setTimeout(() => {
-          if (ttsSessionRef.current !== sessionId) return;
-
-          setIsSpeaking(true);
-
-          speakWithBrowserParagraphs(startParagraphs, sessionId, newIndex);
-        }, 10);
+    if (!shouldResumePlayback) {
+      setIsSpeaking(true);
+      setIsPaused(true);
+      return;
     }
-  }, [getReadableParagraphs, isSpeaking, speakWithBrowserParagraphs]);
+
+    const startParagraphs = paragraphs.slice(newIndex);
+    setTimeout(() => {
+      if (ttsSessionRef.current !== sessionId) return;
+      setIsSpeaking(true);
+      setIsPaused(false);
+      void speakWithBrowserParagraphs(startParagraphs, sessionId, newIndex);
+    }, 10);
+  }, [getReadableParagraphs, isPaused, isSpeaking, speakWithBrowserParagraphs]);
 
   // Setup Media Session action handlers
   useEffect(() => {
@@ -1565,8 +1613,8 @@ function ReaderContent() {
     });
     
     navigator.mediaSession.setActionHandler("pause", () => {
-      if (isSpeaking) {
-        stopSpeaking();
+      if (isSpeaking && !isPaused) {
+        handlePauseTts();
       }
       navigator.mediaSession.playbackState = "paused";
     });
@@ -1590,7 +1638,7 @@ function ReaderContent() {
       navigator.mediaSession.setActionHandler("previoustrack", null);
       navigator.mediaSession.setActionHandler("nexttrack", null);
     };
-  }, [isSpeaking, stopSpeaking, handleTtsPrevParagraph, handleTtsNextParagraph]);
+  }, [handlePauseTts, handleTtsNextParagraph, handleTtsPrevParagraph, isPaused, isSpeaking, stopSpeaking]);
 
   // ---- Navigation handlers ----
   const handleTocItemClick = useCallback((href: string) => {
@@ -1717,6 +1765,11 @@ function ReaderContent() {
     }
   }, [book?.format]);
 
+  const handleOpenTtsView = useCallback(() => {
+    setIsTtsViewOpen(true);
+    setToolbarVisible(false);
+  }, []);
+
   // ---- Theme styles ----
   const currentTheme = READER_THEME_STYLES[readerTheme] || READER_THEME_STYLES.light;
 
@@ -1770,8 +1823,8 @@ function ReaderContent() {
       <div
         className="h-full w-full box-border"
         style={{
-          paddingTop: 56,
-          paddingBottom: 72,
+          paddingTop: isTtsViewOpen ? 0 : 56,
+          paddingBottom: isTtsViewOpen ? 0 : 72,
         }}
       >
         {book.format === "epub" && (
@@ -1798,7 +1851,7 @@ function ReaderContent() {
 
       {/* Toolbar */}
       <ReaderToolbar
-        visible={toolbarVisible && !isSpeaking}
+        visible={toolbarVisible && !isSpeaking && !isTtsViewOpen}
         title={book.title}
         currentPage={currentPage}
         totalPages={totalPages}
@@ -1919,13 +1972,44 @@ function ReaderContent() {
         onJumpToLocation={handleJumpToHistoryLocation}
       />
 
-<TtsFloatingControl
+      {book && (
+        <FullscreenTtsView
+          open={isTtsViewOpen}
+          book={book}
+          currentChapterTitle={currentChapterTitle}
+          activeParagraph={activeTtsParagraph}
+          isSpeaking={isSpeaking}
+          isPaused={isPaused}
+          ttsPlaybackProgress={ttsPlaybackProgress}
+          progress={progress}
+          readingDuration={accumulatedDuration}
+          ttsRate={ttsRate}
+          selectedBrowserVoiceId={selectedBrowserVoiceId}
+          browserVoices={browserVoices}
+          ttsAutoNextChapter={ttsAutoNextChapter}
+          autoScrollToActive={autoScrollToActive}
+          isFullscreen={isFullscreen}
+          onBackToReader={handleBackToReader}
+          onOpenSettings={() => setSettingsOpen(true)}
+          onToggle={handleToggleTts}
+          onStop={stopSpeaking}
+          onPrev={handleTtsPrevParagraph}
+          onNext={handleTtsNextParagraph}
+          onToggleAutoNextChapter={settings.setTtsAutoNextChapter}
+          onToggleAutoScrollToActive={settings.setAutoScrollToActive}
+          onToggleFullscreen={handleToggleFullscreen}
+        />
+      )}
+
+      <TtsFloatingControl
+        hidden={isTtsViewOpen}
         isSpeaking={isSpeaking}
         isPaused={isPaused}
         onToggle={handleToggleTts}
         onStop={stopSpeaking}
         onPrev={handleTtsPrevParagraph}
         onNext={handleTtsNextParagraph}
+        onOpenImmersiveView={handleOpenTtsView}
         ttsAutoNextChapter={ttsAutoNextChapter}
         onTtsAutoNextChapterChange={settings.setTtsAutoNextChapter}
         isFullscreen={isFullscreen}
