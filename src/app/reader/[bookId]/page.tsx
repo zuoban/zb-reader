@@ -2006,7 +2006,6 @@ function ReaderContent() {
           autoScrollToActive={autoScrollToActive}
           isFullscreen={isFullscreen}
           onBackToReader={handleBackToReader}
-          onOpenSettings={() => setSettingsOpen(true)}
           onToggle={handleToggleTts}
           onStop={stopSpeaking}
           onPrev={handleTtsPrevParagraph}

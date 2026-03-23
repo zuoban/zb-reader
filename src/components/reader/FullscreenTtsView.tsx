@@ -4,12 +4,10 @@ import { useMemo } from "react";
 import {
   ArrowLeft,
   BookOpen,
-  ChevronDown,
   Maximize,
   Minimize,
   Pause,
   Play,
-  Settings2,
   SkipBack,
   SkipForward,
   Square,
@@ -38,7 +36,6 @@ interface FullscreenTtsViewProps {
   autoScrollToActive: boolean;
   isFullscreen: boolean;
   onBackToReader: () => void;
-  onOpenSettings: () => void;
   onToggle: () => void;
   onStop: () => void;
   onPrev?: () => void;
@@ -72,7 +69,6 @@ export function FullscreenTtsView({
   autoScrollToActive: _autoScrollToActive,
   isFullscreen,
   onBackToReader,
-  onOpenSettings,
   onToggle,
   onStop,
   onPrev,
@@ -162,16 +158,6 @@ export function FullscreenTtsView({
                 {isFullscreen ? <Minimize className="size-4.5" /> : <Maximize className="size-4.5" />}
               </Button>
             )}
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={onOpenSettings}
-              className="size-11 rounded-full border border-white/12 bg-white/8 text-white backdrop-blur-md hover:bg-white/14 cursor-pointer"
-              aria-label="打开朗读设置"
-            >
-              <Settings2 className="size-5" />
-            </Button>
           </div>
         </header>
 
@@ -180,7 +166,7 @@ export function FullscreenTtsView({
             <div className="relative z-10 mb-6 flex h-52 w-40 items-center justify-center overflow-hidden rounded-[28px] border border-white/12 bg-white/8 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.8)] backdrop-blur-md sm:h-60 sm:w-44">
               {book.cover ? (
                 <img
-                  src={book.cover}
+                  src={`/api/books/${book.id}/cover`}
                   alt={book.title}
                   className="h-full w-full object-cover"
                   onError={(e) => {
@@ -263,65 +249,64 @@ export function FullscreenTtsView({
           </section>
         </main>
 
-        <footer className="mx-auto w-full max-w-2xl rounded-[32px] border border-white/12 bg-black/20 px-4 py-4 backdrop-blur-2xl shadow-[0_24px_80px_-28px_rgba(0,0,0,0.85)] sm:px-5">
-          <div className="mb-4 flex items-center justify-end gap-3 text-xs text-white/62">
-            <span>
-              全书 {(overallProgress * 100).toFixed(2)}%
-              {readingDuration && readingDuration > 0 ? ` · 已读 ${formatDuration(readingDuration)}` : ""}
-            </span>
+        <footer className="mx-auto flex w-full max-w-2xl items-center justify-between gap-2 rounded-[32px] border border-white/12 bg-black/20 px-3 py-3 backdrop-blur-2xl shadow-[0_24px_80px_-28px_rgba(0,0,0,0.85)] sm:px-4">
+          <div className="flex items-center gap-1 text-xs text-white/62">
+            <span>{(overallProgress * 100).toFixed(1)}%</span>
+            {readingDuration && readingDuration > 0 && (
+              <span className="hidden sm:inline"> · {formatDuration(readingDuration)}</span>
+            )}
           </div>
 
-          <div className="mb-4 flex items-center justify-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Button
               type="button"
               variant="ghost"
               size="icon"
               onClick={onPrev}
-              className="size-11 rounded-full border border-white/12 bg-white/8 text-white hover:bg-white/14 cursor-pointer"
+              className="size-10 rounded-full border border-white/12 bg-white/8 text-white hover:bg-white/14 cursor-pointer sm:size-11"
               aria-label="上一段"
             >
-              <SkipBack className="size-5" />
+              <SkipBack className="size-4 sm:size-5" />
             </Button>
             <Button
               type="button"
               onClick={onToggle}
-              className="size-14 rounded-full bg-white text-black shadow-[0_16px_40px_-16px_rgba(255,255,255,0.7)] hover:bg-white/92 cursor-pointer"
+              className="size-12 rounded-full bg-white text-black shadow-[0_16px_40px_-16px_rgba(255,255,255,0.7)] hover:bg-white/92 cursor-pointer sm:size-14"
               aria-label={isSpeaking && !isPaused ? "暂停朗读" : "开始朗读"}
             >
-              {isSpeaking && !isPaused ? <Pause className="size-6" /> : <Play className="size-6 ml-0.5" />}
+              {isSpeaking && !isPaused ? <Pause className="size-5 sm:size-6" /> : <Play className="size-5 ml-0.5 sm:size-6" />}
             </Button>
             <Button
               type="button"
               variant="ghost"
               size="icon"
               onClick={onNext}
-              className="size-11 rounded-full border border-white/12 bg-white/8 text-white hover:bg-white/14 cursor-pointer"
+              className="size-10 rounded-full border border-white/12 bg-white/8 text-white hover:bg-white/14 cursor-pointer sm:size-11"
               aria-label="下一段"
             >
-              <SkipForward className="size-5" />
+              <SkipForward className="size-4 sm:size-5" />
             </Button>
             <Button
               type="button"
               variant="ghost"
               size="icon"
               onClick={onStop}
-              className="size-11 rounded-full border border-red-400/20 bg-red-500/10 text-red-100 hover:bg-red-500/18 cursor-pointer"
+              className="size-10 rounded-full border border-red-400/20 bg-red-500/10 text-red-100 hover:bg-red-500/18 cursor-pointer sm:size-11"
               aria-label="停止朗读"
             >
-              <Square className="size-4.5" />
+              <Square className="size-4 sm:size-4.5" />
             </Button>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            <button
-              type="button"
-              onClick={onBackToReader}
-              className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/12 bg-white/8 px-4 text-sm text-white transition-colors hover:bg-white/14 cursor-pointer"
-            >
-              <BookOpen className="size-4" />
-              看原文
-            </button>
-          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onBackToReader}
+            className="min-w-16 gap-1.5 rounded-full border border-white/12 bg-white/8 px-3 text-sm text-white hover:bg-white/14 cursor-pointer sm:min-w-20 sm:px-4"
+          >
+            <BookOpen className="size-4" />
+            <span className="hidden sm:inline">看原文</span>
+          </Button>
         </footer>
       </div>
     </div>
