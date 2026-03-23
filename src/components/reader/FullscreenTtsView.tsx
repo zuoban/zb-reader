@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   ArrowLeft,
   BookOpen,
+  ChevronDown,
+  ChevronUp,
   Maximize,
   Minimize,
   Pause,
@@ -79,6 +81,8 @@ export function FullscreenTtsView({
   onToggleAutoScrollToActive: _onToggleAutoScrollToActive,
   onToggleFullscreen,
 }: FullscreenTtsViewProps) {
+  const [isSettingsExpanded, setIsSettingsExpanded] = useState(true);
+
   const { activeVoiceLabel, voiceGroups, selectedVoiceValue } = useMemo(() => {
     if (browserVoices.length === 0) {
       return {
@@ -130,17 +134,17 @@ export function FullscreenTtsView({
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.18),_transparent_34%),linear-gradient(180deg,_#24161f_0%,_#171319_35%,_#0b0f17_100%)]" />
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.06),transparent_20%,transparent_78%,rgba(255,255,255,0.04))]" />
 
-      <div className="relative flex h-full flex-col px-4 pb-[calc(env(safe-area-inset-bottom)+20px)] pt-[calc(env(safe-area-inset-top)+16px)] text-white sm:px-6">
+      <div className="relative flex h-full flex-col px-4 pb-[calc(env(safe-area-inset-bottom)+20px)] pt-[calc(env(safe-area-inset-top)+12px)] text-white sm:px-6">
         <header className="flex items-center justify-between gap-3">
           <Button
             type="button"
             variant="ghost"
             size="icon"
             onClick={onBackToReader}
-            className="size-11 rounded-full border border-white/12 bg-white/8 text-white backdrop-blur-md hover:bg-white/14 cursor-pointer"
+            className="size-10 rounded-full border border-white/10 bg-white/5 text-white/70 hover:bg-white/12 cursor-pointer"
             aria-label="返回阅读页"
           >
-            <ArrowLeft className="size-5" />
+            <ArrowLeft className="size-4.5" />
           </Button>
 
           <div className="min-w-0 flex-1" />
@@ -152,18 +156,18 @@ export function FullscreenTtsView({
                 variant="ghost"
                 size="icon"
                 onClick={onToggleFullscreen}
-                className="size-11 rounded-full border border-white/12 bg-white/8 text-white backdrop-blur-md hover:bg-white/14 cursor-pointer"
+                className="size-10 rounded-full border border-white/10 bg-white/5 text-white/70 hover:bg-white/12 cursor-pointer"
                 aria-label={isFullscreen ? "退出全屏" : "进入全屏"}
               >
-                {isFullscreen ? <Minimize className="size-4.5" /> : <Maximize className="size-4.5" />}
+                {isFullscreen ? <Minimize className="size-4" /> : <Maximize className="size-4" />}
               </Button>
             )}
           </div>
         </header>
 
-        <main className="flex min-h-0 flex-1 flex-col justify-center py-6 sm:py-8">
+        <main className="flex min-h-0 flex-1 flex-col justify-start pt-2 sm:pt-4">
           <div className="mx-auto flex w-full max-w-sm flex-col items-center text-center">
-            <div className="relative z-10 mb-6 flex h-52 w-40 items-center justify-center overflow-hidden rounded-[28px] border border-white/12 bg-white/8 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.8)] backdrop-blur-md sm:h-60 sm:w-44">
+            <div className="relative z-10 mb-4 flex h-44 w-36 items-center justify-center overflow-hidden rounded-[24px] border border-white/10 bg-white/6 shadow-[0_20px_50px_-24px_rgba(0,0,0,0.8)] backdrop-blur-md sm:h-48 sm:w-40">
               {book.cover ? (
                 <img
                   src={`/api/books/${book.id}/cover`}
@@ -175,126 +179,147 @@ export function FullscreenTtsView({
                 />
               ) : (
                 <div className="flex h-full w-full flex-col items-center justify-center bg-[linear-gradient(180deg,rgba(255,255,255,0.16),rgba(255,255,255,0.04))] px-5 text-center">
-                  <BookOpen className="mb-3 size-8 text-white/80" />
+                  <BookOpen className="mb-2.5 size-7 text-white/80" />
                   <span className="line-clamp-3 text-sm font-medium text-white/90">{book.title}</span>
                 </div>
               )}
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/40 to-transparent" />
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/40 to-transparent" />
             </div>
 
-            <div className="space-y-2">
-              <h1 className="line-clamp-2 text-2xl font-semibold tracking-tight text-white sm:text-[1.75rem]">
+            <div className="space-y-1.5">
+              <h1 className="line-clamp-2 text-xl font-semibold tracking-tight text-white sm:text-2xl">
                 {book.title}
               </h1>
-              <p className="text-sm text-white/65">{book.author || "未知作者"}</p>
+              <p className="text-sm text-white/55">{book.author || "未知作者"}</p>
             </div>
           </div>
 
-          <section className="mx-auto mt-8 w-full max-w-2xl rounded-[28px] border border-white/10 bg-white/8 p-5 backdrop-blur-xl shadow-[0_16px_48px_-28px_rgba(0,0,0,0.75)] sm:p-6">
-            <div className="mb-5 space-y-4 rounded-[24px] border border-white/10 bg-black/10 p-4 backdrop-blur-md">
-              <div className="flex items-center gap-1.5 text-xs text-white/55">
+          <section className="mx-auto mt-6 w-full max-w-2xl rounded-[28px] border border-white/10 bg-white/8 p-5 backdrop-blur-xl shadow-[0_16px_48px_-28px_rgba(0,0,0,0.75)] sm:p-6">
+            <button
+              type="button"
+              onClick={() => setIsSettingsExpanded(!isSettingsExpanded)}
+              className="mb-4 flex w-full items-center justify-between text-xs text-white/55"
+            >
+              <div className="flex items-center gap-1.5">
                 <Volume2 className="size-3.5" />
                 <span>{statusText}</span>
               </div>
+              {isSettingsExpanded ? (
+                <ChevronUp className="size-4 text-white/40" />
+              ) : (
+                <ChevronDown className="size-4 text-white/40" />
+              )}
+            </button>
 
-              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 sm:items-start">
-                <div className="space-y-2">
-                  <p className="text-xs font-medium text-white/62">语音</p>
-                  <VoiceSelector
-                    value={selectedVoiceValue}
-                    groups={voiceGroups}
-                    activeLabel={activeVoiceLabel}
-                    onChange={(value) => {
-                      if (value === "__empty__") return;
-                      onSelectedBrowserVoiceIdChange(value);
-                    }}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between gap-3 text-xs text-white/62">
-                    <p className="font-medium">语速</p>
-                    <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white/88">
-                      {ttsRate.toFixed(1)}x
-                    </span>
+            <div
+              className={cn(
+                "grid gap-4 overflow-hidden transition-all duration-300 ease-in-out",
+                isSettingsExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+              )}
+            >
+              <div className="min-h-0 space-y-4 rounded-[24px] border border-white/10 bg-black/10 p-4 backdrop-blur-md">
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 sm:items-start">
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-white/62">语音</p>
+                    <VoiceSelector
+                      value={selectedVoiceValue}
+                      groups={voiceGroups}
+                      activeLabel={activeVoiceLabel}
+                      onChange={(value) => {
+                        if (value === "__empty__") return;
+                        onSelectedBrowserVoiceIdChange(value);
+                      }}
+                    />
                   </div>
-                  <div className="relative flex h-11 items-center">
-                    <div className="absolute inset-x-0 h-1.5 rounded-full bg-white/12">
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-3 text-xs text-white/62">
+                      <p className="font-medium">语速</p>
+                      <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white/88">
+                        {ttsRate.toFixed(1)}x
+                      </span>
+                    </div>
+                    <div className="relative flex h-11 items-center">
+                      <div className="absolute inset-x-0 h-1.5 rounded-full bg-white/12">
+                        <div
+                          className="h-full rounded-full bg-white"
+                          style={{ width: `${((ttsRate - 1) / (2 - 1)) * 100}%` }}
+                        />
+                      </div>
+                      <input
+                        type="range"
+                        min={1}
+                        max={2}
+                        step={0.1}
+                        value={ttsRate}
+                        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                        onChange={(e) => onTtsRateChange(Number(e.target.value))}
+                      />
                       <div
-                        className="h-full rounded-full bg-white"
-                        style={{ width: `${((ttsRate - 1) / (2 - 1)) * 100}%` }}
+                        className="pointer-events-none absolute h-5 w-5 rounded-full border-2 border-white bg-[#171319]"
+                        style={{ left: `calc(${((ttsRate - 1) / (2 - 1)) * 100}% - 10px)` }}
                       />
                     </div>
-                    <input
-                      type="range"
-                      min={1}
-                      max={2}
-                      step={0.1}
-                      value={ttsRate}
-                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                      onChange={(e) => onTtsRateChange(Number(e.target.value))}
-                    />
-                    <div
-                      className="pointer-events-none absolute h-5 w-5 rounded-full border-2 border-white bg-[#171319]"
-                      style={{ left: `calc(${((ttsRate - 1) / (2 - 1)) * 100}% - 10px)` }}
-                    />
                   </div>
                 </div>
               </div>
             </div>
 
-            <p className="min-h-28 text-left text-[15px] leading-8 text-white/88 sm:text-base sm:leading-8">
+            <p className="mt-4 min-h-28 text-left text-[15px] leading-8 text-white/88 sm:text-base sm:leading-8">
               {paragraphText || "正在准备朗读内容，马上为你定位到当前段落。"}
             </p>
           </section>
         </main>
 
-        <footer className="mx-auto flex w-full max-w-2xl items-center justify-between gap-2 rounded-[32px] border border-white/12 bg-black/20 px-3 py-3 backdrop-blur-2xl shadow-[0_24px_80px_-28px_rgba(0,0,0,0.85)] sm:px-4">
-          <div className="flex items-center gap-1 text-xs text-white/62">
-            <span>{(overallProgress * 100).toFixed(1)}%</span>
+        <footer className="mx-auto flex w-full max-w-2xl items-center justify-between gap-3 rounded-[36px] border border-white/10 bg-black/30 px-4 py-3 backdrop-blur-2xl shadow-[0_32px_64px_-20px_rgba(0,0,0,0.65)]">
+          <div className="flex items-center gap-2 text-xs text-white/55">
+            <span className="font-medium text-white/80">{(overallProgress * 100).toFixed(1)}%</span>
             {readingDuration && readingDuration > 0 && (
-              <span className="hidden sm:inline"> · {formatDuration(readingDuration)}</span>
+              <>
+                <span className="text-white/30">|</span>
+                <span className="hidden sm:inline">{formatDuration(readingDuration)}</span>
+              </>
             )}
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5">
             <Button
               type="button"
               variant="ghost"
               size="icon"
               onClick={onPrev}
-              className="size-10 rounded-full border border-white/12 bg-white/8 text-white hover:bg-white/14 cursor-pointer sm:size-11"
+              className="size-9 rounded-full border border-white/8 bg-white/5 text-white/70 hover:bg-white/12 hover:text-white cursor-pointer"
               aria-label="上一段"
             >
-              <SkipBack className="size-4 sm:size-5" />
+              <SkipBack className="size-4" />
             </Button>
             <Button
               type="button"
               onClick={onToggle}
-              className="size-12 rounded-full bg-white text-black shadow-[0_16px_40px_-16px_rgba(255,255,255,0.7)] hover:bg-white/92 cursor-pointer sm:size-14"
+              className="size-13 rounded-full bg-white text-black shadow-[0_8px_32px_-8px_rgba(255,255,255,0.6),0_0_0_1px_rgba(255,255,255,0.1)] hover:bg-white/92 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
               aria-label={isSpeaking && !isPaused ? "暂停朗读" : "开始朗读"}
             >
-              {isSpeaking && !isPaused ? <Pause className="size-5 sm:size-6" /> : <Play className="size-5 ml-0.5 sm:size-6" />}
+              {isSpeaking && !isPaused ? <Pause className="size-6" /> : <Play className="size-6 ml-0.5" />}
             </Button>
             <Button
               type="button"
               variant="ghost"
               size="icon"
               onClick={onNext}
-              className="size-10 rounded-full border border-white/12 bg-white/8 text-white hover:bg-white/14 cursor-pointer sm:size-11"
+              className="size-9 rounded-full border border-white/8 bg-white/5 text-white/70 hover:bg-white/12 hover:text-white cursor-pointer"
               aria-label="下一段"
             >
-              <SkipForward className="size-4 sm:size-5" />
+              <SkipForward className="size-4" />
             </Button>
             <Button
               type="button"
               variant="ghost"
               size="icon"
               onClick={onStop}
-              className="size-10 rounded-full border border-red-400/20 bg-red-500/10 text-red-100 hover:bg-red-500/18 cursor-pointer sm:size-11"
+              className="size-9 rounded-full border border-red-400/15 bg-red-500/8 text-red-200/70 hover:bg-red-500/15 hover:text-red-100 cursor-pointer"
               aria-label="停止朗读"
             >
-              <Square className="size-4 sm:size-4.5" />
+              <Square className="size-3.5" />
             </Button>
           </div>
 
@@ -302,10 +327,10 @@ export function FullscreenTtsView({
             type="button"
             variant="ghost"
             onClick={onBackToReader}
-            className="min-w-16 gap-1.5 rounded-full border border-white/12 bg-white/8 px-3 text-sm text-white hover:bg-white/14 cursor-pointer sm:min-w-20 sm:px-4"
+            className="min-w-14 gap-1.5 rounded-full border border-white/8 bg-white/5 px-3 text-xs text-white/70 hover:bg-white/12 hover:text-white cursor-pointer"
           >
-            <BookOpen className="size-4" />
-            <span className="hidden sm:inline">看原文</span>
+            <BookOpen className="size-3.5" />
+            <span className="hidden sm:inline">原文</span>
           </Button>
         </footer>
       </div>
