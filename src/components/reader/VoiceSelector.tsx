@@ -24,7 +24,9 @@ interface VoiceSelectorProps {
 
 export function VoiceSelector({ value, groups, activeLabel, onChange }: VoiceSelectorProps) {
   const [open, setOpen] = useState(false);
+  const [flip, setFlip] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -39,10 +41,18 @@ export function VoiceSelector({ value, groups, activeLabel, onChange }: VoiceSel
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
 
+  useEffect(() => {
+    if (!open || !buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    setFlip(spaceBelow < 200);
+  }, [open]);
+
   return (
     <div ref={containerRef} className="relative">
       <button
         type="button"
+        ref={buttonRef}
         onClick={() => setOpen(!open)}
         className="flex h-11 w-full items-center justify-between rounded-2xl border-0 bg-white/10 px-4 text-left text-sm font-medium text-white cursor-pointer hover:bg-white/14 transition-colors"
       >
@@ -51,7 +61,12 @@ export function VoiceSelector({ value, groups, activeLabel, onChange }: VoiceSel
       </button>
 
       {open && (
-        <div className="absolute left-0 right-0 top-full z-[80] mt-2 max-h-[320px] overflow-y-auto rounded-xl border border-white/12 bg-[#1a1a1a] shadow-xl backdrop-blur-xl">
+        <div
+          className={cn(
+            "absolute left-0 right-0 z-[80] max-h-[40vh] overflow-y-auto rounded-xl border border-white/12 bg-[#1a1a1a] shadow-xl backdrop-blur-xl",
+            flip ? "bottom-full mb-2" : "top-full mt-2"
+          )}
+        >
           {groups.map((group) => (
             <div key={group.label}>
               <div className="px-3 py-2 text-xs font-semibold text-white/50">{group.label}</div>

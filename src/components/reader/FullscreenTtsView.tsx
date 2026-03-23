@@ -1,22 +1,21 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState, useCallback } from "react";
 import {
   ArrowLeft,
   BookOpen,
-  ChevronDown,
-  ChevronUp,
   Maximize,
   Minimize,
   Pause,
   Play,
+  Settings,
   SkipBack,
   SkipForward,
   Square,
   Volume2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { VoiceSelector } from "@/components/reader/VoiceSelector";
+import { TtsSettingsDialog } from "@/components/reader/TtsSettingsDialog";
 import { cn, formatDuration } from "@/lib/utils";
 import type { Book } from "@/lib/db/schema";
 import type { BrowserVoiceOption } from "@/lib/tts";
@@ -81,43 +80,11 @@ export function FullscreenTtsView({
   onToggleAutoScrollToActive: _onToggleAutoScrollToActive,
   onToggleFullscreen,
 }: FullscreenTtsViewProps) {
-  const [isSettingsExpanded, setIsSettingsExpanded] = useState(true);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
-  const { activeVoiceLabel, voiceGroups, selectedVoiceValue } = useMemo(() => {
-    if (browserVoices.length === 0) {
-      return {
-        activeVoiceLabel: "默认语音",
-        voiceGroups: [{ label: "暂无可用语音", voices: [{ value: "__empty__", label: "暂无可用语音", disabled: true }] }],
-        selectedVoiceValue: "__empty__",
-      };
-    }
-
-    // 按语言分组并排序
-    const grouped = new Map<string, typeof browserVoices>();
-    browserVoices.forEach((voice) => {
-      const lang = voice.lang.startsWith("zh") ? "中文" : voice.lang.startsWith("en") ? "英文" : "其他";
-      if (!grouped.has(lang)) grouped.set(lang, []);
-      grouped.get(lang)!.push(voice);
-    });
-
-    // 优先级排序：中文 > 英文 > 其他
-    const sortedGroups = Array.from(grouped.entries())
-      .sort(([a], [b]) => {
-        const order = { "中文": 0, "英文": 1, "其他": 2 };
-        return (order[a as keyof typeof order] ?? 2) - (order[b as keyof typeof order] ?? 2);
-      })
-      .map(([label, voices]) => ({
-        label,
-        voices: voices.map((v) => ({ value: v.id, label: v.name, disabled: false })),
-      }));
-
-    const activeLabel = browserVoices.find((v) => v.id === selectedBrowserVoiceId)?.name ?? "默认语音";
-    const selectedValue = browserVoices.some((v) => v.id === selectedBrowserVoiceId)
-      ? selectedBrowserVoiceId
-      : browserVoices[0]?.id ?? "__empty__";
-
-    return { activeVoiceLabel: activeLabel, voiceGroups: sortedGroups, selectedVoiceValue: selectedValue };
-  }, [browserVoices, selectedBrowserVoiceId]);
+  const handleSettingsOpenChange = useCallback((open: boolean) => {
+    setSettingsOpen(open);
+  }, []);
 
   const overallProgress = clampProgress(progress);
   const paragraphText = activeParagraph?.trim();
@@ -165,7 +132,7 @@ export function FullscreenTtsView({
           </div>
         </header>
 
-        <main className="flex min-h-0 flex-1 flex-col justify-start pt-2 sm:pt-4">
+        <main className="flex min-h-0 flex-1 flex-col justify-start overflow-y-auto pt-2 sm:pt-4">
           <div className="mx-auto flex w-full max-w-sm flex-col items-center text-center">
             <div className="relative z-10 mb-4 flex h-44 w-36 items-center justify-center overflow-hidden rounded-[24px] border border-white/10 bg-white/6 shadow-[0_20px_50px_-24px_rgba(0,0,0,0.8)] backdrop-blur-md sm:h-48 sm:w-40">
               {book.cover ? (
@@ -194,75 +161,22 @@ export function FullscreenTtsView({
             </div>
           </div>
 
-          <section className="mx-auto mt-6 w-full max-w-2xl rounded-[28px] border border-white/10 bg-white/8 p-5 backdrop-blur-xl shadow-[0_16px_48px_-28px_rgba(0,0,0,0.75)] sm:p-6">
-            <button
-              type="button"
-              onClick={() => setIsSettingsExpanded(!isSettingsExpanded)}
-              className="mb-4 flex w-full items-center justify-between text-xs text-white/55"
-            >
+          <section className="mx-auto mt-6 flex min-h-0 w-full max-w-2xl flex-col rounded-[28px] border border-white/10 bg-white/8 p-5 backdrop-blur-xl shadow-[0_16px_48px_-28px_rgba(0,0,0,0.75)] sm:p-6">
+            <div className="flex w-full items-center justify-between text-xs text-white/55">
               <div className="flex items-center gap-1.5">
                 <Volume2 className="size-3.5" />
                 <span>{statusText}</span>
               </div>
-              {isSettingsExpanded ? (
-                <ChevronUp className="size-4 text-white/40" />
-              ) : (
-                <ChevronDown className="size-4 text-white/40" />
-              )}
-            </button>
-
-            <div
-              className={cn(
-                "grid gap-4 overflow-hidden transition-all duration-300 ease-in-out",
-                isSettingsExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-              )}
-            >
-              <div className="min-h-0 space-y-4 rounded-[24px] border border-white/10 bg-black/10 p-4 backdrop-blur-md">
-                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 sm:items-start">
-                  <div className="space-y-2">
-                    <p className="text-xs font-medium text-white/62">语音</p>
-                    <VoiceSelector
-                      value={selectedVoiceValue}
-                      groups={voiceGroups}
-                      activeLabel={activeVoiceLabel}
-                      onChange={(value) => {
-                        if (value === "__empty__") return;
-                        onSelectedBrowserVoiceIdChange(value);
-                      }}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between gap-3 text-xs text-white/62">
-                      <p className="font-medium">语速</p>
-                      <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white/88">
-                        {ttsRate.toFixed(1)}x
-                      </span>
-                    </div>
-                    <div className="relative flex h-11 items-center">
-                      <div className="absolute inset-x-0 h-1.5 rounded-full bg-white/12">
-                        <div
-                          className="h-full rounded-full bg-white"
-                          style={{ width: `${((ttsRate - 1) / (2 - 1)) * 100}%` }}
-                        />
-                      </div>
-                      <input
-                        type="range"
-                        min={1}
-                        max={2}
-                        step={0.1}
-                        value={ttsRate}
-                        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                        onChange={(e) => onTtsRateChange(Number(e.target.value))}
-                      />
-                      <div
-                        className="pointer-events-none absolute h-5 w-5 rounded-full border-2 border-white bg-[#171319]"
-                        style={{ left: `calc(${((ttsRate - 1) / (2 - 1)) * 100}% - 10px)` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setSettingsOpen(true)}
+                className="size-7 rounded-full border border-white/10 bg-white/5 text-white/70 hover:bg-white/12 cursor-pointer"
+                aria-label="朗读设置"
+              >
+                <Settings className="size-3.5" />
+              </Button>
             </div>
 
             <p className="mt-4 min-h-28 text-left text-[15px] leading-8 text-white/88 sm:text-base sm:leading-8">
@@ -333,6 +247,16 @@ export function FullscreenTtsView({
             <span className="hidden sm:inline">原文</span>
           </Button>
         </footer>
+
+        <TtsSettingsDialog
+          open={settingsOpen}
+          onOpenChange={handleSettingsOpenChange}
+          ttsRate={ttsRate}
+          selectedBrowserVoiceId={selectedBrowserVoiceId}
+          browserVoices={browserVoices}
+          onTtsRateChange={onTtsRateChange}
+          onSelectedBrowserVoiceIdChange={onSelectedBrowserVoiceIdChange}
+        />
       </div>
     </div>
   );
