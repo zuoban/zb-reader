@@ -4,8 +4,7 @@ import { useMemo } from "react";
 import {
   ArrowLeft,
   BookOpen,
-  ListEnd,
-  LocateFixed,
+  ChevronDown,
   Maximize,
   Minimize,
   Pause,
@@ -17,6 +16,13 @@ import {
   Volume2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn, formatDuration } from "@/lib/utils";
 import type { Book } from "@/lib/db/schema";
 import type { BrowserVoiceOption } from "@/lib/tts";
@@ -43,6 +49,8 @@ interface FullscreenTtsViewProps {
   onStop: () => void;
   onPrev?: () => void;
   onNext?: () => void;
+  onSelectedBrowserVoiceIdChange: (voiceId: string) => void;
+  onTtsRateChange: (value: number) => void;
   onToggleAutoNextChapter: (value: boolean) => void;
   onToggleAutoScrollToActive: (value: boolean) => void;
   onToggleFullscreen?: () => void;
@@ -60,14 +68,14 @@ export function FullscreenTtsView({
   activeParagraph,
   isSpeaking,
   isPaused,
-  ttsPlaybackProgress,
+  ttsPlaybackProgress: _ttsPlaybackProgress,
   progress,
   readingDuration,
   ttsRate,
   selectedBrowserVoiceId,
   browserVoices,
-  ttsAutoNextChapter,
-  autoScrollToActive,
+  ttsAutoNextChapter: _ttsAutoNextChapter,
+  autoScrollToActive: _autoScrollToActive,
   isFullscreen,
   onBackToReader,
   onOpenSettings,
@@ -75,15 +83,38 @@ export function FullscreenTtsView({
   onStop,
   onPrev,
   onNext,
-  onToggleAutoNextChapter,
-  onToggleAutoScrollToActive,
+  onSelectedBrowserVoiceIdChange,
+  onTtsRateChange,
+  onToggleAutoNextChapter: _onToggleAutoNextChapter,
+  onToggleAutoScrollToActive: _onToggleAutoScrollToActive,
   onToggleFullscreen,
 }: FullscreenTtsViewProps) {
   const activeVoiceLabel = useMemo(() => {
     return browserVoices.find((voice) => voice.id === selectedBrowserVoiceId)?.name ?? "默认语音";
   }, [browserVoices, selectedBrowserVoiceId]);
+  const voiceOptions = useMemo(() => {
+    if (browserVoices.length === 0) {
+      return [{ value: "__empty__", label: "暂无可用语音", disabled: true }];
+    }
 
-  const currentProgress = clampProgress(ttsPlaybackProgress > 0 ? ttsPlaybackProgress : progress);
+    return browserVoices.map((voice) => ({
+      value: voice.id,
+      label: voice.name,
+      disabled: false,
+    }));
+  }, [browserVoices]);
+  const selectedVoiceValue = useMemo(() => {
+    if (browserVoices.length === 0) {
+      return "__empty__";
+    }
+
+    if (browserVoices.some((voice) => voice.id === selectedBrowserVoiceId)) {
+      return selectedBrowserVoiceId;
+    }
+
+    return browserVoices[0]?.id ?? "__empty__";
+  }, [browserVoices, selectedBrowserVoiceId]);
+
   const overallProgress = clampProgress(progress);
   const paragraphText = activeParagraph?.trim();
   const statusText = isSpeaking ? (isPaused ? "已暂停" : "朗读中") : "准备朗读";
@@ -175,12 +206,74 @@ export function FullscreenTtsView({
           </div>
 
           <section className="mx-auto mt-8 w-full max-w-2xl rounded-[28px] border border-white/10 bg-white/8 p-5 backdrop-blur-xl shadow-[0_16px_48px_-28px_rgba(0,0,0,0.75)] sm:p-6">
-            <div className="mb-4 flex items-center justify-between gap-3 text-xs text-white/55">
-              <span className="inline-flex items-center gap-1.5">
+            <div className="mb-5 space-y-4 rounded-[24px] border border-white/10 bg-black/10 p-4 backdrop-blur-md">
+              <div className="flex items-center gap-1.5 text-xs text-white/55">
                 <Volume2 className="size-3.5" />
-                {statusText}
-              </span>
-              <span>{activeVoiceLabel} · {ttsRate.toFixed(1)}x</span>
+                <span>{statusText}</span>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_180px] sm:items-center">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-3 text-xs text-white/62">
+                    <p className="font-medium">语音</p>
+                    <span className="truncate text-white/88">{activeVoiceLabel}</span>
+                  </div>
+                  <Select
+                    value={selectedVoiceValue}
+                    onValueChange={(value) => {
+                      if (value === "__empty__") return;
+                      onSelectedBrowserVoiceIdChange(value);
+                    }}
+                  >
+                    <SelectTrigger className="h-11 rounded-2xl border-0 bg-white/10 px-4 text-left text-sm font-medium text-white cursor-pointer focus:ring-0 focus:ring-offset-0">
+                      <SelectValue placeholder="选择语音" />
+                      <ChevronDown className="size-4 shrink-0 opacity-60" />
+                    </SelectTrigger>
+                    <SelectContent className="z-[80] rounded-xl">
+                      {voiceOptions.map((option) => (
+                        <SelectItem
+                          key={option.value}
+                          value={option.value}
+                          disabled={option.disabled}
+                          className="rounded-lg text-sm"
+                        >
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-3 text-xs text-white/62">
+                    <p className="font-medium">语速</p>
+                    <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white/88">
+                      {ttsRate.toFixed(1)}x
+                    </span>
+                  </div>
+                  <div className="relative flex h-8 items-center">
+                    <div className="absolute inset-x-0 h-1.5 rounded-full bg-white/12">
+                      <div
+                        className="h-full rounded-full bg-white"
+                        style={{ width: `${((ttsRate - 1) / (5 - 1)) * 100}%` }}
+                      />
+                    </div>
+                    <input
+                      type="range"
+                      min={1}
+                      max={5}
+                      step={0.1}
+                      value={ttsRate}
+                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                      onChange={(e) => onTtsRateChange(Number(e.target.value))}
+                    />
+                    <div
+                      className="pointer-events-none absolute h-5 w-5 rounded-full border-2 border-white bg-[#171319]"
+                      style={{ left: `calc(${((ttsRate - 1) / (5 - 1)) * 100}% - 10px)` }}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
 
             <p className="min-h-28 text-left text-[15px] leading-8 text-white/88 sm:text-base sm:leading-8">
@@ -190,20 +283,11 @@ export function FullscreenTtsView({
         </main>
 
         <footer className="mx-auto w-full max-w-2xl rounded-[32px] border border-white/12 bg-black/20 px-4 py-4 backdrop-blur-2xl shadow-[0_24px_80px_-28px_rgba(0,0,0,0.85)] sm:px-5">
-          <div className="mb-4 space-y-2">
-            <div className="flex items-center justify-between gap-3 text-xs text-white/62">
-              <span>段落进度 {(currentProgress * 100).toFixed(0)}%</span>
-              <span>
-                全书 {(overallProgress * 100).toFixed(2)}%
-                {readingDuration && readingDuration > 0 ? ` · 已读 ${formatDuration(readingDuration)}` : ""}
-              </span>
-            </div>
-            <div className="h-2 overflow-hidden rounded-full bg-white/12">
-              <div
-                className="h-full rounded-full bg-[linear-gradient(90deg,#f7e7ff_0%,#d0d8ff_55%,#86c9ff_100%)] transition-all duration-500 ease-out"
-                style={{ width: `${currentProgress * 100}%` }}
-              />
-            </div>
+          <div className="mb-4 flex items-center justify-end gap-3 text-xs text-white/62">
+            <span>
+              全书 {(overallProgress * 100).toFixed(2)}%
+              {readingDuration && readingDuration > 0 ? ` · 已读 ${formatDuration(readingDuration)}` : ""}
+            </span>
           </div>
 
           <div className="mb-4 flex items-center justify-center gap-3 sm:gap-4">
@@ -248,32 +332,6 @@ export function FullscreenTtsView({
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-2">
-            <button
-              type="button"
-              onClick={() => onToggleAutoScrollToActive(!autoScrollToActive)}
-              className={cn(
-                "inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-sm transition-colors cursor-pointer",
-                autoScrollToActive
-                  ? "border-white/20 bg-white text-black"
-                  : "border-white/12 bg-white/8 text-white hover:bg-white/14"
-              )}
-            >
-              <LocateFixed className="size-4" />
-              自动定位
-            </button>
-            <button
-              type="button"
-              onClick={() => onToggleAutoNextChapter(!ttsAutoNextChapter)}
-              className={cn(
-                "inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-sm transition-colors cursor-pointer",
-                ttsAutoNextChapter
-                  ? "border-white/20 bg-white text-black"
-                  : "border-white/12 bg-white/8 text-white hover:bg-white/14"
-              )}
-            >
-              <ListEnd className="size-4" />
-              自动续章
-            </button>
             <button
               type="button"
               onClick={onBackToReader}

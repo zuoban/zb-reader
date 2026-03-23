@@ -190,7 +190,7 @@ function ReaderContent() {
   const ttsTotalParagraphsRef = useRef(0);
 
   // 跟踪 TTS 设置的上次值，用于检测设置变化
-  const prevTtsSettingsRef = useRef({ rate: ttsRate });
+  const prevTtsSettingsRef = useRef({ rate: ttsRate, voiceId: selectedBrowserVoiceId });
   
   // Wake Lock for preventing screen sleep during TTS
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
@@ -1050,50 +1050,66 @@ function ReaderContent() {
     [setupMediaSession, requestWakeLock]
   );
 
+  const replayCurrentTtsParagraph = useCallback(async () => {
+    if (!activeTtsParagraph) return;
+
+    const currentIndex = currentParagraphIndexRef.current;
+    const shouldResumePlayback = isSpeaking && !isPaused;
+
+    ttsSessionRef.current += 1;
+    const sessionId = ttsSessionRef.current;
+    ttsResumeRef.current = null;
+
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current.currentTime = 0;
+    }
+
+    setTtsPlaybackProgress(0);
+
+    if (!shouldResumePlayback) {
+      setIsSpeaking(true);
+      setIsPaused(true);
+      return;
+    }
+
+    try {
+      const objectUrl = await requestMicrosoftSpeech(activeTtsParagraph);
+      if (ttsSessionRef.current !== sessionId) {
+        URL.revokeObjectURL(objectUrl);
+        return;
+      }
+
+      await playAudioSource(objectUrl, sessionId, {
+        onCleanup: () => URL.revokeObjectURL(objectUrl),
+        onEnd: () => URL.revokeObjectURL(objectUrl),
+        debugMeta: { engine: "microsoft", paragraphIndex: currentIndex },
+      });
+    } catch {
+      // 忽略设置切换导致的重播错误，保持当前会话可继续操作
+    }
+  }, [activeTtsParagraph, isPaused, isSpeaking, playAudioSource, requestMicrosoftSpeech]);
+
   // 当 TTS 设置变化时，如果正在播放，重新播放当前段落
   useEffect(() => {
     const prev = prevTtsSettingsRef.current;
-    const current = { rate: ttsRate };
+    const current = { rate: ttsRate, voiceId: selectedBrowserVoiceId };
 
-    // 检查是否有变化
-    const hasChanged = prev.rate !== current.rate;
+    const hasChanged = prev.rate !== current.rate || prev.voiceId !== current.voiceId;
 
-    if (hasChanged && isSpeaking && activeTtsParagraph) {
-      // 更新 ref
-      prevTtsSettingsRef.current = current;
+    prevTtsSettingsRef.current = current;
 
-      // 重新播放当前段落
-      const sessionId = ttsSessionRef.current;
-      const currentIndex = currentParagraphIndexRef.current;
-
-      // 停止当前音频
-      if (currentAudioRef.current) {
-        currentAudioRef.current.pause();
-        currentAudioRef.current.currentTime = 0;
-      }
-
-      // 重新播放当前段落
-      const replayParagraph = async () => {
-        try {
-          const objectUrl = await requestMicrosoftSpeech(activeTtsParagraph);
-          if (ttsSessionRef.current !== sessionId) return;
-
-          await playAudioSource(objectUrl, sessionId, {
-            onCleanup: () => URL.revokeObjectURL(objectUrl),
-            onEnd: () => URL.revokeObjectURL(objectUrl),
-            debugMeta: { engine: "microsoft", paragraphIndex: currentIndex },
-          });
-        } catch {
-          // 忽略错误，让循环继续
-        }
-      };
-
-      void replayParagraph();
-    } else {
-      // 只更新 ref，不重新播放
-      prevTtsSettingsRef.current = current;
+    if (!hasChanged || !isSpeaking || !activeTtsParagraph) {
+      return;
     }
-  }, [ttsRate, isSpeaking, activeTtsParagraph]);
+
+    if (isPaused) {
+      setTtsPlaybackProgress(0);
+      return;
+    }
+
+    void replayCurrentTtsParagraph();
+  }, [activeTtsParagraph, isPaused, isSpeaking, replayCurrentTtsParagraph, selectedBrowserVoiceId, ttsRate]);
 
   const speakWithBrowserParagraphs = useCallback(
     async (paragraphs: string[], sessionId: number, startIndex = 0) => {
@@ -1995,6 +2011,8 @@ function ReaderContent() {
           onStop={stopSpeaking}
           onPrev={handleTtsPrevParagraph}
           onNext={handleTtsNextParagraph}
+          onSelectedBrowserVoiceIdChange={handleSelectedBrowserVoiceIdChange}
+          onTtsRateChange={settings.setTtsRate}
           onToggleAutoNextChapter={settings.setTtsAutoNextChapter}
           onToggleAutoScrollToActive={settings.setAutoScrollToActive}
           onToggleFullscreen={handleToggleFullscreen}
