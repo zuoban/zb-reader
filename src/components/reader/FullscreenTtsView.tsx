@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from "react";
 import {
-  ArrowLeft,
   BookOpen,
   Maximize,
   Minimize,
@@ -12,7 +11,6 @@ import {
   SkipBack,
   SkipForward,
   Square,
-  Volume2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TtsSettingsDialog } from "@/components/reader/TtsSettingsDialog";
@@ -60,7 +58,7 @@ export function FullscreenTtsView({
   activeParagraph,
   isSpeaking,
   isPaused,
-  ttsPlaybackProgress: _ttsPlaybackProgress,
+  ttsPlaybackProgress,
   progress,
   readingDuration,
   ttsRate,
@@ -87,9 +85,8 @@ export function FullscreenTtsView({
   }, []);
 
   const overallProgress = clampProgress(progress);
+  const paragraphProgress = clampProgress(ttsPlaybackProgress);
   const paragraphText = activeParagraph?.trim();
-  const statusText = isSpeaking ? (isPaused ? "已暂停" : "朗读中") : "准备朗读";
-
   return (
     <div
       className={cn(
@@ -98,154 +95,145 @@ export function FullscreenTtsView({
       )}
       aria-hidden={!open}
     >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.18),_transparent_34%),linear-gradient(180deg,_#24161f_0%,_#171319_35%,_#0b0f17_100%)]" />
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.06),transparent_20%,transparent_78%,rgba(255,255,255,0.04))]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-10%,rgba(228,240,255,0.52),transparent_30%),radial-gradient(circle_at_15%_75%,rgba(180,220,255,0.18),transparent_26%),radial-gradient(circle_at_85%_20%,rgba(255,255,255,0.18),transparent_24%),linear-gradient(180deg,#2a2f3d_0%,#171b25_38%,#0c0f16_100%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.16),transparent_18%,transparent_78%,rgba(255,255,255,0.08))]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_45%,rgba(0,0,0,0.18)_100%)]" />
 
-      <div className="relative flex h-full flex-col px-4 pb-[calc(env(safe-area-inset-bottom)+20px)] pt-[calc(env(safe-area-inset-top)+12px)] text-white sm:px-6">
-        <header className="flex items-center justify-between gap-3">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={onBackToReader}
-            className="size-10 rounded-full border border-white/10 bg-white/5 text-white/70 hover:bg-white/12 cursor-pointer"
-            aria-label="返回阅读页"
-          >
-            <ArrowLeft className="size-4.5" />
-          </Button>
-
-          <div className="min-w-0 flex-1" />
-
-          <div className="flex items-center gap-2">
+      <div className="relative flex h-full flex-col px-4 pb-[calc(env(safe-area-inset-bottom)+16px)] pt-[calc(env(safe-area-inset-top)+12px)] text-white sm:px-6">
+        <header className="mx-auto grid w-full max-w-3xl grid-cols-[auto_1fr_auto] items-center gap-3">
+          <div className="flex items-center">
             {onToggleFullscreen && (
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
                 onClick={onToggleFullscreen}
-                className="size-10 rounded-full border border-white/10 bg-white/5 text-white/70 hover:bg-white/12 cursor-pointer"
+                className="size-10 rounded-full border border-white/24 bg-[linear-gradient(180deg,rgba(255,255,255,0.22),rgba(255,255,255,0.09))] text-white/88 shadow-[inset_0_1px_0_rgba(255,255,255,0.34),inset_0_-1px_0_rgba(255,255,255,0.06),0_10px_26px_-14px_rgba(0,0,0,0.7)] backdrop-blur-2xl hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.26),rgba(255,255,255,0.11))] cursor-pointer"
                 aria-label={isFullscreen ? "退出全屏" : "进入全屏"}
               >
                 {isFullscreen ? <Minimize className="size-4" /> : <Maximize className="size-4" />}
               </Button>
             )}
           </div>
+
+          <h1 className="truncate text-center text-base font-semibold tracking-tight text-white/95 sm:text-lg">
+            {book.title}
+          </h1>
+
+          <div className="flex shrink-0 items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setSettingsOpen(true)}
+              className="size-10 rounded-full border border-white/24 bg-[linear-gradient(180deg,rgba(255,255,255,0.22),rgba(255,255,255,0.09))] text-white/88 shadow-[inset_0_1px_0_rgba(255,255,255,0.34),inset_0_-1px_0_rgba(255,255,255,0.06),0_10px_26px_-14px_rgba(0,0,0,0.7)] backdrop-blur-2xl hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.26),rgba(255,255,255,0.11))] cursor-pointer"
+              aria-label="朗读设置"
+            >
+              <Settings className="size-4" />
+            </Button>
+          </div>
         </header>
 
-        <main className="flex min-h-0 flex-1 flex-col justify-start overflow-y-auto pt-2 sm:pt-4">
-          <div className="mx-auto flex w-full max-w-sm flex-col items-center text-center">
-            <div className="relative z-10 mb-4 flex h-44 w-36 items-center justify-center overflow-hidden rounded-[24px] border border-white/10 bg-white/6 shadow-[0_20px_50px_-24px_rgba(0,0,0,0.8)] backdrop-blur-md sm:h-48 sm:w-40">
-              {book.cover ? (
-                <img
-                  src={`/api/books/${book.id}/cover`}
-                  alt={book.title}
-                  className="h-full w-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.style.display = "none";
-                  }}
-                />
-              ) : (
-                <div className="flex h-full w-full flex-col items-center justify-center bg-[linear-gradient(180deg,rgba(255,255,255,0.16),rgba(255,255,255,0.04))] px-5 text-center">
-                  <BookOpen className="mb-2.5 size-7 text-white/80" />
-                  <span className="line-clamp-3 text-sm font-medium text-white/90">{book.title}</span>
-                </div>
-              )}
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/40 to-transparent" />
-            </div>
-
-            <div className="space-y-1.5">
-              <h1 className="line-clamp-2 text-xl font-semibold tracking-tight text-white sm:text-2xl">
-                {book.title}
-              </h1>
-              <p className="text-sm text-white/55">{book.author || "未知作者"}</p>
-            </div>
-          </div>
-
-          <section className="mx-auto mt-6 flex min-h-0 w-full max-w-2xl flex-col rounded-[28px] border border-white/10 bg-white/8 p-5 backdrop-blur-xl shadow-[0_16px_48px_-28px_rgba(0,0,0,0.75)] sm:p-6">
-            <div className="flex w-full items-center justify-between text-xs text-white/55">
-              <div className="flex items-center gap-1.5">
-                <Volume2 className="size-3.5" />
-                <span>{statusText}</span>
+        <main className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col justify-start pt-3 sm:pt-4">
+          <section className="flex h-[min(64vh,620px)] min-h-0 flex-col rounded-[24px] border border-white/20 bg-[linear-gradient(180deg,rgba(255,255,255,0.22),rgba(255,255,255,0.09))] p-5 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.32),inset_0_-1px_0_rgba(255,255,255,0.05),0_28px_60px_-38px_rgba(0,0,0,0.95)] backdrop-blur-3xl sm:h-[min(70vh,760px)] sm:rounded-[28px] sm:p-7">
+            <div className="relative flex min-h-0 flex-1 flex-col">
+              <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-white/50">
+                <span className="h-px w-5 bg-white/28" />
+                <span>{currentChapterTitle || "当前章节"}</span>
               </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => setSettingsOpen(true)}
-                className="size-7 rounded-full border border-white/10 bg-white/5 text-white/70 hover:bg-white/12 cursor-pointer"
-                aria-label="朗读设置"
-              >
-                <Settings className="size-3.5" />
-              </Button>
+              <div className="mt-5 min-h-0 flex-1 overflow-y-auto pr-1 [scrollbar-color:rgba(255,255,255,0.28)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border [&::-webkit-scrollbar-thumb]:border-transparent [&::-webkit-scrollbar-thumb]:bg-[linear-gradient(180deg,rgba(255,255,255,0.34),rgba(255,255,255,0.18))] [&::-webkit-scrollbar-thumb]:bg-clip-padding">
+                <p className="text-[16px] font-normal leading-9 tracking-[0.005em] text-white/96 [text-shadow:0_1px_10px_rgba(0,0,0,0.18)] sm:text-[18px] sm:leading-[2.5rem]">
+                  {paragraphText || "正在准备朗读内容，马上为你定位到当前段落。"}
+                </p>
+              </div>
             </div>
-
-            <p className="mt-4 min-h-28 text-left text-[15px] leading-8 text-white/88 sm:text-base sm:leading-8">
-              {paragraphText || "正在准备朗读内容，马上为你定位到当前段落。"}
-            </p>
           </section>
         </main>
 
-        <footer className="mx-auto flex w-full max-w-2xl items-center justify-between gap-3 rounded-[36px] border border-white/10 bg-black/30 px-4 py-3 backdrop-blur-2xl shadow-[0_32px_64px_-20px_rgba(0,0,0,0.65)]">
-          <div className="flex items-center gap-2 text-xs text-white/55">
-            <span className="font-medium text-white/80">{(overallProgress * 100).toFixed(1)}%</span>
-            {readingDuration && readingDuration > 0 && (
-              <>
-                <span className="text-white/30">|</span>
-                <span className="hidden sm:inline">{formatDuration(readingDuration)}</span>
-              </>
-            )}
+        <footer className="mx-auto mt-3 w-full max-w-3xl rounded-[24px] border border-white/20 bg-[linear-gradient(180deg,rgba(255,255,255,0.2),rgba(255,255,255,0.09))] px-3 py-2.5 backdrop-blur-3xl shadow-[inset_0_1px_0_rgba(255,255,255,0.3),inset_0_-1px_0_rgba(255,255,255,0.05),0_30px_60px_-30px_rgba(0,0,0,0.78)] sm:mt-4 sm:px-4 sm:py-3">
+          <div className="flex items-start justify-between gap-2.5">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <div className="flex h-12 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[12px] border border-white/20 bg-[linear-gradient(180deg,rgba(255,255,255,0.22),rgba(255,255,255,0.09))] shadow-[inset_0_1px_0_rgba(255,255,255,0.26),inset_0_-1px_0_rgba(255,255,255,0.04)]">
+                {book.cover ? (
+                  <img
+                    src={`/api/books/${book.id}/cover`}
+                    alt={book.title}
+                    className="h-full w-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                ) : (
+                  <BookOpen className="size-5 text-white/70" />
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-[13px] font-medium text-white/88 sm:text-sm">{book.author || "未知作者"}</p>
+                <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-white/64 sm:text-xs">
+                  <span>{isSpeaking && !isPaused ? "朗读中" : isPaused ? "已暂停" : "准备朗读"}</span>
+                  <span className="text-white/24">/</span>
+                  <span>{(overallProgress * 100).toFixed(1)}%</span>
+                  {readingDuration && readingDuration > 0 && (
+                    <>
+                      <span className="text-white/24">/</span>
+                      <span>{formatDuration(readingDuration)}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onBackToReader}
+              className="shrink-0 gap-1 rounded-full border border-white/20 bg-[linear-gradient(180deg,rgba(255,255,255,0.22),rgba(255,255,255,0.09))] px-2.5 py-2 text-[11px] text-white/84 shadow-[inset_0_1px_0_rgba(255,255,255,0.26),inset_0_-1px_0_rgba(255,255,255,0.04)] hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.26),rgba(255,255,255,0.11))] hover:text-white cursor-pointer sm:px-3 sm:text-xs"
+            >
+              <BookOpen className="size-3.5" />
+              <span className="hidden sm:inline">原文</span>
+            </Button>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="mt-2.5 flex items-center justify-center gap-1.5 border-t border-white/10 pt-2.5 sm:mt-3 sm:pt-3">
             <Button
               type="button"
               variant="ghost"
               size="icon"
               onClick={onPrev}
-              className="size-9 rounded-full border border-white/8 bg-white/5 text-white/70 hover:bg-white/12 hover:text-white cursor-pointer"
+              className="size-8 rounded-full border border-white/20 bg-[linear-gradient(180deg,rgba(255,255,255,0.2),rgba(255,255,255,0.09))] text-white/86 shadow-[inset_0_1px_0_rgba(255,255,255,0.24),inset_0_-1px_0_rgba(255,255,255,0.04)] hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.24),rgba(255,255,255,0.11))] hover:text-white cursor-pointer sm:size-9"
               aria-label="上一段"
             >
-              <SkipBack className="size-4" />
+              <SkipBack className="size-3.5 sm:size-4" />
             </Button>
             <Button
               type="button"
               onClick={onToggle}
-              className="size-13 rounded-full bg-white text-black shadow-[0_8px_32px_-8px_rgba(255,255,255,0.6),0_0_0_1px_rgba(255,255,255,0.1)] hover:bg-white/92 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+              className="size-11 rounded-full border border-white/30 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(235,242,255,0.78))] text-black shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_14px_32px_-10px_rgba(193,218,255,0.45),0_8px_24px_-12px_rgba(0,0,0,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer sm:size-13"
               aria-label={isSpeaking && !isPaused ? "暂停朗读" : "开始朗读"}
             >
-              {isSpeaking && !isPaused ? <Pause className="size-6" /> : <Play className="size-6 ml-0.5" />}
+              {isSpeaking && !isPaused ? <Pause className="size-5 sm:size-6" /> : <Play className="size-5 ml-0.5 sm:size-6" />}
             </Button>
             <Button
               type="button"
               variant="ghost"
               size="icon"
               onClick={onNext}
-              className="size-9 rounded-full border border-white/8 bg-white/5 text-white/70 hover:bg-white/12 hover:text-white cursor-pointer"
+              className="size-8 rounded-full border border-white/20 bg-[linear-gradient(180deg,rgba(255,255,255,0.2),rgba(255,255,255,0.09))] text-white/86 shadow-[inset_0_1px_0_rgba(255,255,255,0.24),inset_0_-1px_0_rgba(255,255,255,0.04)] hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.24),rgba(255,255,255,0.11))] hover:text-white cursor-pointer sm:size-9"
               aria-label="下一段"
             >
-              <SkipForward className="size-4" />
+              <SkipForward className="size-3.5 sm:size-4" />
             </Button>
             <Button
               type="button"
               variant="ghost"
               size="icon"
               onClick={onStop}
-              className="size-9 rounded-full border border-red-400/15 bg-red-500/8 text-red-200/70 hover:bg-red-500/15 hover:text-red-100 cursor-pointer"
+              className="size-8 rounded-full border border-red-300/18 bg-[linear-gradient(180deg,rgba(255,120,120,0.2),rgba(255,120,120,0.08))] text-red-100/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] hover:bg-[linear-gradient(180deg,rgba(255,120,120,0.26),rgba(255,120,120,0.12))] hover:text-red-50 cursor-pointer sm:size-9"
               aria-label="停止朗读"
             >
-              <Square className="size-3.5" />
+              <Square className="size-3 sm:size-3.5" />
             </Button>
           </div>
-
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={onBackToReader}
-            className="min-w-14 gap-1.5 rounded-full border border-white/8 bg-white/5 px-3 text-xs text-white/70 hover:bg-white/12 hover:text-white cursor-pointer"
-          >
-            <BookOpen className="size-3.5" />
-            <span className="hidden sm:inline">原文</span>
-          </Button>
         </footer>
 
         <TtsSettingsDialog
