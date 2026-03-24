@@ -99,7 +99,7 @@ export function FullscreenTtsView({
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.16),transparent_18%,transparent_78%,rgba(255,255,255,0.08))]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_45%,rgba(0,0,0,0.18)_100%)]" />
 
-      <div className="relative flex h-full flex-col px-4 pb-[calc(env(safe-area-inset-bottom)+16px)] pt-[calc(env(safe-area-inset-top)+12px)] text-white sm:px-6">
+      <div className="relative flex h-full flex-col gap-4 px-4 pb-[calc(env(safe-area-inset-bottom)+16px)] pt-[calc(env(safe-area-inset-top)+12px)] text-white sm:gap-6 sm:px-6">
         <header className="mx-auto grid w-full max-w-3xl grid-cols-[auto_1fr_auto] items-center gap-3">
           <div className="flex items-center">
             {onToggleFullscreen && (
@@ -134,7 +134,7 @@ export function FullscreenTtsView({
           </div>
         </header>
 
-        <main className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col justify-start pt-3 sm:pt-4">
+        <main className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col justify-start">
           <section className="flex h-[min(64vh,620px)] min-h-0 flex-col rounded-[24px] border border-white/20 bg-[linear-gradient(180deg,rgba(255,255,255,0.22),rgba(255,255,255,0.09))] p-5 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.32),inset_0_-1px_0_rgba(255,255,255,0.05),0_28px_60px_-38px_rgba(0,0,0,0.95)] backdrop-blur-3xl sm:h-[min(70vh,760px)] sm:rounded-[28px] sm:p-7">
             <div className="relative flex min-h-0 flex-1 flex-col">
               <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-white/50">
@@ -150,7 +150,7 @@ export function FullscreenTtsView({
           </section>
         </main>
 
-        <footer className="mx-auto mt-3 w-full max-w-3xl rounded-[24px] border border-white/20 bg-[linear-gradient(180deg,rgba(255,255,255,0.2),rgba(255,255,255,0.09))] px-3 py-2.5 backdrop-blur-3xl shadow-[inset_0_1px_0_rgba(255,255,255,0.3),inset_0_-1px_0_rgba(255,255,255,0.05),0_30px_60px_-30px_rgba(0,0,0,0.78)] sm:mt-4 sm:px-4 sm:py-3">
+        <footer className="mx-auto w-full max-w-3xl rounded-[24px] border border-white/20 bg-[linear-gradient(180deg,rgba(255,255,255,0.2),rgba(255,255,255,0.09))] px-3 py-2.5 backdrop-blur-3xl shadow-[inset_0_1px_0_rgba(255,255,255,0.3),inset_0_-1px_0_rgba(255,255,255,0.05),0_30px_60px_-30px_rgba(0,0,0,0.78)] sm:px-4 sm:py-3">
           <div className="flex items-start justify-between gap-2.5">
             <div className="flex min-w-0 items-center gap-2.5">
               <div className="flex h-12 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[12px] border border-white/20 bg-[linear-gradient(180deg,rgba(255,255,255,0.22),rgba(255,255,255,0.09))] shadow-[inset_0_1px_0_rgba(255,255,255,0.26),inset_0_-1px_0_rgba(255,255,255,0.04)]">

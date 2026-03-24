@@ -66,22 +66,24 @@ function VoiceSelect({
         type="button"
         ref={buttonRef}
         onClick={() => setOpen(!open)}
-        className="flex h-11 w-full items-center justify-between rounded-2xl border-0 bg-white/10 px-4 text-left text-sm font-medium text-white cursor-pointer hover:bg-white/14 transition-colors"
+        className="flex h-11 w-full items-center justify-between rounded-2xl border border-white/18 bg-[linear-gradient(180deg,rgba(255,255,255,0.2),rgba(255,255,255,0.08))] px-4 text-left text-sm font-medium text-white/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.24),inset_0_-1px_0_rgba(255,255,255,0.04)] backdrop-blur-2xl cursor-pointer transition-colors hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.24),rgba(255,255,255,0.1))]"
       >
         <span className="truncate">{activeLabel}</span>
-        <ChevronDown className={cn("size-4 shrink-0 opacity-60 transition-transform", open && "rotate-180")} />
+        <ChevronDown className={cn("size-4 shrink-0 opacity-70 transition-transform", open && "rotate-180")} />
       </button>
 
       {open && (
         <div
           className={cn(
-            "absolute left-0 right-0 z-[90] max-h-[40vh] overflow-y-auto rounded-xl border border-white/12 bg-[#1a1a1a] shadow-xl backdrop-blur-xl",
+            "absolute left-0 right-0 z-[90] max-h-[40vh] overflow-y-auto rounded-2xl border border-white/18 bg-[linear-gradient(180deg,rgba(37,43,56,0.92),rgba(22,27,38,0.9))] shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_26px_40px_-22px_rgba(0,0,0,0.8)] backdrop-blur-3xl [scrollbar-color:rgba(255,255,255,0.26)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/20",
             flip ? "bottom-full mb-2" : "top-full mt-2"
           )}
         >
           {groups.map((group) => (
-            <div key={group.label}>
-              <div className="px-3 py-2 text-xs font-semibold text-white/50">{group.label}</div>
+            <div key={group.label} className="px-2 py-1 first:pt-2">
+              <div className="px-2 py-1.5 text-[10px] font-semibold tracking-[0.18em] text-white/34">
+                {group.label}
+              </div>
               {group.voices.map((option) => (
                 <button
                   key={option.value}
@@ -94,13 +96,18 @@ function VoiceSelect({
                     }
                   }}
                   className={cn(
-                    "flex w-full items-center justify-between px-3 py-2.5 text-sm text-white transition-colors",
+                    "flex w-full items-center justify-between rounded-[16px] px-3 py-2.5 text-sm text-white/90 transition-colors",
                     option.disabled ? "opacity-50 cursor-not-allowed" : "hover:bg-white/10 cursor-pointer",
-                    value === option.value && "bg-white/8"
+                    value === option.value &&
+                      "border border-white/16 bg-[linear-gradient(180deg,rgba(255,255,255,0.16),rgba(255,255,255,0.08))] shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]"
                   )}
                 >
                   <span className="truncate">{option.label}</span>
-                  {value === option.value && <Check className="size-4 shrink-0 ml-2" />}
+                  {value === option.value && (
+                    <span className="ml-2 flex size-5 shrink-0 items-center justify-center rounded-full border border-white/16 bg-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.16)]">
+                      <Check className="size-3 text-white" />
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
@@ -170,82 +177,86 @@ export function TtsSettingsDialog({
   return (
     <>
       <div
-        className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm"
+        className="fixed inset-0 z-[80] bg-[radial-gradient(circle_at_top,rgba(214,231,255,0.16),transparent_24%),rgba(5,8,14,0.6)] backdrop-blur-md"
         onClick={() => onOpenChange(false)}
       />
       <div
         className={cn(
-          "fixed left-1/2 top-1/2 z-[80] w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 rounded-[28px] border border-white/10 bg-white/8 p-6 backdrop-blur-xl shadow-[0_16px_48px_-28px_rgba(0,0,0,0.75)]",
+          "fixed left-1/2 top-1/2 z-[80] w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 rounded-[28px] border border-white/20 bg-[linear-gradient(180deg,rgba(255,255,255,0.2),rgba(255,255,255,0.08))] p-5 backdrop-blur-3xl shadow-[inset_0_1px_0_rgba(255,255,255,0.3),inset_0_-1px_0_rgba(255,255,255,0.04),0_28px_60px_-28px_rgba(0,0,0,0.78)] sm:p-6",
           "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
           "sm:max-w-sm"
         )}
         style={{ transition: "all 150ms cubic-bezier(0.4, 0, 0.2, 1)" }}
       >
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2 text-lg font-semibold text-white">
+        <div className="mb-5 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-lg font-semibold text-white/94">
             <Settings className="size-5" />
             朗读设置
           </div>
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="size-8 rounded-full border border-white/10 bg-white/5 text-white/70 hover:bg-white/12 hover:text-white cursor-pointer flex items-center justify-center transition-colors"
+            className="flex size-8 items-center justify-center rounded-full border border-white/18 bg-[linear-gradient(180deg,rgba(255,255,255,0.18),rgba(255,255,255,0.08))] text-white/78 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.22),rgba(255,255,255,0.1))] hover:text-white cursor-pointer transition-colors"
             aria-label="关闭"
           >
             <X className="size-4" />
           </button>
         </div>
 
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <p className="text-xs font-medium text-white/62">语音</p>
-            <VoiceSelect
-              value={selectedVoiceValue}
-              groups={voiceGroups}
-              activeLabel={activeVoiceLabel}
-              onChange={(value) => {
-                if (value === "__empty__") return;
-                onSelectedBrowserVoiceIdChange(value);
-              }}
-            />
+        <div className="space-y-4">
+          <div className="rounded-[22px] border border-white/14 bg-[linear-gradient(180deg,rgba(255,255,255,0.14),rgba(255,255,255,0.06))] px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.16)]">
+            <div className="space-y-2.5">
+              <p className="text-xs font-medium tracking-[0.12em] text-white/62">语音</p>
+              <VoiceSelect
+                value={selectedVoiceValue}
+                groups={voiceGroups}
+                activeLabel={activeVoiceLabel}
+                onChange={(value) => {
+                  if (value === "__empty__") return;
+                  onSelectedBrowserVoiceIdChange(value);
+                }}
+              />
+            </div>
           </div>
 
-          <div className="space-y-3">
-            <div className="flex items-center justify-between gap-3 text-xs text-white/62">
-              <p className="font-medium">语速</p>
-              <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white/88">
-                {ttsRate.toFixed(1)}x
-              </span>
-            </div>
-            <div className="relative flex h-11 items-center">
-              <div className="absolute inset-x-0 h-1.5 rounded-full bg-white/12">
+          <div className="rounded-[22px] border border-white/14 bg-[linear-gradient(180deg,rgba(255,255,255,0.14),rgba(255,255,255,0.06))] px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.16)]">
+            <div className="space-y-3.5">
+              <div className="flex items-center justify-between gap-3 text-xs text-white/62">
+                <p className="font-medium tracking-[0.12em]">语速</p>
+                <span className="rounded-full border border-white/16 bg-[linear-gradient(180deg,rgba(255,255,255,0.18),rgba(255,255,255,0.08))] px-2.5 py-1 text-[11px] font-semibold text-white/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]">
+                  {ttsRate.toFixed(1)}x
+                </span>
+              </div>
+              <div className="relative flex h-10 items-center">
+                <div className="absolute inset-x-0 h-1.5 rounded-full bg-white/14">
+                  <div
+                    className="h-full rounded-full bg-[linear-gradient(90deg,rgba(255,255,255,0.98),rgba(209,228,255,0.78))] shadow-[0_0_12px_rgba(214,232,255,0.28)]"
+                    style={{ width: `${((ttsRate - 1) / (2 - 1)) * 100}%` }}
+                  />
+                </div>
+                <input
+                  type="range"
+                  min={1}
+                  max={2}
+                  step={0.1}
+                  value={ttsRate}
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                  onChange={(e) => onTtsRateChange(Number(e.target.value))}
+                />
                 <div
-                  className="h-full rounded-full bg-white"
-                  style={{ width: `${((ttsRate - 1) / (2 - 1)) * 100}%` }}
+                  className="pointer-events-none absolute h-5 w-5 rounded-full border border-white/40 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(228,238,255,0.82))] shadow-[inset_0_1px_0_rgba(255,255,255,0.82),0_8px_18px_-10px_rgba(176,206,255,0.7)]"
+                  style={{ left: `calc(${((ttsRate - 1) / (2 - 1)) * 100}% - 10px)` }}
                 />
               </div>
-              <input
-                type="range"
-                min={1}
-                max={2}
-                step={0.1}
-                value={ttsRate}
-                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                onChange={(e) => onTtsRateChange(Number(e.target.value))}
-              />
-              <div
-                className="pointer-events-none absolute h-5 w-5 rounded-full border-2 border-white bg-[#171319]"
-                style={{ left: `calc(${((ttsRate - 1) / (2 - 1)) * 100}% - 10px)` }}
-              />
             </div>
           </div>
         </div>
 
-        <div className="mt-6 flex justify-end">
+        <div className="mt-5 flex justify-end">
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="rounded-full bg-white px-6 py-2.5 text-sm font-semibold text-black hover:bg-white/92 cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="rounded-full border border-white/28 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(228,238,255,0.82))] px-6 py-2.5 text-sm font-semibold text-black shadow-[inset_0_1px_0_rgba(255,255,255,0.86),0_14px_28px_-16px_rgba(184,214,255,0.7)] hover:scale-[1.02] cursor-pointer transition-all active:scale-[0.98]"
           >
             确定
           </button>
