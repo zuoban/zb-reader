@@ -61,6 +61,29 @@ function normalizeTocHref(href?: string) {
   return href.split("#")[0]?.trim().toLowerCase() ?? "";
 }
 
+function buildMicrosoftTtsAudioUrl(params: {
+  text: string;
+  voiceName: string;
+  rate: number;
+  pitch: number;
+  volume: number;
+  prefetch?: boolean;
+}) {
+  const searchParams = new URLSearchParams({
+    text: params.text,
+    voiceName: params.voiceName,
+    rate: String(params.rate),
+    pitch: String(params.pitch),
+    volume: String(params.volume),
+  });
+
+  if (params.prefetch) {
+    searchParams.set("prefetch", "1");
+  }
+
+  return `/api/tts/microsoft?${searchParams.toString()}`;
+}
+
 function findCurrentChapterTitle(items: TocItem[], currentHref?: string): string | undefined {
   const targetHref = normalizeTocHref(currentHref);
   if (!targetHref) return undefined;
@@ -897,7 +920,7 @@ function ReaderContent() {
   }, [settings]);
 
   const requestMicrosoftSpeech = useCallback(
-    async (text: string) => {
+    async (text: string, options?: { prefetch?: boolean }) => {
       const ratePercent = Math.round((ttsRate - 1) * 100);
 
       // 检查缓存
@@ -910,39 +933,42 @@ function ReaderContent() {
         volume: 100,
       });
       const cached = ttsAudioCache.get(cacheKey);
-      if (cached?.kind === "blob") {
-        return URL.createObjectURL(cached.blob);
+      if (cached?.kind === "url" && !options?.prefetch) {
+        return cached.audioUrl;
       }
 
-      const res = await fetch("/api/tts/microsoft", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const audioUrl = buildMicrosoftTtsAudioUrl({
+        text,
+        voiceName: selectedBrowserVoiceId,
+        rate: ratePercent,
+        pitch: 0,
+        volume: 100,
+      });
+
+      if (options?.prefetch) {
+        const prefetchUrl = buildMicrosoftTtsAudioUrl({
           text,
           voiceName: selectedBrowserVoiceId,
           rate: ratePercent,
           pitch: 0,
           volume: 100,
-        }),
-      });
-
-      if (res.status === 204) {
-        return "";
+          prefetch: true,
+        });
+        const res = await fetch(prefetchUrl, { method: "GET" });
+        if (!res.ok && res.status !== 204) {
+          const data = (await res.json().catch(() => null)) as
+            | { error?: string; details?: string }
+            | null;
+          const message = data?.error || "朗读失败";
+          const details = data?.details ? `: ${data.details}` : "";
+          throw new Error(`${message}${details}`);
+        }
+      } else {
+        // 使用稳定的同源 URL，避免移动端后台对 blob: 音频的兼容性问题
+        ttsAudioCache.set(cacheKey, { kind: "url", audioUrl });
       }
 
-      if (!res.ok) {
-        const data = (await res.json().catch(() => null)) as
-          | { error?: string; details?: string }
-          | null;
-        const message = data?.error || "朗读失败";
-        const details = data?.details ? `: ${data.details}` : "";
-        throw new Error(`${message}${details}`);
-      }
-
-      const audioBlob = await res.blob();
-      // 写入缓存（存储 Blob，不存储 blob URL）
-      ttsAudioCache.set(cacheKey, { kind: "blob", blob: audioBlob });
-      return URL.createObjectURL(audioBlob);
+      return audioUrl;
     },
     [selectedBrowserVoiceId, ttsRate]
   );
@@ -971,7 +997,11 @@ function ReaderContent() {
       void requestWakeLock();
 
       if (!currentAudioRef.current) {
-        currentAudioRef.current = new Audio();
+        const audio = new Audio();
+        audio.preload = "auto";
+        audio.setAttribute("playsinline", "true");
+        audio.setAttribute("webkit-playsinline", "true");
+        currentAudioRef.current = audio;
       }
 
       const audio = currentAudioRef.current;
@@ -1076,13 +1106,10 @@ function ReaderContent() {
     try {
       const objectUrl = await requestMicrosoftSpeech(activeTtsParagraph);
       if (ttsSessionRef.current !== sessionId) {
-        URL.revokeObjectURL(objectUrl);
         return;
       }
 
       await playAudioSource(objectUrl, sessionId, {
-        onCleanup: () => URL.revokeObjectURL(objectUrl),
-        onEnd: () => URL.revokeObjectURL(objectUrl),
         debugMeta: { engine: "microsoft", paragraphIndex: currentIndex },
       });
     } catch {
@@ -1122,15 +1149,16 @@ function ReaderContent() {
       setIsSpeaking(true);
 
       const preparedTaskMap = new Map<number, Promise<string>>();
+      const preloadWindowSize = Math.max(microsoftPreloadCount, 5);
 
       const ensurePreloadWindow = (windowStart: number) => {
         for (
           let cursor = windowStart;
-          cursor < Math.min(queue.length, windowStart + microsoftPreloadCount);
+          cursor < Math.min(queue.length, windowStart + preloadWindowSize);
           cursor += 1
         ) {
           if (!preparedTaskMap.has(cursor)) {
-            const task = requestMicrosoftSpeech(queue[cursor]);
+            const task = requestMicrosoftSpeech(queue[cursor], { prefetch: true });
             task.catch(() => {
               // avoid unhandled promise rejection for preloaded items
             });
@@ -1185,18 +1213,6 @@ function ReaderContent() {
               }
 
               void playAudioSource(objectUrl as string, sessionId, {
-                onCleanup: () => {
-                  if (objectUrl) {
-                    URL.revokeObjectURL(objectUrl);
-                    objectUrl = null;
-                  }
-                },
-                onEnd: () => {
-                  if (objectUrl) {
-                    URL.revokeObjectURL(objectUrl);
-                    objectUrl = null;
-                  }
-                },
                 debugMeta: {
                   engine: "microsoft",
                   paragraphIndex: startIndex + i,
@@ -1210,9 +1226,6 @@ function ReaderContent() {
             break;
           } catch (error) {
             lastError = error;
-            if (objectUrl) {
-              URL.revokeObjectURL(objectUrl);
-            }
             if (currentAudioRef.current) {
               currentAudioRef.current.pause();
               currentAudioRef.current.currentTime = 0;
@@ -1247,13 +1260,9 @@ function ReaderContent() {
       }
 
       for (const [, task] of preparedTaskMap) {
-        task
-          .then((objectUrl) => {
-            URL.revokeObjectURL(objectUrl);
-          })
-          .catch(() => {
-            // ignore preload cleanup errors
-          });
+        task.catch(() => {
+          // ignore preload cleanup errors
+        });
       }
     },
     [

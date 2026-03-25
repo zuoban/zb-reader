@@ -42,7 +42,7 @@ const DEFAULT_STATE: ReaderSettingsState = {
   ttsRate: 1,
   ttsPitch: 1,
   ttsVolume: 1,
-  microsoftPreloadCount: 3,
+  microsoftPreloadCount: 5,
   ttsHighlightStyle: "indicator",
   ttsHighlightColor: "#3b82f6",
   ttsAutoNextChapter: false,
@@ -65,7 +65,7 @@ export const useReaderSettingsStore = create<
       setTtsPitch: (pitch) => set({ ttsPitch: Math.min(2, Math.max(0.5, pitch)) }),
       setTtsVolume: (volume) => set({ ttsVolume: Math.min(1, Math.max(0, volume)) }),
       setMicrosoftPreloadCount: (count) =>
-        set({ microsoftPreloadCount: [1, 2, 3, 5].includes(count) ? count : 3 }),
+        set({ microsoftPreloadCount: [1, 2, 3, 5, 8].includes(count) ? count : 5 }),
       setTtsHighlightStyle: (style: "background" | "indicator") => set({ ttsHighlightStyle: style }),
       setTtsHighlightColor: (color) => set({ ttsHighlightColor: color }),
       setTtsAutoNextChapter: (enabled) => set({ ttsAutoNextChapter: enabled }),
@@ -106,7 +106,7 @@ export const useReaderSettingsStore = create<
               typeof settings.ttsVolume === "number"
                 ? Math.min(1, Math.max(0, settings.ttsVolume))
                 : DEFAULT_STATE.ttsVolume,
-            microsoftPreloadCount: [1, 2, 3, 5].includes(
+            microsoftPreloadCount: [1, 2, 3, 5, 8].includes(
               settings.microsoftPreloadCount as number
             )
               ? (settings.microsoftPreloadCount as number)

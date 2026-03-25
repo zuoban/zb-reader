@@ -18,7 +18,7 @@ describe("useReaderSettingsStore", () => {
       ttsRate: 1,
       ttsPitch: 1,
       ttsVolume: 1,
-      microsoftPreloadCount: 3,
+      microsoftPreloadCount: 5,
       loaded: false,
     });
     mockFetch.mockReset();
@@ -82,12 +82,12 @@ describe("useReaderSettingsStore", () => {
       act(() => {
         useReaderSettingsStore.getState().setMicrosoftPreloadCount(4);
       });
-      expect(useReaderSettingsStore.getState().microsoftPreloadCount).toBe(3);
+      expect(useReaderSettingsStore.getState().microsoftPreloadCount).toBe(5);
 
       act(() => {
-        useReaderSettingsStore.getState().setMicrosoftPreloadCount(5);
+        useReaderSettingsStore.getState().setMicrosoftPreloadCount(8);
       });
-      expect(useReaderSettingsStore.getState().microsoftPreloadCount).toBe(5);
+      expect(useReaderSettingsStore.getState().microsoftPreloadCount).toBe(8);
     });
   });
 

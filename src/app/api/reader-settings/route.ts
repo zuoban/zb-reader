@@ -25,7 +25,7 @@ const DEFAULTS = {
   theme: "light" as const,
   browserVoiceId: "",
   ttsRate: 1,
-  microsoftPreloadCount: 3,
+  microsoftPreloadCount: 5,
   ttsAutoNextChapter: false,
   ttsHighlightStyle: "indicator" as const,
   ttsHighlightColor: "#3b82f6",
@@ -93,7 +93,7 @@ export async function PUT(req: NextRequest) {
           ? payload.browserVoiceId
           : existing?.browserVoiceId ?? DEFAULTS.browserVoiceId,
       ttsRate: Math.min(5, Math.max(1, Number(payload.ttsRate ?? existing?.ttsRate ?? DEFAULTS.ttsRate))),
-      microsoftPreloadCount: [1, 2, 3, 5].includes(Number(payload.microsoftPreloadCount))
+      microsoftPreloadCount: [1, 2, 3, 5, 8].includes(Number(payload.microsoftPreloadCount))
         ? Number(payload.microsoftPreloadCount)
         : existing?.microsoftPreloadCount ?? DEFAULTS.microsoftPreloadCount,
       ttsAutoNextChapter:

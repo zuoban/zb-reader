@@ -486,6 +486,7 @@ export function ReadingSettings({
                     { value: "2", label: "2 段" },
                     { value: "3", label: "3 段" },
                     { value: "5", label: "5 段" },
+                    { value: "8", label: "8 段" },
                   ]}
                 />
               </SettingRow>
