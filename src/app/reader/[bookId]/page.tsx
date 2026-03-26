@@ -200,6 +200,7 @@ function ReaderContent() {
 
   const currentCfiRef = useRef<string | null>(null);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+  const prevFlipModeRef = useRef<"scroll" | "page" | null>(null);
 
   const ttsSessionRef = useRef(0);
   const ttsResumeRef = useRef<(() => void) | null>(null);
@@ -365,6 +366,12 @@ function ReaderContent() {
     setIsPaused(false);
     setIsTtsViewOpen(false);
 
+    // 恢复之前的翻页模式
+    if (prevFlipModeRef.current && flipMode === "scroll") {
+      settings.setFlipMode(prevFlipModeRef.current);
+      prevFlipModeRef.current = null;
+    }
+
     // Scroll current paragraph to top when stopping
     if (book?.format === "epub" && autoScrollToActive) {
       epubReaderRef.current?.scrollToActiveParagraph();
@@ -383,7 +390,7 @@ function ReaderContent() {
       navigator.mediaSession.playbackState = "none";
       mediaSessionSetupRef.current = false;
     }
-  }, [book?.format, autoScrollToActive]);
+  }, [book?.format, autoScrollToActive, flipMode, settings]);
 
   const setupMediaSession = useCallback(() => {
     if (!("mediaSession" in navigator)) return;
@@ -1349,6 +1356,12 @@ function ReaderContent() {
       ttsResumeRef.current = null;
       resume();
       return;
+    }
+
+    // 保存当前翻页模式并切换到滚动模式
+    if (flipMode === "page") {
+      prevFlipModeRef.current = flipMode;
+      settings.setFlipMode("scroll");
     }
 
     ttsSessionRef.current += 1;
