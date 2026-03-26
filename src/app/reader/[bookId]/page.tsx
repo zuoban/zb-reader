@@ -200,6 +200,7 @@ function ReaderContent() {
 
   const currentCfiRef = useRef<string | null>(null);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+  const prevFlipModeRef = useRef<"scroll" | "page" | null>(null);
 
   const ttsSessionRef = useRef(0);
   const ttsResumeRef = useRef<(() => void) | null>(null);
@@ -365,6 +366,12 @@ function ReaderContent() {
     setIsPaused(false);
     setIsTtsViewOpen(false);
 
+    // 恢复之前的翻页模式
+    if (prevFlipModeRef.current && flipMode === "scroll") {
+      settings.setFlipMode(prevFlipModeRef.current);
+      prevFlipModeRef.current = null;
+    }
+
     // Scroll current paragraph to top when stopping
     if (book?.format === "epub" && autoScrollToActive) {
       epubReaderRef.current?.scrollToActiveParagraph();
@@ -383,7 +390,7 @@ function ReaderContent() {
       navigator.mediaSession.playbackState = "none";
       mediaSessionSetupRef.current = false;
     }
-  }, [book?.format, autoScrollToActive]);
+  }, [book?.format, autoScrollToActive, flipMode, settings]);
 
   const setupMediaSession = useCallback(() => {
     if (!("mediaSession" in navigator)) return;
@@ -1351,6 +1358,15 @@ function ReaderContent() {
       return;
     }
 
+    // 保存当前翻页模式并切换到滚动模式用于朗读
+    const wasPageMode = flipMode === "page";
+    if (wasPageMode) {
+      prevFlipModeRef.current = flipMode;
+      settings.setFlipMode("scroll");
+      // 等待组件重新渲染完成
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+
     ttsSessionRef.current += 1;
     readParagraphsHashRef.current.clear();
     const sessionId = ttsSessionRef.current;
@@ -1366,6 +1382,11 @@ function ReaderContent() {
 
     if (paragraphs.length === 0) {
       toast.error("当前页面没有可朗读段落");
+      // 如果切换了模式但朗读失败，恢复原模式
+      if (wasPageMode) {
+        settings.setFlipMode("page");
+        prevFlipModeRef.current = null;
+      }
       return;
     }
 
@@ -1790,6 +1811,7 @@ function ReaderContent() {
       >
         {book.format === "epub" && (
           <EpubReader
+            key={`${bookId}-${flipMode}`}
             ref={epubReaderRef}
             url={bookUrl}
             initialLocation={initialLocation}
