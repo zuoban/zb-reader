@@ -157,9 +157,6 @@ function ReaderContent() {
   // Settings panel
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  // Progress history dialog
-  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
-
   // Fullscreen
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -532,55 +529,6 @@ function ReaderContent() {
     }, IDLE_TIMEOUT_MS);
   }, [handleBack]);
 
-  useEffect(() => {
-    // Disable idle timeout during TTS
-    if (isSpeaking) {
-      if (idleTimerRef.current) {
-        clearTimeout(idleTimerRef.current);
-        idleTimerRef.current = null;
-      }
-      if (idleWarningRef.current) {
-        clearTimeout(idleWarningRef.current);
-        idleWarningRef.current = null;
-      }
-      setIdleCountdown(null);
-      return;
-    }
-
-    const events = ['mousedown', 'scroll', 'keydown', 'touchstart', 'mousemove'];
-    events.forEach((e) => document.addEventListener(e, resetIdleTimer));
-    resetIdleTimer();
-
-    return () => {
-      if (idleTimerRef.current) {
-        clearTimeout(idleTimerRef.current);
-        idleTimerRef.current = null;
-      }
-      if (idleWarningRef.current) {
-        clearTimeout(idleWarningRef.current);
-        idleWarningRef.current = null;
-      }
-      events.forEach((e) => document.removeEventListener(e, resetIdleTimer));
-    };
-  }, [isSpeaking, resetIdleTimer]);
-
-  // Countdown display
-  useEffect(() => {
-    if (idleCountdown === null || idleCountdown <= 0) return;
-
-    const interval = setInterval(() => {
-      setIdleCountdown((prev) => {
-        if (prev === null || prev <= 1) {
-          clearInterval(interval);
-          return null;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [idleCountdown]);
-
   // ---- Esc key to go back ----
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -591,32 +539,6 @@ function ReaderContent() {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [handleBack]);
-
-  // ---- History dialog handler ----
-  const handleToggleHistory = useCallback(() => {
-    setHistoryDialogOpen((prev) => !prev);
-  }, []);
-
-  const handleRestoreHistory = useCallback(async (historyId: string) => {
-    try {
-      const response = await fetch(`/api/progress/history/${historyId}/restore`, {
-        method: "POST",
-      });
-      if (!response.ok) throw new Error("恢复失败");
-      const data = await response.json();
-      if (data.location) {
-        epubReaderRef.current?.goToLocation(data.location);
-        toast.success("已恢复到历史位置");
-      }
-    } catch (error) {
-      toast.error("恢复失败");
-      logger.error("reader", "恢复历史进度失败", error);
-    }
-  }, []);
-
-  const handleJumpToHistoryLocation = useCallback((location: string, _scrollRatio: number | null) => {
-    epubReaderRef.current?.goToLocation(location);
-  }, []);
 
   // ---- Fullscreen handlers ----
   const handleToggleFullscreen = useCallback(async () => {
@@ -1878,6 +1800,7 @@ function ReaderContent() {
       <ReaderToolbar
         visible={toolbarVisible && !isSpeaking && !isTtsViewOpen}
         title={book.title}
+        currentChapterTitle={currentChapterTitle}
         currentPage={currentPage}
         totalPages={totalPages}
         progress={progress}
@@ -1894,7 +1817,6 @@ function ReaderContent() {
           setSidePanelOpen(true);
           setActiveTab("notes");
         }}
-        onToggleHistory={handleToggleHistory}
         onToggleTts={handleToggleTts}
         onToggleFullscreen={handleToggleFullscreen}
         onToggleSettings={() => setSettingsOpen(true)}
@@ -1986,15 +1908,6 @@ function ReaderContent() {
         initialContent={noteEditor.initialContent}
         initialColor={noteEditor.initialColor}
         onSave={handleSaveNote}
-      />
-
-      {/* Progress history dialog */}
-      <ProgressHistoryDialog
-        open={historyDialogOpen}
-        onOpenChange={setHistoryDialogOpen}
-        bookId={bookId}
-        onRestore={handleRestoreHistory}
-        onJumpToLocation={handleJumpToHistoryLocation}
       />
 
       {book && (

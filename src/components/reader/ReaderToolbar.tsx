@@ -13,7 +13,6 @@ import {
   ChevronRight,
   Maximize,
   Minimize,
-  History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +26,7 @@ import { cn, formatDuration } from "@/lib/utils";
 interface ReaderToolbarProps {
   visible: boolean;
   title: string;
+  currentChapterTitle?: string;
   currentPage?: number;
   totalPages?: number;
   progress: number;
@@ -38,7 +38,6 @@ interface ReaderToolbarProps {
   onToggleBookmark: () => void;
   onToggleSettings: () => void;
   onToggleNotes: () => void;
-  onToggleHistory: () => void;
   onToggleTts: () => void;
   onToggleFullscreen: () => void;
   isSpeaking: boolean;
@@ -93,6 +92,7 @@ function ToolbarButton({
 export function ReaderToolbar({
   visible,
   title,
+  currentChapterTitle,
   currentPage: _currentPage,
   totalPages: _totalPages,
   progress,
@@ -104,7 +104,6 @@ export function ReaderToolbar({
   onToggleBookmark,
   onToggleSettings,
   onToggleNotes,
-  onToggleHistory,
   onToggleTts,
   onToggleFullscreen,
   isSpeaking,
@@ -168,10 +167,6 @@ export function ReaderToolbar({
 
               <ToolbarButton onClick={onToggleNotes} tooltip="笔记">
                 <StickyNote className="size-[18px] sm:size-5" />
-              </ToolbarButton>
-
-              <ToolbarButton onClick={onToggleHistory} tooltip="阅读历史">
-                <History className="size-[18px] sm:size-5" />
               </ToolbarButton>
 
               <ToolbarButton
@@ -248,18 +243,20 @@ export function ReaderToolbar({
 
                 {/* 进度条和百分比 */}
                 <div className="flex-1 flex flex-col gap-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10px] sm:text-xs font-medium tracking-wider uppercase" style={{ color: "var(--reader-muted-text, #737373)" }}>
-                      阅读进度
-                    </span>
-                    <div className="flex items-center gap-2">
+                  <div className="relative flex items-center justify-center">
+                    <div className="absolute left-0 flex items-center gap-2 shrink-0">
                       {readingDuration !== undefined && readingDuration > 0 && (
-                        <span className="text-[10px] sm:text-xs text-muted-foreground">
+                        <span className="text-xs font-normal" style={{ color: "var(--reader-muted-text, #737373)" }}>
                           已读 {formatDuration(readingDuration)}
                         </span>
                       )}
+                    </div>
+                    <span className="text-xs font-normal truncate max-w-[50%] text-center" style={{ color: "var(--reader-text, #171717)" }}>
+                      {currentChapterTitle || "阅读进度"}
+                    </span>
+                    <div className="absolute right-0 flex items-center gap-2 shrink-0">
                       <span
-                        className="text-xs sm:text-sm font-semibold tabular-nums"
+                        className="text-xs font-normal tabular-nums"
                         style={{ color: "var(--reader-primary, #171717)" }}
                       >
                         {(progress * 100).toFixed(2)}%
