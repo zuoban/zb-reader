@@ -799,7 +799,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
             width: "100%",
             height: "100%",
             spread: "none",
-            flow: flipMode === "page" ? "paginated" : "scrolled-doc",
+            flow: "scrolled-doc",
             allowScriptedContent: true,
           });
           renditionRef.current = rendition;
@@ -975,7 +975,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         bookRef.current = null;
         if (book) book.destroy();
       };
-    }, [url, flipMode, initialLocation]);
+    }, [url, initialLocation]);
 
     useEffect(() => {
       const rendition = renditionRef.current;
