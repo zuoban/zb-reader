@@ -202,6 +202,9 @@ export const readerSettings = sqliteTable("reader_settings", {
   autoScrollToActive: integer("auto_scroll_to_active", { mode: "boolean" })
     .default(true)
     .notNull(),
+  flipMode: text("flip_mode", { enum: ["scroll", "page"] })
+    .default("scroll")
+    .notNull(),
   createdAt: text("created_at")
     .default(sql`(datetime('now'))`)
     .notNull(),

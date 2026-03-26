@@ -139,6 +139,7 @@ function ReaderContent() {
   const ttsHighlightColor = settings.ttsHighlightColor;
   const ttsHighlightStyle = settings.ttsHighlightStyle;
   const autoScrollToActive = settings.autoScrollToActive;
+  const flipMode = settings.flipMode;
   const debouncedSaveSettings = useDebouncedSettingsSave();
 
   // Local settings states (browser voices, TTS state)
@@ -343,6 +344,7 @@ function ReaderContent() {
     settings.ttsHighlightColor,
     settings.ttsHighlightStyle,
     settings.autoScrollToActive,
+    settings.flipMode,
   ]);
 
   useEffect(() => {
@@ -835,6 +837,10 @@ function ReaderContent() {
 
   const handleThemeChange = useCallback(async (theme: "light" | "dark" | "sepia") => {
     settings.setTheme(theme);
+  }, [settings]);
+
+  const handleFlipModeChange = useCallback((mode: "scroll" | "page") => {
+    settings.setFlipMode(mode);
   }, [settings]);
 
   const handleSelectedBrowserVoiceIdChange = useCallback((voiceId: string) => {
@@ -1609,15 +1615,23 @@ function ReaderContent() {
 
   const handlePrevPage = useCallback(() => {
     if (book?.format === "epub") {
-      epubReaderRef.current?.scrollUp();
+      if (flipMode === "page") {
+        epubReaderRef.current?.prevPage();
+      } else {
+        epubReaderRef.current?.scrollUp();
+      }
     }
-  }, [book?.format]);
+  }, [book?.format, flipMode]);
 
   const handleNextPage = useCallback(() => {
     if (book?.format === "epub") {
-      epubReaderRef.current?.scrollDown();
+      if (flipMode === "page") {
+        epubReaderRef.current?.nextPage();
+      } else {
+        epubReaderRef.current?.scrollDown();
+      }
     }
-  }, [book?.format]);
+  }, [book?.format, flipMode]);
 
   const handlePrevChapter = useCallback(() => {
     if (book?.format !== "epub") return;
@@ -1776,12 +1790,14 @@ function ReaderContent() {
       >
         {book.format === "epub" && (
           <EpubReader
+            key={`${bookId}-${flipMode}`}
             ref={epubReaderRef}
             url={bookUrl}
             initialLocation={initialLocation}
             fontSize={fontSize}
             pageWidth={pageWidth}
             theme={readerTheme}
+            flipMode={flipMode}
             onLocationChange={handleLocationChange}
             onTocLoaded={handleTocLoaded}
             onTextSelected={handleTextSelected}
@@ -1885,6 +1901,8 @@ function ReaderContent() {
         onTtsHighlightColorChange={settings.setTtsHighlightColor}
         ttsHighlightStyle={ttsHighlightStyle}
         onTtsHighlightStyleChange={settings.setTtsHighlightStyle}
+        flipMode={flipMode}
+        onFlipModeChange={handleFlipModeChange}
       />
 
       {/* Text selection menu */}

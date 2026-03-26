@@ -17,6 +17,7 @@ interface ReaderSettingsPayload {
   ttsAutoNextChapter?: boolean;
   ttsHighlightStyle?: "background" | "indicator";
   ttsHighlightColor?: string;
+  flipMode?: "scroll" | "page";
 }
 
 const DEFAULTS = {
@@ -29,6 +30,7 @@ const DEFAULTS = {
   ttsAutoNextChapter: false,
   ttsHighlightStyle: "indicator" as const,
   ttsHighlightColor: "#3b82f6",
+  flipMode: "scroll" as const,
 };
 
 function toResponseShape(settings: typeof readerSettings.$inferSelect | null | undefined) {
@@ -46,6 +48,7 @@ function toResponseShape(settings: typeof readerSettings.$inferSelect | null | u
     ttsAutoNextChapter: settings.ttsAutoNextChapter,
     ttsHighlightStyle: settings.ttsHighlightStyle || "indicator",
     ttsHighlightColor: settings.ttsHighlightColor || "#3b82f6",
+    flipMode: settings.flipMode || "scroll",
   };
 }
 
@@ -108,6 +111,10 @@ export async function PUT(req: NextRequest) {
         typeof payload.ttsHighlightColor === "string"
           ? payload.ttsHighlightColor
           : existing?.ttsHighlightColor ?? DEFAULTS.ttsHighlightColor,
+      flipMode:
+        payload.flipMode === "scroll" || payload.flipMode === "page"
+          ? payload.flipMode
+          : existing?.flipMode ?? DEFAULTS.flipMode,
       updatedAt: now,
     };
 

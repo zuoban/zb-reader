@@ -17,6 +17,7 @@ interface EpubReaderProps {
   fontSize?: number;
   pageWidth?: number;
   theme?: "light" | "dark" | "sepia";
+  flipMode?: "scroll" | "page";
   onLocationChange?: (location: {
     cfi: string;
     progress: number;
@@ -159,6 +160,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       fontSize = 16,
       pageWidth = 800,
       theme = "light",
+      flipMode = "scroll",
       onLocationChange,
       onTocLoaded,
       onTextSelected,
@@ -201,10 +203,14 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         }
       },
       nextPage() {
-        renditionRef.current?.next();
+        const rendition = renditionRef.current;
+        if (!rendition) return;
+        rendition.next();
       },
       prevPage() {
-        renditionRef.current?.prev();
+        const rendition = renditionRef.current;
+        if (!rendition) return;
+        rendition.prev();
       },
       scrollDown(amount = 300) {
         const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
@@ -249,7 +255,71 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
 
         const normalizeParagraph = (text: string) => text.replace(/\s+/g, " ").trim();
 
+        // 在分页模式下，获取当前显示页面的所有段落
         const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
+        const isPaginated = epubContainer?.scrollHeight === epubContainer?.clientHeight;
+        
+        if (isPaginated) {
+          // 分页模式下，获取当前屏幕可见区域内的段落
+          const visibleParagraphs: string[] = [];
+          
+          for (const element of elementArray) {
+            const rects = Array.from(element.getClientRects());
+            let isVisible = false;
+            
+            for (const rect of rects) {
+              if (
+                rect.bottom > 0 &&
+                rect.top < viewportHeight &&
+                rect.right > 0 &&
+                rect.left < viewportWidth
+              ) {
+                isVisible = true;
+                break;
+              }
+            }
+            
+            if (isVisible) {
+              const text = normalizeParagraph(element.textContent || "");
+              if (text.length > 0) {
+                visibleParagraphs.push(text);
+              }
+            }
+          }
+          
+          if (visibleParagraphs.length > 0) {
+            return visibleParagraphs;
+          }
+          
+          // 如果没有可见段落，返回最近的段落
+          const nearestParagraphs = elementArray
+            .map((element) => {
+              const rects = Array.from(element.getClientRects());
+              if (rects.length === 0) {
+                return { distance: Infinity, text: normalizeParagraph(element.textContent || "") };
+              }
+              const minDistance = rects.reduce((best, rect) => {
+                const rectCenterY = rect.top + rect.height / 2;
+                return Math.min(best, Math.abs(rectCenterY - viewportHeight / 2));
+              }, Infinity);
+              return {
+                distance: minDistance,
+                text: normalizeParagraph(element.textContent || ""),
+              };
+            })
+            .filter((item) => item.text.length > 0 && item.text.length <= 800 && item.distance < viewportHeight)
+            .sort((a, b) => a.distance - b.distance)
+            .slice(0, 24)
+            .map((item) => item.text);
+
+          if (nearestParagraphs.length > 0) {
+            return nearestParagraphs;
+          }
+          
+          return [];
+        }
+
+        // 滚动模式下的原有逻辑
         const containerScrollTop = epubContainer?.scrollTop ?? 0;
 
         const visibleTop = containerScrollTop;
@@ -729,7 +799,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
             width: "100%",
             height: "100%",
             spread: "none",
-            flow: "scrolled-doc",
+            flow: flipMode === "page" ? "paginated" : "scrolled-doc",
             allowScriptedContent: true,
           });
           renditionRef.current = rendition;
@@ -905,7 +975,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         bookRef.current = null;
         if (book) book.destroy();
       };
-    }, [url]);
+    }, [url, flipMode, initialLocation]);
 
     useEffect(() => {
       const rendition = renditionRef.current;
