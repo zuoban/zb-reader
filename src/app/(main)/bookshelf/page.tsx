@@ -11,6 +11,7 @@ import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import type { Book } from "@/lib/db/schema";
 import { formatDuration } from "@/lib/utils";
+import { Library, Clock, CheckCircle2, BookOpen } from "lucide-react";
 
 const SKELETON_COUNT = 8;
 
@@ -115,67 +116,87 @@ export default function BookshelfPage() {
     }));
   }, []);
 
+  const stats = {
+    total: books.length,
+    reading: Object.values(progressMap).filter((v) => v > 0 && v < 1).length,
+    completed: Object.values(progressMap).filter((v) => v >= 1).length,
+    duration: formatDuration(Object.values(readingDurationMap).reduce((sum, d) => sum + d, 0)),
+  };
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background">
       <Navbar onUploadClick={() => setUploadOpen(true)} />
 
-      <main className="mx-auto w-full max-w-7xl px-3 pb-8 pt-5 sm:px-4 sm:pb-10 sm:pt-7">
-        <section
-          className="section-shell animate-reader-fade-up relative mb-6 overflow-hidden p-4 sm:mb-8 sm:p-6"
-          style={{
-            background:
-              "linear-gradient(180deg, color-mix(in srgb, var(--card) 88%, white 12%) 0%, color-mix(in srgb, var(--card) 96%, transparent) 100%)",
-            boxShadow:
-              "0 24px 60px -42px color-mix(in srgb, var(--foreground) 22%, transparent)",
-          }}
-        >
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[linear-gradient(180deg,rgba(255,255,255,0.14),transparent)]" />
-          <div className="pointer-events-none absolute right-[-6rem] top-[-5rem] h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(212,175,55,0.12)_0%,transparent_70%)] blur-3xl" />
-          <div className="pointer-events-none absolute left-[-6rem] bottom-[-8rem] h-64 w-64 rounded-full bg-[radial-gradient(circle,rgba(23,23,23,0.08)_0%,transparent_72%)] blur-3xl" />
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-              <div>
-                <p className="text-[11px] font-medium tracking-[0.18em] text-muted-foreground">
-                  READING HUB
-                </p>
-                <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">我的书架</h1>
-                <p className="mt-1.5 text-sm text-muted-foreground">
-                  {books.length > 0 ? `共 ${books.length} 本书，继续今天的阅读。` : "开始你的阅读之旅"}
-                </p>
+      <main className="mx-auto w-full max-w-7xl px-4 pb-8 pt-4 sm:px-6 sm:pb-12 sm:pt-6">
+        {/* Header Section */}
+        <section className="animate-reader-fade-up mb-8 sm:mb-10">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+                我的书架
+              </h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {stats.total > 0 ? `共 ${stats.total} 本书，继续今天的阅读` : "开始你的阅读之旅"}
+              </p>
+            </div>
+            <div className="w-full sm:w-auto">
+              <SearchBar value={search} onChange={setSearch} />
+            </div>
+          </div>
+        </section>
+
+        {/* Stats Section */}
+        <section className="animate-reader-fade-up mb-8 sm:mb-10" style={{ animationDelay: "80ms" }}>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+            {/* Total Books */}
+            <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card/50 px-4 py-3 transition-colors hover:border-border/80">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Library className="h-5 w-5" />
               </div>
-              <div className="w-full sm:w-auto">
-                <SearchBar value={search} onChange={setSearch} />
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">书籍总数</p>
+                <p className="text-lg font-semibold text-foreground">{stats.total}</p>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <div className="rounded-2xl border border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.72),rgba(255,255,255,0.48))] px-3 py-3 shadow-[0_16px_34px_-28px_rgba(0,0,0,0.24)] backdrop-blur-md">
-                <p className="text-[11px] tracking-[0.14em] text-muted-foreground">书籍总数</p>
-                <p className="mt-1.5 text-xl font-semibold">{books.length}</p>
+
+            {/* Reading */}
+            <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card/50 px-4 py-3 transition-colors hover:border-border/80">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500">
+                <BookOpen className="h-5 w-5" />
               </div>
-              <div className="rounded-2xl border border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.72),rgba(255,255,255,0.48))] px-3 py-3 shadow-[0_16px_34px_-28px_rgba(0,0,0,0.24)] backdrop-blur-md">
-                <p className="text-[11px] tracking-[0.14em] text-muted-foreground">阅读中</p>
-                <p className="mt-1.5 text-xl font-semibold">
-                  {Object.values(progressMap).filter((v) => v > 0 && v < 1).length}
-                </p>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">阅读中</p>
+                <p className="text-lg font-semibold text-foreground">{stats.reading}</p>
               </div>
-              <div className="rounded-2xl border border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.72),rgba(255,255,255,0.48))] px-3 py-3 shadow-[0_16px_34px_-28px_rgba(0,0,0,0.24)] backdrop-blur-md">
-                <p className="text-[11px] tracking-[0.14em] text-muted-foreground">已完成</p>
-                <p className="mt-1.5 text-xl font-semibold">
-                  {Object.values(progressMap).filter((v) => v >= 1).length}
-                </p>
+            </div>
+
+            {/* Completed */}
+            <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card/50 px-4 py-3 transition-colors hover:border-border/80">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-500/10 text-green-500">
+                <CheckCircle2 className="h-5 w-5" />
               </div>
-              <div className="rounded-2xl border border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.72),rgba(255,255,255,0.48))] px-3 py-3 shadow-[0_16px_34px_-28px_rgba(0,0,0,0.24)] backdrop-blur-md">
-                <p className="text-[11px] tracking-[0.14em] text-muted-foreground">总阅读时长</p>
-                <p className="mt-1.5 text-xl font-semibold">
-                  {formatDuration(Object.values(readingDurationMap).reduce((sum, d) => sum + d, 0))}
-                </p>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">已完成</p>
+                <p className="text-lg font-semibold text-foreground">{stats.completed}</p>
+              </div>
+            </div>
+
+            {/* Duration */}
+            <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card/50 px-4 py-3 transition-colors hover:border-border/80">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500">
+                <Clock className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">总时长</p>
+                <p className="text-lg font-semibold text-foreground">{stats.duration}</p>
               </div>
             </div>
           </div>
         </section>
 
+        {/* Book Grid */}
         {loading ? (
-          <div className="animate-reader-fade-up grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6" style={{ animationDelay: "80ms" }}>
+          <div className="animate-reader-fade-up grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6" style={{ animationDelay: "120ms" }}>
             {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
               <BookCardSkeleton key={i} />
             ))}

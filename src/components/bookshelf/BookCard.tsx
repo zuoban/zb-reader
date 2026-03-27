@@ -18,7 +18,7 @@ import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { BookOpen, MoreVertical, Trash2, Clock } from "lucide-react";
 import type { Book } from "@/lib/db/schema";
-import { formatBytes, formatDuration } from "@/lib/utils";
+import { formatDuration } from "@/lib/utils";
 import { SetReadingDurationDialog } from "./SetReadingDurationDialog";
 
 // 格式化最后阅读时间
@@ -126,19 +126,18 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
     });
   }, [spotlight]);
 
+  const hasProgress = progress > 0 && progress < 1;
+  const isCompleted = progress >= 1;
+
   return (
     <Card
       ref={cardRef}
       className={cn(
-        "group relative overflow-hidden rounded-[22px] border border-border/70 py-0 transition-all duration-300 ease-out hover:-translate-y-1 hover:border-primary/40 active:translate-y-0 active:scale-[0.992]",
-        spotlight && "animate-pulse-subtle border-primary/50 shadow-[0_20px_44px_-30px_color-mix(in_srgb,var(--primary)_35%,transparent)]"
+        "group relative overflow-hidden rounded-2xl border border-border/60 bg-card transition-all duration-200",
+        "hover:-translate-y-0.5 hover:border-border/80 hover:shadow-lg",
+        "active:translate-y-0 active:scale-[0.995]",
+        spotlight && "animate-pulse-subtle ring-2 ring-primary/30"
       )}
-      style={{
-        background:
-          "linear-gradient(180deg, color-mix(in srgb, var(--card) 88%, white 12%) 0%, color-mix(in srgb, var(--card) 98%, transparent) 100%)",
-        boxShadow:
-          "0 18px 38px -28px color-mix(in srgb, var(--foreground) 18%, transparent)",
-      }}
     >
       <Link
         href={readerHref}
@@ -147,133 +146,89 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
         onClick={handleOpenReader}
       >
         <div
-          className="aspect-[3/4] bg-muted relative overflow-hidden"
+          className="aspect-[3/4] relative overflow-hidden bg-muted"
           data-reader-transition-cover
         >
-          <div className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-14 bg-[linear-gradient(180deg,rgba(255,255,255,0.14),transparent)]" />
-          <div className="pointer-events-none absolute inset-0 z-[1] opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-            <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.16)_0%,transparent_36%,transparent_100%)]" />
-          </div>
+          {/* Cover Image */}
           {book.cover ? (
             <Image
               src={`/api/books/${book.id}/cover`}
               alt={book.title || "书籍封面"}
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
-              className="object-cover transition-transform duration-300 ease-out group-hover:scale-[1.045] group-active:scale-[1.02]"
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
             />
           ) : (
-            <div className="w-full h-full relative overflow-hidden">
-              {/* 背景纹理 */}
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-slate-50 to-zinc-100 dark:from-slate-900/80 dark:via-slate-800/60 dark:to-zinc-900/80" />
-              <div className="absolute inset-0 opacity-40" style={{
-                backgroundImage: `radial-gradient(circle at 20% 80%, rgba(99,102,241,0.08) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(236,72,153,0.08) 0%, transparent 50%), radial-gradient(circle at 40% 40%, rgba(34,211,238,0.05) 0%, transparent 40%)`
-              }} />
-              
-              {/* 几何装饰 */}
-              <div className="absolute top-4 right-4 w-16 h-16 rounded-full border border-indigo-200/30 dark:border-indigo-500/20" />
-              <div className="absolute bottom-8 left-4 w-8 h-8 rounded-full bg-gradient-to-br from-pink-200/20 to-purple-200/20 dark:from-pink-500/10 dark:to-purple-500/10" />
-              <div className="absolute top-1/3 left-8 w-2 h-16 rounded-full bg-gradient-to-b from-indigo-200/30 to-transparent dark:from-indigo-500/20" />
-              
-              {/* 书本主体 */}
-              <div className="absolute inset-0 flex items-center justify-center p-6">
-                <div className="relative">
-
-                  {/* 书本封面 */}
-                  <div className="relative w-[4.5rem] h-[6.5rem] sm:w-24 sm:h-[8.5rem] rounded-r-md rounded-l-sm transform overflow-hidden transition-transform duration-300 ease-out group-hover:scale-[1.06] group-hover:-rotate-[1.2deg] group-active:scale-[1.02]">
-                    {/* 封面渐变 */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 dark:from-indigo-600 dark:via-purple-600 dark:to-pink-600" />
-                    
-                    {/* 封面纹理 */}
-                    <div className="absolute inset-0 opacity-30" style={{
-                      backgroundImage: `linear-gradient(135deg, rgba(255,255,255,0.1) 25%, transparent 25%), linear-gradient(225deg, rgba(255,255,255,0.1) 25%, transparent 25%), linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%), linear-gradient(315deg, rgba(255,255,255,0.1) 25%, transparent 25%)`,
-                      backgroundSize: '12px 12px',
-                      backgroundPosition: '0 0, 6px 0, 6px -6px, 0 6px'
-                    }} />
-                    
-                    {/* 高光 */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/25 via-transparent to-transparent" />
-                    <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-white/10 to-transparent" />
-                    
-                    {/* 书脊 */}
-                    <div className="absolute left-0 top-0 bottom-0 w-2 bg-gradient-to-r from-black/20 via-transparent to-transparent" />
-                    <div className="absolute left-1 top-0 bottom-0 w-px bg-white/20" />
-                    
-                    {/* 装饰线条 */}
-                    <div className="absolute top-3 left-3 right-3 h-px bg-white/20" />
-                    <div className="absolute bottom-3 left-3 right-3 h-px bg-white/20" />
-                    
-                    {/* 书名首字母 */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="relative">
-                        <span className="relative z-10 text-4xl sm:text-5xl font-black text-white/95 drop-shadow-lg tracking-tight" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.2)' }}>
-                          {book.title?.charAt(0) || "书"}
-                        </span>
-                        {/* 字母光晕 */}
-                        <div className="absolute inset-0 blur-lg bg-white/30 -z-10 scale-150" />
-                      </div>
-                    </div>
-                    
-                    {/* 底部装饰标签 */}
-                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-white/15 backdrop-blur-sm rounded text-[8px] sm:text-[10px] font-medium text-white/80 tracking-wider">
-                      {book.format?.toUpperCase() || "BOOK"}
-                    </div>
+            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
+              {/* Book Placeholder */}
+              <div className="relative">
+                <div className="w-16 h-[5.5rem] sm:w-20 sm:h-28 rounded-r-md rounded-l-sm transform overflow-hidden bg-gradient-to-br from-primary/80 to-primary shadow-md transition-transform duration-300 group-hover:scale-105">
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent" />
+                  <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-r from-black/20 to-transparent" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-2xl sm:text-3xl font-bold text-white drop-shadow">
+                      {book.title?.charAt(0) || "书"}
+                    </span>
+                  </div>
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-white/20 rounded text-[7px] font-medium text-white/90">
+                    {book.format?.toUpperCase()}
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Progress overlay */}
-          {progress > 0 && (
-            <div className="absolute bottom-0 left-0 right-0 border-t border-border/60 bg-card/95 px-3 py-2 backdrop-blur-sm transition-transform duration-300 group-hover:translate-y-0">
-              <div className="flex items-center gap-2">
-                <Progress value={progress * 100} className="h-1.5 sm:h-2 flex-1" />
-                <span className="text-xs font-medium text-foreground shrink-0">
-                  {(progress * 100).toFixed(2)}%
-                </span>
-              </div>
+          {/* Status Badge */}
+          {(hasProgress || isCompleted) && (
+            <div className="absolute left-2 top-2">
+              <span className={cn(
+                "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium",
+                isCompleted 
+                  ? "bg-green-500/90 text-white" 
+                  : "bg-primary/90 text-primary-foreground"
+              )}>
+                {isCompleted ? "已完成" : `${Math.round(progress * 100)}%`}
+              </span>
             </div>
           )}
         </div>
       </Link>
 
-      <div className="p-3 sm:p-4">
-        <div className="flex items-start justify-between gap-1 sm:gap-2">
+      {/* Card Content */}
+      <div className="p-3">
+        <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <h3 className="font-semibold text-sm line-clamp-2 sm:line-clamp-1 text-foreground" title={book.title}>
-              {book.title}
+            <h3 
+              className="truncate text-sm font-medium text-foreground" 
+              title={book.title}
+            >
+              {book.title || "未命名书籍"}
             </h3>
-            <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
-              {book.author}
+            <p className="truncate text-xs text-muted-foreground mt-0.5">
+              {book.author || "未知作者"}
             </p>
-            {lastReadAt && (
-              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
-                {formatLastRead(lastReadAt)}
+            {(lastReadAt || readingDuration > 0) && (
+              <p className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground">
+                <Clock className="h-3 w-3" />
+                <span>
+                  {lastReadAt ? formatLastRead(lastReadAt) : formatDuration(localDuration || readingDuration)}
+                </span>
               </p>
             )}
-            {readingDuration !== undefined && readingDuration > 0 && (
-              <p className="text-xs text-muted-foreground mt-0.5">
-                已读 {formatDuration(localDuration || readingDuration)}
-              </p>
-            )}
-            <p className="text-xs text-muted-foreground mt-0.5 hidden sm:block">
-              {formatBytes(book.fileSize)}
-            </p>
           </div>
 
-            <DropdownMenu>
+          <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
                 aria-label="菜单"
-                className="-mr-2 h-8 w-8 shrink-0 border border-transparent transition-all duration-200 hover:border-border/90 hover:bg-accent hover:scale-105 active:scale-95 sm:opacity-0 sm:translate-y-1 sm:group-hover:translate-y-0 sm:group-hover:opacity-100"
+                className="-mr-2 h-7 w-7 shrink-0 rounded-lg opacity-0 transition-all duration-200 group-hover:opacity-100 hover:bg-accent"
               >
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="surface-glass w-40">
+            <DropdownMenuContent align="end" className="w-40">
               <DropdownMenuItem asChild className="cursor-pointer">
                 <Link href={readerHref} className="flex items-center gap-2">
                   <BookOpen className="h-4 w-4" />
@@ -297,6 +252,16 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+
+        {/* Progress Bar */}
+        {hasProgress && (
+          <div className="mt-2">
+            <Progress 
+              value={progress * 100} 
+              className="h-1" 
+            />
+          </div>
+        )}
       </div>
 
       <SetReadingDurationDialog
