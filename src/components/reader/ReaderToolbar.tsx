@@ -82,7 +82,11 @@ function ToolbarButton({
           {children}
         </Button>
       </TooltipTrigger>
-      <TooltipContent side="bottom" className="text-xs bg-background/95 backdrop-blur-sm border-border/50 text-foreground shadow-lg">
+      <TooltipContent 
+        side="bottom" 
+        sideOffset={6}
+        className="text-xs bg-background/95 backdrop-blur-sm border-border/50 text-foreground shadow-lg [&>svg]:hidden"
+      >
         {tooltip}
       </TooltipContent>
     </Tooltip>
