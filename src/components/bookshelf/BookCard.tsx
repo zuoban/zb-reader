@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { memo, useEffect, useRef, useState } from "react";
-import type { MouseEvent as ReactMouseEvent } from "react";
+import { BookOpen, MoreVertical, Trash2, Clock, CheckCircle2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { READER_ROUTE_TRANSITION_EVENT } from "@/components/layout/ReaderRouteTransition";
@@ -14,12 +14,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { BookOpen, MoreVertical, Trash2, Clock } from "lucide-react";
-import type { Book } from "@/lib/db/schema";
 import { formatDuration } from "@/lib/utils";
 import { SetReadingDurationDialog } from "./SetReadingDurationDialog";
+import type { MouseEvent as ReactMouseEvent } from "react";
+import type { Book } from "@/lib/db/schema";
 
 // 格式化最后阅读时间
 function formatLastRead(dateStr?: string): string | null {
@@ -128,17 +127,23 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
 
   const hasProgress = progress > 0 && progress < 1;
   const isCompleted = progress >= 1;
+  const durationText = localDuration > 0 || readingDuration > 0
+    ? formatDuration(localDuration || readingDuration)
+    : null;
+  const lastReadText = lastReadAt ? formatLastRead(lastReadAt) : null;
+  const statusText = isCompleted ? "已完成" : hasProgress ? `${Math.round(progress * 100)}%` : null;
 
   return (
     <Card
       ref={cardRef}
       className={cn(
-        "group relative overflow-hidden rounded-2xl border border-border/60 bg-card transition-all duration-200",
-        "hover:-translate-y-0.5 hover:border-border/80 hover:shadow-lg",
+        "group surface-glass relative overflow-hidden rounded-[1.15rem] border border-border/50 bg-card/80 transition-all duration-300 sm:rounded-[1.5rem]",
+        "hover:-translate-y-1 hover:border-border/70 hover:shadow-[0_22px_52px_-38px_color-mix(in_oklab,var(--foreground)_24%,transparent)]",
         "active:translate-y-0 active:scale-[0.995]",
         spotlight && "animate-pulse-subtle ring-2 ring-primary/30"
       )}
     >
+      <div className="absolute inset-x-0 top-0 z-10 h-px bg-gradient-to-r from-transparent via-foreground/12 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
       <Link
         href={readerHref}
         className={cn("block cursor-pointer", spotlight && "animate-reader-fade-up")}
@@ -146,74 +151,80 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
         onClick={handleOpenReader}
       >
         <div
-          className="aspect-[3/4] relative overflow-hidden bg-muted"
+          className="relative aspect-[3/4] overflow-hidden bg-muted"
           data-reader-transition-cover
         >
           {/* Cover Image */}
           {book.cover ? (
-            <Image
-              src={`/api/books/${book.id}/cover`}
-              alt={book.title || "书籍封面"}
-              fill
-              sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
-            />
+            <>
+              <Image
+                src={`/api/books/${book.id}/cover`}
+                alt={book.title || "书籍封面"}
+                fill
+                sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
+                className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/36 via-transparent to-white/10 opacity-75" />
+              <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white/12 to-transparent" />
+            </>
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
-              {/* Book Placeholder */}
+            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-muted/80 to-muted/45 dark:from-muted/40 dark:to-muted/20">
               <div className="relative">
-                <div className="w-16 h-[5.5rem] sm:w-20 sm:h-28 rounded-r-md rounded-l-sm transform overflow-hidden bg-gradient-to-br from-primary/80 to-primary shadow-md transition-transform duration-300 group-hover:scale-105">
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent" />
-                  <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-r from-black/20 to-transparent" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-2xl sm:text-3xl font-bold text-white drop-shadow">
-                      {book.title?.charAt(0) || "书"}
-                    </span>
-                  </div>
-                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-white/20 rounded text-[7px] font-medium text-white/90">
-                    {book.format?.toUpperCase()}
-                  </div>
+                <div className="flex h-[5.75rem] w-[4.25rem] items-center justify-center overflow-hidden rounded-r-lg rounded-l-sm border border-white/10 bg-gradient-to-b from-foreground/80 to-foreground/65 text-white shadow-[0_18px_24px_-18px_rgba(15,23,42,0.4)] transition-transform duration-500 group-hover:scale-[1.03] sm:h-28 sm:w-[4.9rem]">
+                  <div className="absolute inset-y-0 left-0 w-1.5 bg-black/15" />
+                  <div className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-white/10 to-transparent" />
+                  <span className="text-xl font-semibold tracking-[-0.04em] text-white/92 sm:text-2xl">
+                    {book.title?.charAt(0) || "书"}
+                  </span>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Status Badge */}
-          {(hasProgress || isCompleted) && (
-            <div className="absolute left-2 top-2">
-              <span className={cn(
-                "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium",
-                isCompleted 
-                  ? "bg-green-500/90 text-white" 
-                  : "bg-primary/90 text-primary-foreground"
-              )}>
-                {isCompleted ? "已完成" : `${Math.round(progress * 100)}%`}
-              </span>
-            </div>
-          )}
+          <div className="absolute inset-x-2 bottom-2 flex items-end justify-start sm:inset-x-2.5 sm:bottom-2.5">
+            <span className="rounded-full border border-white/15 bg-black/30 px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-[0.12em] text-white/90 backdrop-blur-sm sm:px-2 sm:text-[9px] sm:tracking-[0.14em]">
+              {book.format?.toUpperCase() || "BOOK"}
+            </span>
+          </div>
         </div>
       </Link>
 
       {/* Card Content */}
-      <div className="p-3">
-        <div className="flex items-start justify-between gap-2">
+      <div className="p-3 sm:p-3.5">
+        <div className="flex items-start justify-between gap-1.5">
           <div className="min-w-0 flex-1">
-            <h3 
-              className="truncate text-sm font-medium text-foreground" 
+            <h3
+              className="line-clamp-1 text-[13px] font-semibold tracking-[-0.02em] text-foreground sm:text-sm"
               title={book.title}
             >
               {book.title || "未命名书籍"}
             </h3>
-            <p className="truncate text-xs text-muted-foreground mt-0.5">
+            <p className="mt-0.5 line-clamp-1 text-[10px] text-muted-foreground/90 sm:text-[11px]">
               {book.author || "未知作者"}
             </p>
-            {(lastReadAt || readingDuration > 0) && (
-              <p className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground">
-                <Clock className="h-3 w-3" />
-                <span>
-                  {lastReadAt ? formatLastRead(lastReadAt) : formatDuration(localDuration || readingDuration)}
-                </span>
-              </p>
+            {(durationText || lastReadText || statusText) && (
+              <div className="mt-1 flex min-h-4 items-center gap-1.5 text-[9px] text-muted-foreground sm:mt-1.5 sm:text-[10px]">
+                {durationText && (
+                  <span className="flex min-w-0 items-center gap-1">
+                    <Clock className="h-2.5 w-2.5 shrink-0" />
+                    <span className="truncate">{durationText}</span>
+                  </span>
+                )}
+                {durationText && lastReadText && <span className="h-1 w-1 rounded-full bg-border/80" />}
+                {lastReadText && <span className="truncate">{lastReadText}</span>}
+                {(durationText || lastReadText) && statusText && <span className="h-1 w-1 rounded-full bg-border/80" />}
+                {statusText && (
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-1 font-medium",
+                      isCompleted ? "text-green-600 dark:text-green-400" : "text-primary"
+                    )}
+                  >
+                    {isCompleted && <CheckCircle2 className="h-3 w-3" />}
+                    <span>{statusText}</span>
+                  </span>
+                )}
+              </div>
             )}
           </div>
 
@@ -223,9 +234,9 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
                 variant="ghost"
                 size="icon"
                 aria-label="菜单"
-                className="-mr-2 h-7 w-7 shrink-0 rounded-lg opacity-0 transition-all duration-200 group-hover:opacity-100 hover:bg-accent"
+                className="-mr-1 h-6.5 w-6.5 shrink-0 rounded-md text-muted-foreground/70 opacity-70 transition-all duration-200 hover:bg-accent/70 hover:text-foreground sm:h-7 sm:w-7 sm:rounded-lg sm:opacity-0 sm:group-hover:opacity-100"
               >
-                <MoreVertical className="h-4 w-4" />
+                <MoreVertical className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
@@ -254,14 +265,6 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
         </div>
 
         {/* Progress Bar */}
-        {hasProgress && (
-          <div className="mt-2">
-            <Progress 
-              value={progress * 100} 
-              className="h-1" 
-            />
-          </div>
-        )}
       </div>
 
       <SetReadingDurationDialog

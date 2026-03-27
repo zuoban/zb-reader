@@ -1,17 +1,18 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { Clock, CheckCircle2, BookOpen, Library } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { BookGrid } from "@/components/bookshelf/BookGrid";
 import { BookCardSkeleton } from "@/components/bookshelf/BookCardSkeleton";
 import { SearchBar } from "@/components/bookshelf/SearchBar";
 import { UploadDialog } from "@/components/bookshelf/UploadDialog";
+import { BackgroundDecoration } from "@/components/bookshelf/BackgroundDecoration";
 import { READER_RETURN_SPOTLIGHT_KEY } from "@/components/layout/ReaderRouteTransition";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import type { Book } from "@/lib/db/schema";
 import { formatDuration } from "@/lib/utils";
-import { Library, Clock, CheckCircle2, BookOpen } from "lucide-react";
 
 const SKELETON_COUNT = 8;
 
@@ -125,70 +126,44 @@ export default function BookshelfPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <BackgroundDecoration />
       <Navbar onUploadClick={() => setUploadOpen(true)} />
 
-      <main className="mx-auto w-full max-w-7xl px-4 pb-8 pt-4 sm:px-6 sm:pb-12 sm:pt-6">
+      <main className="relative mx-auto w-full max-w-7xl px-4 pb-8 pt-4 sm:px-6 sm:pb-12 sm:pt-5">
         {/* Header Section */}
         <section className="animate-reader-fade-up mb-8 sm:mb-10">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-                我的书架
-              </h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {stats.total > 0 ? `共 ${stats.total} 本书，继续今天的阅读` : "开始你的阅读之旅"}
-              </p>
-            </div>
-            <div className="w-full sm:w-auto">
-              <SearchBar value={search} onChange={setSearch} />
-            </div>
-          </div>
-        </section>
+          <div className="surface-glass relative overflow-hidden rounded-[1.5rem] border border-border/50 px-4 py-3.5 shadow-[0_22px_72px_-42px_color-mix(in_oklab,var(--foreground)_24%,transparent)] sm:rounded-[1.75rem] sm:px-7 sm:py-4">
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+            <div className="absolute -right-20 top-0 h-36 w-36 rounded-full bg-primary/10 blur-3xl dark:bg-primary/15" />
+            <div className="absolute bottom-0 left-0 h-24 w-24 rounded-full bg-sky-500/10 blur-3xl dark:bg-sky-400/10" />
 
-        {/* Stats Section */}
-        <section className="animate-reader-fade-up mb-8 sm:mb-10" style={{ animationDelay: "80ms" }}>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-            {/* Total Books */}
-            <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card/50 px-4 py-3 transition-colors hover:border-border/80">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <Library className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-muted-foreground">书籍总数</p>
-                <p className="text-lg font-semibold text-foreground">{stats.total}</p>
-              </div>
-            </div>
+            <div className="relative flex flex-col gap-2.5 sm:gap-3 lg:flex lg:items-center lg:justify-center lg:gap-5">
 
-            {/* Reading */}
-            <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card/50 px-4 py-3 transition-colors hover:border-border/80">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500">
-                <BookOpen className="h-5 w-5" />
+              <div className="order-3 w-full lg:order-none lg:w-full lg:max-w-xl">
+                <SearchBar value={search} onChange={setSearch} />
               </div>
-              <div>
-                <p className="text-xs font-medium text-muted-foreground">阅读中</p>
-                <p className="text-lg font-semibold text-foreground">{stats.reading}</p>
-              </div>
-            </div>
 
-            {/* Completed */}
-            <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card/50 px-4 py-3 transition-colors hover:border-border/80">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-500/10 text-green-500">
-                <CheckCircle2 className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-muted-foreground">已完成</p>
-                <p className="text-lg font-semibold text-foreground">{stats.completed}</p>
-              </div>
-            </div>
-
-            {/* Duration */}
-            <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card/50 px-4 py-3 transition-colors hover:border-border/80">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500">
-                <Clock className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-muted-foreground">总时长</p>
-                <p className="text-lg font-semibold text-foreground">{stats.duration}</p>
+              <div className="order-2 grid w-full grid-cols-2 gap-x-2.5 gap-y-2 rounded-2xl border border-border/30 bg-background/30 px-3 py-2 backdrop-blur-sm sm:w-fit sm:grid-cols-4 sm:items-center sm:gap-x-0 sm:gap-y-0 sm:rounded-full lg:order-none">
+                <div className="flex min-w-0 items-center gap-1.5 sm:px-2.5">
+                  <Library className="h-3.5 w-3.5 text-primary/70" />
+                  <span className="text-[11px] text-muted-foreground/70">书籍总数</span>
+                  <span className="text-sm font-semibold text-foreground">{stats.total}</span>
+                </div>
+                <div className="flex min-w-0 items-center gap-1.5 sm:border-l sm:border-border/45 sm:px-2.5">
+                  <BookOpen className="h-3.5 w-3.5 text-blue-500/70" />
+                  <span className="text-[11px] text-muted-foreground/70">进行中</span>
+                  <span className="text-sm font-semibold text-foreground">{stats.reading}</span>
+                </div>
+                <div className="flex min-w-0 items-center gap-1.5 sm:border-l sm:border-border/45 sm:px-2.5">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500/70" />
+                  <span className="text-[11px] text-muted-foreground/70">已完成</span>
+                  <span className="text-sm font-semibold text-foreground">{stats.completed}</span>
+                </div>
+                <div className="flex min-w-0 items-center gap-1.5 sm:border-l sm:border-border/45 sm:px-2.5">
+                  <Clock className="h-3.5 w-3.5 text-amber-500/70" />
+                  <span className="text-[11px] text-muted-foreground/70">阅读时长</span>
+                  <span className="text-sm font-semibold text-foreground">{stats.duration}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -196,7 +171,7 @@ export default function BookshelfPage() {
 
         {/* Book Grid */}
         {loading ? (
-          <div className="animate-reader-fade-up grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6" style={{ animationDelay: "120ms" }}>
+          <div className="animate-reader-fade-up grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6" style={{ animationDelay: "120ms" }}>
             {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
               <BookCardSkeleton key={i} />
             ))}

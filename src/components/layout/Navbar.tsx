@@ -42,15 +42,19 @@ export function Navbar({ onUploadClick, className }: NavbarProps) {
   };
 
   return (
-    <header className={cn("sticky top-4 z-50 w-full px-4 sm:px-6 lg:px-8", className)}>
-      <nav className="mx-auto max-w-7xl">
-        <div className="flex h-16 items-center justify-between rounded-2xl border border-border/40 bg-background/80 px-4 shadow-[0_8px_32px_rgba(0,0,0,0.08)] backdrop-blur-xl transition-all duration-300 sm:px-6 dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
+    <header className={cn("sticky top-4 z-50 w-full", className)}>
+      <nav className="mx-auto w-full max-w-7xl px-4 sm:px-6">
+        <div className="surface-glass relative flex h-16 items-center justify-between overflow-hidden rounded-[1.4rem] border border-border/45 px-4 shadow-[0_16px_42px_-34px_color-mix(in_oklab,var(--foreground)_24%,transparent)] backdrop-blur-xl transition-all duration-300 sm:px-6">
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/35 to-transparent" />
+          <div className="absolute -left-8 top-0 h-20 w-20 rounded-full bg-primary/8 blur-3xl dark:bg-primary/12" />
+          <div className="absolute -right-10 bottom-0 h-20 w-20 rounded-full bg-sky-500/8 blur-3xl dark:bg-sky-400/10" />
           {/* Logo */}
           <Link 
             href="/bookshelf" 
-            className="group flex items-center gap-3 transition-all duration-200"
+            className="group relative flex items-center gap-3 transition-all duration-200"
           >
-            <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/25 transition-all duration-300 group-hover:shadow-primary/40 group-hover:scale-105">
+            <div className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-primary to-violet-500 text-primary-foreground shadow-[0_16px_28px_-18px_rgba(79,70,229,0.56)] transition-all duration-300 group-hover:scale-105 group-hover:shadow-[0_20px_34px_-18px_rgba(79,70,229,0.72)]">
+              <div className="absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.25),transparent_40%)]" />
               <Library className="h-5 w-5" strokeWidth={2} />
             </div>
             <div className="hidden flex-col sm:flex">
@@ -70,7 +74,7 @@ export function Navbar({ onUploadClick, className }: NavbarProps) {
                 variant="default" 
                 size="sm" 
                 onClick={onUploadClick}
-                className="h-9 gap-2 rounded-full bg-primary px-4 text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5"
+                className="h-10 gap-2 rounded-full border border-primary/20 bg-gradient-to-r from-primary via-primary to-violet-500 px-4 text-primary-foreground shadow-[0_16px_32px_-20px_rgba(79,70,229,0.56)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_20px_36px_-18px_rgba(79,70,229,0.68)]"
               >
                 <Upload className="h-4 w-4" />
                 <span className="hidden sm:inline">上传书籍</span>
@@ -81,7 +85,7 @@ export function Navbar({ onUploadClick, className }: NavbarProps) {
               variant="ghost"
               size="icon"
               onClick={handleThemeToggle}
-              className="relative h-9 w-9 rounded-full border border-border/50 bg-muted/50 transition-all duration-200 hover:bg-muted hover:border-border"
+              className="relative h-10 w-10 rounded-full border border-border/50 bg-background/55 transition-all duration-200 hover:border-border hover:bg-background/75"
             >
               <Sun className="h-[18px] w-[18px] rotate-0 scale-100 transition-all duration-300 dark:-rotate-90 dark:scale-0" />
               <Moon className="absolute h-[18px] w-[18px] rotate-90 scale-0 transition-all duration-300 dark:rotate-0 dark:scale-100" />
@@ -93,7 +97,7 @@ export function Navbar({ onUploadClick, className }: NavbarProps) {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="relative h-9 w-9 rounded-full border-2 border-border/50 p-0 transition-all duration-200 hover:border-primary/50 hover:shadow-md sm:h-10 sm:w-10"
+                    className="relative h-10 w-10 rounded-full border border-border/50 bg-background/55 p-0 transition-all duration-200 hover:border-primary/40 hover:bg-background/75 hover:shadow-[0_18px_36px_-28px_color-mix(in_oklab,var(--foreground)_30%,transparent)]"
                   >
                     <Avatar className="h-8 w-8 sm:h-9 sm:w-9">
                       <AvatarImage src={session.user.avatar || undefined} alt={session.user.username || "用户头像"} />
