@@ -137,13 +137,12 @@ export default function BookshelfPage() {
             <div className="absolute -right-20 top-0 h-36 w-36 rounded-full bg-primary/10 blur-3xl dark:bg-primary/15" />
             <div className="absolute bottom-0 left-0 h-24 w-24 rounded-full bg-sky-500/10 blur-3xl dark:bg-sky-400/10" />
 
-            <div className="relative flex flex-col gap-2.5 sm:gap-3 lg:flex lg:items-center lg:justify-center lg:gap-5">
-
-              <div className="order-3 w-full lg:order-none lg:w-full lg:max-w-xl">
+            <div className="relative flex flex-col gap-2.5 sm:gap-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+              <div className="order-2 w-full lg:order-none lg:max-w-xl lg:flex-1">
                 <SearchBar value={search} onChange={setSearch} />
               </div>
 
-              <div className="order-2 grid w-full grid-cols-2 gap-x-2.5 gap-y-2 rounded-2xl border border-border/30 bg-background/30 px-3 py-2 backdrop-blur-sm sm:w-fit sm:grid-cols-4 sm:items-center sm:gap-x-0 sm:gap-y-0 sm:rounded-full lg:order-none">
+              <div className="order-1 grid w-full grid-cols-2 gap-x-2.5 gap-y-2 rounded-2xl border border-border/30 bg-background/30 px-3 py-2 backdrop-blur-sm sm:w-fit sm:grid-cols-4 sm:items-center sm:gap-x-0 sm:gap-y-0 sm:rounded-full lg:order-none lg:flex-shrink-0">
                 <div className="flex min-w-0 items-center gap-1.5 sm:px-2.5">
                   <Library className="h-3.5 w-3.5 text-primary/70" />
                   <span className="text-[11px] text-muted-foreground/70">书籍总数</span>
