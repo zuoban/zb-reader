@@ -82,7 +82,7 @@ function ToolbarButton({
           {children}
         </Button>
       </TooltipTrigger>
-      <TooltipContent side="bottom" className="text-xs hidden sm:block bg-background/95 backdrop-blur-sm">
+      <TooltipContent side="bottom" className="text-xs bg-background/95 backdrop-blur-sm border-border/50 text-foreground shadow-lg">
         {tooltip}
       </TooltipContent>
     </Tooltip>
