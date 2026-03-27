@@ -1819,10 +1819,6 @@ function ReaderContent() {
           setActiveTab("toc");
         }}
         onToggleBookmark={handleToggleBookmark}
-        onToggleNotes={() => {
-          setSidePanelOpen(true);
-          setActiveTab("notes");
-        }}
         onToggleTts={handleToggleTts}
         onToggleFullscreen={handleToggleFullscreen}
         onToggleSettings={() => setSettingsOpen(true)}

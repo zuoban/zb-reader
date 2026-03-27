@@ -6,7 +6,6 @@ import {
   BookmarkCheck,
   Settings,
   List,
-  StickyNote,
   Volume2,
   Pause,
   ChevronLeft,
@@ -37,7 +36,6 @@ interface ReaderToolbarProps {
   onToggleToc: () => void;
   onToggleBookmark: () => void;
   onToggleSettings: () => void;
-  onToggleNotes: () => void;
   onToggleTts: () => void;
   onToggleFullscreen: () => void;
   isSpeaking: boolean;
@@ -103,7 +101,6 @@ export function ReaderToolbar({
   onToggleToc,
   onToggleBookmark,
   onToggleSettings,
-  onToggleNotes,
   onToggleTts,
   onToggleFullscreen,
   isSpeaking,
@@ -163,10 +160,6 @@ export function ReaderToolbar({
                 ) : (
                   <Bookmark className="size-[18px] sm:size-5" />
                 )}
-              </ToolbarButton>
-
-              <ToolbarButton onClick={onToggleNotes} tooltip="笔记">
-                <StickyNote className="size-[18px] sm:size-5" />
               </ToolbarButton>
 
               <ToolbarButton
