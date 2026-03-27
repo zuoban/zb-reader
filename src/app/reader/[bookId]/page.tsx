@@ -1890,97 +1890,34 @@ function ReaderContent() {
         "--reader-destructive": currentTheme.destructive,
       } as React.CSSProperties}
     >
+      {/* 简化的主容器 */}
       <div className="relative h-full w-full">
-        <div className="pointer-events-none absolute inset-0">
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "radial-gradient(circle at 16% 18%, color-mix(in srgb, white 18%, transparent) 0%, transparent 18%), radial-gradient(circle at 84% 14%, color-mix(in srgb, var(--reader-text) 4%, transparent) 0%, transparent 18%), linear-gradient(180deg, color-mix(in srgb, var(--reader-bg) 94%, white 6%) 0%, var(--reader-bg) 34%, color-mix(in srgb, var(--reader-bg) 97%, var(--reader-text) 3%) 100%)",
-            }}
-          />
-          <div
-            className="absolute inset-x-0 top-0 h-24"
-            style={{
-              background:
-                "linear-gradient(180deg, color-mix(in srgb, var(--reader-primary) 3%, transparent) 0%, transparent 100%)",
-            }}
-          />
-          <div
-            className="absolute inset-x-0 bottom-0 h-48"
-            style={{
-              background:
-                "linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--reader-text) 4%, transparent) 100%)",
-            }}
-          />
-        </div>
-
-        <div className="relative h-full w-full px-3 py-3 sm:px-4 sm:py-4 lg:px-6">
-          <div
-            className="animate-reader-fade-up relative mx-auto h-full max-w-[1520px] overflow-hidden"
-            style={{ animationDelay: "40ms" }}
-          >
+        {/* 阅读内容区域 */}
+        <div className="h-full w-full px-4 py-4 sm:px-6">
+          <div className="relative mx-auto h-full max-w-4xl">
+            {/* 顶部浮动标题 - 简化版 */}
             {!isSpeaking && !isTtsViewOpen ? (
-              <div
-                className="pointer-events-none absolute left-1/2 top-1 z-10 hidden -translate-x-1/2 animate-reader-fade-up lg:flex"
-                style={{ animationDelay: "90ms" }}
-              >
+              <div className="pointer-events-none absolute left-1/2 top-0 z-10 -translate-x-1/2">
                 <div
-                  className="animate-reader-surface relative inline-flex min-w-[20rem] max-w-[34rem] items-center gap-2.5 overflow-hidden rounded-full border px-3 py-1.5 backdrop-blur-xl"
+                  className="pointer-events-auto inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs backdrop-blur-sm"
                   style={{
-                    background:
-                      "color-mix(in srgb, var(--reader-card-bg) 70%, transparent)",
-                    borderColor:
-                      "color-mix(in srgb, var(--reader-text) 6%, transparent)",
-                    boxShadow:
-                      "0 8px 22px -18px color-mix(in srgb, var(--reader-text) 16%, transparent)",
+                    background: "color-mix(in srgb, var(--reader-card-bg) 85%, transparent)",
+                    borderColor: "var(--reader-border)",
+                    color: "var(--reader-muted-text)",
                   }}
                 >
-                  <div
-                    className="pointer-events-none absolute bottom-0 left-0 h-px rounded-full transition-all duration-500"
-                    style={{
-                      width: `${Math.min(100, Math.max(0, progress * 100))}%`,
-                      background:
-                        "linear-gradient(90deg, color-mix(in srgb, var(--reader-primary) 12%, transparent) 0%, color-mix(in srgb, var(--reader-primary) 36%, transparent) 100%)",
-                    }}
-                  />
-                  <div className="min-w-0 flex-1 px-0.5">
-                    <div
-                      className="truncate text-[11px] leading-none font-normal"
-                      style={{ color: "var(--reader-muted-text)" }}
-                    >
-                      {book.title}
-                    </div>
-                    <div
-                      className="mt-1 truncate text-[11px] leading-none font-normal"
-                      style={{ color: "var(--reader-text)" }}
-                    >
-                      {currentChapterTitle || book.title}
-                    </div>
-                  </div>
-                  <span
-                    className="shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-medium"
-                    style={{
-                      background:
-                        "color-mix(in srgb, var(--reader-primary) 5%, transparent)",
-                      borderColor:
-                        "color-mix(in srgb, var(--reader-primary) 10%, transparent)",
-                      color: "var(--reader-primary)",
-                    }}
-                  >
-                    {(progress * 100).toFixed(1)}%
-                  </span>
+                  <span className="truncate max-w-[120px]">{book.title}</span>
+                  <span className="text-[10px]">{(progress * 100).toFixed(0)}%</span>
                 </div>
               </div>
             ) : null}
 
-            {/* Reader content area */}
+            {/* 阅读器主体 */}
             <div
-              className="animate-reader-fade-up relative h-full w-full box-border"
+              className="h-full w-full"
               style={{
-                paddingTop: isTtsViewOpen ? 0 : 56,
-                paddingBottom: isTtsViewOpen ? 0 : 72,
-                animationDelay: "120ms",
+                paddingTop: isTtsViewOpen ? 0 : 40,
+                paddingBottom: isTtsViewOpen ? 0 : 24,
               }}
             >
               {book.format === "epub" && (
@@ -2172,14 +2109,14 @@ function ReaderContent() {
       {/* Idle countdown warning */}
       {idleCountdown !== null && idleCountdown > 0 && (
         <div
-          className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-full shadow-lg animate-pulse"
+          className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg shadow-sm"
           style={{
             background: "var(--reader-card-bg)",
             border: "1px solid var(--reader-border)",
             color: "var(--reader-text)",
           }}
         >
-          <span className="text-sm font-medium">
+          <span className="text-sm">
             即将返回书架 ({idleCountdown}秒)
           </span>
         </div>
