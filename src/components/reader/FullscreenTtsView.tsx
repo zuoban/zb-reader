@@ -153,26 +153,6 @@ export function FullscreenTtsView({
                   {currentChapterTitle || "当前章节"}
                 </span>
               </div>
-              <div className="mt-4 rounded-[20px] border border-white/12 bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.04))] px-4 py-3">
-                <div className="flex items-center justify-between gap-3 text-[11px] text-white/60 sm:text-xs">
-                  <span>全书进度 {(overallProgress * 100).toFixed(1)}%</span>
-                  <span>当前段落 {(paragraphProgress * 100).toFixed(0)}%</span>
-                </div>
-                <div className="mt-2 space-y-2">
-                  <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
-                    <div
-                      className="h-full rounded-full bg-[linear-gradient(90deg,rgba(255,255,255,0.95),rgba(191,219,254,0.8))] transition-all duration-300"
-                      style={{ width: `${overallProgress * 100}%` }}
-                    />
-                  </div>
-                  <div className="h-1.5 overflow-hidden rounded-full bg-white/8">
-                    <div
-                      className="h-full rounded-full bg-[linear-gradient(90deg,rgba(191,219,254,0.95),rgba(125,211,252,0.8))] transition-all duration-200"
-                      style={{ width: `${paragraphProgress * 100}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
               <div className="mt-5 min-h-0 flex-1 overflow-y-auto pr-1 [scrollbar-color:rgba(255,255,255,0.28)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border [&::-webkit-scrollbar-thumb]:border-transparent [&::-webkit-scrollbar-thumb]:bg-[linear-gradient(180deg,rgba(255,255,255,0.34),rgba(255,255,255,0.18))] [&::-webkit-scrollbar-thumb]:bg-clip-padding">
                 <p className="text-[16px] font-normal leading-9 tracking-[0.01em] text-white/96 [text-shadow:0_1px_10px_rgba(0,0,0,0.18)] sm:text-[18px] sm:leading-[2.6rem]">
                   {paragraphText || "正在准备朗读内容，马上为你定位到当前段落。"}

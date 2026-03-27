@@ -99,32 +99,6 @@ export function TtsFloatingControl({
               "0 18px 36px -30px color-mix(in srgb, var(--reader-text, #171717) 35%, transparent)",
           }}
         >
-          <div className="px-1.5 py-0.5 hidden sm:block">
-            <div className="min-w-[4rem]">
-              <p
-                className="text-[10px] tracking-[0.18em]"
-                style={{ color: "var(--reader-muted-text, #71717a)" }}
-              >
-                朗读中
-              </p>
-              <div
-                className="mt-1 h-1.5 overflow-hidden rounded-full"
-                style={{
-                  background:
-                    "color-mix(in srgb, var(--reader-text, #171717) 10%, transparent)",
-                }}
-              >
-                <div
-                  className="h-full rounded-full transition-all duration-300"
-                  style={{
-                    width: `${clampedProgress * 100}%`,
-                    background: "var(--reader-primary, #171717)",
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-
           {onPrev && (
             <button
               type="button"

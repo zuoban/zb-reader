@@ -176,24 +176,6 @@ export function ReaderToolbar({
 
               <div className="min-w-0 flex-1 px-1 text-center sm:text-left">
                 <div className="flex items-center justify-center gap-2 sm:justify-start">
-                  <span
-                    className="hidden items-center gap-2 rounded-full border px-2.5 py-1 sm:inline-flex"
-                    style={{
-                      background:
-                        "color-mix(in srgb, var(--reader-primary) 6%, transparent)",
-                      borderColor:
-                        "color-mix(in srgb, var(--reader-primary) 12%, transparent)",
-                      color: "var(--reader-primary)",
-                    }}
-                  >
-                    <span
-                      className="h-1.5 w-1.5 rounded-full"
-                      style={{ background: "var(--reader-primary)" }}
-                    />
-                    <span className="text-[10px] font-semibold tracking-[0.16em]">
-                      阅读中
-                    </span>
-                  </span>
                   <h1
                     className="truncate text-[13px] font-semibold sm:text-sm"
                     style={{ color: "var(--reader-text)" }}
