@@ -20,7 +20,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { cn, formatDuration } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 interface ReaderToolbarProps {
   visible: boolean;
@@ -92,8 +92,8 @@ export function ReaderToolbar({
   visible,
   title,
   currentChapterTitle,
-  progress,
-  readingDuration,
+  progress: _progress,
+  readingDuration: _readingDuration,
   isBookmarked,
   isFullscreen,
   onBack,
@@ -204,7 +204,7 @@ export function ReaderToolbar({
         </div>
       </div>
 
-      {/* 底部进度栏 */}
+      {/* 底部进度栏 - 仅保留翻页按钮 */}
       <div
         className={cn(
           "pointer-events-none fixed bottom-0 left-0 right-0 z-50 transition-all duration-200",
@@ -212,89 +212,46 @@ export function ReaderToolbar({
         )}
       >
         <div className="mx-auto max-w-3xl px-4 pb-4">
-          <div
-            className="pointer-events-auto rounded-xl border px-4 py-3 backdrop-blur-md"
-            style={{
-              background: "color-mix(in srgb, var(--reader-card-bg) 90%, transparent)",
-              borderColor: "var(--reader-border)",
-            }}
-          >
-            <div className="flex items-center gap-3">
-              {onPrevChapter && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onPrevChapter}
-                  disabled={!hasPrevChapter}
-                  className={cn(
-                    "shrink-0 h-8 w-8 rounded-lg transition-opacity",
-                    !hasPrevChapter && "opacity-30 cursor-not-allowed"
-                  )}
-                  style={{ color: "var(--reader-text)" }}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-              )}
+          <div className="flex items-center justify-center gap-4">
+            {onPrevChapter && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onPrevChapter}
+                disabled={!hasPrevChapter}
+                className={cn(
+                  "pointer-events-auto h-10 w-10 rounded-full border backdrop-blur-md transition-opacity",
+                  !hasPrevChapter && "opacity-30 cursor-not-allowed"
+                )}
+                style={{ 
+                  color: "var(--reader-text)",
+                  background: "color-mix(in srgb, var(--reader-card-bg) 90%, transparent)",
+                  borderColor: "var(--reader-border)",
+                }}
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+            )}
 
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <span
-                    className="text-xs truncate"
-                    style={{ color: "var(--reader-muted-text)" }}
-                  >
-                    {currentChapterTitle || "正在阅读"}
-                  </span>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {readingDuration !== undefined && readingDuration > 0 && (
-                      <span
-                        className="text-xs"
-                        style={{ color: "var(--reader-muted-text)" }}
-                      >
-                        已读 {formatDuration(readingDuration)}
-                      </span>
-                    )}
-                    <span
-                      className="text-xs font-medium tabular-nums"
-                      style={{ color: "var(--reader-primary)" }}
-                    >
-                      {(progress * 100).toFixed(1)}%
-                    </span>
-                  </div>
-                </div>
-                
-                {/* 进度条 */}
-                <div
-                  className="h-1 w-full rounded-full overflow-hidden"
-                  style={{
-                    background: "color-mix(in srgb, var(--reader-text) 10%, transparent)",
-                  }}
-                >
-                  <div
-                    className="h-full rounded-full transition-all duration-300"
-                    style={{
-                      width: `${progress * 100}%`,
-                      background: "var(--reader-primary)",
-                    }}
-                  />
-                </div>
-              </div>
-
-              {onNextChapter && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onNextChapter}
-                  disabled={!hasNextChapter}
-                  className={cn(
-                    "shrink-0 h-8 w-8 rounded-lg transition-opacity",
-                    !hasNextChapter && "opacity-30 cursor-not-allowed"
-                  )}
-                  style={{ color: "var(--reader-text)" }}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
+            {onNextChapter && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onNextChapter}
+                disabled={!hasNextChapter}
+                className={cn(
+                  "pointer-events-auto h-10 w-10 rounded-full border backdrop-blur-md transition-opacity",
+                  !hasNextChapter && "opacity-30 cursor-not-allowed"
+                )}
+                style={{ 
+                  color: "var(--reader-text)",
+                  background: "color-mix(in srgb, var(--reader-card-bg) 90%, transparent)",
+                  borderColor: "var(--reader-border)",
+                }}
+              >
+                <ChevronRight className="h-5 w-5" />
+              </Button>
+            )}
           </div>
         </div>
       </div>
