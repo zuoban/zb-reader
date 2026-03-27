@@ -85,7 +85,8 @@ function ToolbarButton({
       <TooltipContent 
         side="bottom" 
         sideOffset={8}
-        className="text-xs bg-background/95 backdrop-blur-sm border border-border/50 text-foreground shadow-lg [&_.rotate-45]:hidden"
+        hideArrow
+        className="text-xs bg-background/95 backdrop-blur-sm border border-border/50 text-foreground shadow-lg"
       >
         {tooltip}
       </TooltipContent>
