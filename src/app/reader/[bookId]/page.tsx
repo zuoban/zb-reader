@@ -14,11 +14,10 @@ import { FullscreenTtsView } from "@/components/reader/FullscreenTtsView";
 import { TextSelectionMenu } from "@/components/reader/TextSelectionMenu";
 import { NoteEditor } from "@/components/reader/NoteEditor";
 import { TtsFloatingControl } from "@/components/reader/TtsFloatingControl";
-import { ProgressHistoryDialog } from "@/components/reader/ProgressHistoryDialog";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
-import type { EpubReaderRef } from "@/components/reader/EpubReader";
+import type { EpubReaderRef, ReaderParagraph } from "@/components/reader/EpubReader";
 import type { Book, Bookmark, Note } from "@/lib/db/schema";
 import type { BrowserVoiceOption } from "@/lib/tts";
 import {
@@ -199,12 +198,15 @@ function ReaderContent() {
 
   const currentCfiRef = useRef<string | null>(null);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+  const ttsProgressRafRef = useRef<number | null>(null);
 
   const ttsSessionRef = useRef(0);
   const ttsResumeRef = useRef<(() => void) | null>(null);
   const [activeTtsParagraph, setActiveTtsParagraph] = useState("");
+  const [activeTtsParagraphId, setActiveTtsParagraphId] = useState<string | null>(null);
+  const [activeTtsLocation, setActiveTtsLocation] = useState<string | null>(null);
   const currentParagraphIndexRef = useRef(0);
-  const allParagraphsRef = useRef<string[]>([]);
+  const allParagraphsRef = useRef<ReaderParagraph[]>([]);
   const readParagraphsHashRef = useRef<Set<string>>(new Set<string>());
   const ttsCurrentIndexRef = useRef(0);
   const ttsTotalParagraphsRef = useRef(0);
@@ -362,7 +364,13 @@ function ReaderContent() {
       currentAudioRef.current.currentTime = 0;
       currentAudioRef.current = null;
     }
+    if (ttsProgressRafRef.current !== null) {
+      cancelAnimationFrame(ttsProgressRafRef.current);
+      ttsProgressRafRef.current = null;
+    }
     setActiveTtsParagraph("");
+    setActiveTtsParagraphId(null);
+    setActiveTtsLocation(null);
     setTtsPlaybackProgress(0);
     setIsSpeaking(false);
     setIsPaused(false);
@@ -512,7 +520,7 @@ function ReaderContent() {
   }, [saveProgress, router]);
 
   // ---- Idle timeout: 5 minutes no activity -> return to bookshelf ----
-  const resetIdleTimer = useCallback(() => {
+  const _resetIdleTimer = useCallback(() => {
     if (idleTimerRef.current) {
       clearTimeout(idleTimerRef.current);
       idleTimerRef.current = null;
@@ -937,6 +945,16 @@ function ReaderContent() {
         audio.ontimeupdate = null;
         audio.onended = null;
         audio.onerror = null;
+        audio.onpause = null;
+        audio.onplay = null;
+        audio.onloadedmetadata = null;
+        audio.ondurationchange = null;
+        audio.onprogress = null;
+        audio.oncanplay = null;
+        if (ttsProgressRafRef.current !== null) {
+          cancelAnimationFrame(ttsProgressRafRef.current);
+          ttsProgressRafRef.current = null;
+        }
       };
 
       await new Promise<void>((resolve, reject) => {
@@ -944,20 +962,79 @@ function ReaderContent() {
         audio.currentTime = 0;
         audio.src = source;
 
-        let lastProgressUpdate = 0;
-        const PROGRESS_UPDATE_INTERVAL = 200;
+        const getPlayableDuration = () => {
+          if (Number.isFinite(audio.duration) && audio.duration > 0) {
+            return audio.duration;
+          }
 
-        audio.ontimeupdate = () => {
-          if (!Number.isFinite(audio.duration) || audio.duration <= 0) return;
-          const now = Date.now();
-          if (now - lastProgressUpdate < PROGRESS_UPDATE_INTERVAL) return;
-          lastProgressUpdate = now;
+          if (audio.seekable.length > 0) {
+            const seekableEnd = audio.seekable.end(audio.seekable.length - 1);
+            if (Number.isFinite(seekableEnd) && seekableEnd > 0) {
+              return seekableEnd;
+            }
+          }
+
+          if (audio.buffered.length > 0) {
+            const bufferedEnd = audio.buffered.end(audio.buffered.length - 1);
+            if (Number.isFinite(bufferedEnd) && bufferedEnd > 0) {
+              return bufferedEnd;
+            }
+          }
+
+          return null;
+        };
+
+        const syncPlaybackProgress = () => {
+          const duration = getPlayableDuration();
+          if (!duration) return;
+
+          const rawProgress = Math.min(1, Math.max(0, audio.currentTime / duration));
+          const visibleProgress =
+            rawProgress > 0 && rawProgress < 0.012 ? 0.012 : rawProgress;
+
           setTtsPlaybackProgress(
-            Math.min(1, Math.max(0, audio.currentTime / audio.duration))
+            visibleProgress
           );
         };
 
+        const startProgressLoop = () => {
+          if (ttsProgressRafRef.current !== null) {
+            cancelAnimationFrame(ttsProgressRafRef.current);
+          }
+
+          const tick = () => {
+            syncPlaybackProgress();
+
+            if (!audio.paused && !audio.ended) {
+              ttsProgressRafRef.current = requestAnimationFrame(tick);
+            } else {
+              ttsProgressRafRef.current = null;
+            }
+          };
+
+          ttsProgressRafRef.current = requestAnimationFrame(tick);
+        };
+
+        audio.onplay = () => {
+          syncPlaybackProgress();
+          startProgressLoop();
+        };
+
+        audio.onpause = () => {
+          syncPlaybackProgress();
+          if (ttsProgressRafRef.current !== null) {
+            cancelAnimationFrame(ttsProgressRafRef.current);
+            ttsProgressRafRef.current = null;
+          }
+        };
+
+        audio.onloadedmetadata = syncPlaybackProgress;
+        audio.ondurationchange = syncPlaybackProgress;
+        audio.onprogress = syncPlaybackProgress;
+        audio.oncanplay = syncPlaybackProgress;
+
         audio.onended = () => {
+          syncPlaybackProgress();
           dispose();
           setTtsPlaybackProgress(1);
           options?.onEnd?.();
@@ -1066,8 +1143,8 @@ function ReaderContent() {
   }, [activeTtsParagraph, isPaused, isSpeaking, replayCurrentTtsParagraph, selectedBrowserVoiceId, ttsRate]);
 
   const speakWithBrowserParagraphs = useCallback(
-    async (paragraphs: string[], sessionId: number, startIndex = 0) => {
-      const queue = paragraphs.filter((item) => item.trim().length > 0);
+    async (paragraphs: ReaderParagraph[], sessionId: number, startIndex = 0) => {
+      const queue = paragraphs.filter((item) => item.text.trim().length > 0);
       if (queue.length === 0) {
         toast.error("当前页面没有可朗读段落");
         return;
@@ -1085,7 +1162,7 @@ function ReaderContent() {
           cursor += 1
         ) {
           if (!preparedTaskMap.has(cursor)) {
-            const task = requestMicrosoftSpeech(queue[cursor], { prefetch: true });
+            const task = requestMicrosoftSpeech(queue[cursor].text, { prefetch: true });
             task.catch(() => {
               // avoid unhandled promise rejection for preloaded items
             });
@@ -1104,10 +1181,12 @@ function ReaderContent() {
         currentParagraphIndexRef.current = startIndex + i;
         ttsCurrentIndexRef.current = startIndex + i;
         const paragraph = queue[i];
-        setActiveTtsParagraph(paragraph);
+        setActiveTtsParagraph(paragraph.text);
+        setActiveTtsParagraphId(paragraph.id);
+        setActiveTtsLocation(paragraph.location ?? null);
 
         // 跳过已读的段落（避免跨页重复朗读）
-        const hash = paragraph.slice(0, 50);
+        const hash = paragraph.location || paragraph.text.slice(0, 50);
         if (readParagraphsHashRef.current.has(hash)) {
           // 跳过后，仍然需要预加载，因为 i 在继续递增
           ensurePreloadWindow(i + 1);
@@ -1129,8 +1208,8 @@ function ReaderContent() {
           try {
             objectUrl = await (
               attempt === 1
-                ? preparedTaskMap.get(i) ?? requestMicrosoftSpeech(paragraph)
-                : requestMicrosoftSpeech(paragraph)
+                ? preparedTaskMap.get(i) ?? requestMicrosoftSpeech(paragraph.text)
+                : requestMicrosoftSpeech(paragraph.text)
             );
 
             await new Promise<void>((resolve, reject) => {
@@ -1175,6 +1254,8 @@ function ReaderContent() {
         if (!paragraphSucceeded) {
           if (ttsSessionRef.current === sessionId) {
             setActiveTtsParagraph("");
+            setActiveTtsParagraphId(null);
+            setActiveTtsLocation(null);
             setIsSpeaking(false);
             if (!isRetryableTtsError(lastError)) {
               toast.error("音频播放失败，请检查浏览器自动播放权限");
@@ -1202,14 +1283,14 @@ function ReaderContent() {
   );
 
   const getReadableParagraphs = useCallback(() => {
-    if (!book) return [] as string[];
+    if (!book) return [] as ReaderParagraph[];
 
     if (book.format === "epub") {
       const paragraphs = epubReaderRef.current?.getCurrentParagraphs?.() || [];
       return paragraphs;
     }
 
-    return [] as string[];
+    return [] as ReaderParagraph[];
   }, [book]);
 
   /**
@@ -1217,7 +1298,7 @@ function ReaderContent() {
    * - EPUB：getCurrentParagraphs 已经只返回视口内段落，始终从 0 开始
    * - PDF/其他：始终从 0 开始
    */
-  const getInitialParagraphIndex = useCallback((paragraphs: string[]): number => {
+  const getInitialParagraphIndex = useCallback((paragraphs: ReaderParagraph[]): number => {
     if (!book || paragraphs.length === 0) return 0;
 
     if (book.format === "epub") {
@@ -1417,7 +1498,7 @@ function ReaderContent() {
         await speakWithBrowserParagraphs(paragraphsToRead, sessionId, startIndex);
         // 朗读成功后，记录这些段落的哈希
         paragraphsToRead.forEach(p => {
-          readParagraphsHashRef.current.add(p.slice(0, 50));
+          readParagraphsHashRef.current.add(p.location || p.text.slice(0, 50));
         });
       } catch {
         break;
@@ -1438,6 +1519,8 @@ function ReaderContent() {
 
     if (ttsSessionRef.current === sessionId) {
       setActiveTtsParagraph("");
+      setActiveTtsParagraphId(null);
+      setActiveTtsLocation(null);
       setIsSpeaking(false);
       setIsTtsViewOpen(false);
     }
@@ -1486,7 +1569,9 @@ function ReaderContent() {
 
     currentParagraphIndexRef.current = newIndex;
     ttsCurrentIndexRef.current = newIndex;
-    setActiveTtsParagraph(paragraphs[newIndex]);
+    setActiveTtsParagraph(paragraphs[newIndex].text);
+    setActiveTtsParagraphId(paragraphs[newIndex].id);
+    setActiveTtsLocation(paragraphs[newIndex].location ?? null);
     setTtsPlaybackProgress(0);
 
     if (!shouldResumePlayback) {
@@ -1533,7 +1618,9 @@ function ReaderContent() {
 
     currentParagraphIndexRef.current = newIndex;
     ttsCurrentIndexRef.current = newIndex;
-    setActiveTtsParagraph(paragraphs[newIndex]);
+    setActiveTtsParagraph(paragraphs[newIndex].text);
+    setActiveTtsParagraphId(paragraphs[newIndex].id);
+    setActiveTtsLocation(paragraphs[newIndex].location ?? null);
     setTtsPlaybackProgress(0);
 
     if (!shouldResumePlayback) {
@@ -1757,7 +1844,7 @@ function ReaderContent() {
 
   return (
     <div
-      className={`h-screen w-screen ${currentTheme.bg}`}
+      className={`h-screen w-screen overflow-hidden ${currentTheme.bg}`}
       data-reader-theme={readerTheme}
       style={{
         "--reader-bg": currentTheme.solidBg,
@@ -1771,35 +1858,85 @@ function ReaderContent() {
         "--reader-destructive": currentTheme.destructive,
       } as React.CSSProperties}
     >
-       {/* Reader content area */}
-      <div
-        className="h-full w-full box-border"
-        style={{
-          paddingTop: isTtsViewOpen ? 0 : 56,
-          paddingBottom: isTtsViewOpen ? 0 : 72,
-        }}
-      >
-        {book.format === "epub" && (
-          <EpubReader
-            key={bookId}
-            ref={epubReaderRef}
-            url={bookUrl}
-            initialLocation={initialLocation}
-            fontSize={fontSize}
-            pageWidth={pageWidth}
-            theme={readerTheme}
-            onLocationChange={handleLocationChange}
-            onTocLoaded={handleTocLoaded}
-            onTextSelected={handleTextSelected}
-            onClick={isSpeaking ? undefined : handleToggleToolbar}
-            highlights={highlights}
-            activeTtsParagraph={activeTtsParagraph}
-            ttsPlaybackProgress={ttsPlaybackProgress}
-            ttsHighlightColor={ttsHighlightColor}
-            ttsHighlightStyle={ttsHighlightStyle}
-            autoScrollToActive={autoScrollToActive}
+      <div className="relative h-full w-full">
+        <div className="pointer-events-none absolute inset-0">
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(180deg, color-mix(in srgb, var(--reader-bg) 94%, white 6%) 0%, var(--reader-bg) 32%, color-mix(in srgb, var(--reader-bg) 96%, var(--reader-text) 4%) 100%)",
+            }}
           />
-        )}
+          <div
+            className="absolute inset-x-0 top-0 h-40"
+            style={{
+              background:
+                "linear-gradient(180deg, color-mix(in srgb, var(--reader-primary) 6%, transparent) 0%, transparent 100%)",
+            }}
+          />
+          <div
+            className="absolute inset-x-0 bottom-0 h-48"
+            style={{
+              background:
+                "linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--reader-text) 4%, transparent) 100%)",
+            }}
+          />
+        </div>
+
+        <div className="relative h-full w-full px-3 py-3 sm:px-5 sm:py-5 lg:px-8">
+          <div
+            className="relative mx-auto h-full max-w-[1680px] overflow-hidden rounded-[28px] border sm:rounded-[32px]"
+            style={{
+              background:
+                "linear-gradient(180deg, color-mix(in srgb, var(--reader-bg) 92%, white 8%) 0%, color-mix(in srgb, var(--reader-bg) 98%, var(--reader-text) 2%) 100%)",
+              borderColor:
+                "color-mix(in srgb, var(--reader-text) 10%, transparent)",
+              boxShadow:
+                "0 24px 80px -48px color-mix(in srgb, var(--reader-text) 28%, transparent), inset 0 1px 0 color-mix(in srgb, white 65%, transparent)",
+            }}
+          >
+            <div
+              className="pointer-events-none absolute inset-x-0 top-0 h-28"
+              style={{
+                background:
+                  "linear-gradient(180deg, color-mix(in srgb, white 55%, transparent) 0%, transparent 100%)",
+              }}
+            />
+
+            {/* Reader content area */}
+            <div
+              className="h-full w-full box-border"
+              style={{
+                paddingTop: isTtsViewOpen ? 0 : 48,
+                paddingBottom: isTtsViewOpen ? 0 : 88,
+              }}
+            >
+              {book.format === "epub" && (
+                <EpubReader
+                  key={bookId}
+                  ref={epubReaderRef}
+                  url={bookUrl}
+                  initialLocation={initialLocation}
+                  fontSize={fontSize}
+                  pageWidth={pageWidth}
+                  theme={readerTheme}
+                  onLocationChange={handleLocationChange}
+                  onTocLoaded={handleTocLoaded}
+                  onTextSelected={handleTextSelected}
+                  onClick={isSpeaking ? undefined : handleToggleToolbar}
+                  highlights={highlights}
+                  activeTtsParagraph={activeTtsParagraph}
+                  activeTtsParagraphId={activeTtsParagraphId}
+                  activeTtsLocation={activeTtsLocation}
+                  ttsPlaybackProgress={ttsPlaybackProgress}
+                  ttsHighlightColor={ttsHighlightColor}
+                  ttsHighlightStyle={ttsHighlightStyle}
+                  autoScrollToActive={autoScrollToActive}
+                />
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Toolbar */}

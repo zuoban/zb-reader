@@ -50,10 +50,10 @@ const themeOptions = [
 function SettingCard({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <div
-      className={cn("rounded-2xl sm:rounded-3xl overflow-hidden", className)}
+      className={cn("overflow-hidden rounded-2xl sm:rounded-[28px]", className)}
       style={{
-        background: "var(--reader-card-bg)",
-        border: "1px solid var(--reader-border)",
+        background: "color-mix(in srgb, var(--reader-card-bg) 90%, white 10%)",
+        border: "1px solid color-mix(in srgb, var(--reader-text) 8%, transparent)",
       }}
     >
       {children}
@@ -263,22 +263,22 @@ export function ReadingSettings({
   ttsHighlightStyle,
   onTtsHighlightStyleChange,
 }: ReadingSettingsProps) {
-  const themeBg = theme === "light" ? "#ffffff" : theme === "dark" ? "#1e293b" : "#f4ecd8";
-
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
         showBackground={false}
-        className="rounded-t-3xl sm:rounded-t-4xl border-t-0 px-0 sm:max-w-md sm:mx-auto overflow-hidden"
+        className="overflow-hidden rounded-t-[28px] border-t-0 px-0 sm:mx-auto sm:max-w-md sm:rounded-t-[32px]"
         style={{
-          backgroundColor: themeBg,
-          borderColor: "var(--reader-border)",
-          boxShadow: "0 -20px 60px -8px rgba(0,0,0,0.22), 0 -4px 12px -4px rgba(0,0,0,0.15)",
+          background:
+            "linear-gradient(180deg, color-mix(in srgb, var(--reader-bg) 96%, white 4%) 0%, color-mix(in srgb, var(--reader-bg) 98%, var(--reader-text) 2%) 100%)",
+          borderColor: "color-mix(in srgb, var(--reader-text) 8%, transparent)",
+          boxShadow:
+            "0 -24px 64px -40px color-mix(in srgb, var(--reader-text) 30%, transparent)",
         }}
       >
         {/* Handle + Title */}
-        <SheetHeader className="px-4 sm:px-5 pt-4 sm:pt-4.5 pb-3 sm:pb-4">
+        <SheetHeader className="px-4 pb-3 pt-4 sm:px-5 sm:pb-4 sm:pt-4.5">
           <div className="flex flex-col items-center gap-3 sm:gap-3.5">
             <div
               className="w-10 h-1.5 rounded-full"
@@ -290,6 +290,12 @@ export function ReadingSettings({
             >
               阅读设置
             </SheetTitle>
+            <p
+              className="text-center text-[11px] sm:text-xs"
+              style={{ color: "var(--reader-muted-text)" }}
+            >
+              调整排版与朗读细节，尽量不打断当前阅读节奏
+            </p>
           </div>
         </SheetHeader>
 
@@ -330,7 +336,7 @@ export function ReadingSettings({
 
                     <span
                       className="text-[15px] sm:text-[16px] font-bold tabular-nums w-9 sm:w-10 text-center"
-                      style={{ color: "var(--primary)" }}
+                      style={{ color: "var(--reader-primary)" }}
                     >
                       {fontSize}
                     </span>
@@ -367,7 +373,7 @@ export function ReadingSettings({
                         <span
                           style={{
                             fontSize: s * 0.65,
-                            color: isActive ? "var(--primary)" : "var(--reader-text)",
+                            color: isActive ? "var(--reader-primary)" : "var(--reader-text)",
                             opacity: isActive ? 1 : 0.35,
                             fontWeight: isActive ? 700 : 500,
                             lineHeight: 1,
@@ -379,7 +385,7 @@ export function ReadingSettings({
                         <div
                           className="w-1.5 h-1.5 rounded-full transition-all duration-200"
                           style={{
-                            background: isActive ? "var(--primary)" : "var(--reader-text)",
+                            background: isActive ? "var(--reader-primary)" : "var(--reader-text)",
                             opacity: isActive ? 1 : 0.2,
                             transform: isActive ? "scale(1.3)" : "scale(1)",
                           }}
@@ -416,7 +422,7 @@ export function ReadingSettings({
                     style={{
                       background: option.bg,
                       border: isActive
-                        ? "2.5px solid var(--primary)"
+                        ? "2.5px solid var(--reader-primary)"
                         : `2px solid ${option.borderColor}`,
                       opacity: isActive ? 1 : 0.85,
                     }}
@@ -425,7 +431,7 @@ export function ReadingSettings({
                     {isActive && (
                       <div
                         className="absolute top-2 sm:top-2.5 right-2 sm:right-2.5 w-5 sm:w-5.5 h-5 sm:h-5.5 rounded-full flex items-center justify-center"
-                        style={{ background: "var(--primary)" }}
+                        style={{ background: "var(--reader-primary)" }}
                       >
                         <Check className="size-2.5 sm:size-3 text-white" strokeWidth={3.5} />
                       </div>

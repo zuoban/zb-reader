@@ -82,26 +82,32 @@ export function TtsFloatingControl({
       {isExpanded && (
         <div
           className={cn(
-            "flex items-center gap-1 sm:gap-1.5 px-2 py-1.5 mr-2",
-            "rounded-2xl",
-            "backdrop-blur-xl",
+            "mr-2 flex max-w-[calc(100vw-5rem)] flex-wrap items-center justify-center gap-1 px-2 py-1.5 sm:gap-1.5 sm:px-2.5 sm:py-2",
+            "rounded-full",
+            "backdrop-blur-2xl",
             "border",
             "shadow-lg",
             "animate-in slide-in-from-right-3 fade-in duration-300 ease-out",
-            "flex-wrap justify-center max-w-[calc(100vw-5rem)]"
           )}
           style={{
-            background: "color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.95)) 100%, var(--reader-primary, #171717) 3%)",
-            borderColor: "color-mix(in srgb, var(--reader-primary, #171717) 20%, transparent)",
-            boxShadow: `0 8px 24px -8px var(--reader-shadow, rgba(0,0,0,0.15)), 0 4px 8px -4px var(--reader-shadow, rgba(0,0,0,0.1)), 0 0 0 1px color-mix(in srgb, var(--reader-primary, #171717) 10%, transparent)`,
+            background:
+              "color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.95)) 90%, white 10%)",
+            borderColor:
+              "color-mix(in srgb, var(--reader-text, #171717) 10%, transparent)",
+            boxShadow:
+              "0 18px 36px -30px color-mix(in srgb, var(--reader-text, #171717) 35%, transparent)",
           }}
         >
           {onPrev && (
             <button
               type="button"
               onClick={onPrev}
-              className="group flex size-7 sm:size-8 items-center justify-center rounded-xl transition-all duration-200 cursor-pointer active:scale-88 hover:scale-105 border border-[color-mix(in_srgb,var(--reader-border)_50%,_transparent)] hover:bg-[color-mix(in_srgb,_var(--reader-primary,_#171717)_15%,_transparent)]"
-              style={{ color: "var(--reader-text, #09090b)", background: "color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.9)) 15%, transparent)" }}
+              className="group flex size-7 sm:size-8 items-center justify-center rounded-full border transition-all duration-200 cursor-pointer border-[color-mix(in_srgb,var(--reader-border)_45%,_transparent)]"
+              style={{
+                color: "var(--reader-text, #09090b)",
+                background:
+                  "color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.9)) 35%, transparent)",
+              }}
               title="上一段"
             >
               <SkipBack className="size-3.5 transition-transform duration-150 group-hover:-translate-x-0.5" />
@@ -111,10 +117,11 @@ export function TtsFloatingControl({
           <button
             type="button"
             onClick={onToggle}
-            className="group flex size-8 sm:size-9 items-center justify-center rounded-xl transition-all duration-200 cursor-pointer active:scale-88 hover:scale-105 border border-[color-mix(in_srgb,var(--reader-border)_50%,_transparent)] hover:bg-[color-mix(in_srgb,_var(--reader-primary,_#171717)_15%,_transparent)]"
+            className="group flex size-8 sm:size-9 items-center justify-center rounded-full transition-all duration-200 cursor-pointer border border-[color-mix(in_srgb,var(--reader-border)_45%,_transparent)]"
             style={{
               color: "var(--reader-text, #09090b)",
-              background: "color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.9)) 15%, transparent)"
+              background:
+                "color-mix(in srgb, var(--reader-primary, #171717) 10%, transparent)",
             }}
             title={isPaused ? "播放" : "暂停"}
           >
@@ -128,10 +135,11 @@ export function TtsFloatingControl({
           <button
             type="button"
             onClick={onStop}
-            className="group flex size-7 sm:size-8 items-center justify-center rounded-xl transition-all duration-200 cursor-pointer active:scale-88 hover:scale-105 border border-[color-mix(in_srgb,var(--reader-border)_50%,_transparent)]"
+            className="group flex size-7 sm:size-8 items-center justify-center rounded-full transition-all duration-200 cursor-pointer border border-[color-mix(in_srgb,var(--reader-border)_45%,_transparent)]"
             style={{
               color: "var(--reader-destructive, #dc2626)",
-              background: "color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.9)) 15%, transparent)"
+              background:
+                "color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.9)) 35%, transparent)",
             }}
             title="停止"
           >
@@ -142,8 +150,12 @@ export function TtsFloatingControl({
             <button
               type="button"
               onClick={onNext}
-              className="group flex size-7 sm:size-8 items-center justify-center rounded-xl transition-all duration-200 cursor-pointer active:scale-88 hover:scale-105 border border-[color-mix(in_srgb,var(--reader-border)_50%,_transparent)] hover:bg-[color-mix(in_srgb,_var(--reader-primary,_#171717)_15%,_transparent)]"
-              style={{ color: "var(--reader-text, #09090b)", background: "color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.9)) 15%, transparent)" }}
+              className="group flex size-7 sm:size-8 items-center justify-center rounded-full transition-all duration-200 cursor-pointer border border-[color-mix(in_srgb,var(--reader-border)_45%,_transparent)]"
+              style={{
+                color: "var(--reader-text, #09090b)",
+                background:
+                  "color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.9)) 35%, transparent)",
+              }}
               title="下一段"
             >
               <SkipForward className="size-3.5 transition-transform duration-150 group-hover:translate-x-0.5" />
@@ -159,12 +171,13 @@ export function TtsFloatingControl({
               <button
                 type="button"
                 onClick={() => onAutoScrollToActiveChange(!autoScrollToActive)}
-                className="group relative flex size-7 sm:size-8 items-center justify-center rounded-xl transition-all duration-200 cursor-pointer active:scale-88 hover:scale-105 border border-[color-mix(in_srgb,var(--reader-border)_50%,_transparent)] hover:bg-[color-mix(in_srgb,_var(--reader-primary,_#171717)_15%,_transparent)]"
+                className="group relative flex size-7 sm:size-8 items-center justify-center rounded-full transition-all duration-200 cursor-pointer border border-[color-mix(in_srgb,var(--reader-border)_45%,_transparent)]"
                 style={{
                   color: autoScrollToActive
                     ? "var(--reader-primary, #171717)"
                     : "var(--reader-text, #09090b)",
-                  background: "color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.9)) 15%, transparent)"
+                  background:
+                    "color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.9)) 35%, transparent)",
                 }}
                 title={autoScrollToActive ? "关闭自动定位" : "开启自动定位"}
               >
@@ -190,12 +203,13 @@ export function TtsFloatingControl({
               <button
                 type="button"
                 onClick={() => onTtsAutoNextChapterChange(!ttsAutoNextChapter)}
-                className="group relative flex size-7 sm:size-8 items-center justify-center rounded-xl transition-all duration-200 cursor-pointer active:scale-88 hover:scale-105 border border-[color-mix(in_srgb,var(--reader-border)_50%,_transparent)] hover:bg-[color-mix(in_srgb,_var(--reader-primary,_#171717)_15%,_transparent)]"
+                className="group relative flex size-7 sm:size-8 items-center justify-center rounded-full transition-all duration-200 cursor-pointer border border-[color-mix(in_srgb,var(--reader-border)_45%,_transparent)]"
                 style={{
                   color: ttsAutoNextChapter
                     ? "var(--reader-primary, #171717)"
                     : "var(--reader-text, #09090b)",
-                  background: "color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.9)) 15%, transparent)"
+                  background:
+                    "color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.9)) 35%, transparent)",
                 }}
                 title={ttsAutoNextChapter ? "关闭自动续章" : "开启自动续章"}
               >
@@ -221,8 +235,12 @@ export function TtsFloatingControl({
               <button
                 type="button"
                 onClick={handleOpenImmersiveView}
-                className="group flex size-7 sm:size-8 items-center justify-center rounded-xl transition-all duration-200 cursor-pointer active:scale-88 hover:scale-105 border border-[color-mix(in_srgb,var(--reader-border)_50%,_transparent)] hover:bg-[color-mix(in_srgb,_var(--reader-primary,_#171717)_15%,_transparent)]"
-                style={{ color: "var(--reader-text, #09090b)", background: "color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.9)) 15%, transparent)" }}
+                className="group flex size-7 sm:size-8 items-center justify-center rounded-full transition-all duration-200 cursor-pointer border border-[color-mix(in_srgb,var(--reader-border)_45%,_transparent)]"
+                style={{
+                  color: "var(--reader-text, #09090b)",
+                  background:
+                    "color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.9)) 35%, transparent)",
+                }}
                 title="沉浸朗读"
               >
                 <BookOpen className="size-4 transition-transform duration-150 group-hover:scale-110" />
@@ -239,8 +257,12 @@ export function TtsFloatingControl({
               <button
                 type="button"
                 onClick={onToggleFullscreen}
-                className="group flex size-7 sm:size-8 items-center justify-center rounded-xl transition-all duration-200 cursor-pointer active:scale-88 hover:scale-105 border border-[color-mix(in_srgb,var(--reader-border)_50%,_transparent)] hover:bg-[color-mix(in_srgb,_var(--reader-primary,_#171717)_15%,_transparent)]"
-                style={{ color: "var(--reader-text, #09090b)", background: "color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.9)) 15%, transparent)" }}
+                className="group flex size-7 sm:size-8 items-center justify-center rounded-full transition-all duration-200 cursor-pointer border border-[color-mix(in_srgb,var(--reader-border)_45%,_transparent)]"
+                style={{
+                  color: "var(--reader-text, #09090b)",
+                  background:
+                    "color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.9)) 35%, transparent)",
+                }}
                 title={isFullscreen ? "退出全屏" : "全屏"}
               >
                 {isFullscreen ? (
@@ -258,24 +280,29 @@ export function TtsFloatingControl({
         type="button"
         onClick={handleMainClick}
         className={cn(
-          "group relative flex size-10 items-center justify-center rounded-full cursor-pointer",
+          "group relative flex size-9 sm:size-10 items-center justify-center rounded-full cursor-pointer",
           "transition-all duration-300 ease-out",
-          "shadow-[0_8px_28px_-6px_rgba(0,0,0,0.4),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.15)]",
-          "border-2",
-          "hover:shadow-[0_12px_36px_-8px_rgba(0,0,0,0.5),0_6px_16px_-6px_rgba(0,0,0,0.35),0_0_0_2px_rgba(255,255,255,0.2)]",
-          "active:shadow-[0_4px_16px_-4px_rgba(0,0,0,0.35),0_0_0_1px_rgba(255,255,255,0.1)]",
-          "active:scale-92",
+          "border",
+          "active:scale-95",
           isExpanded && "rotate-180"
         )}
         style={{
-          background: `linear-gradient(135deg, var(--reader-primary, #171717) 0%, color-mix(in srgb, var(--reader-primary, #171717) 80%, #000) 100%)`,
-          borderColor: "rgba(255,255,255,0.5)",
-          color: "#ffffff",
+          background:
+            "color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.95)) 88%, white 12%)",
+          borderColor:
+            "color-mix(in srgb, var(--reader-text, #171717) 10%, transparent)",
+          boxShadow:
+            "0 18px 32px -24px color-mix(in srgb, var(--reader-text, #171717) 35%, transparent)",
+          color: "var(--reader-text, #171717)",
         }}
         title="朗读控制"
       >
         <div
-          className="absolute inset-0 rounded-full transition-opacity duration-300 bg-gradient-to-br from-white/15 to-white/0 opacity-0 group-hover:opacity-100"
+          className="absolute inset-0 rounded-full transition-opacity duration-300 opacity-0 group-hover:opacity-100"
+          style={{
+            background:
+              "linear-gradient(135deg, color-mix(in srgb, white 30%, transparent) 0%, transparent 100%)",
+          }}
         />
 
         {isSpeaking && !isExpanded && <AudioWaveIndicator />}
@@ -291,7 +318,7 @@ export function TtsFloatingControl({
         {isSpeaking && (
           <span
             className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full animate-pulse"
-            style={{ background: "rgba(255,255,255,0.9)" }}
+            style={{ background: "var(--reader-primary, #171717)" }}
           />
         )}
       </button>

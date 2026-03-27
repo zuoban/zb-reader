@@ -31,10 +31,18 @@ interface EpubReaderProps {
   onClick?: () => void;
   highlights?: Array<{ cfiRange: string; color: string; id: string }>;
   activeTtsParagraph?: string;
+  activeTtsParagraphId?: string | null;
+  activeTtsLocation?: string | null;
   ttsPlaybackProgress?: number;
   ttsHighlightStyle?: "background" | "indicator";
   ttsHighlightColor?: string;
   autoScrollToActive?: boolean;
+}
+
+export interface ReaderParagraph {
+  id: string;
+  text: string;
+  location?: string;
 }
 
 export interface EpubReaderRef {
@@ -49,7 +57,7 @@ export interface EpubReaderRef {
   getActiveTtsLocation: () => string | null;
   getProgress: () => number;
   getCurrentText: () => string | null;
-  getCurrentParagraphs: () => string[];
+  getCurrentParagraphs: () => ReaderParagraph[];
   isFirstVisibleParagraphComplete: () => boolean;
   scrollToActiveParagraph: () => void;
 }
@@ -70,87 +78,129 @@ interface RawTocItem {
 
 const THEME_STYLES: Record<
   NonNullable<EpubReaderProps["theme"]>,
-  { body: Record<string, string> }
+  Record<string, Record<string, string>>
 > = {
   light: {
     body: {
       background: "hsl(0 0% 100%)",
       color: "hsl(240 10% 3.9%)",
+      "font-family":
+        '"Iowan Old Style", "Palatino Linotype", "Songti SC", "Noto Serif SC", serif',
+      "line-height": "1.95",
+      "letter-spacing": "0.01em",
+      "text-rendering": "optimizeLegibility",
+      "-webkit-font-smoothing": "antialiased",
+      "padding-left": "0.4rem",
+      "padding-right": "0.4rem",
+    },
+    p: {
+      margin: "0 0 1.15em",
+      "text-align": "justify",
+    },
+    "h1, h2, h3, h4, h5, h6": {
+      color: "hsl(240 10% 3.9%)",
+      "font-weight": "600",
+      "line-height": "1.45",
+      "margin-top": "1.8em",
+      "margin-bottom": "0.8em",
+      "letter-spacing": "0.015em",
+    },
+    blockquote: {
+      margin: "1.2em 0",
+      padding: "0.1em 0 0.1em 1em",
+      "border-left": "2px solid rgba(24,24,27,0.14)",
+      color: "rgba(24,24,27,0.74)",
+    },
+    "img, svg, video, canvas": {
+      "max-width": "100%",
+      height: "auto",
+      "border-radius": "0.5rem",
+    },
+    "a, a:visited": {
+      color: "inherit",
     },
   },
   dark: {
     body: {
       background: "hsl(240 10% 3.9%)",
       color: "hsl(0 0% 98%)",
+      "font-family":
+        '"Iowan Old Style", "Palatino Linotype", "Songti SC", "Noto Serif SC", serif',
+      "line-height": "1.95",
+      "letter-spacing": "0.01em",
+      "text-rendering": "optimizeLegibility",
+      "-webkit-font-smoothing": "antialiased",
+      "padding-left": "0.4rem",
+      "padding-right": "0.4rem",
+    },
+    p: {
+      margin: "0 0 1.15em",
+      "text-align": "justify",
+    },
+    "h1, h2, h3, h4, h5, h6": {
+      color: "hsl(0 0% 98%)",
+      "font-weight": "600",
+      "line-height": "1.45",
+      "margin-top": "1.8em",
+      "margin-bottom": "0.8em",
+      "letter-spacing": "0.015em",
+    },
+    blockquote: {
+      margin: "1.2em 0",
+      padding: "0.1em 0 0.1em 1em",
+      "border-left": "2px solid rgba(255,255,255,0.18)",
+      color: "rgba(250,250,250,0.76)",
+    },
+    "img, svg, video, canvas": {
+      "max-width": "100%",
+      height: "auto",
+      "border-radius": "0.5rem",
+    },
+    "a, a:visited": {
+      color: "inherit",
     },
   },
   sepia: {
     body: {
       background: "#F5F1E8",
       color: "#5B4636",
+      "font-family":
+        '"Iowan Old Style", "Palatino Linotype", "Songti SC", "Noto Serif SC", serif',
+      "line-height": "1.98",
+      "letter-spacing": "0.012em",
+      "text-rendering": "optimizeLegibility",
+      "-webkit-font-smoothing": "antialiased",
+      "padding-left": "0.4rem",
+      "padding-right": "0.4rem",
+    },
+    p: {
+      margin: "0 0 1.2em",
+      "text-align": "justify",
+    },
+    "h1, h2, h3, h4, h5, h6": {
+      color: "#4C382B",
+      "font-weight": "600",
+      "line-height": "1.45",
+      "margin-top": "1.8em",
+      "margin-bottom": "0.8em",
+      "letter-spacing": "0.02em",
+    },
+    blockquote: {
+      margin: "1.2em 0",
+      padding: "0.1em 0 0.1em 1em",
+      "border-left": "2px solid rgba(91,70,54,0.18)",
+      color: "rgba(91,70,54,0.78)",
+    },
+    "img, svg, video, canvas": {
+      "max-width": "100%",
+      height: "auto",
+      "border-radius": "0.5rem",
+    },
+    "a, a:visited": {
+      color: "inherit",
     },
   },
 };
-
-const TTS_INDICATOR_CSS = `
-[data-tts-active='1'] {
-  position: relative;
-}
-[data-tts-active='1'] .tts-progress-track {
-  position: absolute;
-  left: -10px;
-  top: 0.15em;
-  bottom: 0.15em;
-  width: 3px;
-  border-radius: 3px;
-  background: color-mix(in srgb, var(--tts-indicator-color, #3b82f6) 25%, transparent);
-  opacity: 0.5;
-}
-[data-tts-active='1'] .tts-progress-fill {
-  position: absolute;
-  left: -10px;
-  top: 0.15em;
-  width: 3px;
-  border-radius: 3px;
-  background: var(--tts-indicator-color, #3b82f6);
-  box-shadow: 
-    0 0 0 1px var(--tts-indicator-color, #3b82f6),
-    0 0 8px color-mix(in srgb, var(--tts-indicator-color, #3b82f6) 60%, transparent);
-  transition: height 0.12s ease-out, opacity 0.15s ease;
-}
-[data-tts-active='1']::before {
-  content: '';
-  position: absolute;
-  left: -14px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--tts-indicator-color, #3b82f6);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  box-shadow: 0 0 6px var(--tts-indicator-color, #3b82f6);
-}
-[data-tts-active='1'] .tts-progress-fill::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-radius: 3px;
-  background: linear-gradient(180deg, 
-    color-mix(in srgb, white 30%, transparent) 0%, 
-    transparent 50%,
-    color-mix(in srgb, black 20%, transparent) 100%
-  );
-}
-@keyframes tts-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.85; transform: scale(1.02); }
-}
-`;
 
 const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
   (
@@ -167,6 +217,8 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       onClick,
       highlights,
       activeTtsParagraph,
+      activeTtsParagraphId,
+      activeTtsLocation,
       ttsPlaybackProgress = 0,
       ttsHighlightStyle = "indicator",
       ttsHighlightColor = "#3b82f6",
@@ -185,6 +237,16 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     const [isRenditionReady, setIsRenditionReady] = useState(false);
     const pendingHighlightsRef = useRef<Array<{ cfiRange: string; color: string; id: string }>>([]);
     const justSelectedRef = useRef(false);
+
+    const buildParagraphId = useCallback((index: number, text: string) => {
+      const normalized = text
+        .toLowerCase()
+        .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 24);
+
+      return `reader-p-${index}-${normalized || "text"}`;
+    }, []);
 
     const stripScrollSuffix = useCallback((location: string) => {
       const scrollSepIdx = location.indexOf("#scroll=");
@@ -278,7 +340,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       },
       getCurrentParagraphs() {
         const contents = renditionRef.current?.getContents?.() as
-          | Array<{ document?: Document; window?: Window }>
+          | Array<{ document?: Document; window?: Window; cfiFromNode?: (node: Node, ignoreClass?: string) => string }>
           | undefined;
         const content = contents?.[0];
         const doc = content?.document;
@@ -331,13 +393,27 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
           return false;
         };
 
-        const visibleParagraphs: string[] = [];
+        const getParagraphLocation = (element: HTMLElement) => {
+          try {
+            return content?.cfiFromNode?.(element) || undefined;
+          } catch {
+            return undefined;
+          }
+        };
 
-        for (const element of elementArray) {
+        const visibleParagraphs: ReaderParagraph[] = [];
+
+        for (const [index, element] of elementArray.entries()) {
           if (isElementOnCurrentViewport(element)) {
             const text = normalizeParagraph(element.textContent || "");
             if (text.length > 0) {
-              visibleParagraphs.push(text);
+              const id = buildParagraphId(index, text);
+              element.setAttribute("data-reader-paragraph-id", id);
+              visibleParagraphs.push({
+                id,
+                text,
+                location: getParagraphLocation(element),
+              });
             }
           }
         }
@@ -348,10 +424,13 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
 
         const pageCenterY = containerScrollTop + viewportHeight / 2;
         const nearestParagraphs = elementArray
-          .map((element) => {
+          .map((element, index) => {
             const rects = Array.from(element.getClientRects());
+            const text = normalizeParagraph(element.textContent || "");
+            const id = buildParagraphId(index, text);
+            element.setAttribute("data-reader-paragraph-id", id);
             if (rects.length === 0) {
-              return { distance: Infinity, text: normalizeParagraph(element.textContent || "") };
+              return { distance: Infinity, id, text, location: getParagraphLocation(element) };
             }
             const minDistance = rects.reduce((best, rect) => {
               const rectCenterY = rect.top + rect.height / 2;
@@ -359,13 +438,19 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
             }, Infinity);
             return {
               distance: minDistance,
-              text: normalizeParagraph(element.textContent || ""),
+              id,
+              text,
+              location: getParagraphLocation(element),
             };
           })
           .filter((item) => item.text.length > 0 && item.text.length <= 800 && item.distance < viewportHeight)
           .sort((a, b) => a.distance - b.distance)
           .slice(0, 24)
-          .map((item) => item.text);
+          .map((item) => ({
+            id: item.id,
+            text: item.text,
+            location: item.location,
+          }));
 
         if (nearestParagraphs.length > 0) {
           return nearestParagraphs;
@@ -483,21 +568,27 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       return text.replace(/\s+/g, "").trim();
     }, []);
 
-    useEffect(() => {
-      const contents = renditionRef.current?.getContents?.() as
-        | Array<{ document?: Document }>
-        | undefined;
-      const doc = contents?.[0]?.document;
-      if (!doc) return;
+    const findTtsElementByLocation = useCallback(
+      async (location: string) => {
+        const range = await resolveRangeSafely(location);
+        const contents = renditionRef.current?.getContents?.() as
+          | Array<{ document?: Document }>
+          | undefined;
+        const doc = contents?.[0]?.document;
+        if (!range || !doc?.body) return null;
 
-      let styleEl = doc.getElementById("tts-indicator-style");
-      if (!styleEl) {
-        styleEl = doc.createElement("style");
-        styleEl.id = "tts-indicator-style";
-        styleEl.textContent = TTS_INDICATOR_CSS;
-        doc.head.appendChild(styleEl);
-      }
-    }, [isRenditionReady, activeTtsParagraph]);
+        const candidateSelector = "p, li, blockquote, h1, h2, h3, h4, h5, h6";
+        const startElement =
+          range.startContainer.nodeType === Node.ELEMENT_NODE
+            ? (range.startContainer as Element)
+            : range.startContainer.parentElement;
+
+        if (!startElement) return null;
+
+        return startElement.closest(candidateSelector) as HTMLElement | null;
+      },
+      [resolveRangeSafely]
+    );
 
     useEffect(() => {
       const contents = renditionRef.current?.getContents?.() as
@@ -506,162 +597,202 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       const doc = contents?.[0]?.document;
       if (!doc?.body) return;
 
-      const activeNodes = doc.body.querySelectorAll("[data-tts-active='1']");
-      activeNodes.forEach((node) => {
-        node.removeAttribute("data-tts-active");
-        const element = node as HTMLElement;
-        element.style.backgroundColor = "";
-        element.style.transition = "";
-        element.style.opacity = "";
-        element.style.display = "";
-        element.style.padding = "";
-        element.style.border = "";
-        element.style.borderRadius = "";
-        element.style.boxShadow = "";
-        element.style.maxWidth = "";
-        element.style.width = "";
-        element.style.fontSize = "";
-        element.style.lineHeight = "";
-        element.style.margin = "";
-        element.style.position = "";
-        element.style.removeProperty("--tts-indicator-color");
-        element.style.backgroundImage = "";
-        element.style.backgroundPosition = "";
-        element.style.backgroundSize = "";
-        element.style.backgroundRepeat = "";
-        element.style.paddingBottom = "";
-        element.style.marginLeft = "";
-        element.style.marginRight = "";
-        element.style.background = "";
-        element.style.color = "";
+      let cancelled = false;
 
-        const progressTrack = element.querySelector(".tts-progress-track");
-        const progressFill = element.querySelector(".tts-progress-fill");
-        if (progressTrack) progressTrack.remove();
-        if (progressFill) progressFill.remove();
-      });
+      const clearCurrentTtsState = () => {
+        const activeNodes = doc.body.querySelectorAll("[data-tts-active='1']");
+        activeNodes.forEach((node) => {
+          node.removeAttribute("data-tts-active");
+          const element = node as HTMLElement;
+          element.style.backgroundColor = "";
+          element.style.transition = "";
+          element.style.opacity = "";
+          element.style.display = "";
+          element.style.padding = "";
+          element.style.border = "";
+          element.style.borderRadius = "";
+          element.style.boxShadow = "";
+          element.style.maxWidth = "";
+          element.style.width = "";
+          element.style.fontSize = "";
+          element.style.lineHeight = "";
+          element.style.margin = "";
+          element.style.position = "";
+          element.style.removeProperty("--tts-indicator-color");
+          element.style.backgroundImage = "";
+          element.style.backgroundPosition = "";
+          element.style.backgroundSize = "";
+          element.style.backgroundRepeat = "";
+          element.style.paddingBottom = "";
+          element.style.marginLeft = "";
+          element.style.marginRight = "";
+          element.style.background = "";
+          element.style.color = "";
+          element.style.borderLeft = "";
+          element.style.borderImage = "";
+          element.style.paddingLeft = "";
+        });
 
-      doc.body.removeAttribute("data-tts-immersive");
-
-      if (!activeTtsParagraph) {
-        return;
-      }
-
-      const needle = normalizeText(activeTtsParagraph).slice(0, 80);
-      if (!needle) return;
-
-      const candidates = doc.body.querySelectorAll(
-        "p, li, blockquote, h1, h2, h3, h4, h5, h6"
-      );
-
-      candidates.forEach((element) => {
-        const node = element as HTMLElement;
-        node.style.opacity = "";
-        node.style.display = "";
-      });
-
-      const getCommonPrefixLength = (a: string, b: string) => {
-        const limit = Math.min(a.length, b.length);
-        let count = 0;
-        while (count < limit && a[count] === b[count]) {
-          count += 1;
-        }
-        return count;
+        doc.body.removeAttribute("data-tts-immersive");
       };
 
-      let matchedElement: Element | null = null;
-      let bestScore = -1;
+      const applyActiveElement = async () => {
+        clearCurrentTtsState();
 
-      for (const element of Array.from(candidates)) {
-        const content = normalizeText(element.textContent || "");
-        if (!content) continue;
+        if (!activeTtsParagraph) {
+          return;
+        }
 
-        const tag = element.tagName.toLowerCase();
-        const isHeading = /^h[1-6]$/.test(tag);
-        const minContainedLength = Math.min(
-          48,
-          Math.max(24, Math.floor(needle.length * 0.65))
+        const candidates = doc.body.querySelectorAll(
+          "p, li, blockquote, h1, h2, h3, h4, h5, h6"
         );
 
-        let score = -1;
-        if (content === needle) {
-          score = 10000;
-        } else if (content.includes(needle)) {
-          score = 8000 - Math.abs(content.length - needle.length);
-        } else if (needle.includes(content) && content.length >= minContainedLength) {
-          score = 5000 + content.length;
-        } else {
-          const commonPrefixLength = getCommonPrefixLength(content, needle);
-          const requiredPrefix = Math.min(30, Math.floor(needle.length * 0.5));
-          if (commonPrefixLength >= requiredPrefix && content.length >= 24) {
-            score = 4200 + commonPrefixLength;
+        candidates.forEach((element) => {
+          const node = element as HTMLElement;
+          node.style.opacity = "";
+          node.style.display = "";
+        });
+
+        let matchedElement: Element | null = null;
+
+        if (activeTtsParagraphId) {
+          matchedElement = doc.querySelector(
+            `[data-reader-paragraph-id="${activeTtsParagraphId}"]`
+          );
+        }
+
+        if (!matchedElement && activeTtsLocation) {
+          matchedElement = await findTtsElementByLocation(activeTtsLocation);
+        }
+
+        if (!matchedElement) {
+          const needle = normalizeText(activeTtsParagraph).slice(0, 80);
+          if (!needle) return;
+
+          const getCommonPrefixLength = (a: string, b: string) => {
+            const limit = Math.min(a.length, b.length);
+            let count = 0;
+            while (count < limit && a[count] === b[count]) {
+              count += 1;
+            }
+            return count;
+          };
+
+          let bestScore = -1;
+
+          for (const element of Array.from(candidates)) {
+            const content = normalizeText(element.textContent || "");
+            if (!content) continue;
+
+            const tag = element.tagName.toLowerCase();
+            const isHeading = /^h[1-6]$/.test(tag);
+            const minContainedLength = Math.min(
+              48,
+              Math.max(24, Math.floor(needle.length * 0.65))
+            );
+
+            let score = -1;
+            if (content === needle) {
+              score = 10000;
+            } else if (content.includes(needle)) {
+              score = 8000 - Math.abs(content.length - needle.length);
+            } else if (needle.includes(content) && content.length >= minContainedLength) {
+              score = 5000 + content.length;
+            } else {
+              const commonPrefixLength = getCommonPrefixLength(content, needle);
+              const requiredPrefix = Math.min(30, Math.floor(needle.length * 0.5));
+              if (commonPrefixLength >= requiredPrefix && content.length >= 24) {
+                score = 4200 + commonPrefixLength;
+              }
+            }
+
+            if (score < 0) continue;
+
+            if (isHeading && score < 10000) {
+              score -= 2500;
+            }
+
+            if (score > bestScore) {
+              bestScore = score;
+              matchedElement = element;
+            }
           }
         }
 
-        if (score < 0) continue;
+        if (cancelled || !matchedElement) return;
 
-        if (isHeading && score < 10000) {
-          score -= 2500;
+        matchedElement.setAttribute("data-tts-active", "1");
+        const activeElement = matchedElement as HTMLElement;
+        activeElement.style.transition = "all 220ms ease";
+        activeElement.style.opacity = "1";
+        activeElement.style.position = "relative";
+
+        const progressPercent = Math.min(100, Math.max(0, ttsPlaybackProgress * 100));
+
+        if (ttsHighlightStyle === "background") {
+          const rgbColor = ttsHighlightColor.startsWith("#")
+            ? ttsHighlightColor
+            : "#3b82f6";
+          const r = parseInt(rgbColor.slice(1, 3), 16);
+          const g = parseInt(rgbColor.slice(3, 5), 16);
+          const b = parseInt(rgbColor.slice(5, 7), 16);
+
+          activeElement.style.background = `linear-gradient(180deg, 
+            rgba(${r}, ${g}, ${b}, 0.12) 0%, 
+            rgba(${r}, ${g}, ${b}, 0.08) ${progressPercent}%,
+            rgba(${r}, ${g}, ${b}, 0.15) ${progressPercent}%,
+            rgba(${r}, ${g}, ${b}, 0.05) 100%
+          )`;
+          activeElement.style.borderRadius = "6px";
+          activeElement.style.padding = "4px 8px";
+          activeElement.style.marginLeft = "-8px";
+          activeElement.style.marginRight = "-8px";
+          activeElement.style.boxShadow = `
+            inset 0 1px 0 color-mix(in srgb, ${ttsHighlightColor} 20%, transparent),
+            inset 0 -1px 0 color-mix(in srgb, ${ttsHighlightColor} 15%, transparent),
+            0 0 0 1px color-mix(in srgb, ${ttsHighlightColor} 30%, transparent),
+            0 2px 8px color-mix(in srgb, ${ttsHighlightColor} 20%, transparent)
+          `;
+          activeElement.style.transition = "all 0.25s ease";
+          activeElement.style.color = `color-mix(in srgb, ${ttsHighlightColor} 90%, currentColor)`;
+        } else {
+          const trackColor = `color-mix(in srgb, ${ttsHighlightColor} 14%, transparent)`;
+          const progressColor = `color-mix(in srgb, ${ttsHighlightColor} 70%, transparent)`;
+          activeElement.style.backgroundColor = "";
+          activeElement.style.borderRadius = "";
+          activeElement.style.padding = "0 0 0 12px";
+          activeElement.style.paddingLeft = "12px";
+          activeElement.style.boxShadow = "";
+          activeElement.style.background = "";
+          activeElement.style.backgroundImage = `linear-gradient(${trackColor}, ${trackColor}), linear-gradient(${progressColor}, ${progressColor})`;
+          activeElement.style.backgroundPosition = "left top, left top";
+          activeElement.style.backgroundSize = `3px 100%, 3px ${progressPercent}%`;
+          activeElement.style.backgroundRepeat = "no-repeat";
+          activeElement.style.paddingBottom = "";
+          activeElement.style.marginLeft = "";
+          activeElement.style.marginRight = "";
+          activeElement.style.color = "";
+          activeElement.style.borderLeft = "";
+          activeElement.style.borderImage = "";
+          activeElement.style.transition = "background-size 120ms linear, color 180ms ease";
         }
+      };
 
-        if (score > bestScore) {
-          bestScore = score;
-          matchedElement = element;
-        }
-      }
+      void applyActiveElement();
 
-      if (!matchedElement) return;
-
-      matchedElement.setAttribute("data-tts-active", "1");
-      const activeElement = matchedElement as HTMLElement;
-      activeElement.style.transition = "all 220ms ease";
-      activeElement.style.opacity = "1";
-      activeElement.style.position = "relative";
-      
-      const progressPercent = Math.min(100, Math.max(0, ttsPlaybackProgress * 100));
-      
-      if (ttsHighlightStyle === "background") {
-        const rgbColor = ttsHighlightColor.startsWith("#") 
-          ? ttsHighlightColor 
-          : "#3b82f6";
-        const r = parseInt(rgbColor.slice(1, 3), 16);
-        const g = parseInt(rgbColor.slice(3, 5), 16);
-        const b = parseInt(rgbColor.slice(5, 7), 16);
-        
-        activeElement.style.background = `linear-gradient(180deg, 
-          rgba(${r}, ${g}, ${b}, 0.12) 0%, 
-          rgba(${r}, ${g}, ${b}, 0.08) ${progressPercent}%,
-          rgba(${r}, ${g}, ${b}, 0.15) ${progressPercent}%,
-          rgba(${r}, ${g}, ${b}, 0.05) 100%
-        )`;
-        activeElement.style.borderRadius = "6px";
-        activeElement.style.padding = "4px 8px";
-        activeElement.style.marginLeft = "-8px";
-        activeElement.style.marginRight = "-8px";
-        activeElement.style.boxShadow = `
-          inset 0 1px 0 color-mix(in srgb, ${ttsHighlightColor} 20%, transparent),
-          inset 0 -1px 0 color-mix(in srgb, ${ttsHighlightColor} 15%, transparent),
-          0 0 0 1px color-mix(in srgb, ${ttsHighlightColor} 30%, transparent),
-          0 2px 8px color-mix(in srgb, ${ttsHighlightColor} 20%, transparent)
-        `;
-        activeElement.style.transition = "all 0.25s ease";
-        activeElement.style.color = `color-mix(in srgb, ${ttsHighlightColor} 90%, currentColor)`;
-      } else {
-        activeElement.style.backgroundColor = "";
-        activeElement.style.borderRadius = "";
-        activeElement.style.padding = "";
-        activeElement.style.boxShadow = "";
-        activeElement.style.backgroundImage = "";
-        activeElement.style.backgroundPosition = "";
-        activeElement.style.backgroundSize = "";
-        activeElement.style.backgroundRepeat = "";
-        activeElement.style.paddingBottom = "";
-        activeElement.style.marginLeft = "";
-        activeElement.style.marginRight = "";
-        activeElement.style.color = "";
-        activeElement.style.setProperty("--tts-indicator-color", ttsHighlightColor);
-      }
-    }, [activeTtsParagraph, normalizeText, theme, ttsHighlightStyle, ttsHighlightColor]);
+      return () => {
+        cancelled = true;
+      };
+    }, [
+      activeTtsParagraphId,
+      activeTtsLocation,
+      activeTtsParagraph,
+      findTtsElementByLocation,
+      normalizeText,
+      theme,
+      ttsHighlightStyle,
+      ttsHighlightColor,
+    ]);
 
     // 只在段落切换时滚动（不在播放进度更新时滚动）
     useEffect(() => {
@@ -701,7 +832,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         const targetScrollTop = absoluteTop - epubContainer.clientHeight * 0.25;
         epubContainer.scrollTo({ top: Math.max(0, targetScrollTop), behavior: "smooth" });
       }
-    }, [activeTtsParagraph, autoScrollToActive]);
+    }, [activeTtsParagraphId, activeTtsLocation, activeTtsParagraph, autoScrollToActive]);
 
     useEffect(() => {
       if (!activeTtsParagraph) return;
@@ -716,33 +847,35 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       if (!activeElement) return;
 
       if (ttsHighlightStyle === "indicator") {
-        let progressFill = activeElement.querySelector(".tts-progress-fill") as HTMLElement | null;
-        let progressTrack = activeElement.querySelector(".tts-progress-track") as HTMLElement | null;
-
-        if (!progressTrack) {
-          progressTrack = doc.createElement("div");
-          progressTrack.className = "tts-progress-track";
-          activeElement.appendChild(progressTrack);
-        }
-
-        if (!progressFill) {
-          progressFill = doc.createElement("div");
-          progressFill.className = "tts-progress-fill";
-          activeElement.appendChild(progressFill);
-        }
-
         const progressPercent = Math.min(100, Math.max(0, ttsPlaybackProgress * 100));
-        const trackHeight = activeElement.offsetHeight - parseFloat(getComputedStyle(activeElement).fontSize) * 0.4;
-        const fillHeight = trackHeight * (progressPercent / 100);
-        progressFill.style.height = `${Math.max(0, fillHeight)}px`;
-        progressFill.style.setProperty("--tts-indicator-color", ttsHighlightColor);
+        const trackColor = `color-mix(in srgb, ${ttsHighlightColor} 14%, transparent)`;
+        const progressColor = `color-mix(in srgb, ${ttsHighlightColor} 70%, transparent)`;
+        activeElement.style.background = "";
+        activeElement.style.backgroundImage = `linear-gradient(${trackColor}, ${trackColor}), linear-gradient(${progressColor}, ${progressColor})`;
+        activeElement.style.backgroundPosition = "left top, left top";
+        activeElement.style.backgroundSize = `3px 100%, 3px ${progressPercent}%`;
+        activeElement.style.backgroundRepeat = "no-repeat";
+        activeElement.style.borderLeft = "";
+        activeElement.style.borderImage = "";
+        activeElement.style.paddingLeft = "12px";
+        activeElement.style.transition = "background-size 100ms linear, color 180ms ease";
       } else {
-        const progressTrack = activeElement.querySelector(".tts-progress-track");
-        const progressFill = activeElement.querySelector(".tts-progress-fill");
-        if (progressTrack) progressTrack.remove();
-        if (progressFill) progressFill.remove();
+        const rgbColor = ttsHighlightColor.startsWith("#")
+          ? ttsHighlightColor
+          : "#3b82f6";
+        const r = parseInt(rgbColor.slice(1, 3), 16);
+        const g = parseInt(rgbColor.slice(3, 5), 16);
+        const b = parseInt(rgbColor.slice(5, 7), 16);
+        const progressPercent = Math.min(100, Math.max(0, ttsPlaybackProgress * 100));
+
+        activeElement.style.background = `linear-gradient(180deg, 
+          rgba(${r}, ${g}, ${b}, 0.12) 0%, 
+          rgba(${r}, ${g}, ${b}, 0.08) ${progressPercent}%,
+          rgba(${r}, ${g}, ${b}, 0.15) ${progressPercent}%,
+          rgba(${r}, ${g}, ${b}, 0.05) 100%
+        )`;
       }
-    }, [activeTtsParagraph, ttsPlaybackProgress, ttsHighlightStyle, ttsHighlightColor]);
+    }, [activeTtsParagraphId, activeTtsLocation, activeTtsParagraph, ttsPlaybackProgress, ttsHighlightStyle, ttsHighlightColor]);
 
     useEffect(() => {
       if (!viewerRef.current) return;
@@ -1136,8 +1269,13 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
           }, [isRenditionReady, onLocationChange]);
 
     return (
-      <div className="relative h-full w-full flex justify-center">
-        <div ref={viewerRef} id="epub-viewer" className="h-full" style={{ width: pageWidth, maxWidth: "100%" }} />
+      <div className="relative flex h-full w-full justify-center px-3 sm:px-5 lg:px-8 xl:px-10">
+        <div
+          ref={viewerRef}
+          id="epub-viewer"
+          className="h-full flex-none"
+          style={{ width: pageWidth, maxWidth: "100%" }}
+        />
       </div>
     );
   }

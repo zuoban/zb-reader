@@ -120,12 +120,14 @@ function TocItemRow({
 
         <button
           className={cn(
-            "flex-1 text-left px-2 py-1.5 rounded-lg text-sm transition-colors duration-150 truncate cursor-pointer hover:bg-accent"
+            "flex-1 cursor-pointer truncate rounded-xl px-3 py-2 text-left text-sm transition-colors duration-200"
           )}
           style={{
-            paddingLeft: `${level * 12 + 8}px`,
+            paddingLeft: `${level * 12 + 12}px`,
             color: isActive ? "var(--reader-primary)" : "var(--reader-text)",
-            background: isActive ? "var(--reader-primary-light)" : "transparent",
+            background: isActive
+              ? "color-mix(in srgb, var(--reader-primary) 8%, transparent)"
+              : "transparent",
           }}
           onClick={() => {
             onTocItemClick(item.href);
@@ -194,8 +196,13 @@ export function SidePanel({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="left"
-        className="w-[88vw] sm:w-84 p-0 border-r"
-        style={{ background: "var(--reader-bg)" }}
+        className="w-[88vw] p-0 border-r-0 sm:w-84"
+        style={{
+          background:
+            "linear-gradient(180deg, color-mix(in srgb, var(--reader-bg) 94%, white 6%) 0%, color-mix(in srgb, var(--reader-bg) 98%, var(--reader-text) 2%) 100%)",
+          boxShadow:
+            "18px 0 48px -40px color-mix(in srgb, var(--reader-text) 35%, transparent)",
+        }}
       >
         <SheetHeader className="px-4 pt-5 pb-0">
           <SheetTitle className="sr-only">侧边栏</SheetTitle>
@@ -208,18 +215,22 @@ export function SidePanel({
           className="flex flex-col h-full bg-transparent"
         >
           <TabsList
-            className="mx-4 mt-2.5 bg-muted"
+            className="mx-4 mt-2.5 grid h-11 grid-cols-3 rounded-full p-1"
+            style={{
+              background: "color-mix(in srgb, var(--reader-text) 6%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--reader-text) 8%, transparent)",
+            }}
           >
             <TabsTrigger
               value="toc"
-              className="gap-1.5 flex-1 text-muted-foreground"
+              className="gap-1.5 rounded-full text-muted-foreground data-[state=active]:shadow-none"
             >
               <List className="size-4" />
               <span className="hidden sm:inline">目录</span>
             </TabsTrigger>
             <TabsTrigger
               value="bookmarks"
-              className="gap-1.5 flex-1 text-muted-foreground"
+              className="gap-1.5 rounded-full text-muted-foreground data-[state=active]:shadow-none"
             >
               <Bookmark className="size-4" />
               <span className="hidden sm:inline">书签</span>
@@ -234,7 +245,7 @@ export function SidePanel({
             </TabsTrigger>
             <TabsTrigger
               value="notes"
-              className="gap-1.5 flex-1 text-muted-foreground"
+              className="gap-1.5 rounded-full text-muted-foreground data-[state=active]:shadow-none"
             >
               <StickyNote className="size-4" />
               <span className="hidden sm:inline">笔记</span>
@@ -251,7 +262,7 @@ export function SidePanel({
 
           <TabsContent value="toc" className="mt-0 flex-1 overflow-hidden bg-transparent">
             <ScrollArea className="h-full">
-              <div className="p-3" style={{ background: "transparent" }}>
+              <div className="p-4" style={{ background: "transparent" }}>
                 {toc.length === 0 ? (
                   <p
                     className="text-sm text-center py-8 text-muted-foreground"
@@ -261,7 +272,7 @@ export function SidePanel({
                 ) : (
                   <>
                     <p
-                      className="text-xs px-2 mb-2 text-muted-foreground"
+                      className="mb-3 px-3 text-xs text-muted-foreground"
                     >
                       共 {countTocItems(toc)} 章
                     </p>
@@ -297,11 +308,13 @@ export function SidePanel({
                     <div
                       key={bookmark.id}
                       className={cn(
-                        "group rounded-2xl p-3.5 transition-colors duration-150 cursor-pointer border hover:border-[var(--reader-primary)]"
+                        "group cursor-pointer rounded-2xl border p-3.5 transition-colors duration-200"
                       )}
                       style={{
-                        background: "var(--reader-card-bg)",
-                        borderColor: "var(--reader-border)",
+                        background:
+                          "color-mix(in srgb, var(--reader-card-bg) 88%, white 12%)",
+                        borderColor:
+                          "color-mix(in srgb, var(--reader-text) 8%, transparent)",
                       }}
                     >
                       {editingBookmarkId === bookmark.id ? (
@@ -421,11 +434,13 @@ export function SidePanel({
                     <div
                       key={note.id}
                       className={cn(
-                        "group rounded-xl p-3 transition-colors cursor-pointer border"
+                        "group cursor-pointer rounded-2xl border p-3.5 transition-colors duration-200"
                       )}
                       style={{
-                        background: "var(--reader-card-bg)",
-                        borderColor: "var(--reader-border)",
+                        background:
+                          "color-mix(in srgb, var(--reader-card-bg) 88%, white 12%)",
+                        borderColor:
+                          "color-mix(in srgb, var(--reader-text) 8%, transparent)",
                       }}
                     >
                       {editingNoteId === note.id ? (

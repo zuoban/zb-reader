@@ -70,9 +70,10 @@ function ToolbarButton({
           size="icon"
           onClick={onClick}
           className={cn(
-            "cursor-pointer h-8 w-8 sm:h-9 sm:w-9 rounded-xl transition-colors duration-150",
-            "hover:bg-[var(--reader-primary-light)] hover:text-[var(--reader-primary)]",
-            isActive && "bg-[var(--reader-primary-light)] text-[var(--reader-primary)]",
+            "cursor-pointer h-9 w-9 sm:h-10 sm:w-10 rounded-full transition-colors duration-200",
+            "hover:bg-[color-mix(in_srgb,var(--reader-primary)_8%,transparent)] hover:text-[var(--reader-primary)]",
+            isActive &&
+              "bg-[color-mix(in_srgb,var(--reader-primary)_10%,transparent)] text-[var(--reader-primary)]",
             className
           )}
           style={{ color: "var(--reader-text)" }}
@@ -113,186 +114,196 @@ export function ReaderToolbar({
   hasNextChapter,
   rightContent,
 }: ReaderToolbarProps) {
+  const toolbarSurface =
+    "linear-gradient(180deg, color-mix(in srgb, var(--reader-card-bg) 82%, white 18%) 0%, color-mix(in srgb, var(--reader-card-bg) 94%, transparent) 100%)";
+  const toolbarBorder = "color-mix(in srgb, var(--reader-text) 9%, transparent)";
+  const toolbarShadow =
+    "0 18px 40px -30px color-mix(in srgb, var(--reader-text) 35%, transparent)";
+  const showChapterMeta = currentChapterTitle && currentChapterTitle !== title;
+
   return (
     <TooltipProvider>
       <div
         className={cn(
-          "fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out",
+          "pointer-events-none fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out",
           visible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
         )}
       >
-        <div className="mx-auto max-w-4xl px-3 pt-3 sm:px-4 sm:pt-4">
+        <div className="mx-auto max-w-5xl px-3 pt-3 sm:px-5 sm:pt-5">
           <div
-            className={cn(
-              "rounded-2xl border backdrop-blur-xl"
-            )}
+            className="pointer-events-auto rounded-[24px] border backdrop-blur-2xl"
             style={{
-              background: "var(--reader-card-bg)",
-              borderColor: "var(--reader-border)",
-              boxShadow: "0 4px 16px -4px var(--reader-shadow), 0 2px 8px -2px var(--reader-shadow)",
+              background: toolbarSurface,
+              borderColor: toolbarBorder,
+              boxShadow: toolbarShadow,
             }}
           >
-          <div className="flex items-center justify-between h-12 sm:h-14 px-1 sm:px-2">
-            <div className="flex items-center gap-0.5 sm:gap-1">
-              <ToolbarButton onClick={onBack} tooltip="返回书架">
-                <ArrowLeft className="size-[18px] sm:size-5" />
-              </ToolbarButton>
-              <ToolbarButton onClick={onToggleToc} tooltip="目录">
-                <List className="size-[18px] sm:size-5" />
-              </ToolbarButton>
+            <div className="flex items-center gap-2 px-2.5 py-2 sm:px-3 sm:py-2.5">
+              <div className="flex items-center gap-1">
+                <ToolbarButton onClick={onBack} tooltip="返回书架">
+                  <ArrowLeft className="size-[18px] sm:size-[19px]" />
+                </ToolbarButton>
+                <ToolbarButton onClick={onToggleToc} tooltip="目录">
+                  <List className="size-[18px] sm:size-[19px]" />
+                </ToolbarButton>
+              </div>
+
+              <div className="min-w-0 flex-1 px-1 text-center">
+                <h1
+                  className="truncate text-[13px] font-semibold sm:text-sm"
+                  style={{ color: "var(--reader-text)" }}
+                >
+                  {title}
+                </h1>
+                {showChapterMeta ? (
+                  <p
+                    className="mt-0.5 truncate text-[11px] sm:text-xs"
+                    style={{ color: "var(--reader-muted-text)" }}
+                  >
+                    {currentChapterTitle}
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="flex items-center gap-1">
+                <ToolbarButton
+                  onClick={onToggleBookmark}
+                  tooltip={isBookmarked ? "取消书签" : "添加书签"}
+                  isActive={isBookmarked}
+                >
+                  {isBookmarked ? (
+                    <BookmarkCheck className="size-[18px] sm:size-[19px]" />
+                  ) : (
+                    <Bookmark className="size-[18px] sm:size-[19px]" />
+                  )}
+                </ToolbarButton>
+
+                <ToolbarButton
+                  onClick={onToggleTts}
+                  tooltip={isSpeaking ? "暂停朗读" : "开始朗读"}
+                  isActive={isSpeaking}
+                >
+                  {isSpeaking ? (
+                    <Pause className="size-[18px] sm:size-[19px]" />
+                  ) : (
+                    <Volume2 className="size-[18px] sm:size-[19px]" />
+                  )}
+                </ToolbarButton>
+
+                <ToolbarButton
+                  onClick={onToggleFullscreen}
+                  tooltip={isFullscreen ? "退出全屏" : "全屏阅读"}
+                  isActive={isFullscreen}
+                >
+                  {isFullscreen ? (
+                    <Minimize className="size-[18px] sm:size-[19px]" />
+                  ) : (
+                    <Maximize className="size-[18px] sm:size-[19px]" />
+                  )}
+                </ToolbarButton>
+
+                <ToolbarButton onClick={onToggleSettings} tooltip="设置">
+                  <Settings className="size-[18px] sm:size-[19px]" />
+                </ToolbarButton>
+
+                {rightContent}
+              </div>
             </div>
-
-            <h1
-              className="flex-1 mx-1.5 sm:mx-3 text-xs sm:text-sm font-medium text-center truncate max-w-[140px] sm:max-w-none"
-              style={{ color: "var(--reader-text)" }}
-            >
-              {title}
-            </h1>
-
-            <div className="flex items-center gap-0.5 sm:gap-1">
-              <ToolbarButton
-                onClick={onToggleBookmark}
-                tooltip={isBookmarked ? "取消书签" : "添加书签"}
-                isActive={isBookmarked}
-              >
-                {isBookmarked ? (
-                  <BookmarkCheck className="size-[18px] sm:size-5" />
-                ) : (
-                  <Bookmark className="size-[18px] sm:size-5" />
-                )}
-              </ToolbarButton>
-
-              <ToolbarButton
-                onClick={onToggleTts}
-                tooltip={isSpeaking ? "暂停朗读" : "开始朗读"}
-                isActive={isSpeaking}
-              >
-                {isSpeaking ? (
-                  <Pause className="size-[18px] sm:size-5" />
-                ) : (
-                  <Volume2 className="size-[18px] sm:size-5" />
-                )}
-              </ToolbarButton>
-
-              <ToolbarButton
-                onClick={onToggleFullscreen}
-                tooltip={isFullscreen ? "退出全屏" : "全屏阅读"}
-                isActive={isFullscreen}
-              >
-                {isFullscreen ? (
-                  <Minimize className="size-[18px] sm:size-5" />
-                ) : (
-                  <Maximize className="size-[18px] sm:size-5" />
-                )}
-              </ToolbarButton>
-
-              <ToolbarButton onClick={onToggleSettings} tooltip="设置">
-                <Settings className="size-[18px] sm:size-5" />
-              </ToolbarButton>
-
-              {/* Custom right content */}
-              {rightContent}
-            </div>
-          </div>
           </div>
         </div>
       </div>
 
       <div
         className={cn(
-          "fixed bottom-0 left-0 right-0 z-50 transition-all duration-300 ease-out",
+          "pointer-events-none fixed bottom-0 left-0 right-0 z-50 transition-all duration-300 ease-out",
           visible ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
         )}
       >
-        <div className="mx-auto max-w-4xl px-3 pb-3 sm:px-4 sm:pb-4">
+        <div className="mx-auto max-w-5xl px-3 pb-3 sm:px-5 sm:pb-5">
           <div
-            className="relative rounded-2xl border backdrop-blur-xl overflow-hidden"
+            className="pointer-events-auto relative overflow-hidden rounded-[24px] border backdrop-blur-2xl"
             style={{
-              background: "var(--reader-card-bg)",
-              borderColor: "var(--reader-border)",
-              boxShadow: "0 4px 16px -4px var(--reader-shadow), 0 2px 8px -2px var(--reader-shadow)",
+              background: toolbarSurface,
+              borderColor: toolbarBorder,
+              boxShadow: toolbarShadow,
             }}
           >
-            {/* 进度条区域 */}
-            <div className="px-4 pt-3 pb-2 sm:px-5 sm:pt-4 sm:pb-3">
-              <div className="flex items-center gap-2 sm:gap-3">
-                {/* 上一章按钮 */}
-                {onPrevChapter && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={onPrevChapter}
-                    disabled={!hasPrevChapter}
-                    className={cn(
-                      "shrink-0 cursor-pointer h-9 w-9 sm:h-11 sm:w-11 rounded-xl sm:rounded-2xl transition-all duration-200",
-                      "hover:bg-[var(--reader-primary-light,_rgba(23,23,23,0.1))] hover:scale-105 active:scale-95",
-                      !hasPrevChapter && "opacity-30 cursor-not-allowed hover:bg-transparent hover:scale-100"
-                    )}
-                    style={{ color: "var(--reader-text, #171717)" }}
-                  >
-                    <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
-                  </Button>
-                )}
+            <div className="flex items-center gap-2 px-3 py-3 sm:gap-3 sm:px-4 sm:py-3.5">
+              {onPrevChapter && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onPrevChapter}
+                  disabled={!hasPrevChapter}
+                  className={cn(
+                    "shrink-0 cursor-pointer h-9 w-9 rounded-full transition-colors duration-200 sm:h-10 sm:w-10",
+                    "hover:bg-[color-mix(in_srgb,var(--reader-primary)_8%,transparent)]",
+                    !hasPrevChapter &&
+                      "opacity-30 cursor-not-allowed hover:bg-transparent"
+                  )}
+                  style={{ color: "var(--reader-text)" }}
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </Button>
+              )}
 
-                {/* 进度条和百分比 */}
-                <div className="flex-1 flex flex-col gap-2">
-                  <div className="relative flex items-center justify-center">
-                    <div className="absolute left-0 flex items-center gap-2 shrink-0">
-                      {readingDuration !== undefined && readingDuration > 0 && (
-                        <span className="text-xs font-normal" style={{ color: "var(--reader-muted-text, #737373)" }}>
-                          已读 {formatDuration(readingDuration)}
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-xs font-normal truncate max-w-[50%] text-center" style={{ color: "var(--reader-text, #171717)" }}>
-                      {currentChapterTitle || "阅读进度"}
-                    </span>
-                    <div className="absolute right-0 flex items-center gap-2 shrink-0">
-                      <span
-                        className="text-xs font-normal tabular-nums"
-                        style={{ color: "var(--reader-primary, #171717)" }}
-                      >
-                        {(progress * 100).toFixed(2)}%
-                      </span>
-                    </div>
-                  </div>
-                  <div
-                    className="relative w-full h-2.5 sm:h-3 rounded-full overflow-hidden"
-                    style={{
-                      background: "var(--reader-primary-light, rgba(23,23,23,0.1))",
-                    }}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-3 text-[11px] sm:text-xs">
+                  <span
+                    className="min-w-0 flex-1 truncate"
+                    style={{ color: "var(--reader-text)" }}
                   >
-                    <div
-                      className="absolute inset-y-0 left-0 rounded-full transition-all duration-500 ease-out"
-                      style={{
-                        width: `${progress * 100}%`,
-                        background: "linear-gradient(90deg, var(--reader-primary, #171717) 0%, color-mix(in srgb, var(--reader-primary, #171717) 70%, #666) 100%)",
-                        boxShadow: "0 0 12px color-mix(in srgb, var(--reader-primary, #171717) 40%, transparent)",
-                      }}
-                    />
+                    {currentChapterTitle || "阅读进度"}
+                  </span>
+                  <div className="flex shrink-0 items-center gap-3">
+                    {readingDuration !== undefined && readingDuration > 0 && (
+                      <span style={{ color: "var(--reader-muted-text)" }}>
+                        已读 {formatDuration(readingDuration)}
+                      </span>
+                    )}
+                    <span
+                      className="tabular-nums font-medium"
+                      style={{ color: "var(--reader-primary)" }}
+                    >
+                      {(progress * 100).toFixed(1)}%
+                    </span>
                   </div>
                 </div>
-
-                {/* 下一章按钮 */}
-                {onNextChapter && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={onNextChapter}
-                    disabled={!hasNextChapter}
-                    className={cn(
-                      "shrink-0 cursor-pointer h-9 w-9 sm:h-11 sm:w-11 rounded-xl sm:rounded-2xl transition-all duration-200",
-                      "hover:bg-[var(--reader-primary-light,_rgba(23,23,23,0.1))] hover:scale-105 active:scale-95",
-                      !hasNextChapter && "opacity-30 cursor-not-allowed hover:bg-transparent hover:scale-100"
-                    )}
-                    style={{ color: "var(--reader-text, #171717)" }}
-                  >
-                    <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
-                  </Button>
-                )}
+                <div
+                  className="mt-2 h-1.5 w-full overflow-hidden rounded-full"
+                  style={{
+                    background:
+                      "color-mix(in srgb, var(--reader-text) 10%, transparent)",
+                  }}
+                >
+                  <div
+                    className="h-full rounded-full transition-all duration-500 ease-out"
+                    style={{
+                      width: `${progress * 100}%`,
+                      background: "var(--reader-primary)",
+                    }}
+                  />
+                </div>
               </div>
-            </div>
 
+              {onNextChapter && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onNextChapter}
+                  disabled={!hasNextChapter}
+                  className={cn(
+                    "shrink-0 cursor-pointer h-9 w-9 rounded-full transition-colors duration-200 sm:h-10 sm:w-10",
+                    "hover:bg-[color-mix(in_srgb,var(--reader-primary)_8%,transparent)]",
+                    !hasNextChapter &&
+                      "opacity-30 cursor-not-allowed hover:bg-transparent"
+                  )}
+                  style={{ color: "var(--reader-text)" }}
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
