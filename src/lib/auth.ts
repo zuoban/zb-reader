@@ -110,7 +110,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
   },
   events: {
-    async signIn({ user }) {
+    async signIn() {
       // 登录成功时重置失败计数（如果用户存在）
       // 注意：由于登录成功后用户信息已经返回，前端可以处理重置
     },

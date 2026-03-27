@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { books, readingProgress } from "@/lib/db/schema";
-import { eq, and, like, or, desc, inArray, count, sql } from "drizzle-orm";
+import { eq, and, like, or, desc, count } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { saveBookFile, saveCoverImage } from "@/lib/storage";
 import { logger } from "@/lib/logger";

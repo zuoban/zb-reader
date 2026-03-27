@@ -3,9 +3,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { memo, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { READER_ROUTE_TRANSITION_EVENT } from "@/components/layout/ReaderRouteTransition";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
 import { BookOpen, MoreVertical, Trash2, Clock } from "lucide-react";
 import type { Book } from "@/lib/db/schema";
 import { formatBytes, formatDuration } from "@/lib/utils";
@@ -42,30 +45,122 @@ interface BookCardProps {
   progress?: number;
   lastReadAt?: string;
   readingDuration?: number;
+  spotlight?: boolean;
   onDelete: (id: string) => void;
   onDurationUpdate?: (id: string, newDuration: number) => void;
 }
 
-export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt, readingDuration = 0, onDelete, onDurationUpdate }: BookCardProps) {
+export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt, readingDuration = 0, spotlight = false, onDelete, onDurationUpdate }: BookCardProps) {
   const router = useRouter();
   const [showDurationDialog, setShowDurationDialog] = useState(false);
   const [localDuration, setLocalDuration] = useState(readingDuration);
+  const readerHref = `/reader/${book.id}`;
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const handleMouseEnter = () => {
-    router.prefetch(`/reader/${book.id}`);
+    router.prefetch(readerHref);
   };
 
+  const handleOpenReader = (event: ReactMouseEvent<HTMLAnchorElement>) => {
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+
+    const shouldSkipTransition =
+      typeof window === "undefined" ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (!shouldSkipTransition) {
+      const coverElement = event.currentTarget.querySelector(
+        "[data-reader-transition-cover]"
+      ) as HTMLElement | null;
+      const rect = coverElement?.getBoundingClientRect();
+
+      if (rect) {
+        window.dispatchEvent(
+          new CustomEvent(READER_ROUTE_TRANSITION_EVENT, {
+            detail: {
+              href: readerHref,
+              title: book.title || "未命名书籍",
+              author: book.author || "未知作者",
+              coverUrl: book.cover ? `/api/books/${book.id}/cover` : undefined,
+              hasCover: Boolean(book.cover),
+              format: book.format,
+              initial: book.title?.charAt(0) || "书",
+              rect: {
+                left: rect.left,
+                top: rect.top,
+                width: rect.width,
+                height: rect.height,
+              },
+            },
+          })
+        );
+      }
+    }
+
+    window.setTimeout(
+      () => {
+        router.push(readerHref);
+      },
+      shouldSkipTransition ? 0 : 120
+    );
+  };
+
+  useEffect(() => {
+    if (!spotlight) return;
+
+    cardRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+      inline: "nearest",
+    });
+  }, [spotlight]);
+
   return (
-    <Card className="group relative overflow-hidden rounded-2xl border-border/70 py-0 transition-colors duration-150 hover:border-primary/40">
-      <Link href={`/reader/${book.id}`} className="block cursor-pointer" onMouseEnter={handleMouseEnter}>
-        <div className="aspect-[3/4] bg-muted relative overflow-hidden">
+    <Card
+      ref={cardRef}
+      className={cn(
+        "group relative overflow-hidden rounded-[22px] border border-border/70 py-0 transition-all duration-300 ease-out hover:-translate-y-1 hover:border-primary/40 active:translate-y-0 active:scale-[0.992]",
+        spotlight && "animate-pulse-subtle border-primary/50 shadow-[0_20px_44px_-30px_color-mix(in_srgb,var(--primary)_35%,transparent)]"
+      )}
+      style={{
+        background:
+          "linear-gradient(180deg, color-mix(in srgb, var(--card) 88%, white 12%) 0%, color-mix(in srgb, var(--card) 98%, transparent) 100%)",
+        boxShadow:
+          "0 18px 38px -28px color-mix(in srgb, var(--foreground) 18%, transparent)",
+      }}
+    >
+      <Link
+        href={readerHref}
+        className={cn("block cursor-pointer", spotlight && "animate-reader-fade-up")}
+        onMouseEnter={handleMouseEnter}
+        onClick={handleOpenReader}
+      >
+        <div
+          className="aspect-[3/4] bg-muted relative overflow-hidden"
+          data-reader-transition-cover
+        >
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-14 bg-[linear-gradient(180deg,rgba(255,255,255,0.14),transparent)]" />
+          <div className="pointer-events-none absolute inset-0 z-[1] opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+            <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.16)_0%,transparent_36%,transparent_100%)]" />
+          </div>
           {book.cover ? (
             <Image
               src={`/api/books/${book.id}/cover`}
               alt={book.title || "书籍封面"}
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
-              className="object-cover transition-transform duration-150 group-hover:scale-105"
+              className="object-cover transition-transform duration-300 ease-out group-hover:scale-[1.045] group-active:scale-[1.02]"
             />
           ) : (
             <div className="w-full h-full relative overflow-hidden">
@@ -85,7 +180,7 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
                 <div className="relative">
 
                   {/* 书本封面 */}
-                  <div className="relative w-[4.5rem] h-[6.5rem] sm:w-24 sm:h-[8.5rem] rounded-r-md rounded-l-sm transform transition-transform duration-150 group-hover:scale-105 overflow-hidden">
+                  <div className="relative w-[4.5rem] h-[6.5rem] sm:w-24 sm:h-[8.5rem] rounded-r-md rounded-l-sm transform overflow-hidden transition-transform duration-300 ease-out group-hover:scale-[1.06] group-hover:-rotate-[1.2deg] group-active:scale-[1.02]">
                     {/* 封面渐变 */}
                     <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 dark:from-indigo-600 dark:via-purple-600 dark:to-pink-600" />
                     
@@ -131,7 +226,7 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
 
           {/* Progress overlay */}
           {progress > 0 && (
-            <div className="absolute bottom-0 left-0 right-0 border-t border-border/60 bg-card/95 px-3 py-2 backdrop-blur-sm">
+            <div className="absolute bottom-0 left-0 right-0 border-t border-border/60 bg-card/95 px-3 py-2 backdrop-blur-sm transition-transform duration-300 group-hover:translate-y-0">
               <div className="flex items-center gap-2">
                 <Progress value={progress * 100} className="h-1.5 sm:h-2 flex-1" />
                 <span className="text-xs font-medium text-foreground shrink-0">
@@ -173,14 +268,14 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
                 variant="ghost"
                 size="icon"
                 aria-label="菜单"
-                className="-mr-2 h-8 w-8 shrink-0 border border-transparent transition-all duration-200 hover:border-border/90 hover:bg-accent sm:opacity-0 sm:group-hover:opacity-100"
+                className="-mr-2 h-8 w-8 shrink-0 border border-transparent transition-all duration-200 hover:border-border/90 hover:bg-accent hover:scale-105 active:scale-95 sm:opacity-0 sm:translate-y-1 sm:group-hover:translate-y-0 sm:group-hover:opacity-100"
               >
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="surface-glass w-40">
               <DropdownMenuItem asChild className="cursor-pointer">
-                <Link href={`/reader/${book.id}`} className="flex items-center gap-2">
+                <Link href={readerHref} className="flex items-center gap-2">
                   <BookOpen className="h-4 w-4" />
                   <span>阅读</span>
                 </Link>

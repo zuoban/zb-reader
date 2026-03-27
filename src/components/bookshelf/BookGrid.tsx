@@ -10,15 +10,27 @@ interface BookGridProps {
   progressMap: Record<string, number>;
   lastReadAtMap: Record<string, string>;
   readingDurationMap?: Record<string, number>;
+  spotlightBookId?: string | null;
   onDelete: (id: string) => void;
   onDurationUpdate?: (id: string, newDuration: number) => void;
 }
 
-export const BookGrid = memo(function BookGrid({ books, progressMap, lastReadAtMap, readingDurationMap, onDelete, onDurationUpdate }: BookGridProps) {
+export const BookGrid = memo(function BookGrid({ books, progressMap, lastReadAtMap, readingDurationMap, spotlightBookId, onDelete, onDurationUpdate }: BookGridProps) {
   if (books.length === 0) {
     return (
-      <div className="section-shell flex flex-col items-center justify-center py-20">
-        <div className="mb-6 rounded-2xl border border-border/70 bg-card/80 p-5">
+      <div
+        className="section-shell animate-reader-fade-up relative flex flex-col items-center justify-center overflow-hidden py-20"
+        style={{
+          animationDelay: "100ms",
+          background:
+            "linear-gradient(180deg, color-mix(in srgb, var(--card) 88%, white 12%) 0%, color-mix(in srgb, var(--card) 96%, transparent) 100%)",
+          boxShadow:
+            "0 22px 56px -42px color-mix(in srgb, var(--foreground) 20%, transparent)",
+        }}
+      >
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[linear-gradient(180deg,rgba(255,255,255,0.14),transparent)]" />
+        <div className="pointer-events-none absolute left-1/2 top-1/2 h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(212,175,55,0.12)_0%,transparent_72%)] blur-3xl" />
+        <div className="mb-6 rounded-[26px] border border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.74),rgba(255,255,255,0.48))] p-5 shadow-[0_18px_40px_-28px_rgba(0,0,0,0.24)] backdrop-blur-md">
           <BookOpen className="h-16 w-16 text-muted-foreground" />
         </div>
         <h3 className="mb-2 text-xl font-semibold text-foreground">书架是空的</h3>
@@ -34,7 +46,7 @@ export const BookGrid = memo(function BookGrid({ books, progressMap, lastReadAtM
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+    <div className="animate-reader-fade-up grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6" style={{ animationDelay: "110ms" }}>
       {books.map((book) => (
         <BookCard
           key={book.id}
@@ -42,6 +54,7 @@ export const BookGrid = memo(function BookGrid({ books, progressMap, lastReadAtM
           progress={progressMap[book.id] || 0}
           lastReadAt={lastReadAtMap[book.id]}
           readingDuration={readingDurationMap?.[book.id]}
+          spotlight={spotlightBookId === book.id}
           onDelete={onDelete}
           onDurationUpdate={onDurationUpdate}
         />

@@ -135,13 +135,29 @@ export function ReaderToolbar({
       >
         <div className="mx-auto max-w-5xl px-3 pt-3 sm:px-5 sm:pt-5">
           <div
-            className="pointer-events-auto rounded-[26px] border backdrop-blur-2xl"
+            className="pointer-events-auto animate-reader-fade-up relative overflow-hidden rounded-[28px] border backdrop-blur-2xl"
             style={{
               background: toolbarSurface,
               borderColor: toolbarBorder,
               boxShadow: toolbarShadow,
+              animationDelay: "180ms",
             }}
           >
+            <div
+              className="pointer-events-none absolute inset-x-5 top-0 h-px"
+              style={{
+                background:
+                  "linear-gradient(90deg, transparent 0%, color-mix(in srgb, white 70%, transparent) 26%, color-mix(in srgb, white 34%, transparent) 50%, transparent 100%)",
+              }}
+            />
+            <div
+              className="pointer-events-none absolute bottom-0 left-0 h-[2px] transition-all duration-500"
+              style={{
+                width: `${Math.min(100, Math.max(0, progress * 100))}%`,
+                background:
+                  "linear-gradient(90deg, color-mix(in srgb, var(--reader-primary) 18%, transparent) 0%, color-mix(in srgb, var(--reader-primary) 56%, transparent) 100%)",
+              }}
+            />
             <div className="flex items-center gap-2 px-2.5 py-2.5 sm:px-3 sm:py-3">
               <div
                 className="flex items-center gap-1 rounded-full border p-1"
@@ -158,17 +174,25 @@ export function ReaderToolbar({
                 </ToolbarButton>
               </div>
 
-              <div className="min-w-0 flex-1 px-1 text-center">
-                <div className="flex items-center justify-center gap-2">
+              <div className="min-w-0 flex-1 px-1 text-center sm:text-left">
+                <div className="flex items-center justify-center gap-2 sm:justify-start">
                   <span
-                    className="hidden rounded-full px-2.5 py-1 text-[10px] font-medium sm:inline-flex"
+                    className="hidden items-center gap-2 rounded-full border px-2.5 py-1 sm:inline-flex"
                     style={{
                       background:
-                        "color-mix(in srgb, var(--reader-primary) 8%, transparent)",
+                        "color-mix(in srgb, var(--reader-primary) 6%, transparent)",
+                      borderColor:
+                        "color-mix(in srgb, var(--reader-primary) 12%, transparent)",
                       color: "var(--reader-primary)",
                     }}
                   >
-                    阅读中
+                    <span
+                      className="h-1.5 w-1.5 rounded-full"
+                      style={{ background: "var(--reader-primary)" }}
+                    />
+                    <span className="text-[10px] font-semibold tracking-[0.16em]">
+                      阅读中
+                    </span>
                   </span>
                   <h1
                     className="truncate text-[13px] font-semibold sm:text-sm"
@@ -192,6 +216,19 @@ export function ReaderToolbar({
                     当前进度 {(progress * 100).toFixed(1)}%
                   </p>
                 )}
+              </div>
+
+              <div
+                className="hidden shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold md:block"
+                style={{
+                  background:
+                    "color-mix(in srgb, var(--reader-primary) 7%, transparent)",
+                  borderColor:
+                    "color-mix(in srgb, var(--reader-primary) 12%, transparent)",
+                  color: "var(--reader-primary)",
+                }}
+              >
+                {(progress * 100).toFixed(1)}%
               </div>
 
               <div
@@ -256,11 +293,12 @@ export function ReaderToolbar({
       >
         <div className="mx-auto max-w-5xl px-3 pb-3 sm:px-5 sm:pb-5">
           <div
-            className="pointer-events-auto relative overflow-hidden rounded-[26px] border backdrop-blur-2xl"
+            className="pointer-events-auto animate-reader-fade-up relative overflow-hidden rounded-[26px] border backdrop-blur-2xl"
             style={{
               background: toolbarSurface,
               borderColor: toolbarBorder,
               boxShadow: toolbarShadow,
+              animationDelay: "220ms",
             }}
           >
             <div
@@ -270,7 +308,7 @@ export function ReaderToolbar({
                   "linear-gradient(90deg, transparent 0%, color-mix(in srgb, white 72%, transparent) 50%, transparent 100%)",
               }}
             />
-            <div className="flex items-center gap-2 px-3 py-3.5 sm:gap-3 sm:px-4 sm:py-4">
+            <div className="flex items-center gap-2 px-3 py-3 sm:gap-3 sm:px-4 sm:py-4">
               {onPrevChapter && (
                 <Button
                   variant="ghost"
@@ -297,46 +335,68 @@ export function ReaderToolbar({
                 <div className="flex items-end justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <p
-                      className="text-[10px] tracking-[0.18em] sm:text-[11px]"
+                      className="text-[10px] font-medium tracking-[0.18em] sm:text-[11px]"
                       style={{ color: "var(--reader-muted-text)" }}
                     >
                       阅读进度
                     </p>
                     <span
-                      className="mt-1 block min-w-0 truncate text-[12px] font-medium sm:text-sm"
+                      className="mt-1 block min-w-0 truncate text-[12px] font-semibold sm:text-sm"
                       style={{ color: "var(--reader-text)" }}
                     >
                       {currentChapterTitle || "正在阅读当前章节"}
                     </span>
                   </div>
-                  <div className="flex shrink-0 items-center gap-3 text-[11px] sm:text-xs">
+                  <div className="flex shrink-0 items-center gap-2 text-[11px] sm:gap-3 sm:text-xs">
                     {readingDuration !== undefined && readingDuration > 0 && (
-                      <span style={{ color: "var(--reader-muted-text)" }}>
+                      <span
+                        className="rounded-full border px-2.5 py-1"
+                        style={{
+                          color: "var(--reader-muted-text)",
+                          borderColor: toolbarPillBorder,
+                          background: toolbarGroupSurface,
+                        }}
+                      >
                         已读 {formatDuration(readingDuration)}
                       </span>
                     )}
                     <span
-                      className="tabular-nums font-medium"
-                      style={{ color: "var(--reader-primary)" }}
+                      className="rounded-full border px-2.5 py-1 tabular-nums font-semibold"
+                      style={{
+                        color: "var(--reader-primary)",
+                        borderColor:
+                          "color-mix(in srgb, var(--reader-primary) 12%, transparent)",
+                        background:
+                          "color-mix(in srgb, var(--reader-primary) 7%, transparent)",
+                      }}
                     >
                       {(progress * 100).toFixed(1)}%
                     </span>
                   </div>
                 </div>
                 <div
-                  className="mt-3 h-2 w-full overflow-hidden rounded-full"
+                  className="mt-3 h-2.5 w-full overflow-hidden rounded-full"
                   style={{
                     background:
-                      "color-mix(in srgb, var(--reader-text) 10%, transparent)",
+                      "color-mix(in srgb, var(--reader-text) 9%, transparent)",
                   }}
                 >
                   <div
-                    className="h-full rounded-full transition-all duration-500 ease-out"
+                    className="relative h-full rounded-full transition-all duration-500 ease-out"
                     style={{
                       width: `${progress * 100}%`,
-                      background: "var(--reader-primary)",
+                      background:
+                        "linear-gradient(90deg, color-mix(in srgb, var(--reader-primary) 88%, white 12%) 0%, var(--reader-primary) 100%)",
                     }}
-                  />
+                  >
+                    <div
+                      className="absolute inset-x-0 top-0 h-px"
+                      style={{
+                        background:
+                          "linear-gradient(90deg, color-mix(in srgb, white 65%, transparent) 0%, transparent 100%)",
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
 

@@ -263,20 +263,32 @@ export function ReadingSettings({
   ttsHighlightStyle,
   onTtsHighlightStyleChange,
 }: ReadingSettingsProps) {
+  const sheetSurface =
+    "linear-gradient(180deg, color-mix(in srgb, var(--reader-bg) 94%, white 6%) 0%, color-mix(in srgb, var(--reader-bg) 98%, var(--reader-text) 2%) 100%)";
+  const cardSurface =
+    "linear-gradient(180deg, color-mix(in srgb, var(--reader-card-bg) 88%, white 12%) 0%, color-mix(in srgb, var(--reader-card-bg) 96%, transparent) 100%)";
+  const cardBorder = "color-mix(in srgb, var(--reader-text) 8%, transparent)";
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
         showBackground={false}
-        className="overflow-hidden rounded-t-[28px] border-t-0 px-0 sm:mx-auto sm:max-w-md sm:rounded-t-[32px]"
+        className="animate-reader-fade-up overflow-hidden rounded-t-[28px] border-t-0 px-0 sm:mx-auto sm:max-w-md sm:rounded-t-[32px]"
         style={{
-          background:
-            "linear-gradient(180deg, color-mix(in srgb, var(--reader-bg) 96%, white 4%) 0%, color-mix(in srgb, var(--reader-bg) 98%, var(--reader-text) 2%) 100%)",
-          borderColor: "color-mix(in srgb, var(--reader-text) 8%, transparent)",
+          background: sheetSurface,
+          borderColor: cardBorder,
           boxShadow:
             "0 -24px 64px -40px color-mix(in srgb, var(--reader-text) 30%, transparent)",
         }}
       >
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-24"
+          style={{
+            background:
+              "linear-gradient(180deg, color-mix(in srgb, white 52%, transparent) 0%, transparent 100%)",
+          }}
+        />
         {/* Handle + Title */}
         <SheetHeader className="px-4 pb-3 pt-4 sm:px-5 sm:pb-4 sm:pt-4.5">
           <div className="flex flex-col items-center gap-3 sm:gap-3.5">
@@ -300,6 +312,72 @@ export function ReadingSettings({
         </SheetHeader>
 
         <div className="px-4 sm:px-5 pb-8 sm:pb-10 max-h-[70vh] sm:max-h-[72vh] overflow-y-auto space-y-5 sm:space-y-6 scrollbar-hide">
+          <div
+            className="animate-reader-surface rounded-[24px] border px-4 py-4 sm:px-5 sm:py-5"
+            style={{
+              background: cardSurface,
+              borderColor: cardBorder,
+              boxShadow:
+                "0 18px 34px -28px color-mix(in srgb, var(--reader-text) 24%, transparent)",
+            }}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p
+                  className="text-[11px] font-medium tracking-[0.18em]"
+                  style={{ color: "var(--reader-muted-text)" }}
+                >
+                  当前阅读预设
+                </p>
+                <h3
+                  className="mt-1 text-base font-semibold"
+                  style={{ color: "var(--reader-text)" }}
+                >
+                  更适合久读的排版与朗读节奏
+                </h3>
+              </div>
+              <span
+                className="rounded-full px-2.5 py-1 text-xs font-medium"
+                style={{
+                  background:
+                    "color-mix(in srgb, var(--reader-primary) 8%, transparent)",
+                  color: "var(--reader-primary)",
+                }}
+              >
+                {themeOptions.find((option) => option.value === theme)?.label}
+              </span>
+            </div>
+            <div className="mt-4 grid grid-cols-3 gap-2.5 sm:gap-3">
+              {[
+                { label: "字号", value: `${fontSize}px` },
+                { label: "版心", value: `${Math.round((pageWidth / 1200) * 100)}%` },
+                { label: "语速", value: `${ttsRate.toFixed(1)}x` },
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  className="rounded-2xl border px-3 py-3"
+                  style={{
+                    background:
+                      "color-mix(in srgb, var(--reader-card-bg) 82%, white 18%)",
+                    borderColor: cardBorder,
+                  }}
+                >
+                  <p
+                    className="text-[11px]"
+                    style={{ color: "var(--reader-muted-text)" }}
+                  >
+                    {item.label}
+                  </p>
+                  <p
+                    className="mt-1 text-sm font-semibold"
+                    style={{ color: "var(--reader-text)" }}
+                  >
+                    {item.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
 
           {/* ── 排版 ── */}
           <section>
@@ -425,6 +503,9 @@ export function ReadingSettings({
                         ? "2.5px solid var(--reader-primary)"
                         : `2px solid ${option.borderColor}`,
                       opacity: isActive ? 1 : 0.85,
+                      boxShadow: isActive
+                        ? "0 16px 30px -24px color-mix(in srgb, var(--reader-text) 28%, transparent)"
+                        : "none",
                     }}
                   >
                     {/* Active checkmark */}

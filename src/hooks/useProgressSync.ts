@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { getLocalProgressManager } from "@/lib/local-progress";
+import { logger } from "@/lib/logger";
 import type { ProgressUpdate } from "@/lib/local-progress";
 import type { ProgressHistory } from "@/lib/db/schema";
 
@@ -73,17 +74,17 @@ export function useProgressSync(bookId: string): UseProgressSyncReturn {
 
   const updateProgress = useCallback(
     async (update: ProgressUpdate, forceSync = false) => {
-    const manager = managerRef.current;
-    await manager.updateProgress(bookId, update, forceSync);
+      const manager = managerRef.current;
+      await manager.updateProgress(bookId, update, forceSync);
 
-    if (update.progress !== undefined) {
-      setProgress(update.progress);
-    }
-    if (update.readingDuration !== undefined) {
-      setReadingDuration(update.readingDuration);
-    }
-  },
-  [bookId]
+      if (update.progress !== undefined) {
+        setProgress(update.progress);
+      }
+      if (update.readingDuration !== undefined) {
+        setReadingDuration(update.readingDuration);
+      }
+    },
+    [bookId]
   );
 
   const forceSync = useCallback(async () => {
@@ -100,7 +101,7 @@ export function useProgressSync(bookId: string): UseProgressSyncReturn {
       const data = await response.json();
       return data.history || [];
     } catch (error) {
-      console.error("Failed to get history:", error);
+      logger.error("reader", "Failed to get progress history", error);
       return [];
     }
   }, [bookId]);
@@ -126,7 +127,7 @@ export function useProgressSync(bookId: string): UseProgressSyncReturn {
 
         await managerRef.current.loadFromServer(bookId);
       } catch (error) {
-        console.error("Failed to restore:", error);
+        logger.error("reader", "Failed to restore reading progress", error);
         throw error;
       }
     },

@@ -12,8 +12,6 @@ import { unauthorized, badRequest, serverError } from "@/lib/api-utils";
 const DATA_DIR = path.join(process.cwd(), "data");
 const AVATAR_DIR = path.join(DATA_DIR, "avatars");
 
-// 允许的图片格式白名单
-const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
 // 允许的 MIME 类型
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useCallback } from "react";
-import type { Book, Rendition } from "epubjs";
+import type { Rendition } from "epubjs";
 
 const TTS_INDICATOR_CSS = `
 [data-tts-active='1'] {
@@ -147,7 +147,14 @@ export function useTtsHighlighting(
         break;
       }
     }
-  }, [activeTtsParagraph, isRenditionReady, renditionRef, highlightStyle, highlightColor, normalizeText]);
+  }, [
+    activeTtsParagraph,
+    isRenditionReady,
+    renditionRef,
+    highlightStyle,
+    highlightColor,
+    normalizeText,
+  ]);
 }
 
 /**
@@ -192,9 +199,18 @@ export function useScrollToActive(
 
         const absoluteTop = iframeOffsetTop + elementOffsetTop;
         const targetScrollTop = absoluteTop - epubContainer.clientHeight * 0.25;
-        epubContainer.scrollTo({ top: Math.max(0, targetScrollTop), behavior: "smooth" });
+        epubContainer.scrollTo({
+          top: Math.max(0, targetScrollTop),
+          behavior: "smooth",
+        });
         break;
       }
     }
-  }, [activeTtsParagraph, isRenditionReady, renditionRef, autoScrollToActive, normalizeText]);
+  }, [
+    activeTtsParagraph,
+    isRenditionReady,
+    renditionRef,
+    autoScrollToActive,
+    normalizeText,
+  ]);
 }

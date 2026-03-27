@@ -59,6 +59,7 @@ export function TtsFloatingControl({
   progress: _progress = 0,
 }: TtsFloatingControlProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const clampedProgress = Math.min(1, Math.max(0, _progress));
 
   const handleMainClick = useCallback(() => {
     setIsExpanded((prev) => !prev);
@@ -82,8 +83,8 @@ export function TtsFloatingControl({
       {isExpanded && (
         <div
           className={cn(
-            "mr-2 flex max-w-[calc(100vw-5rem)] flex-wrap items-center justify-center gap-1 px-2 py-1.5 sm:gap-1.5 sm:px-2.5 sm:py-2",
-            "rounded-full",
+            "animate-reader-fade-up mr-2 flex max-w-[calc(100vw-5rem)] flex-wrap items-center justify-center gap-1 px-2 py-1.5 sm:gap-1.5 sm:px-2.5 sm:py-2",
+            "rounded-[28px]",
             "backdrop-blur-2xl",
             "border",
             "shadow-lg",
@@ -98,6 +99,32 @@ export function TtsFloatingControl({
               "0 18px 36px -30px color-mix(in srgb, var(--reader-text, #171717) 35%, transparent)",
           }}
         >
+          <div className="px-1.5 py-0.5 hidden sm:block">
+            <div className="min-w-[4rem]">
+              <p
+                className="text-[10px] tracking-[0.18em]"
+                style={{ color: "var(--reader-muted-text, #71717a)" }}
+              >
+                朗读中
+              </p>
+              <div
+                className="mt-1 h-1.5 overflow-hidden rounded-full"
+                style={{
+                  background:
+                    "color-mix(in srgb, var(--reader-text, #171717) 10%, transparent)",
+                }}
+              >
+                <div
+                  className="h-full rounded-full transition-all duration-300"
+                  style={{
+                    width: `${clampedProgress * 100}%`,
+                    background: "var(--reader-primary, #171717)",
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
           {onPrev && (
             <button
               type="button"
@@ -280,7 +307,7 @@ export function TtsFloatingControl({
         type="button"
         onClick={handleMainClick}
         className={cn(
-          "group relative flex size-9 sm:size-10 items-center justify-center rounded-full cursor-pointer",
+          "group animate-reader-surface relative flex size-10 sm:size-11 items-center justify-center rounded-full cursor-pointer overflow-hidden",
           "transition-all duration-300 ease-out",
           "border",
           "active:scale-95",
@@ -304,6 +331,24 @@ export function TtsFloatingControl({
               "linear-gradient(135deg, color-mix(in srgb, white 30%, transparent) 0%, transparent 100%)",
           }}
         />
+
+        {!isExpanded && (
+          <span
+            className="absolute inset-x-2 bottom-1 h-0.5 rounded-full"
+            style={{
+              background:
+                "color-mix(in srgb, var(--reader-text, #171717) 10%, transparent)",
+            }}
+          >
+            <span
+              className="block h-full rounded-full transition-all duration-300"
+              style={{
+                width: `${clampedProgress * 100}%`,
+                background: "var(--reader-primary, #171717)",
+              }}
+            />
+          </span>
+        )}
 
         {isSpeaking && !isExpanded && <AudioWaveIndicator />}
 

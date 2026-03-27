@@ -75,6 +75,7 @@ export function TextSelectionMenu({
       onHighlight={onHighlight}
       onAddNote={onAddNote}
       onCopy={onCopy}
+      onClose={onClose}
       handleAction={handleAction}
     />
   );
@@ -86,6 +87,7 @@ interface TextSelectionMenuInnerProps {
   onHighlight: (color: string) => void;
   onAddNote: () => void;
   onCopy: () => void;
+  onClose?: () => void;
   handleAction: (action: () => void) => void;
 }
 
@@ -95,6 +97,7 @@ function TextSelectionMenuInner({
   onHighlight,
   onAddNote,
   onCopy,
+  onClose,
   handleAction,
 }: TextSelectionMenuInnerProps) {
   const [showColors, setShowColors] = useState(false);
@@ -102,7 +105,7 @@ function TextSelectionMenuInner({
   return (
     <div
       ref={menuRef}
-      className="fixed z-[60] animate-in fade-in-0 zoom-in-95 duration-200"
+      className="animate-reader-fade-up fixed z-[60]"
       style={{
         left: position.x,
         top: position.y,
@@ -112,7 +115,7 @@ function TextSelectionMenuInner({
       <div className="relative">
         <div
           className={cn(
-            "flex items-center gap-1 rounded-full p-1.5 sm:p-2",
+            "flex items-center gap-1 rounded-[24px] p-1.5 sm:p-2",
             "backdrop-blur-2xl",
             "border",
             "shadow-xl"
@@ -127,16 +130,22 @@ function TextSelectionMenuInner({
         >
           {showColors ? (
             <div className="flex items-center gap-2 px-1.5">
+              <span
+                className="hidden pl-1 text-[11px] font-medium sm:block"
+                style={{ color: "var(--reader-muted-text)" }}
+              >
+                标记颜色
+              </span>
               {highlightColors.map((color) => (
                 <button
                   key={color.value}
                   className={cn(
-                    "size-7.5 sm:size-8 rounded-full border border-transparent",
+                    "flex items-center gap-1 rounded-full border border-transparent px-1.5 py-1 sm:px-2",
                     "transition-all duration-200",
-                    "hover:scale-110 hover:border-foreground/20",
+                    "hover:scale-[1.04] hover:border-foreground/20",
                     "cursor-pointer"
                   )}
-                  style={{ backgroundColor: color.value }}
+                  style={{ background: "color-mix(in srgb, var(--reader-card-bg) 82%, white 18%)" }}
                   onClick={() =>
                     handleAction(() => {
                       onHighlight(color.value);
@@ -144,7 +153,18 @@ function TextSelectionMenuInner({
                     })
                   }
                   title={color.label}
-                />
+                >
+                  <span
+                    className="block size-5 rounded-full border border-black/5 sm:size-5.5"
+                    style={{ backgroundColor: color.value }}
+                  />
+                  <span
+                    className="hidden text-[11px] font-medium sm:inline"
+                    style={{ color: "var(--reader-text)" }}
+                  >
+                    {color.label}
+                  </span>
+                </button>
               ))}
               <Button
                 variant="ghost"
@@ -209,6 +229,20 @@ function TextSelectionMenuInner({
               >
                 <Copy className="h-4 w-4" />
                 <span className="text-xs font-medium">复制</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="关闭"
+                className="h-8 w-8 rounded-full cursor-pointer transition-all duration-200 sm:h-9 sm:w-9"
+                style={{ color: "var(--reader-muted-text)" }}
+                onClick={() =>
+                  handleAction(() => {
+                    onClose?.();
+                  })
+                }
+              >
+                <X className="h-4 w-4" />
               </Button>
             </>
           )}

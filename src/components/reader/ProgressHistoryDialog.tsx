@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { History, RotateCcw, Monitor, Clock } from "lucide-react";
+import { logger } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import type { ProgressHistory } from "@/lib/db/schema";
 
@@ -47,7 +48,7 @@ export function ProgressHistoryDialog({
       const data = await response.json();
       setHistory(data.history || []);
     } catch (error) {
-      console.error("Failed to load history:", error);
+      logger.error("reader", "Failed to load history", error);
     } finally {
       setLoading(false);
     }
@@ -59,7 +60,7 @@ export function ProgressHistoryDialog({
       await onRestore(historyId);
       onOpenChange(false);
     } catch (error) {
-      console.error("Failed to restore:", error);
+      logger.error("reader", "Failed to restore progress history", error);
     } finally {
       setRestoring(null);
     }

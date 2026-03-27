@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Poppins, Open_Sans } from "next/font/google";
+import { ReaderRouteTransition } from "@/components/layout/ReaderRouteTransition";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -41,6 +42,7 @@ export default function RootLayout({
         className={`${poppins.variable} ${openSans.variable} antialiased`}
       >
         {children}
+        <ReaderRouteTransition />
       </body>
     </html>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useEffect } from "react";
+import { logger } from "@/lib/logger";
 import { useProgressSync } from "./useProgressSync";
 import { useReadingTracker } from "./useReadingTracker";
 
@@ -69,7 +70,7 @@ export function useProgressSyncCompat(bookId: string) {
 
         return { conflict: false };
       } catch (error) {
-        console.error("Failed to save progress:", error);
+        logger.error("reader", "Failed to save progress", error);
         return { conflict: false };
       }
     },

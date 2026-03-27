@@ -81,44 +81,135 @@ const THEME_STYLES: Record<
   Record<string, Record<string, string>>
 > = {
   light: {
+    html: {
+      background: "transparent",
+    },
     body: {
-      background: "hsl(0 0% 100%)",
+      background: "transparent",
       color: "hsl(240 10% 3.9%)",
       "font-family":
         '"Baskerville", "Iowan Old Style", "Palatino Linotype", "Noto Serif SC", "Songti SC", "Source Han Serif SC", serif',
-      "line-height": "2.02",
-      "letter-spacing": "0.012em",
+      "line-height": "2.08",
+      "letter-spacing": "0.01em",
       "text-rendering": "optimizeLegibility",
       "-webkit-font-smoothing": "antialiased",
       "font-kerning": "normal",
       "word-break": "break-word",
       "overflow-wrap": "break-word",
-      "padding-top": "1.6rem",
-      "padding-bottom": "4rem",
-      "padding-left": "1rem",
-      "padding-right": "1rem",
-      "max-width": "74ch",
-      margin: "0 auto",
+      "padding-top": "2.35rem",
+      "padding-bottom": "5rem",
+      "padding-left": "1.25rem",
+      "padding-right": "1.25rem",
+      margin: "0",
+      width: "100%",
+      "max-width": "none",
+      display: "flex",
+      "flex-direction": "column",
+      "align-items": "center",
+      "box-sizing": "border-box",
+    },
+    "body > *": {
+      width: "100%",
+      "max-width": "66ch",
+      "margin-left": "auto",
+      "margin-right": "auto",
+      "box-sizing": "border-box",
     },
     p: {
-      margin: "0 0 1.28em",
+      margin: "0 0 1.42em",
       "text-align": "justify",
+      "text-indent": "2em",
     },
     "h1, h2, h3, h4, h5, h6": {
       color: "hsl(240 10% 3.9%)",
       "font-weight": "600",
-      "line-height": "1.42",
-      "margin-top": "2.1em",
-      "margin-bottom": "0.9em",
-      "letter-spacing": "0.02em",
+      "line-height": "1.5",
+      "margin-top": "2.45em",
+      "margin-bottom": "1em",
+      "letter-spacing": "0.028em",
+      "text-align": "center",
+      "text-wrap": "balance",
+    },
+    h1: {
+      "font-size": "1.72em",
+      "line-height": "1.38",
+      "margin-top": "0.4em",
+      "margin-bottom": "1.25em",
+      "font-weight": "700",
+    },
+    h2: {
+      "font-size": "1.28em",
+      "margin-top": "2.8em",
+      "margin-bottom": "1.1em",
+    },
+    h3: {
+      "font-size": "1.12em",
+      "margin-top": "2.3em",
+      "margin-bottom": "0.95em",
+    },
+    "ul, ol": {
+      margin: "1.3em 0 1.55em",
+      padding: "0 0 0 1.7em",
+    },
+    li: {
+      margin: "0.48em 0",
+      "padding-left": "0.2em",
+      "line-height": "1.95",
     },
     blockquote: {
-      margin: "1.45em 0",
-      padding: "0.85em 1.1em",
+      margin: "1.7em auto",
+      padding: "1.05em 1.2em",
       "border-left": "3px solid rgba(24,24,27,0.16)",
       "border-radius": "0.95rem",
       background: "rgba(24,24,27,0.03)",
       color: "rgba(24,24,27,0.78)",
+    },
+    hr: {
+      width: "5.5rem",
+      height: "1px",
+      margin: "2.8em auto",
+      border: "0",
+      background:
+        "linear-gradient(90deg, transparent 0%, rgba(24,24,27,0.18) 18%, rgba(24,24,27,0.18) 82%, transparent 100%)",
+    },
+    "pre, code, kbd": {
+      "font-family":
+        '"SFMono-Regular", "JetBrains Mono", "Fira Code", "Courier New", monospace',
+    },
+    pre: {
+      margin: "1.6em 0",
+      padding: "1em 1.1em",
+      "border-radius": "0.95rem",
+      background: "rgba(24,24,27,0.045)",
+      border: "1px solid rgba(24,24,27,0.08)",
+      "font-size": "0.92em",
+      "line-height": "1.72",
+      overflow: "auto",
+      "white-space": "pre-wrap",
+    },
+    code: {
+      "font-size": "0.92em",
+      background: "rgba(24,24,27,0.06)",
+      "border-radius": "0.45rem",
+      padding: "0.12em 0.36em",
+    },
+    "figure, .figure": {
+      margin: "2em auto",
+      "text-align": "center",
+    },
+    figcaption: {
+      margin: "0.9em auto 0",
+      "font-size": "0.88em",
+      color: "rgba(24,24,27,0.56)",
+      "line-height": "1.7",
+    },
+    "strong, b": {
+      "font-weight": "700",
+      color: "rgba(24,24,27,0.92)",
+    },
+    "em, i": {
+      "font-style": "italic",
+      color: "rgba(24,24,27,0.82)",
     },
     "img, svg, video, canvas": {
       "max-width": "100%",
@@ -131,44 +222,135 @@ const THEME_STYLES: Record<
     },
   },
   dark: {
+    html: {
+      background: "transparent",
+    },
     body: {
-      background: "hsl(240 10% 3.9%)",
+      background: "transparent",
       color: "hsl(0 0% 98%)",
       "font-family":
         '"Baskerville", "Iowan Old Style", "Palatino Linotype", "Noto Serif SC", "Songti SC", "Source Han Serif SC", serif',
-      "line-height": "2.02",
-      "letter-spacing": "0.012em",
+      "line-height": "2.08",
+      "letter-spacing": "0.01em",
       "text-rendering": "optimizeLegibility",
       "-webkit-font-smoothing": "antialiased",
       "font-kerning": "normal",
       "word-break": "break-word",
       "overflow-wrap": "break-word",
-      "padding-top": "1.6rem",
-      "padding-bottom": "4rem",
-      "padding-left": "1rem",
-      "padding-right": "1rem",
-      "max-width": "74ch",
-      margin: "0 auto",
+      "padding-top": "2.35rem",
+      "padding-bottom": "5rem",
+      "padding-left": "1.25rem",
+      "padding-right": "1.25rem",
+      margin: "0",
+      width: "100%",
+      "max-width": "none",
+      display: "flex",
+      "flex-direction": "column",
+      "align-items": "center",
+      "box-sizing": "border-box",
+    },
+    "body > *": {
+      width: "100%",
+      "max-width": "66ch",
+      "margin-left": "auto",
+      "margin-right": "auto",
+      "box-sizing": "border-box",
     },
     p: {
-      margin: "0 0 1.28em",
+      margin: "0 0 1.42em",
       "text-align": "justify",
+      "text-indent": "2em",
     },
     "h1, h2, h3, h4, h5, h6": {
       color: "hsl(0 0% 98%)",
       "font-weight": "600",
-      "line-height": "1.42",
-      "margin-top": "2.1em",
-      "margin-bottom": "0.9em",
-      "letter-spacing": "0.02em",
+      "line-height": "1.5",
+      "margin-top": "2.45em",
+      "margin-bottom": "1em",
+      "letter-spacing": "0.028em",
+      "text-align": "center",
+      "text-wrap": "balance",
+    },
+    h1: {
+      "font-size": "1.72em",
+      "line-height": "1.38",
+      "margin-top": "0.4em",
+      "margin-bottom": "1.25em",
+      "font-weight": "700",
+    },
+    h2: {
+      "font-size": "1.28em",
+      "margin-top": "2.8em",
+      "margin-bottom": "1.1em",
+    },
+    h3: {
+      "font-size": "1.12em",
+      "margin-top": "2.3em",
+      "margin-bottom": "0.95em",
+    },
+    "ul, ol": {
+      margin: "1.3em 0 1.55em",
+      padding: "0 0 0 1.7em",
+    },
+    li: {
+      margin: "0.48em 0",
+      "padding-left": "0.2em",
+      "line-height": "1.95",
     },
     blockquote: {
-      margin: "1.45em 0",
-      padding: "0.85em 1.1em",
+      margin: "1.7em auto",
+      padding: "1.05em 1.2em",
       "border-left": "3px solid rgba(255,255,255,0.2)",
       "border-radius": "0.95rem",
       background: "rgba(255,255,255,0.04)",
       color: "rgba(250,250,250,0.8)",
+    },
+    hr: {
+      width: "5.5rem",
+      height: "1px",
+      margin: "2.8em auto",
+      border: "0",
+      background:
+        "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.22) 18%, rgba(255,255,255,0.22) 82%, transparent 100%)",
+    },
+    "pre, code, kbd": {
+      "font-family":
+        '"SFMono-Regular", "JetBrains Mono", "Fira Code", "Courier New", monospace',
+    },
+    pre: {
+      margin: "1.6em 0",
+      padding: "1em 1.1em",
+      "border-radius": "0.95rem",
+      background: "rgba(255,255,255,0.05)",
+      border: "1px solid rgba(255,255,255,0.08)",
+      "font-size": "0.92em",
+      "line-height": "1.72",
+      overflow: "auto",
+      "white-space": "pre-wrap",
+    },
+    code: {
+      "font-size": "0.92em",
+      background: "rgba(255,255,255,0.08)",
+      "border-radius": "0.45rem",
+      padding: "0.12em 0.36em",
+    },
+    "figure, .figure": {
+      margin: "2em auto",
+      "text-align": "center",
+    },
+    figcaption: {
+      margin: "0.9em auto 0",
+      "font-size": "0.88em",
+      color: "rgba(250,250,250,0.56)",
+      "line-height": "1.7",
+    },
+    "strong, b": {
+      "font-weight": "700",
+      color: "rgba(250,250,250,0.95)",
+    },
+    "em, i": {
+      "font-style": "italic",
+      color: "rgba(250,250,250,0.82)",
     },
     "img, svg, video, canvas": {
       "max-width": "100%",
@@ -181,43 +363,134 @@ const THEME_STYLES: Record<
     },
   },
   sepia: {
+    html: {
+      background: "transparent",
+    },
     body: {
-      background: "#F5F1E8",
+      background: "transparent",
       color: "#5B4636",
       "font-family":
         '"Baskerville", "Iowan Old Style", "Palatino Linotype", "Noto Serif SC", "Songti SC", "Source Han Serif SC", serif',
-      "line-height": "2.08",
-      "letter-spacing": "0.014em",
+      "line-height": "2.14",
+      "letter-spacing": "0.012em",
       "text-rendering": "optimizeLegibility",
       "-webkit-font-smoothing": "antialiased",
       "font-kerning": "normal",
       "word-break": "break-word",
       "overflow-wrap": "break-word",
-      "padding-top": "1.7rem",
-      "padding-bottom": "4.2rem",
-      "padding-left": "1rem",
-      "padding-right": "1rem",
-      "max-width": "74ch",
-      margin: "0 auto",
+      "padding-top": "2.45rem",
+      "padding-bottom": "5.1rem",
+      "padding-left": "1.25rem",
+      "padding-right": "1.25rem",
+      margin: "0",
+      width: "100%",
+      "max-width": "none",
+      display: "flex",
+      "flex-direction": "column",
+      "align-items": "center",
+      "box-sizing": "border-box",
+    },
+    "body > *": {
+      width: "100%",
+      "max-width": "66ch",
+      "margin-left": "auto",
+      "margin-right": "auto",
+      "box-sizing": "border-box",
     },
     p: {
-      margin: "0 0 1.34em",
+      margin: "0 0 1.5em",
       "text-align": "justify",
+      "text-indent": "2em",
     },
     "h1, h2, h3, h4, h5, h6": {
       color: "#4C382B",
       "font-weight": "600",
-      "line-height": "1.42",
-      "margin-top": "2.15em",
-      "margin-bottom": "0.95em",
-      "letter-spacing": "0.024em",
+      "line-height": "1.5",
+      "margin-top": "2.5em",
+      "margin-bottom": "1.05em",
+      "letter-spacing": "0.03em",
+      "text-align": "center",
+      "text-wrap": "balance",
+    },
+    h1: {
+      "font-size": "1.76em",
+      "line-height": "1.4",
+      "margin-top": "0.45em",
+      "margin-bottom": "1.3em",
+      "font-weight": "700",
+    },
+    h2: {
+      "font-size": "1.3em",
+      "margin-top": "2.9em",
+      "margin-bottom": "1.12em",
+    },
+    h3: {
+      "font-size": "1.14em",
+      "margin-top": "2.35em",
+      "margin-bottom": "0.98em",
+    },
+    "ul, ol": {
+      margin: "1.38em 0 1.62em",
+      padding: "0 0 0 1.7em",
+    },
+    li: {
+      margin: "0.5em 0",
+      "padding-left": "0.2em",
+      "line-height": "2",
     },
     blockquote: {
-      margin: "1.45em 0",
-      padding: "0.9em 1.1em",
+      margin: "1.8em auto",
+      padding: "1.08em 1.25em",
       "border-left": "3px solid rgba(91,70,54,0.18)",
       "border-radius": "0.95rem",
       background: "rgba(91,70,54,0.045)",
+      color: "rgba(91,70,54,0.82)",
+    },
+    hr: {
+      width: "5.5rem",
+      height: "1px",
+      margin: "2.9em auto",
+      border: "0",
+      background:
+        "linear-gradient(90deg, transparent 0%, rgba(91,70,54,0.2) 18%, rgba(91,70,54,0.2) 82%, transparent 100%)",
+    },
+    "pre, code, kbd": {
+      "font-family":
+        '"SFMono-Regular", "JetBrains Mono", "Fira Code", "Courier New", monospace',
+    },
+    pre: {
+      margin: "1.7em 0",
+      padding: "1em 1.1em",
+      "border-radius": "0.95rem",
+      background: "rgba(91,70,54,0.06)",
+      border: "1px solid rgba(91,70,54,0.08)",
+      "font-size": "0.92em",
+      "line-height": "1.76",
+      overflow: "auto",
+      "white-space": "pre-wrap",
+    },
+    code: {
+      "font-size": "0.92em",
+      background: "rgba(91,70,54,0.07)",
+      "border-radius": "0.45rem",
+      padding: "0.12em 0.36em",
+    },
+    "figure, .figure": {
+      margin: "2.1em auto",
+      "text-align": "center",
+    },
+    figcaption: {
+      margin: "0.9em auto 0",
+      "font-size": "0.88em",
+      color: "rgba(91,70,54,0.58)",
+      "line-height": "1.74",
+    },
+    "strong, b": {
+      "font-weight": "700",
+      color: "rgba(76,56,43,0.96)",
+    },
+    "em, i": {
+      "font-style": "italic",
       color: "rgba(91,70,54,0.82)",
     },
     "img, svg, video, canvas": {
@@ -913,6 +1186,24 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       let cancelled = false;
       let book: Book | null = null;
 
+      const applyTransparentShell = () => {
+        if (!viewerRef.current) return;
+
+        viewerRef.current.style.background = "transparent";
+
+        const epubContainer = viewerRef.current.querySelector(".epub-container") as HTMLElement | null;
+        if (epubContainer) {
+          epubContainer.style.background = "transparent";
+          epubContainer.style.boxShadow = "none";
+        }
+
+        const iframeEl = viewerRef.current.querySelector("iframe") as HTMLIFrameElement | null;
+        if (iframeEl) {
+          iframeEl.style.background = "transparent";
+          iframeEl.style.boxShadow = "none";
+        }
+      };
+
       async function init() {
         try {
           const response = await fetch(url);
@@ -941,6 +1232,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
             allowScriptedContent: true,
           });
           renditionRef.current = rendition;
+          applyTransparentShell();
 
           Object.entries(THEME_STYLES).forEach(([name, styles]) => {
             rendition.themes.register(name, styles);
@@ -971,6 +1263,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
           rendition.display(displayCfi || undefined);
 
           rendition.once("displayed", () => {
+            applyTransparentShell();
             setIsRenditionReady(true);
             if (initialScrollRatio !== null) {
               setTimeout(() => {
@@ -1198,6 +1491,19 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       if (!rendition) return;
 
       const handleDisplayed = () => {
+        if (viewerRef.current) {
+          viewerRef.current.style.background = "transparent";
+          const epubContainer = viewerRef.current.querySelector(".epub-container") as HTMLElement | null;
+          const iframeEl = viewerRef.current.querySelector("iframe") as HTMLIFrameElement | null;
+          if (epubContainer) {
+            epubContainer.style.background = "transparent";
+            epubContainer.style.boxShadow = "none";
+          }
+          if (iframeEl) {
+            iframeEl.style.background = "transparent";
+            iframeEl.style.boxShadow = "none";
+          }
+        }
         void applyHighlights();
       };
 
@@ -1300,20 +1606,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
 
     return (
       <div className="relative flex h-full w-full justify-center px-2 sm:px-4 lg:px-6 xl:px-8">
-        <div
-          className="pointer-events-none absolute inset-y-5 left-0 hidden w-14 rounded-r-full xl:block"
-          style={{
-            background:
-              "linear-gradient(90deg, color-mix(in srgb, var(--reader-text, #09090b) 5%, transparent) 0%, transparent 100%)",
-          }}
-        />
-        <div
-          className="pointer-events-none absolute inset-y-5 right-0 hidden w-14 rounded-l-full xl:block"
-          style={{
-            background:
-              "linear-gradient(270deg, color-mix(in srgb, var(--reader-text, #09090b) 5%, transparent) 0%, transparent 100%)",
-          }}
-        />
         <div
           ref={viewerRef}
           id="epub-viewer"

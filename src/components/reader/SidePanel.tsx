@@ -212,7 +212,7 @@ export function SidePanel({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="left"
-        className="w-[92vw] overflow-hidden border-r p-0 sm:w-[25.5rem]"
+        className="animate-reader-fade-up w-[92vw] overflow-hidden border-r p-0 sm:w-[26rem]"
         style={{
           background: panelSurface,
           borderColor: panelBorder,
@@ -239,7 +239,7 @@ export function SidePanel({
         >
           <div className="px-5 pt-3">
             <div
-              className="rounded-[24px] border px-4 py-4 backdrop-blur-xl"
+              className="animate-reader-surface relative overflow-hidden rounded-[26px] border px-4 py-4 backdrop-blur-xl"
               style={{
                 background: panelCardSurface,
                 borderColor: panelBorder,
@@ -247,6 +247,13 @@ export function SidePanel({
                   "0 20px 36px -28px color-mix(in srgb, var(--reader-text) 26%, transparent)",
               }}
             >
+              <div
+                className="pointer-events-none absolute inset-x-4 top-0 h-px"
+                style={{
+                  background:
+                    "linear-gradient(90deg, transparent 0%, color-mix(in srgb, white 68%, transparent) 22%, color-mix(in srgb, white 34%, transparent) 50%, transparent 100%)",
+                }}
+              />
               <p
                 className="text-[11px] font-medium tracking-[0.18em]"
                 style={{ color: "var(--reader-muted-text)" }}
@@ -265,10 +272,12 @@ export function SidePanel({
                       : "读书笔记"}
                 </h2>
                 <span
-                  className="rounded-full px-2.5 py-1 text-xs font-medium"
+                  className="rounded-full border px-2.5 py-1 text-xs font-semibold"
                   style={{
                     background:
                       "color-mix(in srgb, var(--reader-primary) 8%, transparent)",
+                    borderColor:
+                      "color-mix(in srgb, var(--reader-primary) 12%, transparent)",
                     color: "var(--reader-primary)",
                   }}
                 >
@@ -284,29 +293,33 @@ export function SidePanel({
             </div>
           </div>
           <TabsList
-            className="mx-5 mt-4 grid h-12 grid-cols-3 rounded-full p-1"
+            className="mx-5 mt-4 grid h-13 grid-cols-3 rounded-[20px] p-1.5"
             style={{
               background: panelMutedSurface,
               border: `1px solid ${panelBorder}`,
+              boxShadow:
+                "inset 0 1px 0 color-mix(in srgb, white 45%, transparent)",
             }}
           >
             <TabsTrigger
               value="toc"
-              className="gap-1.5 rounded-full border border-transparent text-muted-foreground transition-all duration-200 data-[state=active]:shadow-none data-[state=active]:text-[var(--reader-text)] data-[state=active]:bg-[var(--reader-card-bg)]"
+              className="gap-1.5 rounded-[16px] border border-transparent text-muted-foreground transition-all duration-200 data-[state=active]:shadow-none data-[state=active]:text-[var(--reader-text)] data-[state=active]:bg-[var(--reader-card-bg)]"
             >
               <List className="size-4" />
               <span className="hidden sm:inline">目录</span>
             </TabsTrigger>
             <TabsTrigger
               value="bookmarks"
-              className="gap-1.5 rounded-full border border-transparent text-muted-foreground transition-all duration-200 data-[state=active]:shadow-none data-[state=active]:text-[var(--reader-text)] data-[state=active]:bg-[var(--reader-card-bg)]"
+              className="gap-1.5 rounded-[16px] border border-transparent text-muted-foreground transition-all duration-200 data-[state=active]:shadow-none data-[state=active]:text-[var(--reader-text)] data-[state=active]:bg-[var(--reader-card-bg)]"
             >
               <Bookmark className="size-4" />
               <span className="hidden sm:inline">书签</span>
               {bookmarks.length > 0 && (
                 <span
-                  className="ml-0.5 text-[10px] rounded-full px-1.5"
-                  style={{ background: "var(--reader-border)" }}
+                  className="ml-0.5 rounded-full px-1.5 text-[10px]"
+                  style={{
+                    background: "color-mix(in srgb, var(--reader-text) 10%, transparent)",
+                  }}
                 >
                   {bookmarks.length}
                 </span>
@@ -314,14 +327,16 @@ export function SidePanel({
             </TabsTrigger>
             <TabsTrigger
               value="notes"
-              className="gap-1.5 rounded-full border border-transparent text-muted-foreground transition-all duration-200 data-[state=active]:shadow-none data-[state=active]:text-[var(--reader-text)] data-[state=active]:bg-[var(--reader-card-bg)]"
+              className="gap-1.5 rounded-[16px] border border-transparent text-muted-foreground transition-all duration-200 data-[state=active]:shadow-none data-[state=active]:text-[var(--reader-text)] data-[state=active]:bg-[var(--reader-card-bg)]"
             >
               <StickyNote className="size-4" />
               <span className="hidden sm:inline">笔记</span>
               {notes.length > 0 && (
                 <span
-                  className="ml-0.5 text-[10px] rounded-full px-1.5"
-                  style={{ background: "var(--reader-border)" }}
+                  className="ml-0.5 rounded-full px-1.5 text-[10px]"
+                  style={{
+                    background: "color-mix(in srgb, var(--reader-text) 10%, transparent)",
+                  }}
                 >
                   {notes.length}
                 </span>
@@ -334,10 +349,12 @@ export function SidePanel({
               <div className="p-5 pt-4" style={{ background: "transparent" }}>
                 {toc.length === 0 ? (
                   <div
-                    className="rounded-[22px] border px-5 py-8 text-center"
+                    className="rounded-[24px] border px-5 py-8 text-center"
                     style={{
                       background: panelCardSurface,
                       borderColor: panelBorder,
+                      boxShadow:
+                        "0 18px 34px -28px color-mix(in srgb, var(--reader-text) 20%, transparent)",
                     }}
                   >
                     <p className="text-sm" style={{ color: "var(--reader-text)" }}>
@@ -381,10 +398,12 @@ export function SidePanel({
               <div className="space-y-2.5 p-5 pt-4" style={{ background: "transparent" }}>
                 {bookmarks.length === 0 ? (
                   <div
-                    className="rounded-[22px] border px-5 py-8 text-center"
+                    className="rounded-[24px] border px-5 py-8 text-center"
                     style={{
                       background: panelCardSurface,
                       borderColor: panelBorder,
+                      boxShadow:
+                        "0 18px 34px -28px color-mix(in srgb, var(--reader-text) 20%, transparent)",
                     }}
                   >
                     <p className="text-sm" style={{ color: "var(--reader-text)" }}>
@@ -402,7 +421,7 @@ export function SidePanel({
                     <div
                       key={bookmark.id}
                       className={cn(
-                        "group cursor-pointer rounded-[22px] border p-4 transition-all duration-200"
+                        "group cursor-pointer rounded-[24px] border p-4 transition-all duration-200 hover:-translate-y-0.5"
                       )}
                       style={{
                         background: panelCardSurface,
@@ -462,11 +481,28 @@ export function SidePanel({
                           }}
                         >
                           <div className="flex items-start justify-between">
-                            <p
-                              className="text-sm font-medium truncate flex-1 text-foreground"
-                            >
-                              {bookmark.label}
-                            </p>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-semibold text-foreground">
+                                {bookmark.label}
+                              </p>
+                              <div className="mt-1 flex items-center gap-2">
+                                <span
+                                  className="rounded-full border px-2 py-0.5 text-[11px] font-medium"
+                                  style={{
+                                    color: "var(--reader-primary)",
+                                    borderColor:
+                                      "color-mix(in srgb, var(--reader-primary) 12%, transparent)",
+                                    background:
+                                      "color-mix(in srgb, var(--reader-primary) 7%, transparent)",
+                                  }}
+                                >
+                                  {(bookmark.progress * 100).toFixed(1)}%
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  {formatDate(bookmark.createdAt)}
+                                </span>
+                              </div>
+                            </div>
                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                               <Button
                                 variant="ghost"
@@ -497,13 +533,21 @@ export function SidePanel({
                               </Button>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-muted-foreground">
-                              {(bookmark.progress * 100).toFixed(2)}%
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {formatDate(bookmark.createdAt)}
-                            </span>
+                          <div
+                            className="mt-3 h-1.5 overflow-hidden rounded-full"
+                            style={{
+                              background:
+                                "color-mix(in srgb, var(--reader-text) 9%, transparent)",
+                            }}
+                          >
+                            <div
+                              className="h-full rounded-full transition-all duration-300"
+                              style={{
+                                width: `${Math.min(100, Math.max(0, bookmark.progress * 100))}%`,
+                                background:
+                                  "linear-gradient(90deg, color-mix(in srgb, var(--reader-primary) 88%, white 12%) 0%, var(--reader-primary) 100%)",
+                              }}
+                            />
                           </div>
                         </div>
                       )}
@@ -519,10 +563,12 @@ export function SidePanel({
               <div className="space-y-2.5 p-5 pt-4" style={{ background: "transparent" }}>
                 {notes.length === 0 ? (
                   <div
-                    className="rounded-[22px] border px-5 py-8 text-center"
+                    className="rounded-[24px] border px-5 py-8 text-center"
                     style={{
                       background: panelCardSurface,
                       borderColor: panelBorder,
+                      boxShadow:
+                        "0 18px 34px -28px color-mix(in srgb, var(--reader-text) 20%, transparent)",
                     }}
                   >
                     <p className="text-sm" style={{ color: "var(--reader-text)" }}>
@@ -540,7 +586,7 @@ export function SidePanel({
                     <div
                       key={note.id}
                       className={cn(
-                        "group cursor-pointer rounded-[22px] border p-4 transition-all duration-200"
+                        "group cursor-pointer rounded-[24px] border p-4 transition-all duration-200 hover:-translate-y-0.5"
                       )}
                       style={{
                         background: panelCardSurface,
@@ -629,9 +675,13 @@ export function SidePanel({
                           }}
                         >
                           <div
-                            className="text-xs pl-2 border-l-2 line-clamp-2 mb-1.5 rounded text-muted-foreground"
+                            className="mb-2 rounded-[14px] border px-3 py-2 text-xs line-clamp-2"
                             style={{
-                              borderColor: note.color,
+                              borderColor: "color-mix(in srgb, var(--reader-text) 8%, transparent)",
+                              background:
+                                "color-mix(in srgb, var(--reader-text) 3%, transparent)",
+                              color: "var(--reader-muted-text)",
+                              boxShadow: `inset 3px 0 0 ${note.color}`,
                             }}
                           >
                             {note.selectedText}

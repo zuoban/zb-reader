@@ -87,6 +87,8 @@ export function FullscreenTtsView({
   const overallProgress = clampProgress(progress);
   const paragraphProgress = clampProgress(ttsPlaybackProgress);
   const paragraphText = activeParagraph?.trim();
+  const statusLabel = isSpeaking && !isPaused ? "朗读中" : isPaused ? "已暂停" : "准备朗读";
+
   return (
     <div
       className={cn(
@@ -95,9 +97,10 @@ export function FullscreenTtsView({
       )}
       aria-hidden={!open}
     >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-10%,rgba(228,240,255,0.52),transparent_30%),radial-gradient(circle_at_15%_75%,rgba(180,220,255,0.18),transparent_26%),radial-gradient(circle_at_85%_20%,rgba(255,255,255,0.18),transparent_24%),linear-gradient(180deg,#2a2f3d_0%,#171b25_38%,#0c0f16_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-10%,rgba(228,240,255,0.52),transparent_30%),radial-gradient(circle_at_18%_78%,rgba(170,212,255,0.16),transparent_24%),radial-gradient(circle_at_86%_18%,rgba(255,255,255,0.18),transparent_24%),linear-gradient(180deg,#2a2f3d_0%,#171b25_38%,#0c0f16_100%)]" />
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.16),transparent_18%,transparent_78%,rgba(255,255,255,0.08))]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_45%,rgba(0,0,0,0.18)_100%)]" />
+      <div className="animate-reader-breathe absolute left-1/2 top-0 h-[34rem] w-[34rem] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(191,219,254,0.2)_0%,transparent_68%)] blur-3xl" />
 
       <div className="relative flex h-full flex-col gap-4 px-4 pb-[calc(env(safe-area-inset-bottom)+16px)] pt-[calc(env(safe-area-inset-top)+12px)] text-white sm:gap-6 sm:px-6">
         <header className="mx-auto grid w-full max-w-3xl grid-cols-[auto_1fr_auto] items-center gap-3">
@@ -116,9 +119,14 @@ export function FullscreenTtsView({
             )}
           </div>
 
-          <h1 className="truncate text-center text-base font-semibold tracking-tight text-white/95 sm:text-lg">
-            {book.title}
-          </h1>
+          <div className="min-w-0 text-center">
+            <p className="text-[10px] uppercase tracking-[0.22em] text-white/45">
+              沉浸朗读
+            </p>
+            <h1 className="truncate text-base font-semibold tracking-tight text-white/95 sm:text-lg">
+              {book.title}
+            </h1>
+          </div>
 
           <div className="flex shrink-0 items-center gap-2">
             <Button
@@ -135,14 +143,38 @@ export function FullscreenTtsView({
         </header>
 
         <main className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col justify-start">
-          <section className="flex h-[min(64vh,620px)] min-h-0 flex-col rounded-[24px] border border-white/20 bg-[linear-gradient(180deg,rgba(255,255,255,0.22),rgba(255,255,255,0.09))] p-5 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.32),inset_0_-1px_0_rgba(255,255,255,0.05),0_28px_60px_-38px_rgba(0,0,0,0.95)] backdrop-blur-3xl sm:h-[min(70vh,760px)] sm:rounded-[28px] sm:p-7">
+          <section className="animate-reader-fade-up flex h-[min(64vh,620px)] min-h-0 flex-col rounded-[24px] border border-white/20 bg-[linear-gradient(180deg,rgba(255,255,255,0.22),rgba(255,255,255,0.09))] p-5 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.32),inset_0_-1px_0_rgba(255,255,255,0.05),0_28px_60px_-38px_rgba(0,0,0,0.95)] backdrop-blur-3xl sm:h-[min(70vh,760px)] sm:rounded-[28px] sm:p-7">
             <div className="relative flex min-h-0 flex-1 flex-col">
-              <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-white/50">
-                <span className="h-px w-5 bg-white/28" />
-                <span>{currentChapterTitle || "当前章节"}</span>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex rounded-full border border-white/14 bg-white/8 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-white/60">
+                  {statusLabel}
+                </span>
+                <span className="text-[11px] uppercase tracking-[0.18em] text-white/50">
+                  {currentChapterTitle || "当前章节"}
+                </span>
+              </div>
+              <div className="mt-4 rounded-[20px] border border-white/12 bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.04))] px-4 py-3">
+                <div className="flex items-center justify-between gap-3 text-[11px] text-white/60 sm:text-xs">
+                  <span>全书进度 {(overallProgress * 100).toFixed(1)}%</span>
+                  <span>当前段落 {(paragraphProgress * 100).toFixed(0)}%</span>
+                </div>
+                <div className="mt-2 space-y-2">
+                  <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+                    <div
+                      className="h-full rounded-full bg-[linear-gradient(90deg,rgba(255,255,255,0.95),rgba(191,219,254,0.8))] transition-all duration-300"
+                      style={{ width: `${overallProgress * 100}%` }}
+                    />
+                  </div>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-white/8">
+                    <div
+                      className="h-full rounded-full bg-[linear-gradient(90deg,rgba(191,219,254,0.95),rgba(125,211,252,0.8))] transition-all duration-200"
+                      style={{ width: `${paragraphProgress * 100}%` }}
+                    />
+                  </div>
+                </div>
               </div>
               <div className="mt-5 min-h-0 flex-1 overflow-y-auto pr-1 [scrollbar-color:rgba(255,255,255,0.28)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border [&::-webkit-scrollbar-thumb]:border-transparent [&::-webkit-scrollbar-thumb]:bg-[linear-gradient(180deg,rgba(255,255,255,0.34),rgba(255,255,255,0.18))] [&::-webkit-scrollbar-thumb]:bg-clip-padding">
-                <p className="text-[16px] font-normal leading-9 tracking-[0.005em] text-white/96 [text-shadow:0_1px_10px_rgba(0,0,0,0.18)] sm:text-[18px] sm:leading-[2.5rem]">
+                <p className="text-[16px] font-normal leading-9 tracking-[0.01em] text-white/96 [text-shadow:0_1px_10px_rgba(0,0,0,0.18)] sm:text-[18px] sm:leading-[2.6rem]">
                   {paragraphText || "正在准备朗读内容，马上为你定位到当前段落。"}
                 </p>
               </div>
@@ -150,7 +182,7 @@ export function FullscreenTtsView({
           </section>
         </main>
 
-        <footer className="mx-auto w-full max-w-3xl rounded-[24px] border border-white/20 bg-[linear-gradient(180deg,rgba(255,255,255,0.2),rgba(255,255,255,0.09))] px-3 py-2.5 backdrop-blur-3xl shadow-[inset_0_1px_0_rgba(255,255,255,0.3),inset_0_-1px_0_rgba(255,255,255,0.05),0_30px_60px_-30px_rgba(0,0,0,0.78)] sm:px-4 sm:py-3">
+        <footer className="animate-reader-fade-up mx-auto w-full max-w-3xl rounded-[24px] border border-white/20 bg-[linear-gradient(180deg,rgba(255,255,255,0.2),rgba(255,255,255,0.09))] px-3 py-2.5 backdrop-blur-3xl shadow-[inset_0_1px_0_rgba(255,255,255,0.3),inset_0_-1px_0_rgba(255,255,255,0.05),0_30px_60px_-30px_rgba(0,0,0,0.78)] sm:px-4 sm:py-3" style={{ animationDelay: "70ms" }}>
           <div className="flex items-start justify-between gap-2.5">
             <div className="flex min-w-0 items-center gap-2.5">
               <div className="flex h-12 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[12px] border border-white/20 bg-[linear-gradient(180deg,rgba(255,255,255,0.22),rgba(255,255,255,0.09))] shadow-[inset_0_1px_0_rgba(255,255,255,0.26),inset_0_-1px_0_rgba(255,255,255,0.04)]">
@@ -170,7 +202,7 @@ export function FullscreenTtsView({
               <div className="min-w-0">
                 <p className="truncate text-[13px] font-medium text-white/88 sm:text-sm">{book.author || "未知作者"}</p>
                 <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-white/64 sm:text-xs">
-                  <span>{isSpeaking && !isPaused ? "朗读中" : isPaused ? "已暂停" : "准备朗读"}</span>
+                  <span>{statusLabel}</span>
                   <span className="text-white/24">/</span>
                   <span>{(overallProgress * 100).toFixed(1)}%</span>
                   {readingDuration && readingDuration > 0 && (

@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { books } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { getCoverFilePath, coverExists } from "@/lib/storage";
 import { logger } from "@/lib/logger";
 import fs from "fs";
-import { unauthorized, notFound, serverError } from "@/lib/api-utils";
+import { notFound, serverError } from "@/lib/api-utils";
 
 export async function GET(
   _req: NextRequest,

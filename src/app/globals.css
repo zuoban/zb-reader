@@ -189,6 +189,49 @@
   animation: audio-wave 0.6s ease-in-out infinite;
 }
 
+@keyframes reader-fade-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes reader-surface-float {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+    box-shadow: 0 18px 42px -30px color-mix(in oklab, var(--foreground) 18%, transparent);
+  }
+  50% {
+    transform: translate3d(0, -2px, 0);
+    box-shadow: 0 22px 52px -30px color-mix(in oklab, var(--foreground) 22%, transparent);
+  }
+}
+
+@keyframes reader-soft-breathe {
+  0%, 100% {
+    opacity: 0.72;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.animate-reader-fade-up {
+  animation: reader-fade-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-reader-surface {
+  animation: reader-surface-float 5.8s ease-in-out infinite;
+}
+
+.animate-reader-breathe {
+  animation: reader-soft-breathe 4.6s ease-in-out infinite;
+}
+
 .surface-glass {
   background: color-mix(in oklab, var(--card) 78%, transparent);
   border: 1px solid color-mix(in oklab, var(--border) 82%, transparent);

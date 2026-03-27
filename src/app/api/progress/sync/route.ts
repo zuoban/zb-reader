@@ -137,8 +137,6 @@ export async function POST(req: NextRequest) {
     const resolution = resolveConflict(currentProgress, clientPayload);
 
     const newVersion = currentProgress.version + 1;
-    const winner = resolution.winner;
-
     const sqlite = getSqlite();
     const transaction = sqlite.transaction(() => {
       sqlite
