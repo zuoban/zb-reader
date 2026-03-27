@@ -139,7 +139,6 @@ function ReaderContent() {
   const ttsHighlightColor = settings.ttsHighlightColor;
   const ttsHighlightStyle = settings.ttsHighlightStyle;
   const autoScrollToActive = settings.autoScrollToActive;
-  const flipMode = settings.flipMode;
   const debouncedSaveSettings = useDebouncedSettingsSave();
 
   // Local settings states (browser voices, TTS state)
@@ -200,7 +199,6 @@ function ReaderContent() {
 
   const currentCfiRef = useRef<string | null>(null);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
-  const prevFlipModeRef = useRef<"scroll" | "page" | null>(null);
 
   const ttsSessionRef = useRef(0);
   const ttsResumeRef = useRef<(() => void) | null>(null);
@@ -345,7 +343,6 @@ function ReaderContent() {
     settings.ttsHighlightColor,
     settings.ttsHighlightStyle,
     settings.autoScrollToActive,
-    settings.flipMode,
   ]);
 
   useEffect(() => {
@@ -355,6 +352,11 @@ function ReaderContent() {
   const stopSpeaking = useCallback(() => {
     ttsSessionRef.current += 1;
     ttsResumeRef.current = null;
+    allParagraphsRef.current = [];
+    readParagraphsHashRef.current.clear();
+    currentParagraphIndexRef.current = 0;
+    ttsCurrentIndexRef.current = 0;
+    ttsTotalParagraphsRef.current = 0;
     if (currentAudioRef.current) {
       currentAudioRef.current.pause();
       currentAudioRef.current.currentTime = 0;
@@ -366,13 +368,7 @@ function ReaderContent() {
     setIsPaused(false);
     setIsTtsViewOpen(false);
 
-    // 恢复之前的翻页模式
-    if (prevFlipModeRef.current && flipMode === "scroll") {
-      settings.setFlipMode(prevFlipModeRef.current);
-      prevFlipModeRef.current = null;
-    }
-
-    // Scroll current paragraph to top when stopping
+    // Keep the reader on the currently spoken paragraph when stopping.
     if (book?.format === "epub" && autoScrollToActive) {
       epubReaderRef.current?.scrollToActiveParagraph();
     }
@@ -390,7 +386,7 @@ function ReaderContent() {
       navigator.mediaSession.playbackState = "none";
       mediaSessionSetupRef.current = false;
     }
-  }, [book?.format, autoScrollToActive, flipMode, settings]);
+  }, [autoScrollToActive, book?.format]);
 
   const setupMediaSession = useCallback(() => {
     if (!("mediaSession" in navigator)) return;
@@ -844,10 +840,6 @@ function ReaderContent() {
 
   const handleThemeChange = useCallback(async (theme: "light" | "dark" | "sepia") => {
     settings.setTheme(theme);
-  }, [settings]);
-
-  const handleFlipModeChange = useCallback((mode: "scroll" | "page") => {
-    settings.setFlipMode(mode);
   }, [settings]);
 
   const handleSelectedBrowserVoiceIdChange = useCallback((voiceId: string) => {
@@ -1358,15 +1350,6 @@ function ReaderContent() {
       return;
     }
 
-    // 保存当前翻页模式并切换到滚动模式用于朗读
-    const wasPageMode = flipMode === "page";
-    if (wasPageMode) {
-      prevFlipModeRef.current = flipMode;
-      settings.setFlipMode("scroll");
-      // 等待组件重新渲染完成
-      await new Promise((resolve) => setTimeout(resolve, 500));
-    }
-
     ttsSessionRef.current += 1;
     readParagraphsHashRef.current.clear();
     const sessionId = ttsSessionRef.current;
@@ -1382,11 +1365,6 @@ function ReaderContent() {
 
     if (paragraphs.length === 0) {
       toast.error("当前页面没有可朗读段落");
-      // 如果切换了模式但朗读失败，恢复原模式
-      if (wasPageMode) {
-        settings.setFlipMode("page");
-        prevFlipModeRef.current = null;
-      }
       return;
     }
 
@@ -1636,23 +1614,15 @@ function ReaderContent() {
 
   const handlePrevPage = useCallback(() => {
     if (book?.format === "epub") {
-      if (flipMode === "page") {
-        epubReaderRef.current?.prevPage();
-      } else {
-        epubReaderRef.current?.scrollUp();
-      }
+      epubReaderRef.current?.scrollUp();
     }
-  }, [book?.format, flipMode]);
+  }, [book?.format]);
 
   const handleNextPage = useCallback(() => {
     if (book?.format === "epub") {
-      if (flipMode === "page") {
-        epubReaderRef.current?.nextPage();
-      } else {
-        epubReaderRef.current?.scrollDown();
-      }
+      epubReaderRef.current?.scrollDown();
     }
-  }, [book?.format, flipMode]);
+  }, [book?.format]);
 
   const handlePrevChapter = useCallback(() => {
     if (book?.format !== "epub") return;
@@ -1811,14 +1781,13 @@ function ReaderContent() {
       >
         {book.format === "epub" && (
           <EpubReader
-            key={`${bookId}-${flipMode}`}
+            key={bookId}
             ref={epubReaderRef}
             url={bookUrl}
             initialLocation={initialLocation}
             fontSize={fontSize}
             pageWidth={pageWidth}
             theme={readerTheme}
-            flipMode={flipMode}
             onLocationChange={handleLocationChange}
             onTocLoaded={handleTocLoaded}
             onTextSelected={handleTextSelected}
@@ -1922,8 +1891,6 @@ function ReaderContent() {
         onTtsHighlightColorChange={settings.setTtsHighlightColor}
         ttsHighlightStyle={ttsHighlightStyle}
         onTtsHighlightStyleChange={settings.setTtsHighlightStyle}
-        flipMode={flipMode}
-        onFlipModeChange={handleFlipModeChange}
       />
 
       {/* Text selection menu */}

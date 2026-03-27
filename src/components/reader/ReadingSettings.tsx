@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Minus, Plus, Volume2, Type, Palette, ChevronDown, BookOpen } from "lucide-react";
+import { Check, Minus, Plus, Volume2, Type, Palette, ChevronDown } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -39,8 +39,6 @@ interface ReadingSettingsProps {
   onTtsHighlightColorChange: (color: string) => void;
   ttsHighlightStyle: "background" | "indicator";
   onTtsHighlightStyleChange: (style: "background" | "indicator") => void;
-  flipMode: "scroll" | "page";
-  onFlipModeChange: (mode: "scroll" | "page") => void;
 }
 
 const themeOptions = [
@@ -264,8 +262,6 @@ export function ReadingSettings({
   onTtsHighlightColorChange,
   ttsHighlightStyle,
   onTtsHighlightStyleChange,
-  flipMode,
-  onFlipModeChange,
 }: ReadingSettingsProps) {
   const themeBg = theme === "light" ? "#ffffff" : theme === "dark" ? "#1e293b" : "#f4ecd8";
 
@@ -298,41 +294,6 @@ export function ReadingSettings({
         </SheetHeader>
 
         <div className="px-4 sm:px-5 pb-8 sm:pb-10 max-h-[70vh] sm:max-h-[72vh] overflow-y-auto space-y-5 sm:space-y-6 scrollbar-hide">
-
-           {/* ── 翻页模式 ── */}
-           <section>
-             <SectionLabel icon={BookOpen} title="翻页模式" />
-             <SettingCard>
-               <div className="flex gap-1.5 p-4">
-                 {[
-                   { value: "scroll" as const, label: "滚动模式", description: "连续滚动" },
-                   { value: "page" as const, label: "翻页模式", description: "分页翻页" },
-                 ].map((option) => {
-                   const isActive = flipMode === option.value;
-                   return (
-                     <button
-                       key={option.value}
-                       onClick={() => onFlipModeChange(option.value)}
-                       className={cn(
-                         "flex-1 flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all cursor-pointer",
-                         isActive
-                           ? "shadow-sm"
-                           : "opacity-60 hover:opacity-80"
-                       )}
-                       style={{
-                         background: isActive ? "var(--reader-card-bg)" : "transparent",
-                         color: "var(--reader-text)",
-                         border: isActive ? "1px solid var(--reader-primary)" : "1px solid transparent",
-                       }}
-                     >
-                       <span className="text-[13px] font-medium">{option.label}</span>
-                       <span className="text-[10px] opacity-60">{option.description}</span>
-                     </button>
-                   );
-                 })}
-               </div>
-             </SettingCard>
-           </section>
 
           {/* ── 排版 ── */}
           <section>

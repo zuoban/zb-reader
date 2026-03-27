@@ -14,7 +14,6 @@ interface ReaderSettingsState {
   ttsHighlightColor: string;
   ttsAutoNextChapter: boolean;
   autoScrollToActive: boolean;
-  flipMode: "scroll" | "page";
   loaded: boolean;
 }
 
@@ -31,7 +30,6 @@ interface ReaderSettingsActions {
   setTtsHighlightColor: (color: string) => void;
   setTtsAutoNextChapter: (enabled: boolean) => void;
   setAutoScrollToActive: (enabled: boolean) => void;
-  setFlipMode: (mode: "scroll" | "page") => void;
   loadFromServer: () => Promise<void>;
   saveToServer: () => Promise<void>;
 }
@@ -49,7 +47,6 @@ const DEFAULT_STATE: ReaderSettingsState = {
   ttsHighlightColor: "#3b82f6",
   ttsAutoNextChapter: false,
   autoScrollToActive: true,
-  flipMode: "scroll",
   loaded: false,
 };
 
@@ -73,7 +70,6 @@ export const useReaderSettingsStore = create<
       setTtsHighlightColor: (color) => set({ ttsHighlightColor: color }),
       setTtsAutoNextChapter: (enabled) => set({ ttsAutoNextChapter: enabled }),
       setAutoScrollToActive: (enabled) => set({ autoScrollToActive: enabled }),
-      setFlipMode: (mode) => set({ flipMode: mode }),
 
       loadFromServer: async () => {
         try {
@@ -119,7 +115,6 @@ export const useReaderSettingsStore = create<
             ttsHighlightColor: settings.ttsHighlightColor || DEFAULT_STATE.ttsHighlightColor,
             ttsAutoNextChapter: settings.ttsAutoNextChapter ?? DEFAULT_STATE.ttsAutoNextChapter,
             autoScrollToActive: settings.autoScrollToActive ?? DEFAULT_STATE.autoScrollToActive,
-            flipMode: settings.flipMode ?? DEFAULT_STATE.flipMode,
             loaded: true,
           });
         } catch {
@@ -148,7 +143,6 @@ export const useReaderSettingsStore = create<
               ttsHighlightColor: state.ttsHighlightColor,
               ttsAutoNextChapter: state.ttsAutoNextChapter,
               autoScrollToActive: state.autoScrollToActive,
-              flipMode: state.flipMode,
             }),
           });
         } catch {

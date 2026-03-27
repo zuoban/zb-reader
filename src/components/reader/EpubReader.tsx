@@ -17,7 +17,6 @@ interface EpubReaderProps {
   fontSize?: number;
   pageWidth?: number;
   theme?: "light" | "dark" | "sepia";
-  flipMode?: "scroll" | "page";
   onLocationChange?: (location: {
     cfi: string;
     progress: number;
@@ -47,6 +46,7 @@ export interface EpubReaderRef {
   scrollDown: (amount?: number) => void;
   scrollUp: (amount?: number) => void;
   getCurrentLocation: () => string | null;
+  getActiveTtsLocation: () => string | null;
   getProgress: () => number;
   getCurrentText: () => string | null;
   getCurrentParagraphs: () => string[];
@@ -160,7 +160,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       fontSize = 16,
       pageWidth = 800,
       theme = "light",
-      flipMode = "scroll",
       onLocationChange,
       onTocLoaded,
       onTextSelected,
@@ -187,9 +186,32 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     const pendingHighlightsRef = useRef<Array<{ cfiRange: string; color: string; id: string }>>([]);
     const justSelectedRef = useRef(false);
 
+    const stripScrollSuffix = useCallback((location: string) => {
+      const scrollSepIdx = location.indexOf("#scroll=");
+      return scrollSepIdx === -1 ? location : location.slice(0, scrollSepIdx);
+    }, []);
+
+    const resolveRangeSafely = useCallback(
+      async (location: string) => {
+        const book = bookRef.current;
+        if (!book) return null;
+
+        try {
+          return await book.getRange(stripScrollSuffix(location));
+        } catch (error) {
+          logger.warn("epub-reader", "解析 CFI 失败", { location, error });
+          return null;
+        }
+      },
+      [stripScrollSuffix]
+    );
+
     useImperativeHandle(ref, () => ({
       goToLocation(cfi: string) {
-        renditionRef.current?.display(cfi);
+        void resolveRangeSafely(cfi).then((range) => {
+          if (!range) return;
+          renditionRef.current?.display(stripScrollSuffix(cfi));
+        });
       },
       goToHref(href: string) {
         renditionRef.current?.display(href);
@@ -227,6 +249,23 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       getCurrentLocation() {
         return currentLocationRef.current;
       },
+      getActiveTtsLocation() {
+        const contents = renditionRef.current?.getContents?.() as
+          | Array<{ document?: Document; cfiFromNode?: (node: Node, ignoreClass?: string) => string }>
+          | undefined;
+        const content = contents?.[0];
+        const doc = content?.document;
+        const activeElement = doc?.querySelector("[data-tts-active='1']");
+        if (!activeElement || !content?.cfiFromNode) {
+          return null;
+        }
+
+        try {
+          return content.cfiFromNode(activeElement);
+        } catch {
+          return null;
+        }
+      },
       getProgress() {
         return progressRef.current;
       },
@@ -255,71 +294,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
 
         const normalizeParagraph = (text: string) => text.replace(/\s+/g, " ").trim();
 
-        // 在分页模式下，获取当前显示页面的所有段落
         const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
-        const isPaginated = epubContainer?.scrollHeight === epubContainer?.clientHeight;
-        
-        if (isPaginated) {
-          // 分页模式下，获取当前屏幕可见区域内的段落
-          const visibleParagraphs: string[] = [];
-          
-          for (const element of elementArray) {
-            const rects = Array.from(element.getClientRects());
-            let isVisible = false;
-            
-            for (const rect of rects) {
-              if (
-                rect.bottom > 0 &&
-                rect.top < viewportHeight &&
-                rect.right > 0 &&
-                rect.left < viewportWidth
-              ) {
-                isVisible = true;
-                break;
-              }
-            }
-            
-            if (isVisible) {
-              const text = normalizeParagraph(element.textContent || "");
-              if (text.length > 0) {
-                visibleParagraphs.push(text);
-              }
-            }
-          }
-          
-          if (visibleParagraphs.length > 0) {
-            return visibleParagraphs;
-          }
-          
-          // 如果没有可见段落，返回最近的段落
-          const nearestParagraphs = elementArray
-            .map((element) => {
-              const rects = Array.from(element.getClientRects());
-              if (rects.length === 0) {
-                return { distance: Infinity, text: normalizeParagraph(element.textContent || "") };
-              }
-              const minDistance = rects.reduce((best, rect) => {
-                const rectCenterY = rect.top + rect.height / 2;
-                return Math.min(best, Math.abs(rectCenterY - viewportHeight / 2));
-              }, Infinity);
-              return {
-                distance: minDistance,
-                text: normalizeParagraph(element.textContent || ""),
-              };
-            })
-            .filter((item) => item.text.length > 0 && item.text.length <= 800 && item.distance < viewportHeight)
-            .sort((a, b) => a.distance - b.distance)
-            .slice(0, 24)
-            .map((item) => item.text);
-
-          if (nearestParagraphs.length > 0) {
-            return nearestParagraphs;
-          }
-          
-          return [];
-        }
-
-        // 滚动模式下的原有逻辑
         const containerScrollTop = epubContainer?.scrollTop ?? 0;
 
         const visibleTop = containerScrollTop;
@@ -799,7 +774,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
             width: "100%",
             height: "100%",
             spread: "none",
-            flow: flipMode === "page" ? "paginated" : "scrolled-doc",
+            flow: "scrolled-doc",
             allowScriptedContent: true,
           });
           renditionRef.current = rendition;
@@ -918,14 +893,25 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
 
           rendition.on(
             "selected",
-            (cfiRange: string, _contents: { window: Window }) => {
+            (cfiRange: string, contents: { window: Window }) => {
               if (!onTextSelected) return;
-              book!.getRange(cfiRange).then((range: Range) => {
-                const text = range.toString();
-                if (text.length > 0) {
-                  onTextSelected(cfiRange, text);
-                }
-              });
+              const selectionText = contents.window.getSelection()?.toString().trim() || "";
+
+              if (selectionText.length > 0) {
+                onTextSelected(cfiRange, selectionText);
+                return;
+              }
+
+              book!.getRange(cfiRange)
+                .then((range: Range) => {
+                  const text = range.toString().trim();
+                  if (text.length > 0) {
+                    onTextSelected(cfiRange, text);
+                  }
+                })
+                .catch((error) => {
+                  logger.warn("epub-reader", "解析选中文本范围失败", error);
+                });
             }
            );
 
@@ -975,7 +961,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         bookRef.current = null;
         if (book) book.destroy();
       };
-    }, [url, flipMode, initialLocation]);
+    }, [url, initialLocation]);
 
     useEffect(() => {
       const rendition = renditionRef.current;
@@ -995,7 +981,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
 
     const highlightMapRef = useRef<Map<string, string>>(new Map());
 
-    const applyHighlights = useCallback(() => {
+    const applyHighlights = useCallback(async () => {
       const rendition = renditionRef.current;
       if (!rendition || !isRenditionReady) return;
 
@@ -1012,7 +998,12 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
 
       if (!currentHighlights || currentHighlights.length === 0) return;
 
-      currentHighlights.forEach((h) => {
+      for (const h of currentHighlights) {
+        const range = await resolveRangeSafely(h.cfiRange);
+        if (!range) {
+          continue;
+        }
+
         try {
           rendition.annotations.highlight(
             h.cfiRange,
@@ -1025,17 +1016,17 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
           highlightMapRef.current.set(h.id, h.cfiRange);
         } catch {
         }
-      });
-    }, [isRenditionReady]);
+      }
+    }, [isRenditionReady, resolveRangeSafely]);
 
     useEffect(() => {
       pendingHighlightsRef.current = highlights || [];
-      applyHighlights();
+      void applyHighlights();
     }, [highlights, applyHighlights]);
 
     useEffect(() => {
       if (isRenditionReady) {
-        applyHighlights();
+        void applyHighlights();
       }
     }, [isRenditionReady, applyHighlights]);
 
@@ -1044,7 +1035,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       if (!rendition) return;
 
       const handleDisplayed = () => {
-        applyHighlights();
+        void applyHighlights();
       };
 
       rendition.on("displayed", handleDisplayed);
