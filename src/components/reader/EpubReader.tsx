@@ -110,7 +110,7 @@ const THEME_STYLES: Record<
     },
     "body > *": {
       width: "100%",
-      "max-width": "66ch",
+      "max-width": "none",
       "margin-left": "auto",
       "margin-right": "auto",
       "box-sizing": "border-box",
@@ -251,7 +251,7 @@ const THEME_STYLES: Record<
     },
     "body > *": {
       width: "100%",
-      "max-width": "66ch",
+      "max-width": "none",
       "margin-left": "auto",
       "margin-right": "auto",
       "box-sizing": "border-box",
@@ -392,7 +392,7 @@ const THEME_STYLES: Record<
     },
     "body > *": {
       width: "100%",
-      "max-width": "66ch",
+      "max-width": "none",
       "margin-left": "auto",
       "margin-right": "auto",
       "box-sizing": "border-box",
@@ -1435,6 +1435,24 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       rendition.themes.override("font-size", `${fontSize}px`);
     }, [fontSize]);
 
+    useEffect(() => {
+      const rendition = renditionRef.current;
+      if (!rendition || !isRenditionReady) return;
+      
+      const contents = rendition.getContents?.();
+      if (contents && Array.isArray(contents) && contents.length > 0) {
+        const content = contents[0] as { document?: Document };
+        const doc = content?.document;
+        if (doc?.body) {
+          const children = doc.body.children;
+          for (let i = 0; i < children.length; i++) {
+            const child = children[i] as HTMLElement;
+            child.style.maxWidth = `${pageWidth}px`;
+          }
+        }
+      }
+    }, [pageWidth, isRenditionReady]);
+
     const highlightMapRef = useRef<Map<string, string>>(new Map());
 
     const applyHighlights = useCallback(async () => {
@@ -1504,6 +1522,21 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
             iframeEl.style.boxShadow = "none";
           }
         }
+        
+        // Apply page width to newly displayed content
+        const contents = rendition.getContents?.();
+        if (contents && Array.isArray(contents) && contents.length > 0) {
+          const content = contents[0] as { document?: Document };
+          const doc = content?.document;
+          if (doc?.body) {
+            const children = doc.body.children;
+            for (let i = 0; i < children.length; i++) {
+              const child = children[i] as HTMLElement;
+              child.style.maxWidth = `${pageWidth}px`;
+            }
+          }
+        }
+        
         void applyHighlights();
       };
 
@@ -1512,7 +1545,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       return () => {
         rendition.off("displayed", handleDisplayed);
       };
-    }, [applyHighlights]);
+    }, [applyHighlights, pageWidth]);
 
     const handleKeyDown = useCallback((e: KeyboardEvent) => {
       const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
