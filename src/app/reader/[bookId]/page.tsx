@@ -1922,11 +1922,11 @@ function ReaderContent() {
           >
             {!isSpeaking && !isTtsViewOpen ? (
               <div
-                className="pointer-events-none absolute left-1/2 top-2 z-10 hidden -translate-x-1/2 animate-reader-fade-up lg:flex"
+                className="pointer-events-none absolute left-1/2 top-1 z-10 hidden -translate-x-1/2 animate-reader-fade-up lg:flex"
                 style={{ animationDelay: "90ms" }}
               >
                 <div
-                  className="animate-reader-surface relative inline-flex min-w-[22rem] max-w-[36rem] items-center gap-3 overflow-hidden rounded-full border px-3 py-2 backdrop-blur-xl"
+                  className="animate-reader-surface relative inline-flex min-w-[20rem] max-w-[34rem] items-center gap-2.5 overflow-hidden rounded-full border px-3 py-1.5 backdrop-blur-xl"
                   style={{
                     background:
                       "color-mix(in srgb, var(--reader-card-bg) 70%, transparent)",
@@ -1946,20 +1946,20 @@ function ReaderContent() {
                   />
                   <div className="min-w-0 flex-1 px-0.5">
                     <div
-                      className="truncate text-[10px] font-medium tracking-[0.12em]"
+                      className="truncate text-[11px] leading-none font-normal"
                       style={{ color: "var(--reader-muted-text)" }}
                     >
                       {book.title}
                     </div>
                     <div
-                      className="mt-0.5 truncate text-[13px] font-semibold"
+                      className="mt-1 truncate text-[11px] leading-none font-normal"
                       style={{ color: "var(--reader-text)" }}
                     >
                       {currentChapterTitle || book.title}
                     </div>
                   </div>
                   <span
-                    className="shrink-0 rounded-full border px-2.5 py-1 text-xs font-semibold"
+                    className="shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-medium"
                     style={{
                       background:
                         "color-mix(in srgb, var(--reader-primary) 5%, transparent)",
