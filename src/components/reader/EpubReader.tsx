@@ -85,36 +85,46 @@ const THEME_STYLES: Record<
       background: "hsl(0 0% 100%)",
       color: "hsl(240 10% 3.9%)",
       "font-family":
-        '"Iowan Old Style", "Palatino Linotype", "Songti SC", "Noto Serif SC", serif',
-      "line-height": "1.95",
-      "letter-spacing": "0.01em",
+        '"Baskerville", "Iowan Old Style", "Palatino Linotype", "Noto Serif SC", "Songti SC", "Source Han Serif SC", serif',
+      "line-height": "2.02",
+      "letter-spacing": "0.012em",
       "text-rendering": "optimizeLegibility",
       "-webkit-font-smoothing": "antialiased",
-      "padding-left": "0.4rem",
-      "padding-right": "0.4rem",
+      "font-kerning": "normal",
+      "word-break": "break-word",
+      "overflow-wrap": "break-word",
+      "padding-top": "1.6rem",
+      "padding-bottom": "4rem",
+      "padding-left": "1rem",
+      "padding-right": "1rem",
+      "max-width": "74ch",
+      margin: "0 auto",
     },
     p: {
-      margin: "0 0 1.15em",
+      margin: "0 0 1.28em",
       "text-align": "justify",
     },
     "h1, h2, h3, h4, h5, h6": {
       color: "hsl(240 10% 3.9%)",
       "font-weight": "600",
-      "line-height": "1.45",
-      "margin-top": "1.8em",
-      "margin-bottom": "0.8em",
-      "letter-spacing": "0.015em",
+      "line-height": "1.42",
+      "margin-top": "2.1em",
+      "margin-bottom": "0.9em",
+      "letter-spacing": "0.02em",
     },
     blockquote: {
-      margin: "1.2em 0",
-      padding: "0.1em 0 0.1em 1em",
-      "border-left": "2px solid rgba(24,24,27,0.14)",
-      color: "rgba(24,24,27,0.74)",
+      margin: "1.45em 0",
+      padding: "0.85em 1.1em",
+      "border-left": "3px solid rgba(24,24,27,0.16)",
+      "border-radius": "0.95rem",
+      background: "rgba(24,24,27,0.03)",
+      color: "rgba(24,24,27,0.78)",
     },
     "img, svg, video, canvas": {
       "max-width": "100%",
       height: "auto",
-      "border-radius": "0.5rem",
+      "border-radius": "0.9rem",
+      "box-shadow": "0 16px 32px -28px rgba(15,23,42,0.35)",
     },
     "a, a:visited": {
       color: "inherit",
@@ -125,36 +135,46 @@ const THEME_STYLES: Record<
       background: "hsl(240 10% 3.9%)",
       color: "hsl(0 0% 98%)",
       "font-family":
-        '"Iowan Old Style", "Palatino Linotype", "Songti SC", "Noto Serif SC", serif',
-      "line-height": "1.95",
-      "letter-spacing": "0.01em",
+        '"Baskerville", "Iowan Old Style", "Palatino Linotype", "Noto Serif SC", "Songti SC", "Source Han Serif SC", serif',
+      "line-height": "2.02",
+      "letter-spacing": "0.012em",
       "text-rendering": "optimizeLegibility",
       "-webkit-font-smoothing": "antialiased",
-      "padding-left": "0.4rem",
-      "padding-right": "0.4rem",
+      "font-kerning": "normal",
+      "word-break": "break-word",
+      "overflow-wrap": "break-word",
+      "padding-top": "1.6rem",
+      "padding-bottom": "4rem",
+      "padding-left": "1rem",
+      "padding-right": "1rem",
+      "max-width": "74ch",
+      margin: "0 auto",
     },
     p: {
-      margin: "0 0 1.15em",
+      margin: "0 0 1.28em",
       "text-align": "justify",
     },
     "h1, h2, h3, h4, h5, h6": {
       color: "hsl(0 0% 98%)",
       "font-weight": "600",
-      "line-height": "1.45",
-      "margin-top": "1.8em",
-      "margin-bottom": "0.8em",
-      "letter-spacing": "0.015em",
+      "line-height": "1.42",
+      "margin-top": "2.1em",
+      "margin-bottom": "0.9em",
+      "letter-spacing": "0.02em",
     },
     blockquote: {
-      margin: "1.2em 0",
-      padding: "0.1em 0 0.1em 1em",
-      "border-left": "2px solid rgba(255,255,255,0.18)",
-      color: "rgba(250,250,250,0.76)",
+      margin: "1.45em 0",
+      padding: "0.85em 1.1em",
+      "border-left": "3px solid rgba(255,255,255,0.2)",
+      "border-radius": "0.95rem",
+      background: "rgba(255,255,255,0.04)",
+      color: "rgba(250,250,250,0.8)",
     },
     "img, svg, video, canvas": {
       "max-width": "100%",
       height: "auto",
-      "border-radius": "0.5rem",
+      "border-radius": "0.9rem",
+      "box-shadow": "0 20px 36px -30px rgba(0,0,0,0.6)",
     },
     "a, a:visited": {
       color: "inherit",
@@ -165,36 +185,46 @@ const THEME_STYLES: Record<
       background: "#F5F1E8",
       color: "#5B4636",
       "font-family":
-        '"Iowan Old Style", "Palatino Linotype", "Songti SC", "Noto Serif SC", serif',
-      "line-height": "1.98",
-      "letter-spacing": "0.012em",
+        '"Baskerville", "Iowan Old Style", "Palatino Linotype", "Noto Serif SC", "Songti SC", "Source Han Serif SC", serif',
+      "line-height": "2.08",
+      "letter-spacing": "0.014em",
       "text-rendering": "optimizeLegibility",
       "-webkit-font-smoothing": "antialiased",
-      "padding-left": "0.4rem",
-      "padding-right": "0.4rem",
+      "font-kerning": "normal",
+      "word-break": "break-word",
+      "overflow-wrap": "break-word",
+      "padding-top": "1.7rem",
+      "padding-bottom": "4.2rem",
+      "padding-left": "1rem",
+      "padding-right": "1rem",
+      "max-width": "74ch",
+      margin: "0 auto",
     },
     p: {
-      margin: "0 0 1.2em",
+      margin: "0 0 1.34em",
       "text-align": "justify",
     },
     "h1, h2, h3, h4, h5, h6": {
       color: "#4C382B",
       "font-weight": "600",
-      "line-height": "1.45",
-      "margin-top": "1.8em",
-      "margin-bottom": "0.8em",
-      "letter-spacing": "0.02em",
+      "line-height": "1.42",
+      "margin-top": "2.15em",
+      "margin-bottom": "0.95em",
+      "letter-spacing": "0.024em",
     },
     blockquote: {
-      margin: "1.2em 0",
-      padding: "0.1em 0 0.1em 1em",
-      "border-left": "2px solid rgba(91,70,54,0.18)",
-      color: "rgba(91,70,54,0.78)",
+      margin: "1.45em 0",
+      padding: "0.9em 1.1em",
+      "border-left": "3px solid rgba(91,70,54,0.18)",
+      "border-radius": "0.95rem",
+      background: "rgba(91,70,54,0.045)",
+      color: "rgba(91,70,54,0.82)",
     },
     "img, svg, video, canvas": {
       "max-width": "100%",
       height: "auto",
-      "border-radius": "0.5rem",
+      "border-radius": "0.9rem",
+      "box-shadow": "0 16px 32px -28px rgba(91,70,54,0.34)",
     },
     "a, a:visited": {
       color: "inherit",
@@ -1269,11 +1299,25 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
           }, [isRenditionReady, onLocationChange]);
 
     return (
-      <div className="relative flex h-full w-full justify-center px-3 sm:px-5 lg:px-8 xl:px-10">
+      <div className="relative flex h-full w-full justify-center px-2 sm:px-4 lg:px-6 xl:px-8">
+        <div
+          className="pointer-events-none absolute inset-y-5 left-0 hidden w-14 rounded-r-full xl:block"
+          style={{
+            background:
+              "linear-gradient(90deg, color-mix(in srgb, var(--reader-text, #09090b) 5%, transparent) 0%, transparent 100%)",
+          }}
+        />
+        <div
+          className="pointer-events-none absolute inset-y-5 right-0 hidden w-14 rounded-l-full xl:block"
+          style={{
+            background:
+              "linear-gradient(270deg, color-mix(in srgb, var(--reader-text, #09090b) 5%, transparent) 0%, transparent 100%)",
+          }}
+        />
         <div
           ref={viewerRef}
           id="epub-viewer"
-          className="h-full flex-none"
+          className="h-full flex-none rounded-[24px]"
           style={{ width: pageWidth, maxWidth: "100%" }}
         />
       </div>

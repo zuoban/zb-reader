@@ -1811,6 +1811,25 @@ function ReaderContent() {
 
   // ---- Theme styles ----
   const currentTheme = READER_THEME_STYLES[readerTheme] || READER_THEME_STYLES.light;
+  const readerStageSurface = useMemo(
+    () =>
+      "linear-gradient(180deg, color-mix(in srgb, var(--reader-bg) 90%, white 10%) 0%, color-mix(in srgb, var(--reader-bg) 96%, white 4%) 24%, color-mix(in srgb, var(--reader-bg) 98%, var(--reader-text) 2%) 100%)",
+    []
+  );
+  const readerStageBorder = useMemo(
+    () => "color-mix(in srgb, var(--reader-text) 10%, transparent)",
+    []
+  );
+  const readerStageShadow = useMemo(
+    () =>
+      "0 28px 90px -54px color-mix(in srgb, var(--reader-text) 30%, transparent), 0 10px 26px -22px color-mix(in srgb, var(--reader-text) 18%, transparent), inset 0 1px 0 color-mix(in srgb, white 72%, transparent)",
+    []
+  );
+  const readerWellSurface = useMemo(
+    () =>
+      "linear-gradient(180deg, color-mix(in srgb, var(--reader-card-bg) 72%, white 28%) 0%, color-mix(in srgb, var(--reader-card-bg) 88%, transparent) 100%)",
+    []
+  );
 
   // Apply CSS variables to root for Portal access
   useEffect(() => {
@@ -1844,7 +1863,7 @@ function ReaderContent() {
 
   return (
     <div
-      className={`h-screen w-screen overflow-hidden ${currentTheme.bg}`}
+      className={`isolate h-screen w-screen overflow-hidden ${currentTheme.bg}`}
       data-reader-theme={readerTheme}
       style={{
         "--reader-bg": currentTheme.solidBg,
@@ -1864,7 +1883,7 @@ function ReaderContent() {
             className="absolute inset-0"
             style={{
               background:
-                "linear-gradient(180deg, color-mix(in srgb, var(--reader-bg) 94%, white 6%) 0%, var(--reader-bg) 32%, color-mix(in srgb, var(--reader-bg) 96%, var(--reader-text) 4%) 100%)",
+                "radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--reader-primary) 9%, transparent) 0%, transparent 28%), radial-gradient(circle at 16% 18%, color-mix(in srgb, white 30%, transparent) 0%, transparent 24%), radial-gradient(circle at 84% 14%, color-mix(in srgb, var(--reader-text) 6%, transparent) 0%, transparent 22%), linear-gradient(180deg, color-mix(in srgb, var(--reader-bg) 92%, white 8%) 0%, var(--reader-bg) 30%, color-mix(in srgb, var(--reader-bg) 96%, var(--reader-text) 4%) 100%)",
             }}
           />
           <div
@@ -1872,6 +1891,13 @@ function ReaderContent() {
             style={{
               background:
                 "linear-gradient(180deg, color-mix(in srgb, var(--reader-primary) 6%, transparent) 0%, transparent 100%)",
+            }}
+          />
+          <div
+            className="absolute left-1/2 top-0 h-[38rem] w-[38rem] -translate-x-1/2 rounded-full opacity-60 blur-3xl"
+            style={{
+              background:
+                "radial-gradient(circle, color-mix(in srgb, var(--reader-primary) 10%, transparent) 0%, transparent 66%)",
             }}
           />
           <div
@@ -1887,12 +1913,9 @@ function ReaderContent() {
           <div
             className="relative mx-auto h-full max-w-[1680px] overflow-hidden rounded-[28px] border sm:rounded-[32px]"
             style={{
-              background:
-                "linear-gradient(180deg, color-mix(in srgb, var(--reader-bg) 92%, white 8%) 0%, color-mix(in srgb, var(--reader-bg) 98%, var(--reader-text) 2%) 100%)",
-              borderColor:
-                "color-mix(in srgb, var(--reader-text) 10%, transparent)",
-              boxShadow:
-                "0 24px 80px -48px color-mix(in srgb, var(--reader-text) 28%, transparent), inset 0 1px 0 color-mix(in srgb, white 65%, transparent)",
+              background: readerStageSurface,
+              borderColor: readerStageBorder,
+              boxShadow: readerStageShadow,
             }}
           >
             <div
@@ -1902,15 +1925,83 @@ function ReaderContent() {
                   "linear-gradient(180deg, color-mix(in srgb, white 55%, transparent) 0%, transparent 100%)",
               }}
             />
+            <div
+              className="pointer-events-none absolute inset-y-5 left-5 hidden w-px xl:block"
+              style={{
+                background:
+                  "linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--reader-text) 10%, transparent) 14%, color-mix(in srgb, var(--reader-text) 3%, transparent) 86%, transparent 100%)",
+              }}
+            />
+            <div
+              className="pointer-events-none absolute inset-y-5 right-5 hidden w-px xl:block"
+              style={{
+                background:
+                  "linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--reader-text) 10%, transparent) 14%, color-mix(in srgb, var(--reader-text) 3%, transparent) 86%, transparent 100%)",
+              }}
+            />
+            {!isSpeaking && !isTtsViewOpen ? (
+              <div className="pointer-events-none absolute left-1/2 top-4 z-10 hidden -translate-x-1/2 lg:flex">
+                <div
+                  className="inline-flex items-center gap-3 rounded-full border px-4 py-2 backdrop-blur-xl"
+                  style={{
+                    background: readerWellSurface,
+                    borderColor: "color-mix(in srgb, var(--reader-text) 8%, transparent)",
+                    boxShadow:
+                      "0 12px 30px -24px color-mix(in srgb, var(--reader-text) 28%, transparent)",
+                  }}
+                >
+                  <span
+                    className="text-[11px] font-medium tracking-[0.18em]"
+                    style={{ color: "var(--reader-muted-text)" }}
+                  >
+                    阅读中
+                  </span>
+                  <span
+                    className="max-w-[24rem] truncate text-sm font-semibold"
+                    style={{ color: "var(--reader-text)" }}
+                  >
+                    {currentChapterTitle || book.title}
+                  </span>
+                  <span
+                    className="rounded-full px-2.5 py-1 text-xs font-medium"
+                    style={{
+                      background:
+                        "color-mix(in srgb, var(--reader-primary) 8%, transparent)",
+                      color: "var(--reader-primary)",
+                    }}
+                  >
+                    {(progress * 100).toFixed(1)}%
+                  </span>
+                </div>
+              </div>
+            ) : null}
 
             {/* Reader content area */}
             <div
-              className="h-full w-full box-border"
+              className="relative h-full w-full box-border"
               style={{
                 paddingTop: isTtsViewOpen ? 0 : 48,
                 paddingBottom: isTtsViewOpen ? 0 : 88,
               }}
             >
+              {!isTtsViewOpen ? (
+                <>
+                  <div
+                    className="pointer-events-none absolute inset-x-5 top-3 z-[1] h-16 rounded-[20px] blur-2xl"
+                    style={{
+                      background:
+                        "linear-gradient(180deg, color-mix(in srgb, white 28%, transparent) 0%, transparent 100%)",
+                    }}
+                  />
+                  <div
+                    className="pointer-events-none absolute bottom-8 left-1/2 z-[1] hidden h-24 w-[42rem] -translate-x-1/2 rounded-full blur-3xl lg:block"
+                    style={{
+                      background:
+                        "radial-gradient(circle, color-mix(in srgb, var(--reader-primary) 8%, transparent) 0%, transparent 72%)",
+                    }}
+                  />
+                </>
+              ) : null}
               {book.format === "epub" && (
                 <EpubReader
                   key={bookId}

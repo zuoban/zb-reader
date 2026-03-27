@@ -115,10 +115,14 @@ export function ReaderToolbar({
   rightContent,
 }: ReaderToolbarProps) {
   const toolbarSurface =
-    "linear-gradient(180deg, color-mix(in srgb, var(--reader-card-bg) 82%, white 18%) 0%, color-mix(in srgb, var(--reader-card-bg) 94%, transparent) 100%)";
+    "linear-gradient(180deg, color-mix(in srgb, var(--reader-card-bg) 76%, white 24%) 0%, color-mix(in srgb, var(--reader-card-bg) 92%, transparent) 100%)";
   const toolbarBorder = "color-mix(in srgb, var(--reader-text) 9%, transparent)";
   const toolbarShadow =
-    "0 18px 40px -30px color-mix(in srgb, var(--reader-text) 35%, transparent)";
+    "0 22px 42px -30px color-mix(in srgb, var(--reader-text) 34%, transparent)";
+  const toolbarGroupSurface =
+    "color-mix(in srgb, var(--reader-text) 4%, transparent)";
+  const toolbarPillBorder =
+    "color-mix(in srgb, var(--reader-text) 8%, transparent)";
   const showChapterMeta = currentChapterTitle && currentChapterTitle !== title;
 
   return (
@@ -131,15 +135,21 @@ export function ReaderToolbar({
       >
         <div className="mx-auto max-w-5xl px-3 pt-3 sm:px-5 sm:pt-5">
           <div
-            className="pointer-events-auto rounded-[24px] border backdrop-blur-2xl"
+            className="pointer-events-auto rounded-[26px] border backdrop-blur-2xl"
             style={{
               background: toolbarSurface,
               borderColor: toolbarBorder,
               boxShadow: toolbarShadow,
             }}
           >
-            <div className="flex items-center gap-2 px-2.5 py-2 sm:px-3 sm:py-2.5">
-              <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2 px-2.5 py-2.5 sm:px-3 sm:py-3">
+              <div
+                className="flex items-center gap-1 rounded-full border p-1"
+                style={{
+                  background: toolbarGroupSurface,
+                  borderColor: toolbarPillBorder,
+                }}
+              >
                 <ToolbarButton onClick={onBack} tooltip="返回书架">
                   <ArrowLeft className="size-[18px] sm:size-[19px]" />
                 </ToolbarButton>
@@ -149,12 +159,24 @@ export function ReaderToolbar({
               </div>
 
               <div className="min-w-0 flex-1 px-1 text-center">
-                <h1
-                  className="truncate text-[13px] font-semibold sm:text-sm"
-                  style={{ color: "var(--reader-text)" }}
-                >
-                  {title}
-                </h1>
+                <div className="flex items-center justify-center gap-2">
+                  <span
+                    className="hidden rounded-full px-2.5 py-1 text-[10px] font-medium sm:inline-flex"
+                    style={{
+                      background:
+                        "color-mix(in srgb, var(--reader-primary) 8%, transparent)",
+                      color: "var(--reader-primary)",
+                    }}
+                  >
+                    阅读中
+                  </span>
+                  <h1
+                    className="truncate text-[13px] font-semibold sm:text-sm"
+                    style={{ color: "var(--reader-text)" }}
+                  >
+                    {title}
+                  </h1>
+                </div>
                 {showChapterMeta ? (
                   <p
                     className="mt-0.5 truncate text-[11px] sm:text-xs"
@@ -162,10 +184,23 @@ export function ReaderToolbar({
                   >
                     {currentChapterTitle}
                   </p>
-                ) : null}
+                ) : (
+                  <p
+                    className="mt-0.5 truncate text-[11px] sm:text-xs"
+                    style={{ color: "var(--reader-muted-text)" }}
+                  >
+                    当前进度 {(progress * 100).toFixed(1)}%
+                  </p>
+                )}
               </div>
 
-              <div className="flex items-center gap-1">
+              <div
+                className="flex items-center gap-1 rounded-full border p-1"
+                style={{
+                  background: toolbarGroupSurface,
+                  borderColor: toolbarPillBorder,
+                }}
+              >
                 <ToolbarButton
                   onClick={onToggleBookmark}
                   tooltip={isBookmarked ? "取消书签" : "添加书签"}
@@ -221,14 +256,21 @@ export function ReaderToolbar({
       >
         <div className="mx-auto max-w-5xl px-3 pb-3 sm:px-5 sm:pb-5">
           <div
-            className="pointer-events-auto relative overflow-hidden rounded-[24px] border backdrop-blur-2xl"
+            className="pointer-events-auto relative overflow-hidden rounded-[26px] border backdrop-blur-2xl"
             style={{
               background: toolbarSurface,
               borderColor: toolbarBorder,
               boxShadow: toolbarShadow,
             }}
           >
-            <div className="flex items-center gap-2 px-3 py-3 sm:gap-3 sm:px-4 sm:py-3.5">
+            <div
+              className="pointer-events-none absolute inset-x-6 top-0 h-px"
+              style={{
+                background:
+                  "linear-gradient(90deg, transparent 0%, color-mix(in srgb, white 72%, transparent) 50%, transparent 100%)",
+              }}
+            />
+            <div className="flex items-center gap-2 px-3 py-3.5 sm:gap-3 sm:px-4 sm:py-4">
               {onPrevChapter && (
                 <Button
                   variant="ghost"
@@ -236,26 +278,38 @@ export function ReaderToolbar({
                   onClick={onPrevChapter}
                   disabled={!hasPrevChapter}
                   className={cn(
-                    "shrink-0 cursor-pointer h-9 w-9 rounded-full transition-colors duration-200 sm:h-10 sm:w-10",
+                    "shrink-0 cursor-pointer h-9 w-9 rounded-full border transition-colors duration-200 sm:h-10 sm:w-10",
                     "hover:bg-[color-mix(in_srgb,var(--reader-primary)_8%,transparent)]",
                     !hasPrevChapter &&
                       "opacity-30 cursor-not-allowed hover:bg-transparent"
                   )}
-                  style={{ color: "var(--reader-text)" }}
+                  style={{
+                    color: "var(--reader-text)",
+                    borderColor: toolbarPillBorder,
+                    background: toolbarGroupSurface,
+                  }}
                 >
                   <ChevronLeft className="h-5 w-5" />
                 </Button>
               )}
 
               <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between gap-3 text-[11px] sm:text-xs">
-                  <span
-                    className="min-w-0 flex-1 truncate"
-                    style={{ color: "var(--reader-text)" }}
-                  >
-                    {currentChapterTitle || "阅读进度"}
-                  </span>
-                  <div className="flex shrink-0 items-center gap-3">
+                <div className="flex items-end justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p
+                      className="text-[10px] tracking-[0.18em] sm:text-[11px]"
+                      style={{ color: "var(--reader-muted-text)" }}
+                    >
+                      阅读进度
+                    </p>
+                    <span
+                      className="mt-1 block min-w-0 truncate text-[12px] font-medium sm:text-sm"
+                      style={{ color: "var(--reader-text)" }}
+                    >
+                      {currentChapterTitle || "正在阅读当前章节"}
+                    </span>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-3 text-[11px] sm:text-xs">
                     {readingDuration !== undefined && readingDuration > 0 && (
                       <span style={{ color: "var(--reader-muted-text)" }}>
                         已读 {formatDuration(readingDuration)}
@@ -270,7 +324,7 @@ export function ReaderToolbar({
                   </div>
                 </div>
                 <div
-                  className="mt-2 h-1.5 w-full overflow-hidden rounded-full"
+                  className="mt-3 h-2 w-full overflow-hidden rounded-full"
                   style={{
                     background:
                       "color-mix(in srgb, var(--reader-text) 10%, transparent)",
@@ -293,12 +347,16 @@ export function ReaderToolbar({
                   onClick={onNextChapter}
                   disabled={!hasNextChapter}
                   className={cn(
-                    "shrink-0 cursor-pointer h-9 w-9 rounded-full transition-colors duration-200 sm:h-10 sm:w-10",
+                    "shrink-0 cursor-pointer h-9 w-9 rounded-full border transition-colors duration-200 sm:h-10 sm:w-10",
                     "hover:bg-[color-mix(in_srgb,var(--reader-primary)_8%,transparent)]",
                     !hasNextChapter &&
                       "opacity-30 cursor-not-allowed hover:bg-transparent"
                   )}
-                  style={{ color: "var(--reader-text)" }}
+                  style={{
+                    color: "var(--reader-text)",
+                    borderColor: toolbarPillBorder,
+                    background: toolbarGroupSurface,
+                  }}
                 >
                   <ChevronRight className="h-5 w-5" />
                 </Button>

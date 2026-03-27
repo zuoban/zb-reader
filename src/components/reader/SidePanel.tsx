@@ -97,11 +97,11 @@ function TocItemRow({
 
   return (
     <div>
-      <div className="flex items-center group">
+      <div className="group flex items-center gap-1">
         {hasChildren ? (
           <button
             className={cn(
-              "shrink-0 p-1 rounded-lg transition-colors duration-150 cursor-pointer hover:bg-[var(--reader-primary-light)] text-muted-foreground"
+              "shrink-0 rounded-lg p-1 transition-colors duration-150 cursor-pointer hover:bg-[var(--reader-primary-light)] text-muted-foreground"
             )}
             onClick={(e) => {
               e.stopPropagation();
@@ -120,14 +120,17 @@ function TocItemRow({
 
         <button
           className={cn(
-            "flex-1 cursor-pointer truncate rounded-xl px-3 py-2 text-left text-sm transition-colors duration-200"
+            "flex-1 cursor-pointer truncate rounded-2xl px-3 py-2.5 text-left text-sm transition-all duration-200"
           )}
           style={{
             paddingLeft: `${level * 12 + 12}px`,
             color: isActive ? "var(--reader-primary)" : "var(--reader-text)",
             background: isActive
-              ? "color-mix(in srgb, var(--reader-primary) 8%, transparent)"
+              ? "linear-gradient(135deg, color-mix(in srgb, var(--reader-primary) 11%, transparent) 0%, color-mix(in srgb, var(--reader-card-bg) 80%, white 20%) 100%)"
               : "transparent",
+            boxShadow: isActive
+              ? "0 14px 28px -24px color-mix(in srgb, var(--reader-text) 28%, transparent)"
+              : "none",
           }}
           onClick={() => {
             onTocItemClick(item.href);
@@ -183,6 +186,19 @@ export function SidePanel({
   const [editingNoteColor, setEditingNoteColor] = useState("");
 
   const noteColors = ["#facc15", "#4ade80", "#60a5fa", "#f87171", "#c084fc"];
+  const panelSurface =
+    "linear-gradient(180deg, color-mix(in srgb, var(--reader-bg) 92%, white 8%) 0%, color-mix(in srgb, var(--reader-bg) 97%, var(--reader-text) 3%) 100%)";
+  const panelBorder = "color-mix(in srgb, var(--reader-text) 8%, transparent)";
+  const panelCardSurface =
+    "linear-gradient(180deg, color-mix(in srgb, var(--reader-card-bg) 84%, white 16%) 0%, color-mix(in srgb, var(--reader-card-bg) 96%, transparent) 100%)";
+  const panelMutedSurface =
+    "color-mix(in srgb, var(--reader-text) 5%, transparent)";
+  const tabMeta =
+    activeTab === "toc"
+      ? { label: "目录导航", count: countTocItems(toc), helper: "快速跳转到任意章节" }
+      : activeTab === "bookmarks"
+        ? { label: "阅读标记", count: bookmarks.length, helper: "继续回到你停下的位置" }
+        : { label: "随手笔记", count: notes.length, helper: "保留你的摘录与想法" };
 
   function countTocItems(items: TocItem[]): number {
     return items.reduce(
@@ -196,15 +212,22 @@ export function SidePanel({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="left"
-        className="w-[88vw] p-0 border-r-0 sm:w-84"
+        className="w-[92vw] overflow-hidden border-r p-0 sm:w-[25.5rem]"
         style={{
-          background:
-            "linear-gradient(180deg, color-mix(in srgb, var(--reader-bg) 94%, white 6%) 0%, color-mix(in srgb, var(--reader-bg) 98%, var(--reader-text) 2%) 100%)",
+          background: panelSurface,
+          borderColor: panelBorder,
           boxShadow:
-            "18px 0 48px -40px color-mix(in srgb, var(--reader-text) 35%, transparent)",
+            "18px 0 52px -40px color-mix(in srgb, var(--reader-text) 35%, transparent)",
         }}
       >
-        <SheetHeader className="px-4 pt-5 pb-0">
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-28"
+          style={{
+            background:
+              "linear-gradient(180deg, color-mix(in srgb, white 55%, transparent) 0%, transparent 100%)",
+          }}
+        />
+        <SheetHeader className="px-5 pt-5 pb-0">
           <SheetTitle className="sr-only">侧边栏</SheetTitle>
         </SheetHeader>
         <Tabs
@@ -214,23 +237,69 @@ export function SidePanel({
           }
           className="flex flex-col h-full bg-transparent"
         >
+          <div className="px-5 pt-3">
+            <div
+              className="rounded-[24px] border px-4 py-4 backdrop-blur-xl"
+              style={{
+                background: panelCardSurface,
+                borderColor: panelBorder,
+                boxShadow:
+                  "0 20px 36px -28px color-mix(in srgb, var(--reader-text) 26%, transparent)",
+              }}
+            >
+              <p
+                className="text-[11px] font-medium tracking-[0.18em]"
+                style={{ color: "var(--reader-muted-text)" }}
+              >
+                {tabMeta.label}
+              </p>
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <h2
+                  className="text-lg font-semibold"
+                  style={{ color: "var(--reader-text)" }}
+                >
+                  {activeTab === "toc"
+                    ? "阅读目录"
+                    : activeTab === "bookmarks"
+                      ? "书签收藏"
+                      : "读书笔记"}
+                </h2>
+                <span
+                  className="rounded-full px-2.5 py-1 text-xs font-medium"
+                  style={{
+                    background:
+                      "color-mix(in srgb, var(--reader-primary) 8%, transparent)",
+                    color: "var(--reader-primary)",
+                  }}
+                >
+                  {tabMeta.count}
+                </span>
+              </div>
+              <p
+                className="mt-1.5 text-sm"
+                style={{ color: "var(--reader-muted-text)" }}
+              >
+                {tabMeta.helper}
+              </p>
+            </div>
+          </div>
           <TabsList
-            className="mx-4 mt-2.5 grid h-11 grid-cols-3 rounded-full p-1"
+            className="mx-5 mt-4 grid h-12 grid-cols-3 rounded-full p-1"
             style={{
-              background: "color-mix(in srgb, var(--reader-text) 6%, transparent)",
-              border: "1px solid color-mix(in srgb, var(--reader-text) 8%, transparent)",
+              background: panelMutedSurface,
+              border: `1px solid ${panelBorder}`,
             }}
           >
             <TabsTrigger
               value="toc"
-              className="gap-1.5 rounded-full text-muted-foreground data-[state=active]:shadow-none"
+              className="gap-1.5 rounded-full border border-transparent text-muted-foreground transition-all duration-200 data-[state=active]:shadow-none data-[state=active]:text-[var(--reader-text)] data-[state=active]:bg-[var(--reader-card-bg)]"
             >
               <List className="size-4" />
               <span className="hidden sm:inline">目录</span>
             </TabsTrigger>
             <TabsTrigger
               value="bookmarks"
-              className="gap-1.5 rounded-full text-muted-foreground data-[state=active]:shadow-none"
+              className="gap-1.5 rounded-full border border-transparent text-muted-foreground transition-all duration-200 data-[state=active]:shadow-none data-[state=active]:text-[var(--reader-text)] data-[state=active]:bg-[var(--reader-card-bg)]"
             >
               <Bookmark className="size-4" />
               <span className="hidden sm:inline">书签</span>
@@ -245,7 +314,7 @@ export function SidePanel({
             </TabsTrigger>
             <TabsTrigger
               value="notes"
-              className="gap-1.5 rounded-full text-muted-foreground data-[state=active]:shadow-none"
+              className="gap-1.5 rounded-full border border-transparent text-muted-foreground transition-all duration-200 data-[state=active]:shadow-none data-[state=active]:text-[var(--reader-text)] data-[state=active]:bg-[var(--reader-card-bg)]"
             >
               <StickyNote className="size-4" />
               <span className="hidden sm:inline">笔记</span>
@@ -262,17 +331,30 @@ export function SidePanel({
 
           <TabsContent value="toc" className="mt-0 flex-1 overflow-hidden bg-transparent">
             <ScrollArea className="h-full">
-              <div className="p-4" style={{ background: "transparent" }}>
+              <div className="p-5 pt-4" style={{ background: "transparent" }}>
                 {toc.length === 0 ? (
-                  <p
-                    className="text-sm text-center py-8 text-muted-foreground"
+                  <div
+                    className="rounded-[22px] border px-5 py-8 text-center"
+                    style={{
+                      background: panelCardSurface,
+                      borderColor: panelBorder,
+                    }}
                   >
-                    暂无目录
-                  </p>
+                    <p className="text-sm" style={{ color: "var(--reader-text)" }}>
+                      暂无目录
+                    </p>
+                    <p
+                      className="mt-1 text-xs"
+                      style={{ color: "var(--reader-muted-text)" }}
+                    >
+                      这本书暂时没有可用的章节导航
+                    </p>
+                  </div>
                 ) : (
                   <>
                     <p
-                      className="mb-3 px-3 text-xs text-muted-foreground"
+                      className="mb-3 px-3 text-xs"
+                      style={{ color: "var(--reader-muted-text)" }}
                     >
                       共 {countTocItems(toc)} 章
                     </p>
@@ -296,25 +378,37 @@ export function SidePanel({
             className="mt-0 flex-1 overflow-hidden bg-transparent"
           >
             <ScrollArea className="h-full">
-              <div className="p-4 space-y-2" style={{ background: "transparent" }}>
+              <div className="space-y-2.5 p-5 pt-4" style={{ background: "transparent" }}>
                 {bookmarks.length === 0 ? (
-                  <p
-                    className="text-sm text-center py-8 text-muted-foreground"
+                  <div
+                    className="rounded-[22px] border px-5 py-8 text-center"
+                    style={{
+                      background: panelCardSurface,
+                      borderColor: panelBorder,
+                    }}
                   >
-                    暂无书签
-                  </p>
+                    <p className="text-sm" style={{ color: "var(--reader-text)" }}>
+                      暂无书签
+                    </p>
+                    <p
+                      className="mt-1 text-xs"
+                      style={{ color: "var(--reader-muted-text)" }}
+                    >
+                      读到关键位置时记一枚书签，会更容易回来看
+                    </p>
+                  </div>
                 ) : (
                   bookmarks.map((bookmark) => (
                     <div
                       key={bookmark.id}
                       className={cn(
-                        "group cursor-pointer rounded-2xl border p-3.5 transition-colors duration-200"
+                        "group cursor-pointer rounded-[22px] border p-4 transition-all duration-200"
                       )}
                       style={{
-                        background:
-                          "color-mix(in srgb, var(--reader-card-bg) 88%, white 12%)",
-                        borderColor:
-                          "color-mix(in srgb, var(--reader-text) 8%, transparent)",
+                        background: panelCardSurface,
+                        borderColor: panelBorder,
+                        boxShadow:
+                          "0 16px 28px -26px color-mix(in srgb, var(--reader-text) 24%, transparent)",
                       }}
                     >
                       {editingBookmarkId === bookmark.id ? (
@@ -422,25 +516,37 @@ export function SidePanel({
 
           <TabsContent value="notes" className="mt-0 flex-1 overflow-hidden bg-transparent">
             <ScrollArea className="h-full">
-              <div className="p-4 space-y-2" style={{ background: "transparent" }}>
+              <div className="space-y-2.5 p-5 pt-4" style={{ background: "transparent" }}>
                 {notes.length === 0 ? (
-                  <p
-                    className="text-sm text-center py-8 text-muted-foreground"
+                  <div
+                    className="rounded-[22px] border px-5 py-8 text-center"
+                    style={{
+                      background: panelCardSurface,
+                      borderColor: panelBorder,
+                    }}
                   >
-                    暂无笔记
-                  </p>
+                    <p className="text-sm" style={{ color: "var(--reader-text)" }}>
+                      暂无笔记
+                    </p>
+                    <p
+                      className="mt-1 text-xs"
+                      style={{ color: "var(--reader-muted-text)" }}
+                    >
+                      选中文字后可以快速记录想法和摘录
+                    </p>
+                  </div>
                 ) : (
                   notes.map((note) => (
                     <div
                       key={note.id}
                       className={cn(
-                        "group cursor-pointer rounded-2xl border p-3.5 transition-colors duration-200"
+                        "group cursor-pointer rounded-[22px] border p-4 transition-all duration-200"
                       )}
                       style={{
-                        background:
-                          "color-mix(in srgb, var(--reader-card-bg) 88%, white 12%)",
-                        borderColor:
-                          "color-mix(in srgb, var(--reader-text) 8%, transparent)",
+                        background: panelCardSurface,
+                        borderColor: panelBorder,
+                        boxShadow:
+                          "0 16px 28px -26px color-mix(in srgb, var(--reader-text) 24%, transparent)",
                       }}
                     >
                       {editingNoteId === note.id ? (
