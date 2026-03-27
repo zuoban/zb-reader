@@ -70,18 +70,19 @@ function ToolbarButton({
           size="icon"
           onClick={onClick}
           className={cn(
-            "cursor-pointer h-9 w-9 rounded-lg transition-colors",
-            "hover:bg-[color-mix(in_srgb,var(--reader-primary)_8%,transparent)] hover:text-[var(--reader-primary)]",
-            isActive &&
-              "bg-[color-mix(in_srgb,var(--reader-primary)_10%,transparent)] text-[var(--reader-primary)]",
+            "cursor-pointer h-9 w-9 rounded-xl transition-all duration-200",
+            "hover:scale-105 hover:shadow-sm",
+            isActive
+              ? "bg-[var(--reader-primary)]/15 text-[var(--reader-primary)] shadow-inner"
+              : "hover:bg-[var(--reader-primary)]/10 hover:text-[var(--reader-primary)]",
             className
           )}
-          style={{ color: "var(--reader-text)" }}
+          style={{ color: isActive ? "var(--reader-primary)" : "var(--reader-text)" }}
         >
           {children}
         </Button>
       </TooltipTrigger>
-      <TooltipContent side="bottom" className="text-xs hidden sm:block">
+      <TooltipContent side="bottom" className="text-xs hidden sm:block bg-background/95 backdrop-blur-sm">
         {tooltip}
       </TooltipContent>
     </Tooltip>
@@ -116,15 +117,15 @@ export function ReaderToolbar({
       {/* 顶部工具栏 */}
       <div
         className={cn(
-          "pointer-events-none fixed top-0 left-0 right-0 z-50 transition-all duration-200",
+          "pointer-events-none fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out",
           visible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
         )}
       >
-        <div className="mx-auto max-w-3xl px-4 pt-3">
+        <div className="mx-auto max-w-3xl px-4 pt-4">
           <div
-            className="pointer-events-auto flex items-center justify-between rounded-xl border px-3 py-2 backdrop-blur-md"
+            className="pointer-events-auto flex items-center justify-between rounded-2xl border px-2 py-2 shadow-[0_8px_32px_rgba(0,0,0,0.12)] backdrop-blur-xl transition-shadow duration-300"
             style={{
-              background: "color-mix(in srgb, var(--reader-card-bg) 90%, transparent)",
+              background: "color-mix(in srgb, var(--reader-card-bg) 88%, transparent)",
               borderColor: "var(--reader-border)",
             }}
           >
@@ -133,22 +134,23 @@ export function ReaderToolbar({
               <ToolbarButton onClick={onBack} tooltip="返回书架">
                 <ArrowLeft className="size-[18px]" />
               </ToolbarButton>
+              <div className="h-5 w-px mx-1" style={{ background: "var(--reader-border)" }} />
               <ToolbarButton onClick={onToggleToc} tooltip="目录">
                 <List className="size-[18px]" />
               </ToolbarButton>
             </div>
 
             {/* 中间：书名和章节 */}
-            <div className="min-w-0 flex-1 px-2 text-center">
+            <div className="min-w-0 flex-1 px-3 text-center">
               <h1
-                className="truncate text-sm font-medium"
+                className="truncate text-sm font-semibold tracking-tight"
                 style={{ color: "var(--reader-text)" }}
               >
                 {title}
               </h1>
               {showChapterMeta && (
                 <p
-                  className="truncate text-xs"
+                  className="truncate text-xs mt-0.5 font-medium"
                   style={{ color: "var(--reader-muted-text)" }}
                 >
                   {currentChapterTitle}
@@ -182,6 +184,8 @@ export function ReaderToolbar({
                 )}
               </ToolbarButton>
 
+              <div className="h-5 w-px mx-1" style={{ background: "var(--reader-border)" }} />
+
               <ToolbarButton
                 onClick={onToggleFullscreen}
                 tooltip={isFullscreen ? "退出全屏" : "全屏阅读"}
@@ -207,11 +211,11 @@ export function ReaderToolbar({
       {/* 底部进度栏 - 仅保留翻页按钮 */}
       <div
         className={cn(
-          "pointer-events-none fixed bottom-0 left-0 right-0 z-50 transition-all duration-200",
+          "pointer-events-none fixed bottom-0 left-0 right-0 z-50 transition-all duration-300 ease-out",
           visible ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
         )}
       >
-        <div className="mx-auto max-w-3xl px-4 pb-4">
+        <div className="mx-auto max-w-3xl px-4 pb-5">
           <div className="flex items-center justify-center gap-4">
             {onPrevChapter && (
               <Button
@@ -220,12 +224,12 @@ export function ReaderToolbar({
                 onClick={onPrevChapter}
                 disabled={!hasPrevChapter}
                 className={cn(
-                  "pointer-events-auto h-10 w-10 rounded-full border backdrop-blur-md transition-opacity",
-                  !hasPrevChapter && "opacity-30 cursor-not-allowed"
+                  "pointer-events-auto h-11 w-11 rounded-full border shadow-lg backdrop-blur-xl transition-all duration-200 hover:scale-110 hover:shadow-xl",
+                  !hasPrevChapter && "opacity-30 cursor-not-allowed hover:scale-100"
                 )}
                 style={{ 
                   color: "var(--reader-text)",
-                  background: "color-mix(in srgb, var(--reader-card-bg) 90%, transparent)",
+                  background: "color-mix(in srgb, var(--reader-card-bg) 88%, transparent)",
                   borderColor: "var(--reader-border)",
                 }}
               >
@@ -240,12 +244,12 @@ export function ReaderToolbar({
                 onClick={onNextChapter}
                 disabled={!hasNextChapter}
                 className={cn(
-                  "pointer-events-auto h-10 w-10 rounded-full border backdrop-blur-md transition-opacity",
-                  !hasNextChapter && "opacity-30 cursor-not-allowed"
+                  "pointer-events-auto h-11 w-11 rounded-full border shadow-lg backdrop-blur-xl transition-all duration-200 hover:scale-110 hover:shadow-xl",
+                  !hasNextChapter && "opacity-30 cursor-not-allowed hover:scale-100"
                 )}
                 style={{ 
                   color: "var(--reader-text)",
-                  background: "color-mix(in srgb, var(--reader-card-bg) 90%, transparent)",
+                  background: "color-mix(in srgb, var(--reader-card-bg) 88%, transparent)",
                   borderColor: "var(--reader-border)",
                 }}
               >
