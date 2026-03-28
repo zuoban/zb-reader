@@ -185,7 +185,7 @@ export const readerSettings = sqliteTable("reader_settings", {
     .unique()
     .references(() => users.id, { onDelete: "cascade" }),
   fontSize: integer("font_size").default(16).notNull(),
-  pageWidth: integer("page_width").default(800).notNull(),
+  pageWidth: integer("page_width").default(100).notNull(),
   theme: text("theme", { enum: ["light", "dark", "sepia"] })
     .default("light")
     .notNull(),

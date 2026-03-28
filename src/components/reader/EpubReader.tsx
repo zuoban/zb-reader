@@ -15,7 +15,7 @@ interface EpubReaderProps {
   url: string;
   initialLocation?: string;
   fontSize?: number;
-  pageWidth?: number;
+  pageWidth?: number; // 百分比 50-100
   theme?: "light" | "dark" | "sepia";
   onLocationChange?: (location: {
     cfi: string;
@@ -511,7 +511,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       url,
       initialLocation,
       fontSize = 16,
-      pageWidth = 800,
+      pageWidth = 100,
       theme = "light",
       onLocationChange,
       onTocLoaded,
@@ -1447,7 +1447,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
           const children = doc.body.children;
           for (let i = 0; i < children.length; i++) {
             const child = children[i] as HTMLElement;
-            child.style.maxWidth = `${pageWidth}px`;
+            child.style.maxWidth = `${pageWidth}%`;
           }
         }
       }
@@ -1532,7 +1532,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
             const children = doc.body.children;
             for (let i = 0; i < children.length; i++) {
               const child = children[i] as HTMLElement;
-              child.style.maxWidth = `${pageWidth}px`;
+              child.style.maxWidth = `${pageWidth}%`;
             }
           }
         }
@@ -1643,7 +1643,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
           ref={viewerRef}
           id="epub-viewer"
           className="h-full flex-none rounded-[24px]"
-          style={{ width: pageWidth }}
+          style={{ width: `${pageWidth}%` }}
         />
       </div>
     );

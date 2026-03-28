@@ -37,7 +37,7 @@ interface ReaderSettingsActions {
 const DEFAULT_STATE: ReaderSettingsState = {
   fontSize: 16,
   theme: "light",
-  pageWidth: 800,
+  pageWidth: 100,
   browserVoiceId: "",
   ttsRate: 1,
   ttsPitch: 1,
@@ -59,7 +59,7 @@ export const useReaderSettingsStore = create<
 
       setFontSize: (size) => set({ fontSize: Math.min(28, Math.max(12, size)) }),
       setTheme: (theme) => set({ theme }),
-      setPageWidth: (width) => set({ pageWidth: Math.min(1200, Math.max(600, width)) }),
+      setPageWidth: (width) => set({ pageWidth: Math.min(100, Math.max(50, width)) }),
       setBrowserVoiceId: (browserVoiceId) => set({ browserVoiceId }),
       setTtsRate: (rate) => set({ ttsRate: Math.min(5, Math.max(1, rate)) }),
       setTtsPitch: (pitch) => set({ ttsPitch: Math.min(2, Math.max(0.5, pitch)) }),
@@ -91,7 +91,7 @@ export const useReaderSettingsStore = create<
             theme: settings.theme || DEFAULT_STATE.theme,
             pageWidth:
               typeof settings.pageWidth === "number"
-                ? Math.min(1200, Math.max(600, settings.pageWidth))
+                ? Math.min(100, Math.max(50, settings.pageWidth))
                 : DEFAULT_STATE.pageWidth,
             browserVoiceId: settings.browserVoiceId || DEFAULT_STATE.browserVoiceId,
             ttsRate:

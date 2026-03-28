@@ -21,7 +21,7 @@ interface ReaderSettingsPayload {
 
 const DEFAULTS = {
   fontSize: 16,
-  pageWidth: 800,
+  pageWidth: 100,
   theme: "light" as const,
   browserVoiceId: "",
   ttsRate: 1,
@@ -83,7 +83,7 @@ export async function PUT(req: NextRequest) {
 
     const nextValues = {
       fontSize: Math.min(28, Math.max(12, Number(payload.fontSize ?? existing?.fontSize ?? DEFAULTS.fontSize))),
-      pageWidth: Math.min(1200, Math.max(600, Number(payload.pageWidth ?? existing?.pageWidth ?? DEFAULTS.pageWidth))),
+      pageWidth: Math.min(100, Math.max(50, Number(payload.pageWidth ?? existing?.pageWidth ?? DEFAULTS.pageWidth))),
       theme:
         payload.theme === "dark" || payload.theme === "sepia" || payload.theme === "light"
           ? payload.theme
