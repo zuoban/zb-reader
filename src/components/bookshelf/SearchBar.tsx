@@ -1,7 +1,8 @@
 "use client";
 
+import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface SearchBarProps {
   value: string;
@@ -10,15 +11,27 @@ interface SearchBarProps {
 
 export function SearchBar({ value, onChange }: SearchBarProps) {
   return (
-    <div className="group relative w-full sm:w-[320px]">
-      <div className="pointer-events-none absolute inset-y-1 left-1 right-1 rounded-[1.1rem] bg-gradient-to-r from-white/18 via-transparent to-white/8 opacity-0 transition-opacity duration-300 group-focus-within:opacity-100 dark:from-white/8 dark:to-white/4" />
-      <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors duration-150 group-focus-within:text-primary" />
+    <div className="group relative w-full">
+      <div className="pointer-events-none absolute inset-y-1 left-1 right-1 rounded-[1rem] bg-gradient-to-r from-primary/8 via-transparent to-sky-500/6 opacity-0 transition-opacity duration-300 group-focus-within:opacity-100 dark:from-primary/10 dark:to-sky-400/8" />
+      <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors duration-150 group-focus-within:text-primary" />
       <Input
         placeholder="搜索书名或作者..."
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-12 rounded-2xl border-border/55 bg-background/60 pl-11 pr-4 text-[15px] shadow-[0_14px_40px_-32px_color-mix(in_oklab,var(--foreground)_28%,transparent)] backdrop-blur-md transition-all duration-200 placeholder:text-muted-foreground/80 focus-visible:border-primary/40 focus-visible:bg-background/82 sm:h-12"
+        className="h-12 rounded-[1.1rem] border-border/60 bg-background/88 pl-12 pr-12 text-[15px] shadow-[0_12px_28px_-24px_color-mix(in_oklab,var(--foreground)_12%,transparent)] transition-all duration-200 placeholder:text-muted-foreground/75 focus-visible:border-primary/45 focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-primary/12"
       />
+      {value ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label="清空搜索"
+          onClick={() => onChange("")}
+          className="absolute right-2 top-1/2 h-8 w-8 -translate-y-1/2 rounded-full text-muted-foreground/80 hover:bg-muted hover:text-foreground"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      ) : null}
     </div>
   );
 }

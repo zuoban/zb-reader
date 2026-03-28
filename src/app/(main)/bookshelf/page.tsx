@@ -129,40 +129,40 @@ export default function BookshelfPage() {
       <BackgroundDecoration />
       <Navbar onUploadClick={() => setUploadOpen(true)} />
 
-      <main className="relative mx-auto w-full max-w-7xl px-4 pb-8 pt-4 sm:px-6 sm:pb-12 sm:pt-5">
+      <main className="relative mx-auto w-full max-w-7xl px-4 pb-10 pt-4 sm:px-6 sm:pb-14 sm:pt-5">
         {/* Header Section */}
-        <section className="animate-reader-fade-up mb-8 sm:mb-10">
-          <div className="surface-glass relative overflow-hidden rounded-[1.5rem] border border-border/50 px-4 py-3.5 shadow-[0_22px_72px_-42px_color-mix(in_oklab,var(--foreground)_24%,transparent)] sm:rounded-[1.75rem] sm:px-7 sm:py-4">
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
-            <div className="absolute -right-20 top-0 h-36 w-36 rounded-full bg-primary/10 blur-3xl dark:bg-primary/15" />
-            <div className="absolute bottom-0 left-0 h-24 w-24 rounded-full bg-sky-500/10 blur-3xl dark:bg-sky-400/10" />
+        <section className="animate-reader-fade-up mb-7 space-y-3 sm:mb-8 sm:space-y-4">
+          <div className="relative overflow-hidden rounded-[1.25rem] border border-border/60 bg-background/78 px-4 py-3 shadow-[0_16px_36px_-30px_color-mix(in_oklab,var(--foreground)_14%,transparent)] backdrop-blur-xl sm:rounded-[1.4rem] sm:px-5 sm:py-3.5">
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-foreground/10 to-transparent" />
 
-            <div className="relative flex flex-col gap-2.5 sm:gap-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
-              <div className="order-2 w-full lg:order-none lg:max-w-xl lg:flex-1">
+            <div className="relative">
+              <div className="w-full lg:max-w-xl">
                 <SearchBar value={search} onChange={setSearch} />
               </div>
+            </div>
+          </div>
 
-              <div className="order-1 grid w-full grid-cols-2 gap-x-2.5 gap-y-2 rounded-2xl border border-border/30 bg-background/30 px-3 py-2 backdrop-blur-sm sm:w-fit sm:grid-cols-4 sm:items-center sm:gap-x-0 sm:gap-y-0 sm:rounded-full lg:order-none lg:flex-shrink-0">
-                <div className="flex min-w-0 items-center gap-1.5 sm:px-2.5">
-                  <Library className="h-3.5 w-3.5 text-primary/70" />
-                  <span className="text-[11px] text-muted-foreground/70">书籍总数</span>
-                  <span className="text-sm font-semibold text-foreground">{stats.total}</span>
-                </div>
-                <div className="flex min-w-0 items-center gap-1.5 sm:border-l sm:border-border/45 sm:px-2.5">
-                  <BookOpen className="h-3.5 w-3.5 text-blue-500/70" />
-                  <span className="text-[11px] text-muted-foreground/70">进行中</span>
-                  <span className="text-sm font-semibold text-foreground">{stats.reading}</span>
-                </div>
-                <div className="flex min-w-0 items-center gap-1.5 sm:border-l sm:border-border/45 sm:px-2.5">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500/70" />
-                  <span className="text-[11px] text-muted-foreground/70">已完成</span>
-                  <span className="text-sm font-semibold text-foreground">{stats.completed}</span>
-                </div>
-                <div className="flex min-w-0 items-center gap-1.5 sm:border-l sm:border-border/45 sm:px-2.5">
-                  <Clock className="h-3.5 w-3.5 text-amber-500/70" />
-                  <span className="text-[11px] text-muted-foreground/70">阅读时长</span>
-                  <span className="text-sm font-semibold text-foreground">{stats.duration}</span>
-                </div>
+          <div className="rounded-[1.1rem] border border-border/55 bg-background/88 px-3 py-2.5 shadow-[0_12px_28px_-26px_color-mix(in_oklab,var(--foreground)_12%,transparent)] sm:px-4">
+            <div className="grid grid-cols-2 gap-y-2 sm:grid-cols-4 sm:gap-y-0">
+              <div className="flex min-w-0 items-center gap-2 px-1.5 sm:px-3">
+                <Library className="h-3.5 w-3.5 shrink-0 text-primary/75" />
+                <span className="text-[11px] text-muted-foreground">书籍总数</span>
+                <span className="text-base font-semibold tracking-[-0.03em] text-foreground">{stats.total}</span>
+              </div>
+              <div className="flex min-w-0 items-center gap-2 px-1.5 sm:border-l sm:border-border/50 sm:px-3">
+                <BookOpen className="h-3.5 w-3.5 shrink-0 text-blue-500/75" />
+                <span className="text-[11px] text-muted-foreground">进行中</span>
+                <span className="text-base font-semibold tracking-[-0.03em] text-foreground">{stats.reading}</span>
+              </div>
+              <div className="flex min-w-0 items-center gap-2 px-1.5 sm:border-l sm:border-border/50 sm:px-3">
+                <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-green-500/75" />
+                <span className="text-[11px] text-muted-foreground">已完成</span>
+                <span className="text-base font-semibold tracking-[-0.03em] text-foreground">{stats.completed}</span>
+              </div>
+              <div className="flex min-w-0 items-center gap-2 px-1.5 sm:border-l sm:border-border/50 sm:px-3">
+                <Clock className="h-3.5 w-3.5 shrink-0 text-amber-500/80" />
+                <span className="text-[11px] text-muted-foreground">阅读时长</span>
+                <span className="truncate text-base font-semibold tracking-[-0.03em] text-foreground">{stats.duration}</span>
               </div>
             </div>
           </div>
@@ -170,7 +170,7 @@ export default function BookshelfPage() {
 
         {/* Book Grid */}
         {loading ? (
-          <div className="animate-reader-fade-up grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6" style={{ animationDelay: "120ms" }}>
+          <div className="animate-reader-fade-up grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5" style={{ animationDelay: "120ms" }}>
             {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
               <BookCardSkeleton key={i} />
             ))}
