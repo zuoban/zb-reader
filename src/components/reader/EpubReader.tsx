@@ -15,7 +15,6 @@ interface EpubReaderProps {
   url: string;
   initialLocation?: string;
   fontSize?: number;
-  pageWidth?: number; // 百分比 50-100
   theme?: "light" | "dark" | "sepia";
   onLocationChange?: (location: {
     cfi: string;
@@ -511,7 +510,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       url,
       initialLocation,
       fontSize = 16,
-      pageWidth = 100,
       theme = "light",
       onLocationChange,
       onTocLoaded,
@@ -529,6 +527,31 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     },
     ref
   ) => {
+    const [pageWidth, setPageWidth] = useState(100);
+
+    useEffect(() => {
+      const updatePageWidth = () => {
+        const width = window.innerWidth;
+        let newWidth = 100;
+        if (width >= 1920) {
+          newWidth = 60;
+        } else if (width >= 1440) {
+          newWidth = 70;
+        } else if (width >= 1024) {
+          newWidth = 80;
+        } else if (width >= 768) {
+          newWidth = 90;
+        } else if (width >= 480) {
+          newWidth = 95;
+        }
+        setPageWidth(newWidth);
+      };
+
+      updatePageWidth();
+      window.addEventListener("resize", updatePageWidth);
+      return () => window.removeEventListener("resize", updatePageWidth);
+    }, []);
+
     const viewerRef = useRef<HTMLDivElement>(null);
     const bookRef = useRef<Book | null>(null);
     const renditionRef = useRef<Rendition | null>(null);

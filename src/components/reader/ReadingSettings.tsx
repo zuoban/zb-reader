@@ -22,8 +22,6 @@ interface ReadingSettingsProps {
   onOpenChange: (open: boolean) => void;
   fontSize: number;
   onFontSizeChange: (size: number) => void;
-  pageWidth: number;
-  onPageWidthChange: (width: number) => void;
   theme: "light" | "dark" | "sepia";
   onThemeChange: (theme: "light" | "dark" | "sepia") => void;
   browserVoices: BrowserVoiceOption[];
@@ -253,8 +251,6 @@ export function ReadingSettings({
   onOpenChange,
   fontSize,
   onFontSizeChange,
-  pageWidth,
-  onPageWidthChange,
   theme,
   onThemeChange,
   browserVoices,
@@ -340,10 +336,9 @@ export function ReadingSettings({
                 {themeOptions.find((option) => option.value === theme)?.label}
               </span>
             </div>
-            <div className="mt-5 grid grid-cols-3 gap-3">
+            <div className="mt-5 grid grid-cols-2 gap-3">
               {[
                 { label: "字号", value: `${fontSize}px` },
-                { label: "版心", value: `${pageWidth}%` },
                 { label: "语速", value: `${ttsRate.toFixed(1)}x` },
               ].map((item) => (
                 <div
@@ -466,20 +461,8 @@ export function ReadingSettings({
                     );
                   })}
                 </div>
-
-               {/* Page width slider */}
-                <SliderRow
-                  label="页面宽度"
-                  value={pageWidth}
-                  min={50}
-                  max={100}
-                  step={5}
-                  onChange={onPageWidthChange}
-                  unit="%"
-                  noBorder
-                />
-             </SettingCard>
-           </section>
+              </SettingCard>
+            </section>
 
           {/* ── 主题 ── */}
           <section>

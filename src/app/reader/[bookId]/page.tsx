@@ -130,7 +130,6 @@ function ReaderContent() {
   // Settings from store
   const settings = useReaderSettingsStore();
   const fontSize = settings.fontSize;
-  const pageWidth = settings.pageWidth;
   const readerTheme = settings.theme;
   const selectedBrowserVoiceId = settings.browserVoiceId;
   const ttsRate = settings.ttsRate;
@@ -337,7 +336,6 @@ function ReaderContent() {
     debouncedSaveSettings();
   }, [
     settings.fontSize,
-    settings.pageWidth,
     settings.theme,
     settings.browserVoiceId,
     settings.ttsRate,
@@ -873,10 +871,6 @@ function ReaderContent() {
   // ---- Settings handlers ----
   const handleFontSizeChange = useCallback((size: number) => {
     settings.setFontSize(size);
-  }, [settings]);
-
-  const handlePageWidthChange = useCallback((width: number) => {
-    settings.setPageWidth(width);
   }, [settings]);
 
   const handleThemeChange = useCallback(async (theme: "light" | "dark" | "sepia") => {
@@ -1927,7 +1921,6 @@ function ReaderContent() {
                   url={bookUrl}
                   initialLocation={initialLocation}
                   fontSize={fontSize}
-                  pageWidth={pageWidth}
                   theme={readerTheme}
                   onLocationChange={handleLocationChange}
                   onTocLoaded={handleTocLoaded}
@@ -2016,8 +2009,6 @@ function ReaderContent() {
         onOpenChange={setSettingsOpen}
         fontSize={fontSize}
         onFontSizeChange={handleFontSizeChange}
-        pageWidth={pageWidth}
-        onPageWidthChange={handlePageWidthChange}
         theme={readerTheme}
         onThemeChange={handleThemeChange}
         browserVoices={browserVoices}
