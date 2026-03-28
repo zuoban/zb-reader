@@ -278,7 +278,7 @@ export function ReadingSettings({
       <SheetContent
         side="bottom"
         showBackground={false}
-        className="overflow-hidden rounded-t-[28px] border-t px-0 sm:mx-auto sm:max-w-xl lg:max-w-2xl"
+        className="overflow-hidden rounded-t-[28px] border-t px-0 sm:mx-auto sm:max-w-xl xl:max-w-[850px]"
         style={{
           background: "var(--reader-bg)",
           borderColor: cardBorder,

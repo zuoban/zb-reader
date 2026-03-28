@@ -1894,7 +1894,7 @@ function ReaderContent() {
       <div className="relative h-full w-full">
         {/* 阅读内容区域 */}
         <div className="h-full w-full px-4 py-4 sm:px-6">
-          <div className="relative mx-auto h-full max-w-4xl">
+          <div className="relative mx-auto h-full">
             {/* 顶部浮动标题 - 简化版 */}
             {!isSpeaking && !isTtsViewOpen ? (
               <div className="pointer-events-none absolute left-1/2 top-0 z-10 -translate-x-1/2">

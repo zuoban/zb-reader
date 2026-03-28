@@ -1643,7 +1643,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
           ref={viewerRef}
           id="epub-viewer"
           className="h-full flex-none rounded-[24px]"
-          style={{ width: pageWidth, maxWidth: "100%" }}
+          style={{ width: pageWidth }}
         />
       </div>
     );
