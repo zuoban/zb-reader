@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   List,
   Bookmark,
@@ -88,12 +88,23 @@ function TocItemRow({
   onClose: () => void;
 }) {
   const [expanded, setExpanded] = useState(true);
+  const itemRef = useRef<HTMLButtonElement>(null);
   const hasChildren = item.subitems && item.subitems.length > 0;
 
   const isActive =
     currentHref &&
     (item.href === currentHref ||
       currentHref.startsWith(item.href?.split("#")[0]));
+
+  // 自动滚动到当前章节
+  useEffect(() => {
+    if (isActive && itemRef.current) {
+      itemRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+  }, [isActive]);
 
   return (
     <div>
@@ -118,6 +129,7 @@ function TocItemRow({
         )}
 
         <button
+          ref={itemRef}
           className={cn(
             "flex-1 cursor-pointer truncate rounded-lg px-3 py-2 text-left text-sm transition-all duration-200",
             isActive && "font-semibold"
