@@ -562,6 +562,94 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     const pendingHighlightsRef = useRef<Array<{ cfiRange: string; color: string; id: string }>>([]);
     const justSelectedRef = useRef(false);
 
+    const highlightSpanRef = useRef<HTMLElement | null>(null);
+
+    /**
+     * 在元素内查找文本并创建 Range
+     */
+    const findTextRange = useCallback((element: Node, searchText: string): Range | null => {
+      const normalizedSearch = searchText.replace(/\s+/g, "").trim();
+      if (!normalizedSearch) return null;
+
+      const walker = document.createTreeWalker(
+        element,
+        NodeFilter.SHOW_TEXT,
+        null
+      );
+
+      const textNodes: Text[] = [];
+      let node: Node | null;
+
+      while ((node = walker.nextNode())) {
+        textNodes.push(node as Text);
+      }
+
+      // 收集所有文本内容
+      let fullText = "";
+      const nodeOffsets: { node: Text; start: number; end: number }[] = [];
+
+      for (const textNode of textNodes) {
+        const text = textNode.textContent || "";
+        nodeOffsets.push({
+          node: textNode,
+          start: fullText.length,
+          end: fullText.length + text.length,
+        });
+        fullText += text;
+      }
+
+      const normalizedFullText = fullText.replace(/\s+/g, "");
+
+      // 查找匹配位置
+      const index = normalizedFullText.indexOf(normalizedSearch);
+      if (index === -1) return null;
+
+      // 计算在原始文本中的起始和结束位置
+      let charCount = 0;
+      let startOffset = -1;
+      let endOffset = -1;
+
+      for (let i = 0; i < fullText.length; i++) {
+        if (fullText[i].trim()) {
+          if (charCount === index && startOffset === -1) {
+            startOffset = i;
+          }
+          if (charCount === index + normalizedSearch.length - 1 && endOffset === -1) {
+            endOffset = i + 1;
+            break;
+          }
+          charCount++;
+        }
+      }
+
+      if (startOffset === -1 || endOffset === -1) return null;
+
+      // 找到对应的节点和偏移
+      let startNode: Text | null = null;
+      let endNode: Text | null = null;
+      let startNodeOffset = 0;
+      let endNodeOffset = 0;
+
+      for (const { node, start, end } of nodeOffsets) {
+        if (start <= startOffset && startOffset < end) {
+          startNode = node;
+          startNodeOffset = startOffset - start;
+        }
+        if (start < endOffset && endOffset <= end) {
+          endNode = node;
+          endNodeOffset = endOffset - start;
+        }
+      }
+
+      if (!startNode || !endNode) return null;
+
+      const range = document.createRange();
+      range.setStart(startNode, startNodeOffset);
+      range.setEnd(endNode, endNodeOffset);
+
+      return range;
+    }, []);
+
     const buildParagraphId = useCallback((index: number, text: string) => {
       const normalized = text
         .toLowerCase()
@@ -924,37 +1012,24 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       let cancelled = false;
 
       const clearCurrentTtsState = () => {
+        // 清除句子级高亮 span
+        if (highlightSpanRef.current) {
+          const span = highlightSpanRef.current;
+          const parent = span.parentNode;
+          if (parent) {
+            const textContent = span.textContent || "";
+            const textNode = doc.createTextNode(textContent);
+            parent.replaceChild(textNode, span);
+            parent.normalize();
+          }
+          highlightSpanRef.current = null;
+        }
+
         const activeNodes = doc.body.querySelectorAll("[data-tts-active='1']");
         activeNodes.forEach((node) => {
           node.removeAttribute("data-tts-active");
           const element = node as HTMLElement;
-          element.style.backgroundColor = "";
-          element.style.transition = "";
-          element.style.opacity = "";
-          element.style.display = "";
-          element.style.padding = "";
-          element.style.border = "";
-          element.style.borderRadius = "";
-          element.style.boxShadow = "";
-          element.style.maxWidth = "";
-          element.style.width = "";
-          element.style.fontSize = "";
-          element.style.lineHeight = "";
-          element.style.margin = "";
-          element.style.position = "";
-          element.style.removeProperty("--tts-indicator-color");
-          element.style.backgroundImage = "";
-          element.style.backgroundPosition = "";
-          element.style.backgroundSize = "";
-          element.style.backgroundRepeat = "";
-          element.style.paddingBottom = "";
-          element.style.marginLeft = "";
-          element.style.marginRight = "";
-          element.style.background = "";
-          element.style.color = "";
-          element.style.borderLeft = "";
-          element.style.borderImage = "";
-          element.style.paddingLeft = "";
+          element.style.cssText = "";
         });
 
         doc.body.removeAttribute("data-tts-immersive");
@@ -1051,54 +1126,37 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         activeElement.style.opacity = "1";
         activeElement.style.position = "relative";
 
-        const progressPercent = Math.min(100, Math.max(0, ttsPlaybackProgress * 100));
+        // 尝试找到精确的句子范围并高亮
+        const range = findTextRange(activeElement, activeTtsParagraph);
+        if (range) {
+          try {
+            const span = doc.createElement("span");
+            span.className = "tts-sentence-highlight";
 
-        if (ttsHighlightStyle === "background") {
-          const rgbColor = ttsHighlightColor.startsWith("#")
-            ? ttsHighlightColor
-            : "#3b82f6";
-          const r = parseInt(rgbColor.slice(1, 3), 16);
-          const g = parseInt(rgbColor.slice(3, 5), 16);
-          const b = parseInt(rgbColor.slice(5, 7), 16);
+            if (ttsHighlightStyle === "indicator") {
+              span.style.textDecoration = "underline";
+              span.style.textDecorationThickness = "2px";
+              span.style.textUnderlineOffset = "3px";
+              span.style.textDecorationColor = ttsHighlightColor;
+            } else {
+              span.style.backgroundColor = `${ttsHighlightColor}40`;
+              span.style.borderRadius = "3px";
+              span.style.padding = "1px 2px";
+            }
 
-          activeElement.style.background = `linear-gradient(180deg, 
-            rgba(${r}, ${g}, ${b}, 0.12) 0%, 
-            rgba(${r}, ${g}, ${b}, 0.08) ${progressPercent}%,
-            rgba(${r}, ${g}, ${b}, 0.15) ${progressPercent}%,
-            rgba(${r}, ${g}, ${b}, 0.05) 100%
-          )`;
-          activeElement.style.borderRadius = "6px";
-          activeElement.style.padding = "4px 8px";
-          activeElement.style.marginLeft = "-8px";
-          activeElement.style.marginRight = "-8px";
-          activeElement.style.boxShadow = `
-            inset 0 1px 0 color-mix(in srgb, ${ttsHighlightColor} 20%, transparent),
-            inset 0 -1px 0 color-mix(in srgb, ${ttsHighlightColor} 15%, transparent),
-            0 0 0 1px color-mix(in srgb, ${ttsHighlightColor} 30%, transparent),
-            0 2px 8px color-mix(in srgb, ${ttsHighlightColor} 20%, transparent)
-          `;
-          activeElement.style.transition = "all 0.25s ease";
-          activeElement.style.color = `color-mix(in srgb, ${ttsHighlightColor} 90%, currentColor)`;
+            range.surroundContents(span);
+            highlightSpanRef.current = span;
+          } catch {
+            // 如果 surroundContents 失败，回退到段落级高亮
+            if (ttsHighlightStyle === "background") {
+              activeElement.style.backgroundColor = `${ttsHighlightColor}20`;
+            }
+          }
         } else {
-          const trackColor = `color-mix(in srgb, ${ttsHighlightColor} 14%, transparent)`;
-          const progressColor = `color-mix(in srgb, ${ttsHighlightColor} 70%, transparent)`;
-          activeElement.style.backgroundColor = "";
-          activeElement.style.borderRadius = "";
-          activeElement.style.padding = "0 0 0 12px";
-          activeElement.style.paddingLeft = "12px";
-          activeElement.style.boxShadow = "";
-          activeElement.style.background = "";
-          activeElement.style.backgroundImage = `linear-gradient(${trackColor}, ${trackColor}), linear-gradient(${progressColor}, ${progressColor})`;
-          activeElement.style.backgroundPosition = "left top, left top";
-          activeElement.style.backgroundSize = `3px 100%, 3px ${progressPercent}%`;
-          activeElement.style.backgroundRepeat = "no-repeat";
-          activeElement.style.paddingBottom = "";
-          activeElement.style.marginLeft = "";
-          activeElement.style.marginRight = "";
-          activeElement.style.color = "";
-          activeElement.style.borderLeft = "";
-          activeElement.style.borderImage = "";
-          activeElement.style.transition = "background-size 120ms linear, color 180ms ease";
+          // 找不到精确范围，回退到段落级高亮
+          if (ttsHighlightStyle === "background") {
+            activeElement.style.backgroundColor = `${ttsHighlightColor}20`;
+          }
         }
       };
 
@@ -1112,6 +1170,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       activeTtsLocation,
       activeTtsParagraph,
       findTtsElementByLocation,
+      findTextRange,
       normalizeText,
       theme,
       ttsHighlightStyle,

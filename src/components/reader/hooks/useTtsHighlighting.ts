@@ -3,29 +3,21 @@
 import { useEffect, useRef, useCallback } from "react";
 import type { Rendition } from "epubjs";
 
-const TTS_INDICATOR_CSS = `
+const TTS_HIGHLIGHT_CSS = `
 [data-tts-active='1'] {
   position: relative;
 }
-[data-tts-active='1'] .tts-progress-track {
-  position: absolute;
-  left: -10px;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: var(--tts-indicator-color, #3b82f6);
-  border-radius: 2px;
+.tts-sentence-highlight {
+  transition: all 0.2s ease;
 }
-[data-tts-active='1'] .tts-progress-fill {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 0%;
-  background: var(--tts-indicator-color, #3b82f6);
-  opacity: 0.3;
-  border-radius: 2px;
-  transition: width 0.1s ease-out;
+.tts-sentence-highlight-indicator {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+.tts-sentence-highlight-background {
+  border-radius: 3px;
+  padding: 1px 2px;
 }
 [data-tts-immersive] {
   overflow: hidden;
@@ -37,6 +29,92 @@ const TTS_INDICATOR_CSS = `
 `;
 
 /**
+ * 在元素内查找文本并创建 Range
+ */
+function findTextRange(element: Node, searchText: string): Range | null {
+  const normalizedSearch = searchText.replace(/\s+/g, "").trim();
+  if (!normalizedSearch) return null;
+
+  const walker = document.createTreeWalker(
+    element,
+    NodeFilter.SHOW_TEXT,
+    null
+  );
+
+  const textNodes: Text[] = [];
+  let node: Node | null;
+
+  while ((node = walker.nextNode())) {
+    textNodes.push(node as Text);
+  }
+
+  // 收集所有文本内容
+  let fullText = "";
+  const nodeOffsets: { node: Text; start: number; end: number }[] = [];
+
+  for (const textNode of textNodes) {
+    const text = textNode.textContent || "";
+    nodeOffsets.push({
+      node: textNode,
+      start: fullText.length,
+      end: fullText.length + text.length,
+    });
+    fullText += text;
+  }
+
+  const normalizedFullText = fullText.replace(/\s+/g, "");
+
+  // 查找匹配位置
+  const index = normalizedFullText.indexOf(normalizedSearch);
+  if (index === -1) return null;
+
+  // 计算在原始文本中的起始和结束位置
+  let charCount = 0;
+  let startOffset = -1;
+  let endOffset = -1;
+
+  for (let i = 0; i < fullText.length; i++) {
+    if (fullText[i].trim()) {
+      if (charCount === index && startOffset === -1) {
+        startOffset = i;
+      }
+      if (charCount === index + normalizedSearch.length - 1 && endOffset === -1) {
+        endOffset = i + 1;
+        break;
+      }
+      charCount++;
+    }
+  }
+
+  if (startOffset === -1 || endOffset === -1) return null;
+
+  // 找到对应的节点和偏移
+  let startNode: Text | null = null;
+  let endNode: Text | null = null;
+  let startNodeOffset = 0;
+  let endNodeOffset = 0;
+
+  for (const { node, start, end } of nodeOffsets) {
+    if (start <= startOffset && startOffset < end) {
+      startNode = node;
+      startNodeOffset = startOffset - start;
+    }
+    if (start < endOffset && endOffset <= end) {
+      endNode = node;
+      endNodeOffset = endOffset - start;
+    }
+  }
+
+  if (!startNode || !endNode) return null;
+
+  const range = document.createRange();
+  range.setStart(startNode, startNodeOffset);
+  range.setEnd(endNode, endNodeOffset);
+
+  return range;
+}
+
+/**
  * Hook for managing TTS highlighting in EPUB rendition
  */
 export function useTtsHighlighting(
@@ -46,10 +124,10 @@ export function useTtsHighlighting(
   highlightStyle: "background" | "indicator" = "indicator",
   highlightColor: string = "#3b82f6"
 ) {
-  const highlightIdsRef = useRef<Set<string>>(new Set());
+  const highlightSpanRef = useRef<HTMLElement | null>(null);
   const normalizeText = useCallback((text: string) => text.replace(/\s+/g, "").trim(), []);
 
-  // Inject TTS indicator CSS
+  // Inject TTS highlight CSS
   useEffect(() => {
     const contents = renditionRef.current?.getContents?.() as
       | Array<{ document?: Document }>
@@ -57,16 +135,16 @@ export function useTtsHighlighting(
     const doc = contents?.[0]?.document;
     if (!doc) return;
 
-    let styleEl = doc.getElementById("tts-indicator-style");
+    let styleEl = doc.getElementById("tts-highlight-style");
     if (!styleEl) {
       styleEl = doc.createElement("style");
-      styleEl.id = "tts-indicator-style";
-      styleEl.textContent = TTS_INDICATOR_CSS;
+      styleEl.id = "tts-highlight-style";
+      styleEl.textContent = TTS_HIGHLIGHT_CSS;
       doc.head.appendChild(styleEl);
     }
   }, [isRenditionReady, renditionRef]);
 
-  // Handle active paragraph highlighting
+  // Handle active sentence highlighting
   useEffect(() => {
     const contents = renditionRef.current?.getContents?.() as
       | Array<{ document?: Document }>
@@ -74,40 +152,27 @@ export function useTtsHighlighting(
     const doc = contents?.[0]?.document;
     if (!doc?.body) return;
 
-    // Clear existing highlights
+    // Clear existing highlight
+    if (highlightSpanRef.current) {
+      const span = highlightSpanRef.current;
+      const parent = span.parentNode;
+      if (parent) {
+        // 将 span 的内容替换为文本节点
+        const textContent = span.textContent || "";
+        const textNode = doc.createTextNode(textContent);
+        parent.replaceChild(textNode, span);
+        // 规范化父节点（合并相邻文本节点）
+        parent.normalize();
+      }
+      highlightSpanRef.current = null;
+    }
+
+    // Clear paragraph-level highlights
     const activeNodes = doc.body.querySelectorAll("[data-tts-active='1']");
     activeNodes.forEach((node) => {
       node.removeAttribute("data-tts-active");
       const element = node as HTMLElement;
-      element.style.backgroundColor = "";
-      element.style.transition = "";
-      element.style.opacity = "";
-      element.style.display = "";
-      element.style.padding = "";
-      element.style.border = "";
-      element.style.borderRadius = "";
-      element.style.boxShadow = "";
-      element.style.maxWidth = "";
-      element.style.width = "";
-      element.style.fontSize = "";
-      element.style.lineHeight = "";
-      element.style.margin = "";
-      element.style.position = "";
-      element.style.removeProperty("--tts-indicator-color");
-      element.style.backgroundImage = "";
-      element.style.backgroundPosition = "";
-      element.style.backgroundSize = "";
-      element.style.backgroundRepeat = "";
-      element.style.paddingBottom = "";
-      element.style.marginLeft = "";
-      element.style.marginRight = "";
-      element.style.background = "";
-      element.style.color = "";
-
-      const progressTrack = element.querySelector(".tts-progress-track");
-      const progressFill = element.querySelector(".tts-progress-fill");
-      if (progressTrack) progressTrack.remove();
-      if (progressFill) progressFill.remove();
+      element.style.cssText = "";
     });
 
     doc.body.removeAttribute("data-tts-immersive");
@@ -116,7 +181,7 @@ export function useTtsHighlighting(
       return;
     }
 
-    const needle = normalizeText(activeTtsParagraph).slice(0, 80);
+    const needle = normalizeText(activeTtsParagraph).slice(0, 200);
     if (!needle) return;
 
     const candidates = doc.body.querySelectorAll(
@@ -125,25 +190,42 @@ export function useTtsHighlighting(
 
     for (const candidate of candidates) {
       const text = normalizeText(candidate.textContent || "");
-      if (text.includes(needle) || needle.includes(text.slice(0, 100))) {
+      if (text.includes(needle)) {
         candidate.setAttribute("data-tts-active", "1");
 
-        if (highlightStyle === "indicator") {
-          const element = candidate as HTMLElement;
-          element.style.setProperty("--tts-indicator-color", highlightColor);
+        // 尝试找到精确的句子范围并高亮
+        const range = findTextRange(candidate, activeTtsParagraph);
+        if (range) {
+          try {
+            const span = doc.createElement("span");
+            span.className = `tts-sentence-highlight tts-sentence-highlight-${highlightStyle}`;
+            
+            if (highlightStyle === "indicator") {
+              span.style.textDecoration = "underline";
+              span.style.textDecorationThickness = "2px";
+              span.style.textUnderlineOffset = "3px";
+              span.style.textDecorationColor = highlightColor;
+            } else {
+              span.style.backgroundColor = `${highlightColor}40`;
+              span.style.borderRadius = "3px";
+              span.style.padding = "1px 2px";
+            }
 
-          const progressTrack = doc.createElement("div");
-          progressTrack.className = "tts-progress-track";
-          candidate.appendChild(progressTrack);
-
-          const progressFill = doc.createElement("div");
-          progressFill.className = "tts-progress-fill";
-          candidate.appendChild(progressFill);
+            range.surroundContents(span);
+            highlightSpanRef.current = span;
+          } catch {
+            // 如果 surroundContents 失败（跨越多个块级元素），回退到段落高亮
+            if (highlightStyle === "background") {
+              (candidate as HTMLElement).style.backgroundColor = `${highlightColor}20`;
+            }
+          }
         } else {
-          (candidate as HTMLElement).style.backgroundColor = highlightColor + "40";
+          // 找不到精确范围，回退到段落高亮
+          if (highlightStyle === "background") {
+            (candidate as HTMLElement).style.backgroundColor = `${highlightColor}20`;
+          }
         }
 
-        highlightIdsRef.current.add(candidate.getAttribute("data-highlight-id") || "");
         break;
       }
     }
@@ -185,7 +267,7 @@ export function useScrollToActive(
 
     for (const candidate of candidates) {
       const text = normalizeText(candidate.textContent || "");
-      if (text.includes(needle) || needle.includes(text.slice(0, 100))) {
+      if (text.includes(needle)) {
         const element = candidate as HTMLElement;
         const iframe = doc.querySelector("iframe");
         const iframeRect = iframe?.getBoundingClientRect();
