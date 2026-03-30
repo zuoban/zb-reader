@@ -137,7 +137,6 @@ function ReaderContent() {
   const ttsAutoNextChapter = settings.ttsAutoNextChapter;
   const ttsHighlightColor = settings.ttsHighlightColor;
   const ttsHighlightStyle = settings.ttsHighlightStyle;
-  const autoScrollToActive = settings.autoScrollToActive;
   const debouncedSaveSettings = useDebouncedSettingsSave();
 
   // Local settings states (browser voices, TTS state)
@@ -376,7 +375,7 @@ function ReaderContent() {
     setIsTtsViewOpen(false);
 
     // Keep the reader on the currently spoken paragraph when stopping.
-    if (book?.format === "epub" && autoScrollToActive) {
+    if (book?.format === "epub") {
       epubReaderRef.current?.scrollToActiveParagraph();
     }
 
@@ -393,7 +392,7 @@ function ReaderContent() {
       navigator.mediaSession.playbackState = "none";
       mediaSessionSetupRef.current = false;
     }
-  }, [autoScrollToActive, book?.format]);
+  }, [book?.format]);
 
   const setupMediaSession = useCallback(() => {
     if (!("mediaSession" in navigator)) return;
@@ -1933,7 +1932,6 @@ function ReaderContent() {
                   ttsPlaybackProgress={ttsPlaybackProgress}
                   ttsHighlightColor={ttsHighlightColor}
                   ttsHighlightStyle={ttsHighlightStyle}
-                  autoScrollToActive={autoScrollToActive}
                 />
               )}
             </div>
@@ -2018,8 +2016,6 @@ function ReaderContent() {
         onTtsRateChange={settings.setTtsRate}
         microsoftPreloadCount={microsoftPreloadCount}
         onMicrosoftPreloadCountChange={settings.setMicrosoftPreloadCount}
-        ttsAutoNextChapter={ttsAutoNextChapter}
-        onTtsAutoNextChapterChange={settings.setTtsAutoNextChapter}
         ttsHighlightColor={ttsHighlightColor}
         onTtsHighlightColorChange={settings.setTtsHighlightColor}
         ttsHighlightStyle={ttsHighlightStyle}
@@ -2063,8 +2059,6 @@ function ReaderContent() {
           ttsRate={ttsRate}
           selectedBrowserVoiceId={selectedBrowserVoiceId}
           browserVoices={browserVoices}
-          ttsAutoNextChapter={ttsAutoNextChapter}
-          autoScrollToActive={autoScrollToActive}
           isFullscreen={isFullscreen}
           onBackToReader={handleBackToReader}
           onToggle={handleToggleTts}
@@ -2073,8 +2067,6 @@ function ReaderContent() {
           onNext={handleTtsNextParagraph}
           onSelectedBrowserVoiceIdChange={handleSelectedBrowserVoiceIdChange}
           onTtsRateChange={settings.setTtsRate}
-          onToggleAutoNextChapter={settings.setTtsAutoNextChapter}
-          onToggleAutoScrollToActive={settings.setAutoScrollToActive}
           onToggleFullscreen={handleToggleFullscreen}
         />
       )}
@@ -2088,12 +2080,8 @@ function ReaderContent() {
         onPrev={handleTtsPrevParagraph}
         onNext={handleTtsNextParagraph}
         onOpenImmersiveView={handleOpenTtsView}
-        ttsAutoNextChapter={ttsAutoNextChapter}
-        onTtsAutoNextChapterChange={settings.setTtsAutoNextChapter}
         isFullscreen={isFullscreen}
         onToggleFullscreen={handleToggleFullscreen}
-        autoScrollToActive={autoScrollToActive}
-        onAutoScrollToActiveChange={settings.setAutoScrollToActive}
         progress={progress}
       />
 

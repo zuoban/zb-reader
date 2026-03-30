@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { BookOpen, Pause, Play, Square, SkipBack, SkipForward, LocateFixed, ListEnd, Maximize, Minimize } from "lucide-react";
+import { BookOpen, Pause, Play, Square, SkipBack, SkipForward, Maximize, Minimize } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TtsFloatingControlProps {
@@ -14,12 +14,8 @@ interface TtsFloatingControlProps {
   onNext?: () => void;
   onJumpToPosition?: () => void;
   onOpenImmersiveView?: () => void;
-  ttsAutoNextChapter?: boolean;
-  onTtsAutoNextChapterChange?: (value: boolean) => void;
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
-  autoScrollToActive?: boolean;
-  onAutoScrollToActiveChange?: (value: boolean) => void;
   progress?: number;
 }
 
@@ -50,12 +46,8 @@ export function TtsFloatingControl({
   onNext,
   onJumpToPosition: _onJumpToPosition,
   onOpenImmersiveView,
-  ttsAutoNextChapter = false,
-  onTtsAutoNextChapterChange,
   isFullscreen = false,
   onToggleFullscreen,
-  autoScrollToActive = true,
-  onAutoScrollToActiveChange,
   progress: _progress = 0,
 }: TtsFloatingControlProps) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -161,70 +153,6 @@ export function TtsFloatingControl({
             >
               <SkipForward className="size-3.5 transition-transform duration-150 group-hover:translate-x-0.5" />
             </button>
-          )}
-
-          {onAutoScrollToActiveChange && (
-            <>
-              <div
-                className="w-px h-5 mx-0.5 hidden sm:block"
-                style={{ background: "var(--reader-border)" }}
-              />
-              <button
-                type="button"
-                onClick={() => onAutoScrollToActiveChange(!autoScrollToActive)}
-                className="group relative flex size-7 sm:size-8 items-center justify-center rounded-full transition-all duration-200 cursor-pointer border border-[color-mix(in_srgb,var(--reader-border)_45%,_transparent)]"
-                style={{
-                  color: autoScrollToActive
-                    ? "var(--reader-primary, #171717)"
-                    : "var(--reader-text, #09090b)",
-                  background:
-                    "color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.9)) 35%, transparent)",
-                }}
-                title={autoScrollToActive ? "关闭自动定位" : "开启自动定位"}
-              >
-                <LocateFixed
-                  className={cn(
-                    "size-4 transition-all duration-200",
-                    autoScrollToActive && "scale-110"
-                  )}
-                />
-                {autoScrollToActive && (
-                  <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[var(--reader-primary,#171717)]" />
-                )}
-              </button>
-            </>
-          )}
-
-          {onTtsAutoNextChapterChange && (
-            <>
-              <div
-                className="w-px h-5 mx-0.5 hidden sm:block"
-                style={{ background: "var(--reader-border)" }}
-              />
-              <button
-                type="button"
-                onClick={() => onTtsAutoNextChapterChange(!ttsAutoNextChapter)}
-                className="group relative flex size-7 sm:size-8 items-center justify-center rounded-full transition-all duration-200 cursor-pointer border border-[color-mix(in_srgb,var(--reader-border)_45%,_transparent)]"
-                style={{
-                  color: ttsAutoNextChapter
-                    ? "var(--reader-primary, #171717)"
-                    : "var(--reader-text, #09090b)",
-                  background:
-                    "color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.9)) 35%, transparent)",
-                }}
-                title={ttsAutoNextChapter ? "关闭自动续章" : "开启自动续章"}
-              >
-                <ListEnd
-                  className={cn(
-                    "size-4 transition-all duration-200",
-                    ttsAutoNextChapter && "scale-110"
-                  )}
-                />
-                {ttsAutoNextChapter && (
-                  <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[var(--reader-primary,#171717)]" />
-                )}
-              </button>
-            </>
           )}
 
           {onOpenImmersiveView && (

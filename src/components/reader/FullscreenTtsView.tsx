@@ -31,8 +31,6 @@ interface FullscreenTtsViewProps {
   ttsRate: number;
   selectedBrowserVoiceId: string;
   browserVoices: BrowserVoiceOption[];
-  ttsAutoNextChapter: boolean;
-  autoScrollToActive: boolean;
   isFullscreen: boolean;
   onBackToReader: () => void;
   onToggle: () => void;
@@ -41,8 +39,6 @@ interface FullscreenTtsViewProps {
   onNext?: () => void;
   onSelectedBrowserVoiceIdChange: (voiceId: string) => void;
   onTtsRateChange: (value: number) => void;
-  onToggleAutoNextChapter: (value: boolean) => void;
-  onToggleAutoScrollToActive: (value: boolean) => void;
   onToggleFullscreen?: () => void;
 }
 
@@ -64,8 +60,6 @@ export function FullscreenTtsView({
   ttsRate,
   selectedBrowserVoiceId,
   browserVoices,
-  ttsAutoNextChapter: _ttsAutoNextChapter,
-  autoScrollToActive: _autoScrollToActive,
   isFullscreen,
   onBackToReader,
   onToggle,
@@ -74,8 +68,6 @@ export function FullscreenTtsView({
   onNext,
   onSelectedBrowserVoiceIdChange,
   onTtsRateChange,
-  onToggleAutoNextChapter: _onToggleAutoNextChapter,
-  onToggleAutoScrollToActive: _onToggleAutoScrollToActive,
   onToggleFullscreen,
 }: FullscreenTtsViewProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);

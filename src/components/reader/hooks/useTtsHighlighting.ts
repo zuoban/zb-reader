@@ -163,13 +163,12 @@ export function useTtsHighlighting(
 export function useScrollToActive(
   renditionRef: React.RefObject<Rendition | null>,
   isRenditionReady: boolean,
-  activeTtsParagraph: string | undefined,
-  autoScrollToActive: boolean = true
+  activeTtsParagraph: string | undefined
 ) {
   const normalizeText = useCallback((text: string) => text.replace(/\s+/g, "").trim(), []);
 
   useEffect(() => {
-    if (!autoScrollToActive || !activeTtsParagraph || !isRenditionReady) return;
+    if (!activeTtsParagraph || !isRenditionReady) return;
 
     const contents = renditionRef.current?.getContents?.() as
       | Array<{ document?: Document; spine?: { index: number } }>
@@ -210,7 +209,6 @@ export function useScrollToActive(
     activeTtsParagraph,
     isRenditionReady,
     renditionRef,
-    autoScrollToActive,
     normalizeText,
   ]);
 }

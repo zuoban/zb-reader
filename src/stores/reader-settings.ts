@@ -45,7 +45,7 @@ const DEFAULT_STATE: ReaderSettingsState = {
   microsoftPreloadCount: 5,
   ttsHighlightStyle: "indicator",
   ttsHighlightColor: "#3b82f6",
-  ttsAutoNextChapter: false,
+  ttsAutoNextChapter: true,
   autoScrollToActive: true,
   loaded: false,
 };

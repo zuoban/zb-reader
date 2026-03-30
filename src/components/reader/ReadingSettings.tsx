@@ -31,8 +31,6 @@ interface ReadingSettingsProps {
   onTtsRateChange: (value: number) => void;
   microsoftPreloadCount: number;
   onMicrosoftPreloadCountChange: (value: number) => void;
-  ttsAutoNextChapter: boolean;
-  onTtsAutoNextChapterChange: (value: boolean) => void;
   ttsHighlightColor: string;
   onTtsHighlightColorChange: (color: string) => void;
   ttsHighlightStyle: "background" | "indicator";
@@ -260,8 +258,6 @@ export function ReadingSettings({
   onTtsRateChange,
   microsoftPreloadCount,
   onMicrosoftPreloadCountChange,
-  ttsAutoNextChapter,
-  onTtsAutoNextChapterChange,
   ttsHighlightColor,
   onTtsHighlightColorChange,
   ttsHighlightStyle,
@@ -550,28 +546,6 @@ export function ReadingSettings({
                     { value: "8", label: "8 段" },
                   ]}
                 />
-              </SettingRow>
-
-              <SettingRow label="自动续章" sublabel="当前章节朗读完后自动进入下一章" noBorder>
-                <button
-                  onClick={() => onTtsAutoNextChapterChange(!ttsAutoNextChapter)}
-                  className={cn(
-                    "relative w-12 sm:w-13 h-7 sm:h-7.5 rounded-full transition-colors cursor-pointer"
-                  )}
-                  style={{
-                    background: ttsAutoNextChapter
-                      ? "var(--reader-primary)"
-                      : "color-mix(in srgb, var(--reader-text) 15%, transparent)",
-                  }}
-                >
-                  <span
-                    className={cn(
-                      "absolute top-1 sm:top-1 left-1 sm:left-1 w-5 h-5 sm:w-5.5 sm:h-5.5 rounded-full transition-transform duration-200 shadow-md",
-                      ttsAutoNextChapter ? "translate-x-5.5 sm:translate-x-6" : "translate-x-0"
-                    )}
-                    style={{ background: "var(--reader-card-bg)" }}
-                  />
-                </button>
               </SettingRow>
 
               <SettingRow label="高亮样式" noBorder>
