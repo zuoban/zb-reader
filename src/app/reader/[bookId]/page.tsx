@@ -30,6 +30,7 @@ import { logger } from "@/lib/logger";
 import { useProgressSyncCompat } from "@/hooks/useProgressSyncCompat";
 import { useReaderSettingsStore, useDebouncedSettingsSave } from "@/stores/reader-settings";
 import { READER_THEME_STYLES } from "@/lib/reader-theme";
+import { paragraphsToSentences, type Sentence } from "@/lib/textUtils";
 
 // Dynamic import for EpubReader (client-only, depends on browser APIs)
 const EpubReader = dynamic(() => import("@/components/reader/EpubReader"), {
@@ -205,10 +206,10 @@ function ReaderContent() {
   const [activeTtsParagraphId, setActiveTtsParagraphId] = useState<string | null>(null);
   const [activeTtsLocation, setActiveTtsLocation] = useState<string | null>(null);
   const currentParagraphIndexRef = useRef(0);
-  const allParagraphsRef = useRef<ReaderParagraph[]>([]);
-  const readParagraphsHashRef = useRef<Set<string>>(new Set<string>());
+  const allSentencesRef = useRef<Sentence[]>([]);
+  const readSentencesHashRef = useRef<Set<string>>(new Set<string>());
   const ttsCurrentIndexRef = useRef(0);
-  const ttsTotalParagraphsRef = useRef(0);
+  const ttsTotalSentencesRef = useRef(0);
 
   // 跟踪 TTS 设置的上次值，用于检测设置变化
   const prevTtsSettingsRef = useRef({ rate: ttsRate, voiceId: selectedBrowserVoiceId });
@@ -352,11 +353,11 @@ function ReaderContent() {
   const stopSpeaking = useCallback(() => {
     ttsSessionRef.current += 1;
     ttsResumeRef.current = null;
-    allParagraphsRef.current = [];
-    readParagraphsHashRef.current.clear();
+    allSentencesRef.current = [];
+    readSentencesHashRef.current.clear();
     currentParagraphIndexRef.current = 0;
     ttsCurrentIndexRef.current = 0;
-    ttsTotalParagraphsRef.current = 0;
+    ttsTotalSentencesRef.current = 0;
     if (currentAudioRef.current) {
       currentAudioRef.current.pause();
       currentAudioRef.current.currentTime = 0;
@@ -941,7 +942,7 @@ function ReaderContent() {
       options?: {
         onEnd?: () => void;
         onCleanup?: () => void;
-        debugMeta?: { engine: "microsoft"; paragraphIndex?: number; paragraph?: string };
+        debugMeta?: { engine: "microsoft"; sentenceIndex?: number; paragraph?: string };
       }
     ) => {
       if (ttsSessionRef.current !== sessionId) return;
@@ -1140,7 +1141,7 @@ function ReaderContent() {
       }
 
       await playAudioSource(objectUrl, sessionId, {
-        debugMeta: { engine: "microsoft", paragraphIndex: currentIndex },
+        debugMeta: { engine: "microsoft", sentenceIndex: currentIndex },
       });
     } catch {
       // 忽略设置切换导致的重播错误，保持当前会话可继续操作
@@ -1169,17 +1170,17 @@ function ReaderContent() {
   }, [activeTtsParagraph, isPaused, isSpeaking, replayCurrentTtsParagraph, selectedBrowserVoiceId, ttsRate]);
 
   const speakWithBrowserParagraphs = useCallback(
-    async (paragraphs: ReaderParagraph[], sessionId: number, startIndex = 0) => {
-      const queue = paragraphs.filter((item) => item.text.trim().length > 0);
+    async (sentences: Sentence[], sessionId: number, startIndex = 0) => {
+      const queue = sentences.filter((item) => item.text.trim().length > 0);
       if (queue.length === 0) {
-        toast.error("当前页面没有可朗读段落");
+        toast.error("当前页面没有可朗读内容");
         return;
       }
 
       setIsSpeaking(true);
 
       const preparedTaskMap = new Map<number, Promise<string>>();
-      const preloadWindowSize = Math.max(microsoftPreloadCount, 5);
+      const preloadWindowSize = 5; // 预加载5句
 
       const ensurePreloadWindow = (windowStart: number) => {
         for (
@@ -1206,14 +1207,14 @@ function ReaderContent() {
 
         currentParagraphIndexRef.current = startIndex + i;
         ttsCurrentIndexRef.current = startIndex + i;
-        const paragraph = queue[i];
-        setActiveTtsParagraph(paragraph.text);
-        setActiveTtsParagraphId(paragraph.id);
-        setActiveTtsLocation(paragraph.location ?? null);
+        const sentence = queue[i];
+        setActiveTtsParagraph(sentence.text);
+        setActiveTtsParagraphId(sentence.paragraphId);
+        setActiveTtsLocation(sentence.location ?? null);
 
-        // 跳过已读的段落（避免跨页重复朗读）
-        const hash = paragraph.location || paragraph.text.slice(0, 50);
-        if (readParagraphsHashRef.current.has(hash)) {
+        // 跳过已读的句子（避免跨页重复朗读）
+        const hash = sentence.location || sentence.text.slice(0, 50);
+        if (readSentencesHashRef.current.has(hash)) {
           // 跳过后，仍然需要预加载，因为 i 在继续递增
           ensurePreloadWindow(i + 1);
           continue;
@@ -1221,7 +1222,7 @@ function ReaderContent() {
 
         ensurePreloadWindow(i + 1);
 
-        let paragraphSucceeded = false;
+        let sentenceSucceeded = false;
         let lastError: unknown = null;
 
         for (let attempt = 1; attempt <= MAX_TTS_RETRY_COUNT; attempt += 1) {
@@ -1234,8 +1235,8 @@ function ReaderContent() {
           try {
             objectUrl = await (
               attempt === 1
-                ? preparedTaskMap.get(i) ?? requestMicrosoftSpeech(paragraph.text)
-                : requestMicrosoftSpeech(paragraph.text)
+                ? preparedTaskMap.get(i) ?? requestMicrosoftSpeech(sentence.text)
+                : requestMicrosoftSpeech(sentence.text)
             );
 
             await new Promise<void>((resolve, reject) => {
@@ -1247,14 +1248,14 @@ function ReaderContent() {
               void playAudioSource(objectUrl as string, sessionId, {
                 debugMeta: {
                   engine: "microsoft",
-                  paragraphIndex: startIndex + i,
+                  sentenceIndex: startIndex + i,
                 },
               })
                 .then(resolve)
                 .catch(reject);
             });
 
-            paragraphSucceeded = true;
+            sentenceSucceeded = true;
             break;
           } catch (error) {
             lastError = error;
@@ -1277,7 +1278,7 @@ function ReaderContent() {
           }
         }
 
-        if (!paragraphSucceeded) {
+        if (!sentenceSucceeded) {
           if (ttsSessionRef.current === sessionId) {
             setActiveTtsParagraph("");
             setActiveTtsParagraphId(null);
@@ -1301,7 +1302,6 @@ function ReaderContent() {
     },
     [
       isRetryableTtsError,
-      microsoftPreloadCount,
       playAudioSource,
       requestMicrosoftSpeech,
       wait,
@@ -1458,7 +1458,7 @@ function ReaderContent() {
     }
 
     ttsSessionRef.current += 1;
-    readParagraphsHashRef.current.clear();
+    readSentencesHashRef.current.clear();
     const sessionId = ttsSessionRef.current;
 
     // 获取当前页面的段落
@@ -1471,13 +1471,20 @@ function ReaderContent() {
     }
 
     if (paragraphs.length === 0) {
-      toast.error("当前页面没有可朗读段落");
+      toast.error("当前页面没有可朗读内容");
       return;
     }
 
-    // 更新段落引用
-    allParagraphsRef.current = paragraphs;
-    ttsTotalParagraphsRef.current = paragraphs.length;
+    // 将段落分割为句子
+    const sentences = paragraphsToSentences(paragraphs);
+    if (sentences.length === 0) {
+      toast.error("当前页面没有可朗读内容");
+      return;
+    }
+
+    // 更新句子引用
+    allSentencesRef.current = sentences;
+    ttsTotalSentencesRef.current = sentences.length;
 
     currentParagraphIndexRef.current = getInitialParagraphIndex(paragraphs);
     ttsCurrentIndexRef.current = currentParagraphIndexRef.current;
@@ -1488,43 +1495,50 @@ function ReaderContent() {
 
     // 开始朗读循环
     while (ttsSessionRef.current === sessionId) {
-      // 在循环开始时再次检查段落（因为翻页后会变）
-      if (paragraphs.length === 0) {
+      // 在循环开始时再次检查句子（因为翻页后会变）
+      if (sentences.length === 0) {
+        paragraphs = getReadableParagraphs();
+        if (paragraphs.length === 0) {
+          // 再次尝试等待
+          await new Promise((resolve) => setTimeout(resolve, 220));
           paragraphs = getReadableParagraphs();
-          if (paragraphs.length === 0) {
-            // 再次尝试等待
-             await new Promise((resolve) => setTimeout(resolve, 220));
-             paragraphs = getReadableParagraphs();
-          }
-          if (paragraphs.length === 0) {
-             toast.error("没有更多可朗读内容");
-             break;
-          }
-          // 翻页后，从头开始读新的一页
-          currentParagraphIndexRef.current = 0;
-          ttsCurrentIndexRef.current = 0;
-          allParagraphsRef.current = paragraphs;
-          ttsTotalParagraphsRef.current = paragraphs.length;
+        }
+        if (paragraphs.length === 0) {
+          toast.error("没有更多可朗读内容");
+          break;
+        }
+        const newSentences = paragraphsToSentences(paragraphs);
+        if (newSentences.length === 0) {
+          toast.error("没有更多可朗读内容");
+          break;
+        }
+        // 翻页后，从头开始读新的一页
+        currentParagraphIndexRef.current = 0;
+        ttsCurrentIndexRef.current = 0;
+        allSentencesRef.current = newSentences;
+        ttsTotalSentencesRef.current = newSentences.length;
+        // 使用新的句子列表继续循环
+        Object.assign(sentences, newSentences);
       }
 
       // 从当前索引开始切片
       const startIndex = currentParagraphIndexRef.current;
-      const paragraphsToRead = paragraphs.slice(startIndex);
+      const sentencesToRead = sentences.slice(startIndex);
 
-      if (paragraphsToRead.length === 0) {
-          // 当前页读完了，尝试翻页
-          const moved = await tryAutoTurnPage(sessionId);
-          if (!moved) break;
-          // 翻页后清空当前段落，以便下一次循环重新获取
-          paragraphs = [];
-          continue;
+      if (sentencesToRead.length === 0) {
+        // 当前页读完了，尝试翻页
+        const moved = await tryAutoTurnPage(sessionId);
+        if (!moved) break;
+        // 翻页后清空当前句子列表，以便下一次循环重新获取
+        sentences.length = 0;
+        continue;
       }
 
       try {
-        await speakWithBrowserParagraphs(paragraphsToRead, sessionId, startIndex);
-        // 朗读成功后，记录这些段落的哈希
-        paragraphsToRead.forEach(p => {
-          readParagraphsHashRef.current.add(p.location || p.text.slice(0, 50));
+        await speakWithBrowserParagraphs(sentencesToRead, sessionId, startIndex);
+        // 朗读成功后，记录这些句子的哈希
+        sentencesToRead.forEach((s) => {
+          readSentencesHashRef.current.add(s.location || s.text.slice(0, 50));
         });
       } catch {
         break;
@@ -1539,8 +1553,8 @@ function ReaderContent() {
       if (!moved) {
         break;
       }
-      // 翻页成功，清空段落缓存，下一轮循环会重新获取
-      paragraphs = [];
+      // 翻页成功，清空句子缓存，下一轮循环会重新获取
+      sentences.length = 0;
     }
 
     if (ttsSessionRef.current === sessionId) {
@@ -1570,13 +1584,14 @@ function ReaderContent() {
   }, [stopSpeaking]);
 
   const handleTtsPrevParagraph = useCallback(() => {
-    let paragraphs = allParagraphsRef.current;
-    if (paragraphs.length === 0) {
-      paragraphs = getReadableParagraphs();
-      allParagraphsRef.current = paragraphs;
+    let sentences = allSentencesRef.current;
+    if (sentences.length === 0) {
+      const paragraphs = getReadableParagraphs();
+      sentences = paragraphsToSentences(paragraphs);
+      allSentencesRef.current = sentences;
     }
 
-    if (paragraphs.length === 0) return;
+    if (sentences.length === 0) return;
 
     const newIndex = Math.max(0, currentParagraphIndexRef.current - 1);
 
@@ -1595,9 +1610,9 @@ function ReaderContent() {
 
     currentParagraphIndexRef.current = newIndex;
     ttsCurrentIndexRef.current = newIndex;
-    setActiveTtsParagraph(paragraphs[newIndex].text);
-    setActiveTtsParagraphId(paragraphs[newIndex].id);
-    setActiveTtsLocation(paragraphs[newIndex].location ?? null);
+    setActiveTtsParagraph(sentences[newIndex].text);
+    setActiveTtsParagraphId(sentences[newIndex].paragraphId);
+    setActiveTtsLocation(sentences[newIndex].location ?? null);
     setTtsPlaybackProgress(0);
 
     if (!shouldResumePlayback) {
@@ -1606,30 +1621,31 @@ function ReaderContent() {
       return;
     }
 
-    const startParagraphs = paragraphs.slice(newIndex);
+    const startSentences = sentences.slice(newIndex);
     setTimeout(() => {
       if (ttsSessionRef.current !== sessionId) return;
       setIsSpeaking(true);
       setIsPaused(false);
-      void speakWithBrowserParagraphs(startParagraphs, sessionId, newIndex);
+      void speakWithBrowserParagraphs(startSentences, sessionId, newIndex);
     }, 10);
   }, [getReadableParagraphs, isPaused, isSpeaking, speakWithBrowserParagraphs]);
 
   const handleTtsNextParagraph = useCallback(() => {
-    let paragraphs = allParagraphsRef.current;
-    if (paragraphs.length === 0) {
-      paragraphs = getReadableParagraphs();
-      allParagraphsRef.current = paragraphs;
+    let sentences = allSentencesRef.current;
+    if (sentences.length === 0) {
+      const paragraphs = getReadableParagraphs();
+      sentences = paragraphsToSentences(paragraphs);
+      allSentencesRef.current = sentences;
     }
 
-    if (paragraphs.length === 0) return;
+    if (sentences.length === 0) return;
 
     const newIndex = Math.min(
-      paragraphs.length - 1,
+      sentences.length - 1,
       currentParagraphIndexRef.current + 1
     );
 
-    if (newIndex === currentParagraphIndexRef.current && currentParagraphIndexRef.current === paragraphs.length - 1) return;
+    if (newIndex === currentParagraphIndexRef.current && currentParagraphIndexRef.current === sentences.length - 1) return;
 
     const shouldResumePlayback = isSpeaking && !isPaused;
 
@@ -1644,9 +1660,9 @@ function ReaderContent() {
 
     currentParagraphIndexRef.current = newIndex;
     ttsCurrentIndexRef.current = newIndex;
-    setActiveTtsParagraph(paragraphs[newIndex].text);
-    setActiveTtsParagraphId(paragraphs[newIndex].id);
-    setActiveTtsLocation(paragraphs[newIndex].location ?? null);
+    setActiveTtsParagraph(sentences[newIndex].text);
+    setActiveTtsParagraphId(sentences[newIndex].paragraphId);
+    setActiveTtsLocation(sentences[newIndex].location ?? null);
     setTtsPlaybackProgress(0);
 
     if (!shouldResumePlayback) {
@@ -1655,12 +1671,12 @@ function ReaderContent() {
       return;
     }
 
-    const startParagraphs = paragraphs.slice(newIndex);
+    const startSentences = sentences.slice(newIndex);
     setTimeout(() => {
       if (ttsSessionRef.current !== sessionId) return;
       setIsSpeaking(true);
       setIsPaused(false);
-      void speakWithBrowserParagraphs(startParagraphs, sessionId, newIndex);
+      void speakWithBrowserParagraphs(startSentences, sessionId, newIndex);
     }, 10);
   }, [getReadableParagraphs, isPaused, isSpeaking, speakWithBrowserParagraphs]);
 
