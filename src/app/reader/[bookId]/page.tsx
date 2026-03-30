@@ -137,7 +137,6 @@ function ReaderContent() {
   const microsoftPreloadCount = settings.microsoftPreloadCount;
   const ttsAutoNextChapter = settings.ttsAutoNextChapter;
   const ttsHighlightColor = settings.ttsHighlightColor;
-  const ttsHighlightStyle = settings.ttsHighlightStyle;
   const debouncedSaveSettings = useDebouncedSettingsSave();
 
   // Local settings states (browser voices, TTS state)
@@ -145,7 +144,6 @@ function ReaderContent() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [isTtsViewOpen, setIsTtsViewOpen] = useState(false);
-  const [ttsPlaybackProgress, setTtsPlaybackProgress] = useState(0);
 
   // Side panel
   const [sidePanelOpen, setSidePanelOpen] = useState(false);
@@ -342,13 +340,8 @@ function ReaderContent() {
     settings.microsoftPreloadCount,
     settings.ttsAutoNextChapter,
     settings.ttsHighlightColor,
-    settings.ttsHighlightStyle,
     settings.autoScrollToActive,
   ]);
-
-  useEffect(() => {
-    setTtsPlaybackProgress(0);
-  }, [activeTtsParagraph]);
 
   const stopSpeaking = useCallback(() => {
     ttsSessionRef.current += 1;
@@ -370,7 +363,6 @@ function ReaderContent() {
     setActiveTtsParagraph("");
     setActiveTtsParagraphId(null);
     setActiveTtsLocation(null);
-    setTtsPlaybackProgress(0);
     setIsSpeaking(false);
     setIsPaused(false);
     setIsTtsViewOpen(false);
@@ -989,81 +981,8 @@ function ReaderContent() {
         audio.currentTime = 0;
         audio.src = source;
 
-        const getPlayableDuration = () => {
-          if (Number.isFinite(audio.duration) && audio.duration > 0) {
-            return audio.duration;
-          }
-
-          if (audio.seekable.length > 0) {
-            const seekableEnd = audio.seekable.end(audio.seekable.length - 1);
-            if (Number.isFinite(seekableEnd) && seekableEnd > 0) {
-              return seekableEnd;
-            }
-          }
-
-          if (audio.buffered.length > 0) {
-            const bufferedEnd = audio.buffered.end(audio.buffered.length - 1);
-            if (Number.isFinite(bufferedEnd) && bufferedEnd > 0) {
-              return bufferedEnd;
-            }
-          }
-
-          return null;
-        };
-
-        const syncPlaybackProgress = () => {
-          const duration = getPlayableDuration();
-          if (!duration) return;
-
-          const rawProgress = Math.min(1, Math.max(0, audio.currentTime / duration));
-          const visibleProgress =
-            rawProgress > 0 && rawProgress < 0.012 ? 0.012 : rawProgress;
-
-          setTtsPlaybackProgress(
-            visibleProgress
-          );
-        };
-
-        const startProgressLoop = () => {
-          if (ttsProgressRafRef.current !== null) {
-            cancelAnimationFrame(ttsProgressRafRef.current);
-          }
-
-          const tick = () => {
-            syncPlaybackProgress();
-
-            if (!audio.paused && !audio.ended) {
-              ttsProgressRafRef.current = requestAnimationFrame(tick);
-            } else {
-              ttsProgressRafRef.current = null;
-            }
-          };
-
-          ttsProgressRafRef.current = requestAnimationFrame(tick);
-        };
-
-        audio.onplay = () => {
-          syncPlaybackProgress();
-          startProgressLoop();
-        };
-
-        audio.onpause = () => {
-          syncPlaybackProgress();
-          if (ttsProgressRafRef.current !== null) {
-            cancelAnimationFrame(ttsProgressRafRef.current);
-            ttsProgressRafRef.current = null;
-          }
-        };
-
-        audio.onloadedmetadata = syncPlaybackProgress;
-        audio.ondurationchange = syncPlaybackProgress;
-        audio.onprogress = syncPlaybackProgress;
-        audio.oncanplay = syncPlaybackProgress;
-
         audio.onended = () => {
-          syncPlaybackProgress();
           dispose();
-          setTtsPlaybackProgress(1);
           options?.onEnd?.();
           resolve();
         };
@@ -1126,8 +1045,6 @@ function ReaderContent() {
       currentAudioRef.current.currentTime = 0;
     }
 
-    setTtsPlaybackProgress(0);
-
     if (!shouldResumePlayback) {
       setIsSpeaking(true);
       setIsPaused(true);
@@ -1162,7 +1079,6 @@ function ReaderContent() {
     }
 
     if (isPaused) {
-      setTtsPlaybackProgress(0);
       return;
     }
 
@@ -1613,7 +1529,6 @@ function ReaderContent() {
     setActiveTtsParagraph(sentences[newIndex].text);
     setActiveTtsParagraphId(sentences[newIndex].paragraphId);
     setActiveTtsLocation(sentences[newIndex].location ?? null);
-    setTtsPlaybackProgress(0);
 
     if (!shouldResumePlayback) {
       setIsSpeaking(true);
@@ -1663,7 +1578,6 @@ function ReaderContent() {
     setActiveTtsParagraph(sentences[newIndex].text);
     setActiveTtsParagraphId(sentences[newIndex].paragraphId);
     setActiveTtsLocation(sentences[newIndex].location ?? null);
-    setTtsPlaybackProgress(0);
 
     if (!shouldResumePlayback) {
       setIsSpeaking(true);
@@ -1945,9 +1859,7 @@ function ReaderContent() {
                   activeTtsParagraph={activeTtsParagraph}
                   activeTtsParagraphId={activeTtsParagraphId}
                   activeTtsLocation={activeTtsLocation}
-                  ttsPlaybackProgress={ttsPlaybackProgress}
                   ttsHighlightColor={ttsHighlightColor}
-                  ttsHighlightStyle={ttsHighlightStyle}
                 />
               )}
             </div>
@@ -2034,8 +1946,6 @@ function ReaderContent() {
         onMicrosoftPreloadCountChange={settings.setMicrosoftPreloadCount}
         ttsHighlightColor={ttsHighlightColor}
         onTtsHighlightColorChange={settings.setTtsHighlightColor}
-        ttsHighlightStyle={ttsHighlightStyle}
-        onTtsHighlightStyleChange={settings.setTtsHighlightStyle}
       />
 
       {/* Text selection menu */}
@@ -2069,7 +1979,6 @@ function ReaderContent() {
           activeParagraph={activeTtsParagraph}
           isSpeaking={isSpeaking}
           isPaused={isPaused}
-          ttsPlaybackProgress={ttsPlaybackProgress}
           progress={progress}
           readingDuration={accumulatedDuration}
           ttsRate={ttsRate}

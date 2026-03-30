@@ -25,7 +25,6 @@ interface FullscreenTtsViewProps {
   activeParagraph?: string;
   isSpeaking: boolean;
   isPaused: boolean;
-  ttsPlaybackProgress: number;
   progress: number;
   readingDuration?: number;
   ttsRate: number;
@@ -54,7 +53,6 @@ export function FullscreenTtsView({
   activeParagraph,
   isSpeaking,
   isPaused,
-  ttsPlaybackProgress,
   progress,
   readingDuration,
   ttsRate,
@@ -77,7 +75,6 @@ export function FullscreenTtsView({
   }, []);
 
   const overallProgress = clampProgress(progress);
-  const _paragraphProgress = clampProgress(ttsPlaybackProgress);
   const paragraphText = activeParagraph?.trim();
   const statusLabel = isSpeaking && !isPaused ? "朗读中" : isPaused ? "已暂停" : "准备朗读";
 

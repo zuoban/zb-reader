@@ -33,8 +33,6 @@ interface ReadingSettingsProps {
   onMicrosoftPreloadCountChange: (value: number) => void;
   ttsHighlightColor: string;
   onTtsHighlightColorChange: (color: string) => void;
-  ttsHighlightStyle: "background" | "indicator";
-  onTtsHighlightStyleChange: (style: "background" | "indicator") => void;
 }
 
 const themeOptions = [
@@ -260,8 +258,6 @@ export function ReadingSettings({
   onMicrosoftPreloadCountChange,
   ttsHighlightColor,
   onTtsHighlightColorChange,
-  ttsHighlightStyle,
-  onTtsHighlightStyleChange,
 }: ReadingSettingsProps) {
   const cardBorder = "var(--reader-border)";
 
@@ -546,32 +542,6 @@ export function ReadingSettings({
                     { value: "8", label: "8 段" },
                   ]}
                 />
-              </SettingRow>
-
-              <SettingRow label="高亮样式" noBorder>
-                <div className="flex gap-1.5 p-1 rounded-xl" style={{ background: "color-mix(in srgb, var(--reader-text) 6%, transparent)" }}>
-                  {[
-                    { value: "indicator" as const, label: "指示条" },
-                    { value: "background" as const, label: "背景" },
-                  ].map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => onTtsHighlightStyleChange(option.value)}
-                      className={cn(
-                        "px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all cursor-pointer",
-                        ttsHighlightStyle === option.value
-                          ? "shadow-sm"
-                          : "opacity-60 hover:opacity-80"
-                      )}
-                      style={{
-                        background: ttsHighlightStyle === option.value ? "var(--reader-card-bg)" : "transparent",
-                        color: "var(--reader-text)",
-                      }}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
               </SettingRow>
 
               <SettingRow label="高亮颜色" noBorder>

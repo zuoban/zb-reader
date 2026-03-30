@@ -195,9 +195,6 @@ export const readerSettings = sqliteTable("reader_settings", {
   ttsAutoNextChapter: integer("tts_auto_next_chapter", { mode: "boolean" })
     .default(false)
     .notNull(),
-  ttsHighlightStyle: text("tts_highlight_style", { enum: ["background", "indicator"] })
-    .default("indicator")
-    .notNull(),
   ttsHighlightColor: text("tts_highlight_color").default("#3b82f6").notNull(),
   autoScrollToActive: integer("auto_scroll_to_active", { mode: "boolean" })
     .default(true)

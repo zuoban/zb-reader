@@ -32,8 +32,6 @@ interface EpubReaderProps {
   activeTtsParagraph?: string;
   activeTtsParagraphId?: string | null;
   activeTtsLocation?: string | null;
-  ttsPlaybackProgress?: number;
-  ttsHighlightStyle?: "background" | "indicator";
   ttsHighlightColor?: string;
 }
 
@@ -519,8 +517,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       activeTtsParagraph,
       activeTtsParagraphId,
       activeTtsLocation,
-      ttsPlaybackProgress = 0,
-      ttsHighlightStyle = "indicator",
       ttsHighlightColor = "#3b82f6",
     },
     ref
@@ -1132,31 +1128,19 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
           try {
             const span = doc.createElement("span");
             span.className = "tts-sentence-highlight";
-
-            if (ttsHighlightStyle === "indicator") {
-              span.style.textDecoration = "underline";
-              span.style.textDecorationThickness = "2px";
-              span.style.textUnderlineOffset = "3px";
-              span.style.textDecorationColor = ttsHighlightColor;
-            } else {
-              span.style.backgroundColor = `${ttsHighlightColor}40`;
-              span.style.borderRadius = "3px";
-              span.style.padding = "1px 2px";
-            }
+            span.style.backgroundColor = `${ttsHighlightColor}40`;
+            span.style.borderRadius = "3px";
+            span.style.padding = "1px 2px";
 
             range.surroundContents(span);
             highlightSpanRef.current = span;
           } catch {
             // 如果 surroundContents 失败，回退到段落级高亮
-            if (ttsHighlightStyle === "background") {
-              activeElement.style.backgroundColor = `${ttsHighlightColor}20`;
-            }
+            activeElement.style.backgroundColor = `${ttsHighlightColor}20`;
           }
         } else {
           // 找不到精确范围，回退到段落级高亮
-          if (ttsHighlightStyle === "background") {
-            activeElement.style.backgroundColor = `${ttsHighlightColor}20`;
-          }
+          activeElement.style.backgroundColor = `${ttsHighlightColor}20`;
         }
       };
 
@@ -1173,7 +1157,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       findTextRange,
       normalizeText,
       theme,
-      ttsHighlightStyle,
       ttsHighlightColor,
     ]);
 
@@ -1212,52 +1195,12 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
 
         const absoluteTop = iframeOffsetTop + elementOffsetTop;
         const targetScrollTop = absoluteTop - epubContainer.clientHeight * 0.25;
-        epubContainer.scrollTo({ top: Math.max(0, targetScrollTop), behavior: "smooth" });
+        epubContainer.scrollTo({
+          top: Math.max(0, targetScrollTop),
+          behavior: "smooth",
+        });
       }
-    }, [activeTtsParagraphId, activeTtsLocation, activeTtsParagraph]);
-
-    useEffect(() => {
-      if (!activeTtsParagraph) return;
-
-      const contents = renditionRef.current?.getContents?.() as
-        | Array<{ document?: Document }>
-        | undefined;
-      const doc = contents?.[0]?.document;
-      if (!doc) return;
-
-      const activeElement = doc.querySelector("[data-tts-active='1']") as HTMLElement | null;
-      if (!activeElement) return;
-
-      if (ttsHighlightStyle === "indicator") {
-        const progressPercent = Math.min(100, Math.max(0, ttsPlaybackProgress * 100));
-        const trackColor = `color-mix(in srgb, ${ttsHighlightColor} 14%, transparent)`;
-        const progressColor = `color-mix(in srgb, ${ttsHighlightColor} 70%, transparent)`;
-        activeElement.style.background = "";
-        activeElement.style.backgroundImage = `linear-gradient(${trackColor}, ${trackColor}), linear-gradient(${progressColor}, ${progressColor})`;
-        activeElement.style.backgroundPosition = "left top, left top";
-        activeElement.style.backgroundSize = `3px 100%, 3px ${progressPercent}%`;
-        activeElement.style.backgroundRepeat = "no-repeat";
-        activeElement.style.borderLeft = "";
-        activeElement.style.borderImage = "";
-        activeElement.style.paddingLeft = "12px";
-        activeElement.style.transition = "background-size 100ms linear, color 180ms ease";
-      } else {
-        const rgbColor = ttsHighlightColor.startsWith("#")
-          ? ttsHighlightColor
-          : "#3b82f6";
-        const r = parseInt(rgbColor.slice(1, 3), 16);
-        const g = parseInt(rgbColor.slice(3, 5), 16);
-        const b = parseInt(rgbColor.slice(5, 7), 16);
-        const progressPercent = Math.min(100, Math.max(0, ttsPlaybackProgress * 100));
-
-        activeElement.style.background = `linear-gradient(180deg, 
-          rgba(${r}, ${g}, ${b}, 0.12) 0%, 
-          rgba(${r}, ${g}, ${b}, 0.08) ${progressPercent}%,
-          rgba(${r}, ${g}, ${b}, 0.15) ${progressPercent}%,
-          rgba(${r}, ${g}, ${b}, 0.05) 100%
-        )`;
-      }
-    }, [activeTtsParagraphId, activeTtsLocation, activeTtsParagraph, ttsPlaybackProgress, ttsHighlightStyle, ttsHighlightColor]);
+    }, [activeTtsParagraph]);
 
     useEffect(() => {
       if (!viewerRef.current) return;

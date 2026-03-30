@@ -15,7 +15,6 @@ interface ReaderSettingsPayload {
   ttsRate?: number;
   microsoftPreloadCount?: number;
   ttsAutoNextChapter?: boolean;
-  ttsHighlightStyle?: "background" | "indicator";
   ttsHighlightColor?: string;
 }
 
@@ -27,7 +26,6 @@ const DEFAULTS = {
   ttsRate: 1,
   microsoftPreloadCount: 5,
   ttsAutoNextChapter: false,
-  ttsHighlightStyle: "indicator" as const,
   ttsHighlightColor: "#3b82f6",
 };
 
@@ -44,7 +42,6 @@ function toResponseShape(settings: typeof readerSettings.$inferSelect | null | u
     ttsRate: settings.ttsRate,
     microsoftPreloadCount: settings.microsoftPreloadCount,
     ttsAutoNextChapter: settings.ttsAutoNextChapter,
-    ttsHighlightStyle: settings.ttsHighlightStyle || "indicator",
     ttsHighlightColor: settings.ttsHighlightColor || "#3b82f6",
   };
 }
@@ -100,10 +97,6 @@ export async function PUT(req: NextRequest) {
         typeof payload.ttsAutoNextChapter === "boolean"
           ? payload.ttsAutoNextChapter
           : existing?.ttsAutoNextChapter ?? DEFAULTS.ttsAutoNextChapter,
-      ttsHighlightStyle:
-        payload.ttsHighlightStyle === "background" || payload.ttsHighlightStyle === "indicator"
-          ? payload.ttsHighlightStyle
-          : existing?.ttsHighlightStyle ?? DEFAULTS.ttsHighlightStyle,
       ttsHighlightColor:
         typeof payload.ttsHighlightColor === "string"
           ? payload.ttsHighlightColor

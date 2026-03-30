@@ -9,13 +9,6 @@ const TTS_HIGHLIGHT_CSS = `
 }
 .tts-sentence-highlight {
   transition: all 0.2s ease;
-}
-.tts-sentence-highlight-indicator {
-  text-decoration: underline;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 3px;
-}
-.tts-sentence-highlight-background {
   border-radius: 3px;
   padding: 1px 2px;
 }
@@ -121,7 +114,6 @@ export function useTtsHighlighting(
   renditionRef: React.RefObject<Rendition | null>,
   isRenditionReady: boolean,
   activeTtsParagraph: string | undefined,
-  highlightStyle: "background" | "indicator" = "indicator",
   highlightColor: string = "#3b82f6"
 ) {
   const highlightSpanRef = useRef<HTMLElement | null>(null);
@@ -198,32 +190,18 @@ export function useTtsHighlighting(
         if (range) {
           try {
             const span = doc.createElement("span");
-            span.className = `tts-sentence-highlight tts-sentence-highlight-${highlightStyle}`;
-            
-            if (highlightStyle === "indicator") {
-              span.style.textDecoration = "underline";
-              span.style.textDecorationThickness = "2px";
-              span.style.textUnderlineOffset = "3px";
-              span.style.textDecorationColor = highlightColor;
-            } else {
-              span.style.backgroundColor = `${highlightColor}40`;
-              span.style.borderRadius = "3px";
-              span.style.padding = "1px 2px";
-            }
+            span.className = "tts-sentence-highlight";
+            span.style.backgroundColor = `${highlightColor}40`;
 
             range.surroundContents(span);
             highlightSpanRef.current = span;
           } catch {
             // 如果 surroundContents 失败（跨越多个块级元素），回退到段落高亮
-            if (highlightStyle === "background") {
-              (candidate as HTMLElement).style.backgroundColor = `${highlightColor}20`;
-            }
+            (candidate as HTMLElement).style.backgroundColor = `${highlightColor}20`;
           }
         } else {
           // 找不到精确范围，回退到段落高亮
-          if (highlightStyle === "background") {
-            (candidate as HTMLElement).style.backgroundColor = `${highlightColor}20`;
-          }
+          (candidate as HTMLElement).style.backgroundColor = `${highlightColor}20`;
         }
 
         break;
@@ -233,7 +211,6 @@ export function useTtsHighlighting(
     activeTtsParagraph,
     isRenditionReady,
     renditionRef,
-    highlightStyle,
     highlightColor,
     normalizeText,
   ]);
@@ -276,7 +253,7 @@ export function useScrollToActive(
         if (!iframeRect || !elementRect) return;
 
         const iframeOffsetTop = iframeRect.top;
-        const elementOffsetTop = elementRect.top - iframeOffsetTop;
+        const elementOffsetTop = elementRect.top - iframeRect.top;
 
         const absoluteTop = iframeOffsetTop + elementOffsetTop;
         const targetScrollTop = absoluteTop - epubContainer.clientHeight * 0.25;
