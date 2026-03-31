@@ -1296,10 +1296,29 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       if (!activeTtsParagraph) return;
 
       const ctx = epubContextRef.current;
-      const activeElement = ctx.getActiveTtsElement();
-      if (!activeElement) return;
 
-      ctx.scrollToElement(activeElement, 0.25);
+      const doScroll = () => {
+        // 优先滚动到当前朗读的句子（句子级别的高亮 span）
+        const sentenceSpan = highlightSpanRef.current;
+        if (sentenceSpan && ctx.getDocument()?.body?.contains(sentenceSpan)) {
+          ctx.scrollToElement(sentenceSpan, 0.3);
+          return;
+        }
+
+        // 如果没有句子级别 span，滚动到段落
+        const activeElement = ctx.getActiveTtsElement();
+        if (!activeElement) return;
+
+        ctx.scrollToElement(activeElement, 0.25);
+      };
+
+      // 立即尝试滚动（如果 span 已同步创建）
+      doScroll();
+
+      // 短暂延迟后再次尝试（处理异步创建 span 的情况）
+      const timeoutId = setTimeout(doScroll, 100);
+
+      return () => clearTimeout(timeoutId);
     }, [activeTtsParagraph]);
 
     useEffect(() => {
