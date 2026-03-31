@@ -187,23 +187,11 @@ export class EpubContext {
     activeNodes.forEach((node) => {
       node.removeAttribute("data-tts-active");
       const element = node as HTMLElement;
-      element.style.cssText = "";
+      element.style.backgroundColor = "";
+      element.style.borderRadius = "";
     });
 
     doc.body.removeAttribute("data-tts-immersive");
-  }
-
-  setTtsHighlight(
-    element: HTMLElement,
-    highlightColor: string
-  ): void {
-    element.setAttribute("data-tts-active", "1");
-    element.style.transition = "all 220ms ease";
-    element.style.position = "relative";
-    element.style.textDecoration = "underline";
-    element.style.textDecorationColor = highlightColor;
-    element.style.textDecorationThickness = "3px";
-    element.style.textUnderlineOffset = "4px";
   }
 
   clearHighlightSpan(): void {
@@ -211,15 +199,24 @@ export class EpubContext {
     if (!doc?.body) return;
 
     const spans = doc.querySelectorAll(".tts-sentence-highlight");
+    const paragraphsToNormalize = new Set<Element>();
+
     spans.forEach((span) => {
       const parent = span.parentNode;
       if (parent) {
-        const textContent = span.textContent || "";
-        const textNode = doc.createTextNode(textContent);
-        parent.replaceChild(textNode, span);
-        parent.normalize();
+        while (span.firstChild) {
+          parent.insertBefore(span.firstChild, span);
+        }
+        parent.removeChild(span);
+
+        const paragraph = parent.parentElement || parent as Element;
+        if (paragraph.tagName.match(/^(P|LI|BLOCKQUOTE|H[1-6])$/i)) {
+          paragraphsToNormalize.add(paragraph);
+        }
       }
     });
+
+    paragraphsToNormalize.forEach((p) => p.normalize());
   }
 
   createHighlightSpan(
@@ -234,13 +231,27 @@ export class EpubContext {
       const endContainer = range.endContainer;
 
       if (startContainer === endContainer && startContainer.nodeType === Node.TEXT_NODE) {
+        const textNode = startContainer as Text;
+        const startOffset = range.startOffset;
+        const endOffset = range.endOffset;
+
+        if (startOffset === 0 && endOffset === textNode.length) {
+          const span = doc.createElement("span");
+          span.className = "tts-sentence-highlight";
+          span.style.backgroundColor = `${highlightColor}30`;
+          span.style.borderRadius = "2px";
+          range.surroundContents(span);
+          return span;
+        }
+
+        const before = textNode.splitText(startOffset);
+        const _middle = before.splitText(endOffset - startOffset);
         const span = doc.createElement("span");
         span.className = "tts-sentence-highlight";
-        span.style.textDecoration = "underline";
-        span.style.textDecorationColor = highlightColor;
-        span.style.textDecorationThickness = "3px";
-        span.style.textUnderlineOffset = "4px";
-        range.surroundContents(span);
+        span.style.backgroundColor = `${highlightColor}30`;
+        span.style.borderRadius = "2px";
+        before.parentNode?.insertBefore(span, before);
+        span.appendChild(before);
         return span;
       }
 
@@ -265,38 +276,22 @@ export class EpubContext {
 
       if (nodes.length === 0) return null;
 
-      const firstNode = nodes[0];
-      const lastNode = nodes[nodes.length - 1];
+      const firstSpan = doc.createElement("span");
+      firstSpan.className = "tts-sentence-highlight";
+      firstSpan.style.backgroundColor = `${highlightColor}30`;
+      firstSpan.style.borderRadius = "2px";
 
       for (let i = 0; i < nodes.length; i++) {
         const textNode = nodes[i];
-        let nodeToWrap: Text;
-
-        if (i === 0 && textNode === startContainer && range.startOffset > 0) {
-          nodeToWrap = textNode.splitText(range.startOffset);
-        } else {
-          nodeToWrap = textNode;
-        }
-
-        if (i === nodes.length - 1 && textNode === endContainer && range.endOffset < textNode.length) {
-          if (i === 0 && textNode === startContainer) {
-            nodeToWrap.splitText(range.endOffset - range.startOffset);
-          } else {
-            nodeToWrap.splitText(range.endOffset);
-          }
-        }
-
-        const span = doc.createElement("span");
+        const span = i === 0 ? firstSpan : doc.createElement("span");
         span.className = "tts-sentence-highlight";
-        span.style.textDecoration = "underline";
-        span.style.textDecorationColor = highlightColor;
-        span.style.textDecorationThickness = "3px";
-        span.style.textUnderlineOffset = "4px";
-        nodeToWrap.parentNode?.insertBefore(span, nodeToWrap);
-        span.appendChild(nodeToWrap);
+        span.style.backgroundColor = `${highlightColor}30`;
+        span.style.borderRadius = "2px";
+        textNode.parentNode?.insertBefore(span, textNode);
+        span.appendChild(textNode);
       }
 
-      return doc.querySelector(".tts-sentence-highlight") as HTMLSpanElement | null;
+      return firstSpan;
     } catch {
       return null;
     }

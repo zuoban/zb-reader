@@ -4,14 +4,6 @@ import { useEffect, useRef, useCallback } from "react";
 import type { Rendition } from "epubjs";
 
 const TTS_HIGHLIGHT_CSS = `
-[data-tts-active='1'] {
-  position: relative;
-}
-.tts-sentence-highlight {
-  transition: all 0.2s ease;
-  border-radius: 3px;
-  padding: 1px 2px;
-}
 [data-tts-immersive] {
   overflow: hidden;
 }

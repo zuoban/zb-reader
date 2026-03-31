@@ -1261,6 +1261,9 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
           if (span) {
             highlightSpanRef.current = span;
           }
+        } else {
+          activeElement.style.backgroundColor = `${ttsHighlightColor}20`;
+          activeElement.style.borderRadius = "4px";
         }
       };
 
