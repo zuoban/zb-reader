@@ -654,6 +654,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       index: number;
     }>>([]);
     const layoutContainerWidthRef = useRef<number>(0);
+    const lastLayoutCfiRef = useRef<string | null>(null);
 
     /**
      * 在元素内查找文本并创建 Range
@@ -870,6 +871,13 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         const ctx = epubContextRef.current;
         const doc = ctx.getDocument();
         if (!doc?.body) return [];
+
+        const currentCfi = currentLocationRef.current;
+        if (currentCfi && currentCfi !== lastLayoutCfiRef.current) {
+          paragraphLayoutsRef.current = [];
+          positionIndexRef.current = [];
+          lastLayoutCfiRef.current = currentCfi;
+        }
 
         const normalizeParagraph = (text: string) => text.replace(/\s+/g, " ").trim();
 
@@ -1633,6 +1641,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         if (doc?.body) {
           epubContextRef.current.applyMaxWidthToChildren(pageWidth);
           buildParagraphLayoutIndex(doc, containerWidth);
+          lastLayoutCfiRef.current = currentLocationRef.current;
         }
 
         void applyHighlights();
