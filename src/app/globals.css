@@ -256,3 +256,93 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Reading content enhancement styles */
+.reading-content-enhance {
+  --reading-line-length: 38em;
+  --reading-para-spacing: 1.65em;
+}
+
+.smooth-paragraph-transition {
+  transition: opacity 0.2s ease-out, transform 0.15s ease-out;
+}
+
+.paragraph-focus {
+  opacity: 1;
+  transform: translateZ(0);
+}
+
+.paragraph-blur {
+  opacity: 0.75;
+  filter: blur(0.3px);
+}
+
+@keyframes reading-text-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-reading-text-enter {
+  animation: reading-text-enter 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+@keyframes chapter-transition-fade {
+  from {
+    opacity: 0.88;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-chapter-fade {
+  animation: chapter-transition-fade 0.5s ease-out;
+}
+
+/* Reading mode focus - reduce distractions */
+.reading-focus-mode {
+  .reading-focus-mode {
+    opacity: 0.6;
+    filter: blur(1px);
+  }
+  
+  &:focus-within,
+  &:hover {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+/* Smooth scroll behavior for reading */
+.smooth-reading-scroll {
+  scroll-behavior: smooth;
+  overscroll-behavior-y: contain;
+}
+
+/* Reading rhythm indicator */
+.reading-rhythm-indicator {
+  position: absolute;
+  left: 0;
+  width: 2px;
+  height: 100%;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    color-mix(in oklab, var(--primary) 8%, transparent) 25%,
+    color-mix(in oklab, var(--primary) 12%, transparent) 50%,
+    color-mix(in oklab, var(--primary) 8%, transparent) 75%,
+    transparent 100%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.reading-rhythm-indicator.active {
+  opacity: 1;
+}
