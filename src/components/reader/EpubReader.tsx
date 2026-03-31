@@ -10,6 +10,13 @@ import {
 } from "react";
 import ePub, { Book, Rendition } from "epubjs";
 import { logger } from "@/lib/logger";
+import {
+  prepareParagraphs,
+  buildPositionIndex,
+  findVisibleParagraphs,
+  ParagraphLayout,
+  calculateLineHeight,
+} from "@/lib/pretext-layout";
 
 interface EpubReaderProps {
   url: string;
@@ -560,6 +567,16 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
 
     const highlightSpanRef = useRef<HTMLElement | null>(null);
 
+    const paragraphLayoutsRef = useRef<ParagraphLayout[]>([]);
+    const positionIndexRef = useRef<Array<{
+      id: string;
+      startY: number;
+      endY: number;
+      height: number;
+      index: number;
+    }>>([]);
+    const layoutContainerWidthRef = useRef<number>(0);
+
     /**
      * 在元素内查找文本并创建 Range
      */
@@ -655,6 +672,53 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
 
       return `reader-p-${index}-${normalized || "text"}`;
     }, []);
+
+    const buildParagraphLayoutIndex = useCallback(
+      (
+        doc: Document,
+        containerWidth: number
+      ) => {
+        const nodes = doc.body.querySelectorAll(
+          "p, li, blockquote, h1, h2, h3, h4, h5, h6"
+        );
+
+        const paragraphs: Array<{ id: string; text: string; location?: string }> = [];
+        const contents = renditionRef.current?.getContents?.() as
+          | Array<{ cfiFromNode?: (node: Node, ignoreClass?: string) => string }>
+          | undefined;
+        const content = contents?.[0];
+
+        for (const [index, element] of Array.from(nodes).entries()) {
+          const text = (element.textContent || "").replace(/\s+/g, " ").trim();
+          if (text.length > 0 && text.length <= 800) {
+            const id = buildParagraphId(index, text);
+            element.setAttribute("data-reader-paragraph-id", id);
+            paragraphs.push({
+              id,
+              text,
+              location: content?.cfiFromNode?.(element) || undefined,
+            });
+          }
+        }
+
+        if (paragraphs.length === 0) {
+          paragraphLayoutsRef.current = [];
+          positionIndexRef.current = [];
+          return;
+        }
+
+        const layouts = prepareParagraphs(paragraphs, {
+          fontSize,
+          containerWidth,
+          lineHeight: calculateLineHeight(fontSize),
+        });
+
+        paragraphLayoutsRef.current = layouts;
+        positionIndexRef.current = buildPositionIndex(layouts);
+        layoutContainerWidthRef.current = containerWidth;
+      },
+      [fontSize, buildParagraphId]
+    );
 
     const stripScrollSuffix = useCallback((location: string) => {
       const scrollSepIdx = location.indexOf("#scroll=");
@@ -754,18 +818,49 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         const doc = content?.document;
         if (!doc?.body) return [];
 
+        const normalizeParagraph = (text: string) => text.replace(/\s+/g, " ").trim();
+
+        const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
+        const containerScrollTop = epubContainer?.scrollTop ?? 0;
+        const viewportHeight = content?.window?.innerHeight || window.innerHeight;
+        const viewportWidth = doc.body.clientWidth || content?.window?.innerWidth || window.innerWidth;
+
+        const positionIndex = positionIndexRef.current;
+        const paragraphLayouts = paragraphLayoutsRef.current;
+
+        if (positionIndex.length > 0 && paragraphLayouts.length > 0) {
+          const visibleIds = findVisibleParagraphs(
+            positionIndex,
+            containerScrollTop,
+            viewportHeight,
+            100
+          );
+
+          if (visibleIds.length > 0) {
+            const visibleParagraphs: ReaderParagraph[] = [];
+
+            for (const { index } of visibleIds) {
+              const layout = paragraphLayouts[index];
+              if (layout && layout.text.length > 0) {
+                visibleParagraphs.push({
+                  id: layout.id,
+                  text: layout.text,
+                  location: layout.location,
+                });
+              }
+            }
+
+            if (visibleParagraphs.length > 0) {
+              return visibleParagraphs;
+            }
+          }
+        }
+
         const nodes = doc.body.querySelectorAll(
           "p, li, blockquote, h1, h2, h3, h4, h5, h6"
         );
 
         const elementArray = Array.from(nodes) as HTMLElement[];
-        const viewportWidth = doc.body.clientWidth || content?.window?.innerWidth || window.innerWidth;
-        const viewportHeight = content?.window?.innerHeight || window.innerHeight;
-
-        const normalizeParagraph = (text: string) => text.replace(/\s+/g, " ").trim();
-
-        const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
-        const containerScrollTop = epubContainer?.scrollTop ?? 0;
 
         const visibleTop = containerScrollTop;
         const visibleBottom = containerScrollTop + viewportHeight;
@@ -976,6 +1071,52 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       return text.replace(/\s+/g, "").trim();
     }, []);
 
+    const findParagraphByPretext = useCallback(
+      (
+        doc: Document,
+        searchText: string
+      ): HTMLElement | null => {
+        const positionIndex = positionIndexRef.current;
+        const paragraphLayouts = paragraphLayoutsRef.current;
+
+        if (positionIndex.length === 0 || paragraphLayouts.length === 0) {
+          return null;
+        }
+
+        const needle = normalizeText(searchText).slice(0, 80);
+        if (!needle) return null;
+
+        let bestLayout: ParagraphLayout | null = null;
+        let bestScore = -1;
+
+        for (const layout of paragraphLayouts) {
+          const content = normalizeText(layout.text);
+          if (!content) continue;
+
+          const minLength = Math.min(48, Math.max(24, Math.floor(needle.length * 0.65)));
+
+          let score = -1;
+          if (content === needle) {
+            score = 10000;
+          } else if (content.includes(needle)) {
+            score = 8000 - Math.abs(content.length - needle.length);
+          } else if (needle.includes(content) && content.length >= minLength) {
+            score = 5000 + content.length;
+          }
+
+          if (score > bestScore) {
+            bestScore = score;
+            bestLayout = layout;
+          }
+        }
+
+        if (!bestLayout) return null;
+
+        return doc.querySelector(`[data-reader-paragraph-id="${bestLayout.id}"]`) as HTMLElement | null;
+      },
+      [normalizeText]
+    );
+
     const findTtsElementByLocation = useCallback(
       async (location: string) => {
         const range = await resolveRangeSafely(location);
@@ -1058,6 +1199,10 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
 
         if (!matchedElement && activeTtsLocation) {
           matchedElement = await findTtsElementByLocation(activeTtsLocation);
+        }
+
+        if (!matchedElement) {
+          matchedElement = findParagraphByPretext(doc, activeTtsParagraph);
         }
 
         if (!matchedElement) {
@@ -1156,6 +1301,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       findTtsElementByLocation,
       findTextRange,
       normalizeText,
+      findParagraphByPretext,
       theme,
       ttsHighlightColor,
     ]);
@@ -1455,7 +1601,17 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       const rendition = renditionRef.current;
       if (!rendition) return;
       rendition.themes.override("font-size", `${fontSize}px`);
-    }, [fontSize]);
+
+      const contents = rendition.getContents?.();
+      if (contents && Array.isArray(contents) && contents.length > 0) {
+        const content = contents[0] as { document?: Document; window?: Window };
+        const doc = content?.document;
+        if (doc?.body) {
+          const containerWidth = doc.body.clientWidth || content?.window?.innerWidth || window.innerWidth;
+          buildParagraphLayoutIndex(doc, containerWidth);
+        }
+      }
+    }, [fontSize, buildParagraphLayoutIndex]);
 
     useEffect(() => {
       const rendition = renditionRef.current;
@@ -1545,10 +1701,9 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
           }
         }
         
-        // Apply page width to newly displayed content
         const contents = rendition.getContents?.();
         if (contents && Array.isArray(contents) && contents.length > 0) {
-          const content = contents[0] as { document?: Document };
+          const content = contents[0] as { document?: Document; window?: Window };
           const doc = content?.document;
           if (doc?.body) {
             const children = doc.body.children;
@@ -1556,6 +1711,9 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
               const child = children[i] as HTMLElement;
               child.style.maxWidth = `${pageWidth}%`;
             }
+
+            const containerWidth = doc.body.clientWidth || content?.window?.innerWidth || window.innerWidth;
+            buildParagraphLayoutIndex(doc, containerWidth);
           }
         }
         
@@ -1567,7 +1725,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       return () => {
         rendition.off("displayed", handleDisplayed);
       };
-    }, [applyHighlights, pageWidth]);
+    }, [applyHighlights, pageWidth, buildParagraphLayoutIndex]);
 
     const handleKeyDown = useCallback((e: KeyboardEvent) => {
       const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
