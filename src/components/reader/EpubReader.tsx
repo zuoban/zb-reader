@@ -10,6 +10,7 @@ import {
 } from "react";
 import ePub, { Book, Rendition } from "epubjs";
 import { logger } from "@/lib/logger";
+import { EpubContext } from "@/lib/epub-context";
 import {
   prepareParagraphs,
   buildPositionIndex,
@@ -566,6 +567,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     const justSelectedRef = useRef(false);
 
     const highlightSpanRef = useRef<HTMLElement | null>(null);
+    const epubContextRef = useRef<EpubContext>(new EpubContext());
 
     const paragraphLayoutsRef = useRef<ParagraphLayout[]>([]);
     const positionIndexRef = useRef<Array<{
@@ -683,10 +685,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         );
 
         const paragraphs: Array<{ id: string; text: string; location?: string }> = [];
-        const contents = renditionRef.current?.getContents?.() as
-          | Array<{ cfiFromNode?: (node: Node, ignoreClass?: string) => string }>
-          | undefined;
-        const content = contents?.[0];
 
         for (const [index, element] of Array.from(nodes).entries()) {
           const text = (element.textContent || "").replace(/\s+/g, " ").trim();
@@ -696,7 +694,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
             paragraphs.push({
               id,
               text,
-              location: content?.cfiFromNode?.(element) || undefined,
+              location: epubContextRef.current.getCfiFromNode(element) || undefined,
             });
           }
         }
@@ -769,61 +767,38 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         rendition.prev();
       },
       scrollDown(amount = 300) {
-        const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
-        if (epubContainer) {
-          epubContainer.scrollBy({ top: amount, behavior: "smooth" });
-        }
+        const container = epubContextRef.current.getScrollContainer();
+        container?.scrollBy({ top: amount, behavior: "smooth" });
       },
       scrollUp(amount = 300) {
-        const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
-        if (epubContainer) {
-          epubContainer.scrollBy({ top: -amount, behavior: "smooth" });
-        }
+        const container = epubContextRef.current.getScrollContainer();
+        container?.scrollBy({ top: -amount, behavior: "smooth" });
       },
       getCurrentLocation() {
         return currentLocationRef.current;
       },
       getActiveTtsLocation() {
-        const contents = renditionRef.current?.getContents?.() as
-          | Array<{ document?: Document; cfiFromNode?: (node: Node, ignoreClass?: string) => string }>
-          | undefined;
-        const content = contents?.[0];
-        const doc = content?.document;
-        const activeElement = doc?.querySelector("[data-tts-active='1']");
-        if (!activeElement || !content?.cfiFromNode) {
-          return null;
-        }
-
-        try {
-          return content.cfiFromNode(activeElement);
-        } catch {
-          return null;
-        }
+        const activeElement = epubContextRef.current.getActiveTtsElement();
+        if (!activeElement) return null;
+        return epubContextRef.current.getCfiFromNode(activeElement);
       },
       getProgress() {
         return progressRef.current;
       },
       getCurrentText() {
-        const contents = renditionRef.current?.getContents?.() as
-          | Array<{ document?: Document }>
-          | undefined;
-        const text = contents?.[0]?.document?.body?.innerText?.trim();
+        const body = epubContextRef.current.getBody();
+        const text = body?.innerText?.trim();
         return text && text.length > 0 ? text : null;
       },
       getCurrentParagraphs() {
-        const contents = renditionRef.current?.getContents?.() as
-          | Array<{ document?: Document; window?: Window; cfiFromNode?: (node: Node, ignoreClass?: string) => string }>
-          | undefined;
-        const content = contents?.[0];
-        const doc = content?.document;
+        const ctx = epubContextRef.current;
+        const doc = ctx.getDocument();
         if (!doc?.body) return [];
 
         const normalizeParagraph = (text: string) => text.replace(/\s+/g, " ").trim();
 
-        const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
-        const containerScrollTop = epubContainer?.scrollTop ?? 0;
-        const viewportHeight = content?.window?.innerHeight || window.innerHeight;
-        const viewportWidth = doc.body.clientWidth || content?.window?.innerWidth || window.innerWidth;
+        const containerScrollTop = ctx.getScrollTop();
+        const { height: viewportHeight } = ctx.getViewportSize();
 
         const positionIndex = positionIndexRef.current;
         const paragraphLayouts = paragraphLayoutsRef.current;
@@ -861,6 +836,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         );
 
         const elementArray = Array.from(nodes) as HTMLElement[];
+        const { width: viewportWidth } = ctx.getViewportSize();
 
         const visibleTop = containerScrollTop;
         const visibleBottom = containerScrollTop + viewportHeight;
@@ -897,11 +873,8 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         };
 
         const getParagraphLocation = (element: HTMLElement) => {
-          try {
-            return content?.cfiFromNode?.(element) || undefined;
-          } catch {
-            return undefined;
-          }
+          const cfi = ctx.getCfiFromNode(element);
+          return cfi || undefined;
         };
 
         const visibleParagraphs: ReaderParagraph[] = [];
@@ -963,11 +936,8 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       },
 
       isFirstVisibleParagraphComplete() {
-        const contents = renditionRef.current?.getContents?.() as
-          | Array<{ document?: Document; window?: Window }>
-          | undefined;
-        const content = contents?.[0];
-        const doc = content?.document;
+        const ctx = epubContextRef.current;
+        const doc = ctx.getDocument();
         if (!doc?.body) return true;
 
         const nodes = doc.body.querySelectorAll(
@@ -975,11 +945,8 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         );
 
         const elementArray = Array.from(nodes) as HTMLElement[];
-        const viewportWidth = doc.body.clientWidth || content?.window?.innerWidth || window.innerWidth;
-        const viewportHeight = content?.window?.innerHeight || window.innerHeight;
-
-        const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
-        const containerScrollTop = epubContainer?.scrollTop ?? 0;
+        const { width: viewportWidth, height: viewportHeight } = ctx.getViewportSize();
+        const containerScrollTop = ctx.getScrollTop();
 
         const visibleTop = containerScrollTop;
         const visibleBottom = containerScrollTop + viewportHeight;
@@ -1032,38 +999,11 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         return true;
       },
       scrollToActiveParagraph() {
-        const contents = renditionRef.current?.getContents?.() as
-          | Array<{ document?: Document }>
-          | undefined;
-        const doc = contents?.[0]?.document;
-        if (!doc) return;
-
-        const activeElement = doc.querySelector("[data-tts-active='1']") as HTMLElement | null;
+        const ctx = epubContextRef.current;
+        const activeElement = ctx.getActiveTtsElement();
         if (!activeElement) return;
 
-        const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
-        if (!epubContainer) return;
-
-        let elementOffsetTop = 0;
-        let node: HTMLElement | null = activeElement;
-        while (node) {
-          elementOffsetTop += node.offsetTop;
-          node = node.offsetParent as HTMLElement | null;
-        }
-
-        const iframeEl = epubContainer.querySelector("iframe") as HTMLElement | null;
-        let iframeOffsetTop = 0;
-        if (iframeEl) {
-          let n: HTMLElement | null = iframeEl;
-          while (n && n !== epubContainer) {
-            iframeOffsetTop += n.offsetTop;
-            n = n.offsetParent as HTMLElement | null;
-          }
-        }
-
-        const absoluteTop = iframeOffsetTop + elementOffsetTop;
-        const targetScrollTop = absoluteTop;
-        epubContainer.scrollTo({ top: Math.max(0, targetScrollTop), behavior: "smooth" });
+        ctx.scrollToTop(activeElement);
       },
     }));
 
@@ -1120,10 +1060,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     const findTtsElementByLocation = useCallback(
       async (location: string) => {
         const range = await resolveRangeSafely(location);
-        const contents = renditionRef.current?.getContents?.() as
-          | Array<{ document?: Document }>
-          | undefined;
-        const doc = contents?.[0]?.document;
+        const doc = epubContextRef.current.getDocument();
         if (!range || !doc?.body) return null;
 
         const candidateSelector = "p, li, blockquote, h1, h2, h3, h4, h5, h6";
@@ -1140,36 +1077,16 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     );
 
     useEffect(() => {
-      const contents = renditionRef.current?.getContents?.() as
-        | Array<{ document?: Document }>
-        | undefined;
-      const doc = contents?.[0]?.document;
+      const ctx = epubContextRef.current;
+      const doc = ctx.getDocument();
       if (!doc?.body) return;
 
       let cancelled = false;
 
       const clearCurrentTtsState = () => {
-        // 清除句子级高亮 span
-        if (highlightSpanRef.current) {
-          const span = highlightSpanRef.current;
-          const parent = span.parentNode;
-          if (parent) {
-            const textContent = span.textContent || "";
-            const textNode = doc.createTextNode(textContent);
-            parent.replaceChild(textNode, span);
-            parent.normalize();
-          }
-          highlightSpanRef.current = null;
-        }
-
-        const activeNodes = doc.body.querySelectorAll("[data-tts-active='1']");
-        activeNodes.forEach((node) => {
-          node.removeAttribute("data-tts-active");
-          const element = node as HTMLElement;
-          element.style.cssText = "";
-        });
-
-        doc.body.removeAttribute("data-tts-immersive");
+        ctx.clearHighlightSpan();
+        ctx.clearTtsHighlight();
+        highlightSpanRef.current = null;
       };
 
       const applyActiveElement = async () => {
@@ -1179,7 +1096,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
           return;
         }
 
-        const candidates = doc.body.querySelectorAll(
+        const candidates = ctx.querySelectorAll(
           "p, li, blockquote, h1, h2, h3, h4, h5, h6"
         );
 
@@ -1192,9 +1109,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         let matchedElement: Element | null = null;
 
         if (activeTtsParagraphId) {
-          matchedElement = doc.querySelector(
-            `[data-reader-paragraph-id="${activeTtsParagraphId}"]`
-          );
+          matchedElement = ctx.getElementByParagraphId(activeTtsParagraphId);
         }
 
         if (!matchedElement && activeTtsLocation) {
@@ -1261,31 +1176,17 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
 
         if (cancelled || !matchedElement) return;
 
-        matchedElement.setAttribute("data-tts-active", "1");
         const activeElement = matchedElement as HTMLElement;
-        activeElement.style.transition = "all 220ms ease";
-        activeElement.style.opacity = "1";
-        activeElement.style.position = "relative";
+        ctx.setTtsHighlight(activeElement, ttsHighlightColor);
 
-        // 尝试找到精确的句子范围并高亮
         const range = findTextRange(activeElement, activeTtsParagraph);
         if (range) {
-          try {
-            const span = doc.createElement("span");
-            span.className = "tts-sentence-highlight";
-            span.style.backgroundColor = `${ttsHighlightColor}40`;
-            span.style.borderRadius = "3px";
-            span.style.padding = "1px 2px";
-
-            range.surroundContents(span);
+          const span = ctx.createHighlightSpan(range, ttsHighlightColor);
+          if (span) {
             highlightSpanRef.current = span;
-          } catch {
-            // 如果 surroundContents 失败，回退到段落级高亮
+          } else {
             activeElement.style.backgroundColor = `${ttsHighlightColor}20`;
           }
-        } else {
-          // 找不到精确范围，回退到段落级高亮
-          activeElement.style.backgroundColor = `${ttsHighlightColor}20`;
         }
       };
 
@@ -1306,46 +1207,14 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       ttsHighlightColor,
     ]);
 
-    // 只在段落切换时滚动（不在播放进度更新时滚动）
     useEffect(() => {
       if (!activeTtsParagraph) return;
 
-      const contents = renditionRef.current?.getContents?.() as
-        | Array<{ document?: Document }>
-        | undefined;
-      const doc = contents?.[0]?.document;
-      if (!doc) return;
-
-      const activeElement = doc.querySelector("[data-tts-active='1']") as HTMLElement | null;
+      const ctx = epubContextRef.current;
+      const activeElement = ctx.getActiveTtsElement();
       if (!activeElement) return;
 
-      // 滚动到活动段落
-      const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
-      if (epubContainer) {
-        let elementOffsetTop = 0;
-        let node: HTMLElement | null = activeElement;
-        while (node) {
-          elementOffsetTop += node.offsetTop;
-          node = node.offsetParent as HTMLElement | null;
-        }
-
-        const iframeEl = epubContainer.querySelector("iframe") as HTMLElement | null;
-        let iframeOffsetTop = 0;
-        if (iframeEl) {
-          let n: HTMLElement | null = iframeEl;
-          while (n && n !== epubContainer) {
-            iframeOffsetTop += n.offsetTop;
-            n = n.offsetParent as HTMLElement | null;
-          }
-        }
-
-        const absoluteTop = iframeOffsetTop + elementOffsetTop;
-        const targetScrollTop = absoluteTop - epubContainer.clientHeight * 0.25;
-        epubContainer.scrollTo({
-          top: Math.max(0, targetScrollTop),
-          behavior: "smooth",
-        });
-      }
+      ctx.scrollToElement(activeElement, 0.25);
     }, [activeTtsParagraph]);
 
     useEffect(() => {
@@ -1400,6 +1269,8 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
             allowScriptedContent: true,
           });
           renditionRef.current = rendition;
+          epubContextRef.current.setRendition(rendition);
+          epubContextRef.current.setContainer(viewerRef.current);
           applyTransparentShell();
 
           Object.entries(THEME_STYLES).forEach(([name, styles]) => {
@@ -1602,33 +1473,17 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       if (!rendition) return;
       rendition.themes.override("font-size", `${fontSize}px`);
 
-      const contents = rendition.getContents?.();
-      if (contents && Array.isArray(contents) && contents.length > 0) {
-        const content = contents[0] as { document?: Document; window?: Window };
-        const doc = content?.document;
-        if (doc?.body) {
-          const containerWidth = doc.body.clientWidth || content?.window?.innerWidth || window.innerWidth;
-          buildParagraphLayoutIndex(doc, containerWidth);
-        }
+      const doc = epubContextRef.current.getDocument();
+      const { width: containerWidth } = epubContextRef.current.getViewportSize();
+      if (doc?.body) {
+        buildParagraphLayoutIndex(doc, containerWidth);
       }
     }, [fontSize, buildParagraphLayoutIndex]);
 
     useEffect(() => {
-      const rendition = renditionRef.current;
-      if (!rendition || !isRenditionReady) return;
-      
-      const contents = rendition.getContents?.();
-      if (contents && Array.isArray(contents) && contents.length > 0) {
-        const content = contents[0] as { document?: Document };
-        const doc = content?.document;
-        if (doc?.body) {
-          const children = doc.body.children;
-          for (let i = 0; i < children.length; i++) {
-            const child = children[i] as HTMLElement;
-            child.style.maxWidth = `${pageWidth}%`;
-          }
-        }
-      }
+      if (!isRenditionReady) return;
+
+      epubContextRef.current.applyMaxWidthToChildren(pageWidth);
     }, [pageWidth, isRenditionReady]);
 
     const highlightMapRef = useRef<Map<string, string>>(new Map());
@@ -1687,36 +1542,15 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       if (!rendition) return;
 
       const handleDisplayed = () => {
-        if (viewerRef.current) {
-          viewerRef.current.style.background = "transparent";
-          const epubContainer = viewerRef.current.querySelector(".epub-container") as HTMLElement | null;
-          const iframeEl = viewerRef.current.querySelector("iframe") as HTMLIFrameElement | null;
-          if (epubContainer) {
-            epubContainer.style.background = "transparent";
-            epubContainer.style.boxShadow = "none";
-          }
-          if (iframeEl) {
-            iframeEl.style.background = "transparent";
-            iframeEl.style.boxShadow = "none";
-          }
-        }
-        
-        const contents = rendition.getContents?.();
-        if (contents && Array.isArray(contents) && contents.length > 0) {
-          const content = contents[0] as { document?: Document; window?: Window };
-          const doc = content?.document;
-          if (doc?.body) {
-            const children = doc.body.children;
-            for (let i = 0; i < children.length; i++) {
-              const child = children[i] as HTMLElement;
-              child.style.maxWidth = `${pageWidth}%`;
-            }
+        epubContextRef.current.applyTransparentBackground();
 
-            const containerWidth = doc.body.clientWidth || content?.window?.innerWidth || window.innerWidth;
-            buildParagraphLayoutIndex(doc, containerWidth);
-          }
+        const doc = epubContextRef.current.getDocument();
+        const { width: containerWidth } = epubContextRef.current.getViewportSize();
+        if (doc?.body) {
+          epubContextRef.current.applyMaxWidthToChildren(pageWidth);
+          buildParagraphLayoutIndex(doc, containerWidth);
         }
-        
+
         void applyHighlights();
       };
 
@@ -1728,17 +1562,17 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     }, [applyHighlights, pageWidth, buildParagraphLayoutIndex]);
 
     const handleKeyDown = useCallback((e: KeyboardEvent) => {
-      const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
-      if (!epubContainer) return;
-
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
       }
 
+      const container = epubContextRef.current.getScrollContainer();
+      if (!container) return;
+
       if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
-        epubContainer.scrollBy({ top: -100, behavior: "smooth" });
+        container.scrollBy({ top: -100, behavior: "smooth" });
       } else if (e.key === "ArrowDown" || e.key === "ArrowRight") {
-        epubContainer.scrollBy({ top: 100, behavior: "smooth" });
+        container.scrollBy({ top: 100, behavior: "smooth" });
       }
     }, []);
 
@@ -1758,13 +1592,13 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
           return;
         }
 
-        const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
-        if (!epubContainer) return;
+        const container = epubContextRef.current.getScrollContainer();
+        if (!container) return;
 
         if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
-          epubContainer.scrollBy({ top: -100, behavior: "smooth" });
+          container.scrollBy({ top: -100, behavior: "smooth" });
         } else if (e.key === "ArrowDown" || e.key === "ArrowRight") {
-          epubContainer.scrollBy({ top: 100, behavior: "smooth" });
+          container.scrollBy({ top: 100, behavior: "smooth" });
         }
       };
 
