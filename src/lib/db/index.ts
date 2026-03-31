@@ -300,6 +300,22 @@ function getConnection() {
     sqlite.exec(`ALTER TABLE reading_progress ADD COLUMN device_id TEXT;`);
   }
 
+  // Migration: Add font_family and flip_mode to reader_settings (2026-03-31)
+  const readerSettingsInfo = sqlite.prepare("PRAGMA table_info(reader_settings)").all() as { name: string }[];
+  const hasFontFamily = readerSettingsInfo.some((col) => col.name === "font_family");
+  const hasFlipMode = readerSettingsInfo.some((col) => col.name === "flip_mode");
+
+  if (!hasFontFamily) {
+    sqlite.exec(`ALTER TABLE reader_settings ADD COLUMN font_family TEXT NOT NULL DEFAULT 'system';`);
+  }
+  if (!hasFlipMode) {
+    sqlite.exec(`ALTER TABLE reader_settings ADD COLUMN flip_mode TEXT NOT NULL DEFAULT 'scroll';`);
+  }
+
+  // Migration: Add missing indexes for reading_progress (2026-03-31)
+  sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_reading_progress_user_id ON reading_progress (user_id);`);
+  sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_reading_progress_last_read_at ON reading_progress (last_read_at);`);
+
   _sqlite = sqlite;
   _db = drizzle(sqlite, { schema });
 
