@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { BrowserVoiceOption } from "@/lib/tts";
+import type { FontFamily } from "@/stores/reader-settings";
 import { cn } from "@/lib/utils";
 
 interface ReadingSettingsProps {
@@ -22,6 +23,8 @@ interface ReadingSettingsProps {
   onOpenChange: (open: boolean) => void;
   fontSize: number;
   onFontSizeChange: (size: number) => void;
+  fontFamily: FontFamily;
+  onFontFamilyChange: (fontFamily: FontFamily) => void;
   theme: "light" | "dark" | "sepia";
   onThemeChange: (theme: "light" | "dark" | "sepia") => void;
   browserVoices: BrowserVoiceOption[];
@@ -39,6 +42,13 @@ const themeOptions = [
   { value: "light" as const, label: "白色", bg: "#ffffff", textColor: "#334155", borderColor: "#e2e8f0" },
   { value: "dark" as const, label: "深色", bg: "#1e293b", textColor: "#e2e8f0", borderColor: "#334155" },
   { value: "sepia" as const, label: "护眼", bg: "#f4ecd8", textColor: "#5c4a32", borderColor: "#d6c9a8" },
+];
+
+const fontOptions = [
+  { value: "system", label: "系统默认" },
+  { value: "serif", label: "宋体/衬线体" },
+  { value: "sans", label: "黑体/无衬线" },
+  { value: "kaiti", label: "楷体" },
 ];
 
 function SettingCard({ children, className }: { children: React.ReactNode; className?: string }) {
@@ -247,6 +257,8 @@ export function ReadingSettings({
   onOpenChange,
   fontSize,
   onFontSizeChange,
+  fontFamily,
+  onFontFamilyChange,
   theme,
   onThemeChange,
   browserVoices,
@@ -361,8 +373,18 @@ export function ReadingSettings({
           {/* ── 排版 ── */}
           <section>
             <SectionLabel icon={Type} title="排版" />
-             <SettingCard>
-                {/* Font size row */}
+            <SettingCard>
+              {/* Font family row */}
+              <SettingRow label="字体" noBorder={false}>
+                <CompactSelect
+                  value={fontFamily}
+                  onChange={(v) => onFontFamilyChange(v as FontFamily)}
+                  placeholder="选择字体"
+                  options={fontOptions}
+                />
+              </SettingRow>
+
+              {/* Font size row */}
                 <div
                   className="flex items-center justify-between px-4 sm:px-5 py-4 sm:py-4.5 border-b"
                   style={{ borderColor: "var(--reader-border)" }}

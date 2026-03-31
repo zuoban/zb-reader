@@ -23,6 +23,7 @@ interface EpubReaderProps {
   url: string;
   initialLocation?: string;
   fontSize?: number;
+  fontFamily?: string;
   theme?: "light" | "dark" | "sepia";
   onLocationChange?: (location: {
     cfi: string;
@@ -79,6 +80,17 @@ interface RawTocItem {
   id?: string;
   subitems?: RawTocItem[];
 }
+
+const FONT_FAMILY_MAP: Record<string, string> = {
+  system: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif',
+  serif: '"Noto Serif SC", "Source Han Serif SC", "Songti SC", "SimSun", "STSong", serif',
+  sans: '"Noto Sans SC", "Source Han Sans SC", "Heiti SC", "SimHei", "STHeiti", sans-serif',
+  kaiti: '"LXGW WenKai", "Kaiti SC", "STKaiti", "KaiTi", "BiauKai", serif',
+};
+
+const getFontFamily = (fontFamily?: string) => {
+  return FONT_FAMILY_MAP[fontFamily || "system"] || FONT_FAMILY_MAP.system;
+};
 
 const THEME_STYLES: Record<
   NonNullable<EpubReaderProps["theme"]>,
@@ -578,6 +590,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       url,
       initialLocation,
       fontSize = 16,
+      fontFamily = "system",
       theme = "light",
       onLocationChange,
       onTocLoaded,
@@ -1342,6 +1355,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
 
           rendition.themes.select(theme);
           rendition.themes.override("font-size", `${fontSize}px`);
+          rendition.themes.override("font-family", getFontFamily(fontFamily));
 
           let displayCfi: string | undefined;
           let initialScrollRatio: number | null = null;
@@ -1542,6 +1556,12 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         buildParagraphLayoutIndex(doc, containerWidth);
       }
     }, [fontSize, buildParagraphLayoutIndex]);
+
+    useEffect(() => {
+      const rendition = renditionRef.current;
+      if (!rendition) return;
+      rendition.themes.override("font-family", getFontFamily(fontFamily));
+    }, [fontFamily]);
 
     useEffect(() => {
       if (!isRenditionReady) return;

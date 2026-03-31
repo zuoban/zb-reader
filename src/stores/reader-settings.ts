@@ -1,9 +1,12 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 
+export type FontFamily = "system" | "serif" | "sans" | "kaiti";
+
 interface ReaderSettingsState {
   fontSize: number;
   theme: "light" | "dark" | "sepia";
+  fontFamily: FontFamily;
   pageWidth: number;
   browserVoiceId: string;
   ttsRate: number;
@@ -19,6 +22,7 @@ interface ReaderSettingsState {
 interface ReaderSettingsActions {
   setFontSize: (size: number) => void;
   setTheme: (theme: "light" | "dark" | "sepia") => void;
+  setFontFamily: (fontFamily: FontFamily) => void;
   setPageWidth: (width: number) => void;
   setBrowserVoiceId: (id: string) => void;
   setTtsRate: (rate: number) => void;
@@ -32,9 +36,12 @@ interface ReaderSettingsActions {
   saveToServer: () => Promise<void>;
 }
 
+const ALLOWED_FONT_FAMILIES: FontFamily[] = ["system", "serif", "sans", "kaiti"];
+
 const DEFAULT_STATE: ReaderSettingsState = {
   fontSize: 16,
   theme: "light",
+  fontFamily: "system",
   pageWidth: 100,
   browserVoiceId: "",
   ttsRate: 1,
@@ -56,6 +63,7 @@ export const useReaderSettingsStore = create<
 
       setFontSize: (size) => set({ fontSize: Math.min(28, Math.max(12, size)) }),
       setTheme: (theme) => set({ theme }),
+      setFontFamily: (fontFamily: FontFamily) => set({ fontFamily }),
       setPageWidth: (width) => set({ pageWidth: Math.min(100, Math.max(50, width)) }),
       setBrowserVoiceId: (browserVoiceId) => set({ browserVoiceId }),
       setTtsRate: (rate) => set({ ttsRate: Math.min(5, Math.max(1, rate)) }),
@@ -85,6 +93,9 @@ export const useReaderSettingsStore = create<
                 ? Math.min(28, Math.max(12, settings.fontSize))
                 : DEFAULT_STATE.fontSize,
             theme: settings.theme || DEFAULT_STATE.theme,
+            fontFamily: ALLOWED_FONT_FAMILIES.includes(settings.fontFamily as FontFamily)
+              ? (settings.fontFamily as FontFamily)
+              : DEFAULT_STATE.fontFamily,
             pageWidth:
               typeof settings.pageWidth === "number"
                 ? Math.min(100, Math.max(50, settings.pageWidth))
@@ -128,6 +139,7 @@ export const useReaderSettingsStore = create<
             body: JSON.stringify({
               fontSize: state.fontSize,
               theme: state.theme,
+              fontFamily: state.fontFamily,
               pageWidth: state.pageWidth,
               browserVoiceId: state.browserVoiceId,
               ttsRate: state.ttsRate,

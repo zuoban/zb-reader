@@ -11,6 +11,7 @@ interface ReaderSettingsPayload {
   fontSize?: number;
   pageWidth?: number;
   theme?: "light" | "dark" | "sepia";
+  fontFamily?: string;
   browserVoiceId?: string;
   ttsRate?: number;
   microsoftPreloadCount?: number;
@@ -22,12 +23,15 @@ const DEFAULTS = {
   fontSize: 16,
   pageWidth: 100,
   theme: "light" as const,
+  fontFamily: "system" as const,
   browserVoiceId: "",
   ttsRate: 1,
   microsoftPreloadCount: 5,
   ttsAutoNextChapter: false,
   ttsHighlightColor: "#3b82f6",
 };
+
+const ALLOWED_FONT_FAMILIES = ["system", "serif", "sans", "kaiti"];
 
 function toResponseShape(settings: typeof readerSettings.$inferSelect | null | undefined) {
   if (!settings) {
@@ -38,6 +42,7 @@ function toResponseShape(settings: typeof readerSettings.$inferSelect | null | u
     fontSize: settings.fontSize,
     pageWidth: settings.pageWidth,
     theme: settings.theme,
+    fontFamily: settings.fontFamily || DEFAULTS.fontFamily,
     browserVoiceId: settings.browserVoiceId || "",
     ttsRate: settings.ttsRate,
     microsoftPreloadCount: settings.microsoftPreloadCount,
@@ -85,6 +90,9 @@ export async function PUT(req: NextRequest) {
         payload.theme === "dark" || payload.theme === "sepia" || payload.theme === "light"
           ? payload.theme
           : existing?.theme ?? DEFAULTS.theme,
+      fontFamily: ALLOWED_FONT_FAMILIES.includes(payload.fontFamily as string)
+        ? (payload.fontFamily as string)
+        : existing?.fontFamily ?? DEFAULTS.fontFamily,
       browserVoiceId:
         typeof payload.browserVoiceId === "string"
           ? payload.browserVoiceId

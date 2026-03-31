@@ -196,6 +196,7 @@ export const readerSettings = sqliteTable("reader_settings", {
     .default(false)
     .notNull(),
   ttsHighlightColor: text("tts_highlight_color").default("#3b82f6").notNull(),
+  fontFamily: text("font_family").default("system").notNull(),
   autoScrollToActive: integer("auto_scroll_to_active", { mode: "boolean" })
     .default(true)
     .notNull(),

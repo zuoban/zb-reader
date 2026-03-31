@@ -29,6 +29,7 @@ import { ttsAudioCache, TtsAudioLruCache } from "@/lib/ttsAudioCache";
 import { logger } from "@/lib/logger";
 import { useProgressSyncCompat } from "@/hooks/useProgressSyncCompat";
 import { useReaderSettingsStore, useDebouncedSettingsSave } from "@/stores/reader-settings";
+import type { FontFamily } from "@/stores/reader-settings";
 import { READER_THEME_STYLES } from "@/lib/reader-theme";
 import { paragraphsToSentences, type Sentence } from "@/lib/textUtils";
 
@@ -131,6 +132,7 @@ function ReaderContent() {
   // Settings from store
   const settings = useReaderSettingsStore();
   const fontSize = settings.fontSize;
+  const fontFamily = settings.fontFamily;
   const readerTheme = settings.theme;
   const selectedBrowserVoiceId = settings.browserVoiceId;
   const ttsRate = settings.ttsRate;
@@ -335,6 +337,7 @@ function ReaderContent() {
   }, [
     settings.fontSize,
     settings.theme,
+    settings.fontFamily,
     settings.browserVoiceId,
     settings.ttsRate,
     settings.microsoftPreloadCount,
@@ -863,6 +866,10 @@ function ReaderContent() {
   // ---- Settings handlers ----
   const handleFontSizeChange = useCallback((size: number) => {
     settings.setFontSize(size);
+  }, [settings]);
+
+  const handleFontFamilyChange = useCallback((family: FontFamily) => {
+    settings.setFontFamily(family);
   }, [settings]);
 
   const handleThemeChange = useCallback(async (theme: "light" | "dark" | "sepia") => {
@@ -1850,6 +1857,7 @@ function ReaderContent() {
                   url={bookUrl}
                   initialLocation={initialLocation}
                   fontSize={fontSize}
+                  fontFamily={fontFamily}
                   theme={readerTheme}
                   onLocationChange={handleLocationChange}
                   onTocLoaded={handleTocLoaded}
@@ -1935,6 +1943,8 @@ function ReaderContent() {
         onOpenChange={setSettingsOpen}
         fontSize={fontSize}
         onFontSizeChange={handleFontSizeChange}
+        fontFamily={fontFamily}
+        onFontFamilyChange={handleFontFamilyChange}
         theme={readerTheme}
         onThemeChange={handleThemeChange}
         browserVoices={browserVoices}
