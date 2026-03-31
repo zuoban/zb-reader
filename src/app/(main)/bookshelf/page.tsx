@@ -6,7 +6,6 @@ import { Navbar } from "@/components/layout/Navbar";
 import { BookGrid } from "@/components/bookshelf/BookGrid";
 import { BookCardSkeleton } from "@/components/bookshelf/BookCardSkeleton";
 import { SearchBar } from "@/components/bookshelf/SearchBar";
-import { UploadDialog } from "@/components/bookshelf/UploadDialog";
 import { BackgroundDecoration } from "@/components/bookshelf/BackgroundDecoration";
 import { READER_RETURN_SPOTLIGHT_KEY } from "@/components/layout/ReaderRouteTransition";
 import { useTheme } from "next-themes";
@@ -23,7 +22,6 @@ export default function BookshelfPage() {
   const [readingDurationMap, setReadingDurationMap] = useState<Record<string, number>>({});
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
-  const [uploadOpen, setUploadOpen] = useState(false);
   const [spotlightBookId, setSpotlightBookId] = useState<string | null>(null);
   const { setTheme } = useTheme();
 
@@ -127,7 +125,7 @@ export default function BookshelfPage() {
   return (
     <div className="min-h-screen bg-background">
       <BackgroundDecoration />
-      <Navbar onUploadClick={() => setUploadOpen(true)} />
+      <Navbar onUploadComplete={fetchBooks} />
 
       <main className="relative mx-auto w-full max-w-7xl px-4 pb-10 pt-4 sm:px-6 sm:pb-14 sm:pt-5">
         {/* Header Section */}
@@ -187,14 +185,6 @@ export default function BookshelfPage() {
           />
         )}
       </main>
-
-      <UploadDialog
-        open={uploadOpen}
-        onOpenChange={setUploadOpen}
-        onUploadComplete={() => {
-          fetchBooks();
-        }}
-      />
     </div>
   );
 }

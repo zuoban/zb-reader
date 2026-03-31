@@ -1,9 +1,10 @@
 "use client";
 
+import { UploadButton } from "@/components/bookshelf/UploadButton";
 import Link from "next/link";
 import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
-import { Upload, Moon, Sun, LogOut, User, Library } from "lucide-react";
+import { Moon, Sun, LogOut, User, Library } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,11 +18,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
 interface NavbarProps {
-  onUploadClick?: () => void;
+  onUploadComplete?: () => void;
   className?: string;
 }
 
-export function Navbar({ onUploadClick, className }: NavbarProps) {
+export function Navbar({ onUploadComplete, className }: NavbarProps) {
   const { data: session } = useSession();
   const { theme, setTheme } = useTheme();
 
@@ -73,16 +74,11 @@ export function Navbar({ onUploadClick, className }: NavbarProps) {
 
           {/* Actions */}
           <div className="flex items-center gap-2 sm:gap-3">
-            {onUploadClick && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={onUploadClick}
+            {onUploadComplete && (
+              <UploadButton
+                onUploadComplete={onUploadComplete}
                 className="h-9 gap-2 rounded-full border-primary/18 bg-background/92 px-3.5 text-foreground shadow-[0_10px_20px_-20px_color-mix(in_oklab,var(--foreground)_12%,transparent)] transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:bg-primary/6 hover:text-primary"
-              >
-                <Upload className="h-4 w-4" />
-                <span className="hidden sm:inline">上传书籍</span>
-              </Button>
+              />
             )}
 
             <Button
