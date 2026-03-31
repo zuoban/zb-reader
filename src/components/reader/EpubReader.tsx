@@ -233,6 +233,9 @@ const THEME_STYLES: Record<
       "border-radius": "1rem",
       "box-shadow": "0 18px 36px -28px rgba(15,23,42,0.38)",
     },
+    "sup": {
+      "line-height": "1",
+    },
     "a, a:visited": {
       color: "inherit",
       "text-decoration": "none",
@@ -395,6 +398,9 @@ const THEME_STYLES: Record<
       "border-radius": "1rem",
       "box-shadow": "0 22px 40px -32px rgba(0,0,0,0.65)",
     },
+    "sup": {
+      "line-height": "1",
+    },
     "a, a:visited": {
       color: "inherit",
       "text-decoration": "none",
@@ -556,6 +562,9 @@ const THEME_STYLES: Record<
       height: "auto",
       "border-radius": "1rem",
       "box-shadow": "0 18px 36px -28px rgba(91,70,54,0.36)",
+    },
+    "sup": {
+      "line-height": "1",
     },
     "a, a:visited": {
       color: "inherit",
@@ -1409,6 +1418,24 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
           rendition.once("displayed", () => {
             applyTransparentShell();
             setIsRenditionReady(true);
+            const iframeEl = viewerRef.current?.querySelector("iframe") as HTMLIFrameElement | null;
+            const doc = iframeEl?.contentDocument;
+            if (doc) {
+              const style = doc.createElement("style");
+              style.textContent = `
+                sup img {
+                  width: 1.2em !important;
+                  height: auto !important;
+                  vertical-align: sub;
+                }
+                sub img {
+                  width: 1.2em !important;
+                  height: auto !important;
+                  vertical-align: super;
+                }
+              `;
+              doc.head.appendChild(style);
+            }
             if (initialScrollRatio !== null) {
               setTimeout(() => {
                 const epubContainer = viewerRef.current?.querySelector(".epub-container") as HTMLElement | null;
