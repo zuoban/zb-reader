@@ -143,13 +143,14 @@ export class EpubContext {
   getParagraphs(selector = "p, li, blockquote, h1, h2, h3, h4, h5, h6"): ParagraphInfo[] {
     const elements = this.querySelectorAll(selector);
     const paragraphs: ParagraphInfo[] = [];
+    const punctuationOnlyRegex = /^[\s\p{P}\p{S}\p{Z}]*$/u;
 
     for (const element of Array.from(elements)) {
       const el = element as HTMLElement;
       const text = (el.textContent || "").replace(/\s+/g, " ").trim();
       const id = el.getAttribute("data-reader-paragraph-id") || "";
 
-      if (text.length > 0 && text.length <= 800) {
+      if (text.length > 0 && text.length <= 800 && !punctuationOnlyRegex.test(text)) {
         paragraphs.push({
           id,
           text,
@@ -198,9 +199,11 @@ export class EpubContext {
   ): void {
     element.setAttribute("data-tts-active", "1");
     element.style.transition = "all 220ms ease";
-    element.style.opacity = "1";
     element.style.position = "relative";
-    element.style.backgroundColor = `${highlightColor}20`;
+    element.style.textDecoration = "underline";
+    element.style.textDecorationColor = highlightColor;
+    element.style.textDecorationThickness = "3px";
+    element.style.textUnderlineOffset = "4px";
   }
 
   clearHighlightSpan(): void {
@@ -227,14 +230,73 @@ export class EpubContext {
     if (!doc) return null;
 
     try {
-      const span = doc.createElement("span");
-      span.className = "tts-sentence-highlight";
-      span.style.backgroundColor = `${highlightColor}40`;
-      span.style.borderRadius = "3px";
-      span.style.padding = "1px 2px";
+      const startContainer = range.startContainer;
+      const endContainer = range.endContainer;
 
-      range.surroundContents(span);
-      return span;
+      if (startContainer === endContainer && startContainer.nodeType === Node.TEXT_NODE) {
+        const span = doc.createElement("span");
+        span.className = "tts-sentence-highlight";
+        span.style.textDecoration = "underline";
+        span.style.textDecorationColor = highlightColor;
+        span.style.textDecorationThickness = "3px";
+        span.style.textUnderlineOffset = "4px";
+        range.surroundContents(span);
+        return span;
+      }
+
+      const nodes: Text[] = [];
+      const walker = doc.createTreeWalker(
+        range.commonAncestorContainer,
+        NodeFilter.SHOW_TEXT,
+        {
+          acceptNode: (node: Node) => {
+            if (!range.intersectsNode(node)) return NodeFilter.FILTER_REJECT;
+            if (!node.textContent || node.textContent.trim().length === 0) return NodeFilter.FILTER_REJECT;
+            return NodeFilter.FILTER_ACCEPT;
+          },
+        }
+      );
+
+      let node = walker.nextNode();
+      while (node) {
+        nodes.push(node as Text);
+        node = walker.nextNode();
+      }
+
+      if (nodes.length === 0) return null;
+
+      const firstNode = nodes[0];
+      const lastNode = nodes[nodes.length - 1];
+
+      for (let i = 0; i < nodes.length; i++) {
+        const textNode = nodes[i];
+        let nodeToWrap: Text;
+
+        if (i === 0 && textNode === startContainer && range.startOffset > 0) {
+          nodeToWrap = textNode.splitText(range.startOffset);
+        } else {
+          nodeToWrap = textNode;
+        }
+
+        if (i === nodes.length - 1 && textNode === endContainer && range.endOffset < textNode.length) {
+          if (i === 0 && textNode === startContainer) {
+            nodeToWrap.splitText(range.endOffset - range.startOffset);
+          } else {
+            nodeToWrap.splitText(range.endOffset);
+          }
+        }
+
+        const span = doc.createElement("span");
+        span.className = "tts-sentence-highlight";
+        span.style.textDecoration = "underline";
+        span.style.textDecorationColor = highlightColor;
+        span.style.textDecorationThickness = "3px";
+        span.style.textUnderlineOffset = "4px";
+        nodeToWrap.parentNode?.insertBefore(span, nodeToWrap);
+        span.appendChild(nodeToWrap);
+      }
+
+      return doc.querySelector(".tts-sentence-highlight") as HTMLSpanElement | null;
     } catch {
       return null;
     }

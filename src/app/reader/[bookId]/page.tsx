@@ -1094,7 +1094,8 @@ function ReaderContent() {
 
   const speakWithBrowserParagraphs = useCallback(
     async (sentences: Sentence[], sessionId: number, startIndex = 0) => {
-      const queue = sentences.filter((item) => item.text.trim().length > 0);
+      const punctuationOnlyRegex = /^[\s\p{P}\p{S}\p{Z}]*$/u;
+      const queue = sentences.filter((item) => item.text.trim().length > 0 && !punctuationOnlyRegex.test(item.text));
       if (queue.length === 0) {
         toast.error("当前页面没有可朗读内容");
         return;

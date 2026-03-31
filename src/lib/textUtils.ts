@@ -287,17 +287,19 @@ export function paragraphsToSentences(
   maxLength = 500
 ): Sentence[] {
   const sentences: Sentence[] = [];
+  const punctuationOnlyRegex = /^[\s\p{P}\p{S}\p{Z}]*$/u;
 
   for (const paragraph of paragraphs) {
     const text = paragraph.text.trim();
-    if (text.length === 0) continue;
+    if (text.length === 0 || punctuationOnlyRegex.test(text)) continue;
 
     const sentenceTexts = splitIntoSentences(text, maxLength);
 
     for (const sentenceText of sentenceTexts) {
-      if (sentenceText.trim().length > 0) {
+      const trimmed = sentenceText.trim();
+      if (trimmed.length > 0 && !punctuationOnlyRegex.test(trimmed)) {
         sentences.push({
-          text: sentenceText.trim(),
+          text: trimmed,
           paragraphId: paragraph.id,
           location: paragraph.location,
         });

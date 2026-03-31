@@ -1253,15 +1253,13 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         if (cancelled || !matchedElement) return;
 
         const activeElement = matchedElement as HTMLElement;
-        ctx.setTtsHighlight(activeElement, ttsHighlightColor);
+        activeElement.setAttribute("data-tts-active", "1");
 
         const range = findTextRange(activeElement, activeTtsParagraph);
         if (range) {
           const span = ctx.createHighlightSpan(range, ttsHighlightColor);
           if (span) {
             highlightSpanRef.current = span;
-          } else {
-            activeElement.style.backgroundColor = `${ttsHighlightColor}20`;
           }
         }
       };
