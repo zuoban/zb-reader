@@ -112,6 +112,16 @@ export function UploadDialog({
     }
   };
 
+  const formatFileName = (name: string, maxLength: number = 50) => {
+    if (name.length <= maxLength) return name;
+    const lastDot = name.lastIndexOf('.');
+    const ext = lastDot > 0 ? name.slice(lastDot) : '';
+    const base = lastDot > 0 ? name.slice(0, lastDot) : name;
+    const baseLength = maxLength - ext.length - 3;
+    if (baseLength <= 0) return name.slice(0, maxLength - 3) + '...';
+    return base.slice(0, baseLength) + '...' + ext;
+  };
+
   const formatSize = (bytes: number) => {
     if (bytes < 1024) return bytes + " B";
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
@@ -122,7 +132,7 @@ export function UploadDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="overflow-hidden rounded-[1.35rem] border-border/60 bg-card/92 p-0 shadow-[0_36px_100px_-48px_color-mix(in_oklab,var(--foreground)_40%,transparent)] sm:max-w-xl sm:rounded-[1.75rem]">
+      <DialogContent className="overflow-hidden rounded-[1.35rem] border-border/60 bg-card/92 p-0 shadow-[0_36px_100px_-48px_color-mix(in_oklab,var(--foreground)_40%,transparent)] sm:max-w-2xl sm:rounded-[1.75rem]">
         <div className="relative">
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/45 to-transparent" />
           <div className="absolute -right-14 top-0 h-32 w-32 rounded-full bg-primary/12 blur-3xl dark:bg-primary/15" />
@@ -171,7 +181,7 @@ export function UploadDialog({
                     {files.length} 个文件
                   </span>
                 </div>
-                <div className="max-h-56 space-y-2.5 overflow-y-auto pr-1 sm:max-h-60 sm:space-y-3">
+                <div className="space-y-2.5 sm:space-y-3">
                   {files.map((f, i) => (
                     <div
                       key={i}
@@ -182,7 +192,7 @@ export function UploadDialog({
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-foreground">
-                          {f.file.name}
+                          {formatFileName(f.file.name)}
                         </p>
                         <p className="text-[11px] text-muted-foreground sm:text-xs">
                           {formatSize(f.file.size)}
