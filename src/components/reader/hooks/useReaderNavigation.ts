@@ -1,16 +1,9 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import type { EpubReaderRef } from "@/components/reader/EpubReader";
 import { READER_ROUTE_EXIT_EVENT } from "@/components/layout/ReaderRouteTransition";
 import type { TocItem } from "@/types/reader";
-
-interface Book {
-  id: number;
-  title: string | null;
-  author: string | null;
-  cover: string | null;
-  format: string | null;
-}
+import type { Book } from "@/lib/db/schema";
 
 interface UseReaderNavigationParams {
   bookId: string;
@@ -41,6 +34,7 @@ interface UseReaderNavigationParams {
   bookmarks: Array<{ location: string }>;
   setIsCurrentBookmarked: (value: boolean) => void;
   debouncedSaveProgress: () => void;
+  onTextSelectionOpened?: () => void;
 }
 
 interface UseReaderNavigationReturn {
@@ -64,6 +58,8 @@ interface UseReaderNavigationReturn {
   handleNextPage: () => void;
   handlePrevChapter: () => void;
   handleNextChapter: () => void;
+  hasPrevChapter: boolean;
+  hasNextChapter: boolean;
 }
 
 /**
@@ -95,6 +91,7 @@ export function useReaderNavigation({
   bookmarks,
   setIsCurrentBookmarked,
   debouncedSaveProgress,
+  onTextSelectionOpened,
 }: UseReaderNavigationParams): UseReaderNavigationReturn {
   const router = useRouter();
 
@@ -143,13 +140,14 @@ export function useReaderNavigation({
   );
 
   const handleTextSelected = useCallback((cfiRange: string, text: string) => {
+    onTextSelectionOpened?.();
     setSelectionMenu({
       visible: true,
       position: { x: window.innerWidth / 2, y: 80 },
       cfiRange,
       text,
     });
-  }, []);
+  }, [onTextSelectionOpened, setSelectionMenu]);
 
   const handleToggleToolbar = useCallback(() => {
     if (isSpeaking) {
@@ -289,6 +287,33 @@ export function useReaderNavigation({
     }
   }, [book?.format, currentHref, toc]);
 
+  const { hasPrevChapter, hasNextChapter } = useMemo(() => {
+    let prev = false;
+    let next = false;
+
+    if (book?.format === "epub" && toc.length > 0) {
+      const currentIdx = toc.findIndex(
+        (item) =>
+          item.href === currentHref ||
+          currentHref?.includes(item.href) ||
+          item.href?.includes(currentHref || "")
+      );
+
+      if (currentIdx !== -1) {
+        prev = currentIdx > 0;
+        next = currentIdx < toc.length - 1;
+      } else if (currentHref) {
+        prev = true;
+        next = true;
+      }
+    }
+
+    return {
+      hasPrevChapter: prev,
+      hasNextChapter: next,
+    };
+  }, [book?.format, currentHref, toc]);
+
   return {
     handleLocationChange,
     handleTocLoaded,
@@ -303,5 +328,7 @@ export function useReaderNavigation({
     handleNextPage,
     handlePrevChapter,
     handleNextChapter,
+    hasPrevChapter,
+    hasNextChapter,
   };
 }

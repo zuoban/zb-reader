@@ -20,16 +20,16 @@ import {
   useNoteActions,
   useReaderBookData,
   useReaderFullscreen,
+  useReaderNavigation,
   useReaderSettingsLifecycle,
+  useReaderTtsAudio,
 } from "@/components/reader/hooks";
-import { READER_ROUTE_EXIT_EVENT } from "@/components/layout/ReaderRouteTransition";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import type { EpubReaderRef, ReaderParagraph } from "@/components/reader/EpubReader";
 import type { TocItem } from "@/types/reader";
 import { ttsAudioCache, TtsAudioLruCache } from "@/lib/ttsAudioCache";
-import { logger } from "@/lib/logger";
 import { useProgressSyncCompat } from "@/hooks/useProgressSyncCompat";
 import { useReaderSettingsStore, useDebouncedSettingsSave } from "@/stores/reader-settings";
 import type { FontFamily } from "@/stores/reader-settings";
@@ -49,8 +49,6 @@ const EpubReader = dynamic(() => import("@/components/reader/EpubReader"), {
 
 const MAX_TTS_RETRY_COUNT = 5;
 const TTS_RETRY_DELAY_MS = 450;
-const IS_DEV = process.env.NODE_ENV !== "production";
-
 function normalizeTocHref(href?: string) {
   if (!href) return "";
   return href.split("#")[0]?.trim().toLowerCase() ?? "";
@@ -198,11 +196,8 @@ function ReaderContent() {
   const debouncedSaveProgress = progressSync.debouncedSaveProgress;
 
   const currentCfiRef = useRef<string | null>(null);
-  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
-  const ttsProgressRafRef = useRef<number | null>(null);
 
   const ttsSessionRef = useRef(0);
-  const ttsResumeRef = useRef<(() => void) | null>(null);
   const [activeTtsParagraph, setActiveTtsParagraph] = useState("");
   const [activeTtsParagraphId, setActiveTtsParagraphId] = useState<string | null>(null);
   const [activeTtsLocation, setActiveTtsLocation] = useState<string | null>(null);
@@ -211,13 +206,6 @@ function ReaderContent() {
   const readSentencesHashRef = useRef<Set<string>>(new Set<string>());
   const ttsCurrentIndexRef = useRef(0);
   const ttsTotalSentencesRef = useRef(0);
-
-  // 跟踪 TTS 设置的上次值，用于检测设置变化
-  const prevTtsSettingsRef = useRef({ rate: ttsRate, voiceId: selectedBrowserVoiceId });
-  
-  // Wake Lock for preventing screen sleep during TTS
-  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
-  const mediaSessionSetupRef = useRef(false);
   const handleBackRef = useRef<(() => Promise<void>) | null>(null);
 
   const currentChapterTitle = useMemo(() => {
@@ -249,179 +237,53 @@ function ReaderContent() {
     return !error.message.includes("NotAllowedError");
   }, []);
 
-  const stopSpeaking = useCallback(() => {
-    ttsSessionRef.current += 1;
-    ttsResumeRef.current = null;
-    allSentencesRef.current = [];
-    readSentencesHashRef.current.clear();
-    currentParagraphIndexRef.current = 0;
-    ttsCurrentIndexRef.current = 0;
-    ttsTotalSentencesRef.current = 0;
-    if (currentAudioRef.current) {
-      currentAudioRef.current.pause();
-      currentAudioRef.current.currentTime = 0;
-      currentAudioRef.current = null;
-    }
-    if (ttsProgressRafRef.current !== null) {
-      cancelAnimationFrame(ttsProgressRafRef.current);
-      ttsProgressRafRef.current = null;
-    }
-    setActiveTtsParagraph("");
-    setActiveTtsParagraphId(null);
-    setActiveTtsLocation(null);
-    setIsSpeaking(false);
-    setIsPaused(false);
-    setIsTtsViewOpen(false);
-
-    // Keep the reader on the currently spoken paragraph when stopping.
-    if (book?.format === "epub") {
-      epubReaderRef.current?.scrollToActiveParagraph();
-    }
-
-    // Release wake lock
-    if (wakeLockRef.current) {
-      wakeLockRef.current.release().catch((err) => {
-        logger.warn("reader", "Failed to release wake lock", err);
-      });
-      wakeLockRef.current = null;
-    }
-
-    // Clear media session
-    if ("mediaSession" in navigator && mediaSessionSetupRef.current) {
-      navigator.mediaSession.playbackState = "none";
-      mediaSessionSetupRef.current = false;
-    }
-  }, [book?.format]);
-
-  const setupMediaSession = useCallback(() => {
-    if (!("mediaSession" in navigator)) return;
-    if (mediaSessionSetupRef.current) return;
-    
-    mediaSessionSetupRef.current = true;
-    
-    navigator.mediaSession.metadata = new MediaMetadata({
-      title: book?.title || "朗读中",
-      artist: book?.author || "ZB Reader",
-      album: "电子书朗读",
-    });
-    
-    navigator.mediaSession.playbackState = "playing";
-  }, [book]);
-
-  const requestWakeLock = useCallback(async () => {
-    if (!("wakeLock" in navigator)) return;
-    
-    try {
-      if (wakeLockRef.current) {
-        await wakeLockRef.current.release();
-      }
-      wakeLockRef.current = await navigator.wakeLock.request("screen");
-    } catch {
-      // Wake Lock not supported or failed
-    }
-  }, []);
-
   // Progress saving is now handled by useProgressSyncCompat hook
   // Use saveProgress() and debouncedSaveProgress() from the hook
 
   // ---- Handlers ----
-  const handleLocationChange = useCallback(
-    (location: {
-      cfi: string;
-      progress: number;
-      currentPage?: number;
-      totalPages?: number;
-      href?: string;
-      scrollRatio?: number;
-    }) => {
-      // Encode the scroll ratio into the location string so we can restore the
-      // exact scroll position (not just the chapter/CFI) on the next open.
-      // Format: "<cfi>#scroll=<ratio>" where ratio is a float in [0, 1].
-      // If scrollRatio is undefined (e.g. no scroll info), we strip any previous
-      // suffix to keep the stored value clean.
-      let locationToSave = location.cfi;
-      if (typeof location.scrollRatio === "number" && location.scrollRatio > 0) {
-        locationToSave = `${location.cfi}#scroll=${location.scrollRatio.toFixed(4)}`;
-      }
-      currentLocationRef.current = locationToSave;
-      currentCfiRef.current = location.cfi;
-      progressRef.current = location.progress;
-      currentPageRef.current = location.currentPage;
-      totalPagesRef.current = location.totalPages;
-      setProgress(location.progress);
-      setCurrentPage(location.currentPage);
-      setTotalPages(location.totalPages);
-      if (location.href) setCurrentHref(location.href);
-
-      // Check if current location is bookmarked
-      const isBookmarked = bookmarks.some((b) => b.location === location.cfi);
-      setIsCurrentBookmarked(isBookmarked);
-
-      debouncedSaveProgress();
+  const {
+    handleLocationChange,
+    handleTocLoaded,
+    handleTextSelected,
+    handleToggleToolbar,
+    handleBack,
+    handleTocItemClick,
+    handleBookmarkClick,
+    handleNoteClick,
+    handleProgressChange,
+    handlePrevPage,
+    handleNextPage,
+    handlePrevChapter,
+    handleNextChapter,
+    hasPrevChapter,
+    hasNextChapter,
+  } = useReaderNavigation({
+    bookId,
+    book,
+    epubReaderRef,
+    saveProgress,
+    toc,
+    currentHref,
+    progressRef,
+    isSpeaking,
+    setToolbarVisible,
+    setSelectionMenu,
+    setToc,
+    setCurrentHref,
+    setProgress,
+    setCurrentPage,
+    setTotalPages,
+    currentLocationRef,
+    currentCfiRef,
+    currentPageRef,
+    totalPagesRef,
+    bookmarks,
+    setIsCurrentBookmarked,
+    debouncedSaveProgress,
+    onTextSelectionOpened: () => {
+      setSelectionMenuKey((key) => key + 1);
     },
-    [bookmarks, debouncedSaveProgress]
-  );
-
-  const handleTocLoaded = useCallback((tocItems: TocItem[]) => {
-    setToc(tocItems);
-  }, []);
-
-  const handleTextSelected = useCallback((cfiRange: string, text: string) => {
-    setSelectionMenuKey((k) => k + 1);
-    setSelectionMenu({
-      visible: true,
-      position: { x: window.innerWidth / 2, y: 80 },
-      cfiRange,
-      text,
-    });
-  }, []);
-
-  const handleToggleToolbar = useCallback(() => {
-    if (isSpeaking) {
-      return;
-    }
-    setToolbarVisible((prev) => !prev);
-    setSelectionMenu((prev) => ({ ...prev, visible: false }));
-  }, [isSpeaking]);
-
-  const handleBack = useCallback(async () => {
-    const saveResult = await saveProgress();
-    if (!saveResult?.conflict) {
-      const shouldSkipTransition =
-        typeof window === "undefined" ||
-        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-      if (!shouldSkipTransition && book) {
-        window.dispatchEvent(
-          new CustomEvent(READER_ROUTE_EXIT_EVENT, {
-            detail: {
-              href: "/bookshelf",
-              bookId: book.id,
-              title: book.title || "未命名书籍",
-              author: book.author || "未知作者",
-              coverUrl: book.cover ? `/api/books/${book.id}/cover` : undefined,
-              hasCover: Boolean(book.cover),
-              format: book.format,
-              initial: book.title?.charAt(0) || "书",
-              rect: {
-                left: window.innerWidth / 2 - 120,
-                top: window.innerHeight / 2 - 180,
-                width: 240,
-                height: 326,
-              },
-            },
-          })
-        );
-      }
-
-      window.setTimeout(
-        () => {
-          router.push("/bookshelf");
-        },
-        shouldSkipTransition ? 0 : 130
-      );
-    }
-  }, [saveProgress, router, book]);
+  });
 
   // Wire up handleBack ref for idle timeout
   handleBackRef.current = handleBack;
@@ -579,163 +441,50 @@ function ReaderContent() {
     [selectedBrowserVoiceId, ttsRate]
   );
 
-  const playAudioSource = useCallback(
-    async (
-      source: string,
-      sessionId: number,
-      options?: {
-        onEnd?: () => void;
-        onCleanup?: () => void;
-        debugMeta?: { engine: "microsoft"; sentenceIndex?: number; paragraph?: string };
-      }
-    ) => {
-      if (ttsSessionRef.current !== sessionId) return;
+  const {
+    hasPendingResume,
+    pausePlayback: handlePauseTts,
+    playAudioSource,
+    resumePendingPlayback,
+    resumePlayback: handleResumeTts,
+    stopCurrentAudio,
+    stopTransport,
+  } = useReaderTtsAudio({
+    bookTitle: book?.title,
+    bookAuthor: book?.author,
+    activeTtsParagraph,
+    currentParagraphIndexRef,
+    isPaused,
+    isSpeaking,
+    requestMicrosoftSpeech,
+    selectedBrowserVoiceId,
+    setIsPaused,
+    setIsSpeaking,
+    setIsTtsViewOpen,
+    ttsRate,
+    ttsSessionRef,
+  });
 
-      if (source === "") {
-        options?.onEnd?.();
-        return;
-      }
-
-      // Setup Media Session for background playback on mobile
-      setupMediaSession();
-      
-      // Request Wake Lock to prevent screen sleep
-      void requestWakeLock();
-
-      if (!currentAudioRef.current) {
-        const audio = new Audio();
-        audio.preload = "auto";
-        audio.setAttribute("playsinline", "true");
-        audio.setAttribute("webkit-playsinline", "true");
-        currentAudioRef.current = audio;
-      }
-
-      const audio = currentAudioRef.current;
-
-      const dispose = () => {
-        audio.ontimeupdate = null;
-        audio.onended = null;
-        audio.onerror = null;
-        audio.onpause = null;
-        audio.onplay = null;
-        audio.onloadedmetadata = null;
-        audio.ondurationchange = null;
-        audio.onprogress = null;
-        audio.oncanplay = null;
-        if (ttsProgressRafRef.current !== null) {
-          cancelAnimationFrame(ttsProgressRafRef.current);
-          ttsProgressRafRef.current = null;
-        }
-      };
-
-      await new Promise<void>((resolve, reject) => {
-        audio.pause();
-        audio.currentTime = 0;
-        audio.src = source;
-
-        audio.onended = () => {
-          dispose();
-          options?.onEnd?.();
-          resolve();
-        };
-
-        audio.onerror = () => {
-          dispose();
-          options?.onCleanup?.();
-          if (IS_DEV) {
-            logger.warn("tts", "audio element onerror", options?.debugMeta);
-          }
-          reject(new Error("audio_play_error:MediaError"));
-        };
-
-        audio.play().catch((error) => {
-          const reason =
-            error instanceof DOMException
-              ? error.name
-              : error instanceof Error
-                ? error.name || "UnknownError"
-                : "UnknownError";
-
-          dispose();
-
-          if (reason === "NotAllowedError") {
-            ttsResumeRef.current = () => {
-              if (ttsSessionRef.current !== sessionId) return;
-              audio.play().catch(() => {
-                // user can click again to retry resume
-              });
-            };
-            toast.error("播放被浏览器拦截，点击朗读按钮继续");
-          }
-
-          if (IS_DEV) {
-            logger.warn("tts", "audio.play rejected", {
-              ...options?.debugMeta,
-              reason,
-            });
-          }
-
-          reject(new Error(`audio_play_error:${reason}`));
-        });
-      });
-    },
-    [setupMediaSession, requestWakeLock]
-  );
-
-  const replayCurrentTtsParagraph = useCallback(async () => {
-    if (!activeTtsParagraph) return;
-
-    const currentIndex = currentParagraphIndexRef.current;
-    const shouldResumePlayback = isSpeaking && !isPaused;
-
+  const stopSpeaking = useCallback(() => {
     ttsSessionRef.current += 1;
-    const sessionId = ttsSessionRef.current;
-    ttsResumeRef.current = null;
+    allSentencesRef.current = [];
+    readSentencesHashRef.current.clear();
+    currentParagraphIndexRef.current = 0;
+    ttsCurrentIndexRef.current = 0;
+    ttsTotalSentencesRef.current = 0;
+    stopTransport();
+    setActiveTtsParagraph("");
+    setActiveTtsParagraphId(null);
+    setActiveTtsLocation(null);
+    setIsSpeaking(false);
+    setIsPaused(false);
+    setIsTtsViewOpen(false);
 
-    if (currentAudioRef.current) {
-      currentAudioRef.current.pause();
-      currentAudioRef.current.currentTime = 0;
+    // Keep the reader on the currently spoken paragraph when stopping.
+    if (book?.format === "epub") {
+      epubReaderRef.current?.scrollToActiveParagraph();
     }
-
-    if (!shouldResumePlayback) {
-      setIsSpeaking(true);
-      setIsPaused(true);
-      return;
-    }
-
-    try {
-      const objectUrl = await requestMicrosoftSpeech(activeTtsParagraph);
-      if (ttsSessionRef.current !== sessionId) {
-        return;
-      }
-
-      await playAudioSource(objectUrl, sessionId, {
-        debugMeta: { engine: "microsoft", sentenceIndex: currentIndex },
-      });
-    } catch {
-      // 忽略设置切换导致的重播错误，保持当前会话可继续操作
-    }
-  }, [activeTtsParagraph, isPaused, isSpeaking, playAudioSource, requestMicrosoftSpeech]);
-
-  // 当 TTS 设置变化时，如果正在播放，重新播放当前段落
-  useEffect(() => {
-    const prev = prevTtsSettingsRef.current;
-    const current = { rate: ttsRate, voiceId: selectedBrowserVoiceId };
-
-    const hasChanged = prev.rate !== current.rate || prev.voiceId !== current.voiceId;
-
-    prevTtsSettingsRef.current = current;
-
-    if (!hasChanged || !isSpeaking || !activeTtsParagraph) {
-      return;
-    }
-
-    if (isPaused) {
-      return;
-    }
-
-    void replayCurrentTtsParagraph();
-  }, [activeTtsParagraph, isPaused, isSpeaking, replayCurrentTtsParagraph, selectedBrowserVoiceId, ttsRate]);
+  }, [book?.format, stopTransport]);
 
   const speakWithBrowserParagraphs = useCallback(
     async (sentences: Sentence[], sessionId: number, startIndex = 0) => {
@@ -828,10 +577,7 @@ function ReaderContent() {
             break;
           } catch (error) {
             lastError = error;
-            if (currentAudioRef.current) {
-              currentAudioRef.current.pause();
-              currentAudioRef.current.currentTime = 0;
-            }
+            stopCurrentAudio();
 
             const canRetry = isRetryableTtsError(error);
 
@@ -873,6 +619,7 @@ function ReaderContent() {
       isRetryableTtsError,
       playAudioSource,
       requestMicrosoftSpeech,
+      stopCurrentAudio,
       wait,
     ]
   );
@@ -980,31 +727,6 @@ function ReaderContent() {
     [book, currentPage, currentHref, getPageIdentity, totalPages, ttsAutoNextChapter, waitForPageChange]
   );
 
-  const handlePauseTts = useCallback(() => {
-    if (currentAudioRef.current) {
-      currentAudioRef.current.pause();
-    }
-    setIsPaused(true);
-
-    if ("mediaSession" in navigator && mediaSessionSetupRef.current) {
-      navigator.mediaSession.playbackState = "paused";
-    }
-  }, []);
-
-  const handleResumeTts = useCallback(() => {
-    if (currentAudioRef.current) {
-      currentAudioRef.current.play().catch((err) => {
-        logger.warn("tts", "Failed to resume audio", err);
-      });
-    }
-    setIsPaused(false);
-    setIsTtsViewOpen(true);
-
-    if ("mediaSession" in navigator && mediaSessionSetupRef.current) {
-      navigator.mediaSession.playbackState = "playing";
-    }
-  }, []);
-
   const handleToggleTts = useCallback(async () => {
     if (isSpeaking) {
       if (isPaused) {
@@ -1015,12 +737,9 @@ function ReaderContent() {
       return;
     }
 
-    if (ttsResumeRef.current) {
+    if (hasPendingResume()) {
       setIsTtsViewOpen(true);
-      setIsSpeaking(true);
-      const resume = ttsResumeRef.current;
-      ttsResumeRef.current = null;
-      resume();
+      resumePendingPlayback();
       return;
     }
 
@@ -1137,8 +856,10 @@ function ReaderContent() {
     getReadableParagraphs,
     handlePauseTts,
     handleResumeTts,
+    hasPendingResume,
     isPaused,
     isSpeaking,
+    resumePendingPlayback,
     speakWithBrowserParagraphs,
     stopSpeaking,
     tryAutoTurnPage,
@@ -1168,12 +889,7 @@ function ReaderContent() {
 
     ttsSessionRef.current += 1;
     const sessionId = ttsSessionRef.current;
-    ttsResumeRef.current = null;
-
-    if (currentAudioRef.current) {
-      currentAudioRef.current.pause();
-      currentAudioRef.current.currentTime = 0;
-    }
+    stopCurrentAudio();
 
     currentParagraphIndexRef.current = newIndex;
     ttsCurrentIndexRef.current = newIndex;
@@ -1194,7 +910,7 @@ function ReaderContent() {
       setIsPaused(false);
       void speakWithBrowserParagraphs(startSentences, sessionId, newIndex);
     }, 10);
-  }, [getReadableParagraphs, isPaused, isSpeaking, speakWithBrowserParagraphs]);
+  }, [getReadableParagraphs, isPaused, isSpeaking, speakWithBrowserParagraphs, stopCurrentAudio]);
 
   const handleTtsNextParagraph = useCallback(() => {
     let sentences = allSentencesRef.current;
@@ -1217,12 +933,7 @@ function ReaderContent() {
 
     ttsSessionRef.current += 1;
     const sessionId = ttsSessionRef.current;
-    ttsResumeRef.current = null;
-
-    if (currentAudioRef.current) {
-      currentAudioRef.current.pause();
-      currentAudioRef.current.currentTime = 0;
-    }
+    stopCurrentAudio();
 
     currentParagraphIndexRef.current = newIndex;
     ttsCurrentIndexRef.current = newIndex;
@@ -1243,17 +954,15 @@ function ReaderContent() {
       setIsPaused(false);
       void speakWithBrowserParagraphs(startSentences, sessionId, newIndex);
     }, 10);
-  }, [getReadableParagraphs, isPaused, isSpeaking, speakWithBrowserParagraphs]);
+  }, [getReadableParagraphs, isPaused, isSpeaking, speakWithBrowserParagraphs, stopCurrentAudio]);
 
   // Setup Media Session action handlers
   useEffect(() => {
     if (!("mediaSession" in navigator)) return;
     
     navigator.mediaSession.setActionHandler("play", () => {
-      if (!isSpeaking && ttsResumeRef.current) {
-        setIsSpeaking(true);
-        ttsResumeRef.current();
-        ttsResumeRef.current = null;
+      if (!isSpeaking && hasPendingResume()) {
+        resumePendingPlayback();
       }
       navigator.mediaSession.playbackState = "playing";
     });
@@ -1284,126 +993,16 @@ function ReaderContent() {
       navigator.mediaSession.setActionHandler("previoustrack", null);
       navigator.mediaSession.setActionHandler("nexttrack", null);
     };
-  }, [handlePauseTts, handleTtsNextParagraph, handleTtsPrevParagraph, isPaused, isSpeaking, stopSpeaking]);
-
-  // ---- Navigation handlers ----
-  const handleTocItemClick = useCallback((href: string) => {
-    epubReaderRef.current?.goToHref(href);
-  }, []);
-
-  const handleBookmarkClick = useCallback((location: string) => {
-    epubReaderRef.current?.goToLocation(location);
-  }, []);
-
-  const handleNoteClick = useCallback((location: string) => {
-    epubReaderRef.current?.goToLocation(location);
-  }, []);
-
-  const handleProgressChange = useCallback(
-    (newProgress: number) => {
-      epubReaderRef.current?.goToPercentage(newProgress);
-    },
-    []
-  );
-
-  const handlePrevPage = useCallback(() => {
-    if (book?.format === "epub") {
-      epubReaderRef.current?.scrollUp();
-    }
-  }, [book?.format]);
-
-  const handleNextPage = useCallback(() => {
-    if (book?.format === "epub") {
-      epubReaderRef.current?.scrollDown();
-    }
-  }, [book?.format]);
-
-  const handlePrevChapter = useCallback(() => {
-    if (book?.format !== "epub") return;
-    
-    // 方法 1：使用 rendition.prev() - scrolled-doc 模式下切换到上一节
-    const epubInstance = epubReaderRef.current;
-    if (epubInstance) {
-      epubInstance.prevPage();
-      return;
-    }
-    
-    // 方法 2：使用 TOC 导航（备用）
-    if (toc.length === 0) return;
-    
-    let currentIndex = -1;
-    if (currentHref) {
-      currentIndex = toc.findIndex(
-        (item) => item.href === currentHref || item.href.includes(currentHref)
-      );
-    }
-    
-    if (currentIndex === -1) {
-      const currentProgress = progressRef.current;
-      currentIndex = Math.floor(currentProgress * toc.length) - 1;
-      currentIndex = Math.max(0, currentIndex);
-    }
-    
-    if (currentIndex > 0) {
-      const prevChapter = toc[currentIndex - 1];
-      epubReaderRef.current?.goToHref(prevChapter.href);
-    }
-  }, [book?.format, currentHref, toc]);
-
-  const handleNextChapter = useCallback(() => {
-    if (book?.format !== "epub") return;
-    
-    // 方法 1：使用 rendition.next() - scrolled-doc 模式下切换到下一节
-    const epubInstance = epubReaderRef.current;
-    if (epubInstance) {
-      epubInstance.nextPage();
-      return;
-    }
-    
-    // 方法 2：使用 TOC 导航（备用）
-    if (toc.length === 0) return;
-    
-    let currentIndex = -1;
-    if (currentHref) {
-      currentIndex = toc.findIndex(
-        (item) => item.href === currentHref || item.href.includes(currentHref)
-      );
-    }
-    
-    if (currentIndex === -1) {
-      const currentProgress = progressRef.current;
-      currentIndex = Math.floor(currentProgress * toc.length);
-    }
-    
-    if (currentIndex !== -1 && currentIndex < toc.length - 1) {
-      const nextChapter = toc[currentIndex + 1];
-      epubReaderRef.current?.goToHref(nextChapter.href);
-    }
-  }, [book?.format, currentHref, toc]);
-
-  // 计算是否有上一章/下一章
-  // 使用 TOC（目录）来判断章节边界
-  let hasPrevChapter = false;
-  let hasNextChapter = false;
-  
-  if (book?.format === "epub" && toc.length > 0) {
-    // 找到当前章节在 TOC 中的索引
-    const currentIdx = toc.findIndex(item => 
-      item.href === currentHref || 
-      currentHref?.includes(item.href) ||
-      item.href?.includes(currentHref || '')
-    );
-    
-    if (currentIdx !== -1) {
-      hasPrevChapter = currentIdx > 0;
-      hasNextChapter = currentIdx < toc.length - 1;
-    } else {
-      // 如果在 TOC 中找不到，但有 currentHref，说明可能在子章节
-      // 这种情况下假设可以前后翻页
-      hasPrevChapter = true;
-      hasNextChapter = true;
-    }
-  }
+  }, [
+    handlePauseTts,
+    handleTtsNextParagraph,
+    handleTtsPrevParagraph,
+    hasPendingResume,
+    isPaused,
+    isSpeaking,
+    resumePendingPlayback,
+    stopSpeaking,
+  ]);
 
   const handleOpenTtsView = useCallback(() => {
     setIsTtsViewOpen(true);
