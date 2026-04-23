@@ -35,6 +35,85 @@ export function resolveEpubRelativePath(basePath: string, href: string): string 
   return resultParts.length > 0 ? resultParts.join("/") : null;
 }
 
+function decodeXmlEntities(value: string): string {
+  return value
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, "\"")
+    .replace(/&apos;/g, "'");
+}
+
+function parseXmlAttributes(rawAttributes: string): Record<string, string> {
+  const attrs: Record<string, string> = {};
+  const attrRegex = /([\w:.-]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = attrRegex.exec(rawAttributes)) !== null) {
+    attrs[match[1]] = decodeXmlEntities(match[2] ?? match[3] ?? "");
+  }
+
+  return attrs;
+}
+
+function getXmlElementText(xml: string, tagName: string): string | undefined {
+  const escapedTagName = tagName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const regex = new RegExp(`<${escapedTagName}\\b[^>]*>([\\s\\S]*?)<\\/${escapedTagName}>`, "i");
+  const match = xml.match(regex);
+  const text = match?.[1]?.replace(/<[^>]+>/g, "").trim();
+  return text ? decodeXmlEntities(text) : undefined;
+}
+
+export function parseEpubContainerRootfilePath(containerXml: string): string | undefined {
+  const rootfileRegex = /<rootfile\b([^>]*)\/?>/gi;
+  let match: RegExpExecArray | null;
+
+  while ((match = rootfileRegex.exec(containerXml)) !== null) {
+    const attrs = parseXmlAttributes(match[1]);
+    if (attrs["full-path"]) {
+      return attrs["full-path"];
+    }
+  }
+
+  return undefined;
+}
+
+export function parseEpubOpfMetadata(opfContent: string): {
+  title?: string;
+  author?: string;
+  coverItemHref?: string;
+} {
+  const title = getXmlElementText(opfContent, "dc:title");
+  const author = getXmlElementText(opfContent, "dc:creator");
+  let coverId: string | undefined;
+  let coverItemHref: string | undefined;
+
+  const metaRegex = /<meta\b([^>]*)\/?>/gi;
+  let metaMatch: RegExpExecArray | null;
+  while ((metaMatch = metaRegex.exec(opfContent)) !== null) {
+    const attrs = parseXmlAttributes(metaMatch[1]);
+    if (attrs.name?.toLowerCase() === "cover" && attrs.content) {
+      coverId = attrs.content;
+      break;
+    }
+  }
+
+  const itemRegex = /<item\b([^>]*)\/?>/gi;
+  let itemMatch: RegExpExecArray | null;
+  while ((itemMatch = itemRegex.exec(opfContent)) !== null) {
+    const attrs = parseXmlAttributes(itemMatch[1]);
+    if (coverId && attrs.id === coverId && attrs.href) {
+      coverItemHref = attrs.href;
+      break;
+    }
+    if (!coverItemHref && attrs.properties?.split(/\s+/).includes("cover-image") && attrs.href) {
+      coverItemHref = attrs.href;
+    }
+  }
+
+  return { title, author, coverItemHref };
+}
+
 export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -262,51 +341,19 @@ async function extractEpubMetadata(
     ?.async("string");
   if (!containerXml) return {};
 
-  const rootFileMatch = containerXml.match(/full-path="([^"]+)"/);
-  if (!rootFileMatch) return {};
+  const rootFilePath = parseEpubContainerRootfilePath(containerXml);
+  if (!rootFilePath) return {};
 
-  const opfPath = resolveEpubRelativePath("", rootFileMatch[1]);
+  const opfPath = resolveEpubRelativePath("", rootFilePath);
   if (!opfPath) return {};
 
   const opfContent = await zip.file(opfPath)?.async("string");
   if (!opfContent) return {};
 
-  const titleMatch = opfContent.match(
-    /<dc:title[^>]*>([^<]+)<\/dc:title>/i
-  );
-  const title = titleMatch ? titleMatch[1].trim() : undefined;
-
-  const authorMatch = opfContent.match(
-    /<dc:creator[^>]*>([^<]+)<\/dc:creator>/i
-  );
-  const author = authorMatch ? authorMatch[1].trim() : undefined;
+  const { title, author, coverItemHref } = parseEpubOpfMetadata(opfContent);
 
   let coverFileName: string | undefined;
   try {
-    const coverMetaMatch = opfContent.match(
-      /meta[^>]*name="cover"[^>]*content="([^"]+)"/i
-    );
-    let coverItemHref: string | undefined;
-
-    if (coverMetaMatch) {
-      const coverId = coverMetaMatch[1];
-      const coverItemMatch = opfContent.match(
-        new RegExp(`item[^>]*id="${coverId}"[^>]*href="([^"]+)"`, "i")
-      );
-      if (coverItemMatch) {
-        coverItemHref = coverItemMatch[1];
-      }
-    }
-
-    if (!coverItemHref) {
-      const coverPropMatch = opfContent.match(
-        /item[^>]*properties="cover-image"[^>]*href="([^"]+)"/i
-      );
-      if (coverPropMatch) {
-        coverItemHref = coverPropMatch[1];
-      }
-    }
-
     if (coverItemHref) {
       const coverPath = resolveEpubRelativePath(opfPath, coverItemHref);
       if (!coverPath) return { title, author };

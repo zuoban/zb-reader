@@ -129,3 +129,50 @@ describe("resolveEpubRelativePath", () => {
     expect(resolveEpubRelativePath("OPS/package.opf", "https://example.com/cover.jpg")).toBeNull();
   });
 });
+
+describe("EPUB XML metadata parsing", () => {
+  it("parses rootfile full-path with single-quoted attributes", async () => {
+    const { parseEpubContainerRootfilePath } = await import("./route");
+
+    expect(
+      parseEpubContainerRootfilePath(
+        `<container><rootfiles><rootfile media-type='application/oebps-package+xml' full-path='OPS/content.opf'/></rootfiles></container>`
+      )
+    ).toBe("OPS/content.opf");
+  });
+
+  it("parses OPF metadata regardless of item attribute order", async () => {
+    const { parseEpubOpfMetadata } = await import("./route");
+    const metadata = parseEpubOpfMetadata(`
+      <package>
+        <metadata>
+          <dc:title>Title &amp; More</dc:title>
+          <dc:creator>Author &apos;Name&apos;</dc:creator>
+          <meta content="cover-id" name="cover" />
+        </metadata>
+        <manifest>
+          <item media-type="image/jpeg" href="images/cover.jpg" id="cover-id" />
+        </manifest>
+      </package>
+    `);
+
+    expect(metadata).toEqual({
+      title: "Title & More",
+      author: "Author 'Name'",
+      coverItemHref: "images/cover.jpg",
+    });
+  });
+
+  it("falls back to cover-image properties when cover meta is absent", async () => {
+    const { parseEpubOpfMetadata } = await import("./route");
+    const metadata = parseEpubOpfMetadata(`
+      <package>
+        <manifest>
+          <item id="cover-image" properties="nav cover-image" href="cover.png" />
+        </manifest>
+      </package>
+    `);
+
+    expect(metadata.coverItemHref).toBe("cover.png");
+  });
+});
