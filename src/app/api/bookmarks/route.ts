@@ -5,7 +5,8 @@ import { db } from "@/lib/db";
 import { bookmarks } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
-import { unauthorized, badRequest, serverError } from "@/lib/api-utils";
+import { unauthorized, badRequest, serverError, validateJson } from "@/lib/api-utils";
+import { bookmarkSchema } from "@/lib/validations";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -46,11 +47,10 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { bookId, location, label, pageNumber, progress } = await req.json();
+    const validation = await validateJson(req, bookmarkSchema);
+    if (validation.error) return validation.error;
 
-    if (!bookId || !location) {
-      return badRequest("缺少必要参数");
-    }
+    const { bookId, location, label, pageNumber, progress } = validation.data;
 
     const id = uuidv4();
 

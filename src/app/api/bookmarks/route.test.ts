@@ -148,7 +148,7 @@ describe("Bookmarks API", () => {
       const data = await res.json();
 
       expect(res.status).toBe(400);
-      expect(data.error).toBe("缺少必要参数");
+      expect(data.error).toContain("Invalid input");
     });
 
     it("should create bookmark successfully", async () => {

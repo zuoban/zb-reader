@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import type { z } from "zod";
 
 /**
  * 创建未认证错误响应
@@ -58,4 +59,29 @@ export async function getUserId(): Promise<string> {
     throw new Error("未登录");
   }
   return session.user.id;
+}
+
+/**
+ * 使用 Zod schema 校验请求体
+ * @returns 校验成功返回 { data }，失败返回 NextResponse 错误响应
+ */
+export async function validateJson<T extends z.ZodType>(
+  req: Request,
+  schema: T,
+): Promise<
+  | { data: z.infer<T>; error?: undefined }
+  | { error: NextResponse; data?: undefined }
+> {
+  try {
+    const body = await req.json();
+    const result = schema.safeParse(body);
+    if (!result.success) {
+      return {
+        error: badRequest(result.error.issues[0]?.message || "参数错误"),
+      };
+    }
+    return { data: result.data };
+  } catch {
+    return { error: badRequest("请求体格式错误") };
+  }
 }
