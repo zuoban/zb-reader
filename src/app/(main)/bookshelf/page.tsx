@@ -173,62 +173,60 @@ export default function BookshelfPage() {
       <Navbar onUploadComplete={fetchBooks} />
 
       <main className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-10 pt-4 sm:px-6 sm:pb-14 sm:pt-5">
-        <div className="mb-4 flex flex-col gap-3 rounded-xl border border-border/65 bg-card/70 px-3 py-3 shadow-[0_18px_42px_-36px_color-mix(in_oklab,var(--foreground)_40%,transparent)] backdrop-blur-2xl sm:mb-5 sm:flex-row sm:items-center sm:justify-between sm:px-4">
-          <div className="flex min-w-0 items-center gap-2 text-sm font-medium text-foreground">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-background/72">
-              <Tags className="h-4 w-4 text-[color:var(--cta)]" />
-            </span>
-            <div className="min-w-0">
-              <div className="text-sm font-semibold">分类筛选</div>
-              <div className="text-xs text-muted-foreground">
-                {activeCategoryName ? `正在查看「${activeCategoryName}」` : "全部书籍"}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex gap-2 overflow-x-auto pb-1 sm:max-w-[70%] sm:justify-end sm:pb-0">
-            <Button
-              type="button"
-              variant={selectedCategory === ALL_CATEGORY ? "default" : "outline"}
-              size="sm"
-              className="h-8 cursor-pointer rounded-lg px-3 text-xs"
-              onClick={() => setSelectedCategory(ALL_CATEGORY)}
+        <div className="mb-4 -mx-1 flex gap-2 overflow-x-auto px-1 pb-2 [scrollbar-width:none] sm:mb-5 [&::-webkit-scrollbar]:hidden">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className={cn(
+              "h-8 cursor-pointer rounded-full border px-3 text-xs shadow-none",
+              selectedCategory === ALL_CATEGORY
+                ? "border-primary bg-primary text-primary-foreground hover:bg-primary/92 hover:text-primary-foreground"
+                : "border-border/65 bg-background/35 text-muted-foreground hover:border-ring/45 hover:bg-accent/55 hover:text-foreground"
+            )}
+            onClick={() => setSelectedCategory(ALL_CATEGORY)}
+          >
+            {selectedCategory === ALL_CATEGORY ? <Check className="h-3.5 w-3.5" /> : null}
+            全部
+            <Badge
+              variant="outline"
+              className={cn(
+                "ml-1 border-transparent bg-muted/70 px-1.5 py-0 text-[10px] text-muted-foreground",
+                selectedCategory === ALL_CATEGORY &&
+                  "bg-primary-foreground/14 text-primary-foreground"
+              )}
             >
-              {selectedCategory === ALL_CATEGORY ? <Check className="h-3.5 w-3.5" /> : null}
-              全部
+              {totalBooks}
+            </Badge>
+          </Button>
+          {categories.map((category) => (
+            <Button
+              key={category.name}
+              type="button"
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "h-8 cursor-pointer rounded-full border px-3 text-xs shadow-none",
+                selectedCategory === category.name
+                  ? "border-primary bg-primary text-primary-foreground hover:bg-primary/92 hover:text-primary-foreground"
+                  : "border-border/65 bg-background/35 text-muted-foreground hover:border-ring/45 hover:bg-accent/55 hover:text-foreground"
+              )}
+              onClick={() => setSelectedCategory(category.name)}
+            >
+              {selectedCategory === category.name ? <Check className="h-3.5 w-3.5" /> : null}
+              <span className="max-w-28 truncate">{category.name}</span>
               <Badge
                 variant="outline"
                 className={cn(
-                  "ml-1 border-current/20 px-1.5 py-0 text-[10px]",
-                  selectedCategory === ALL_CATEGORY && "text-primary-foreground"
+                  "ml-1 border-transparent bg-muted/70 px-1.5 py-0 text-[10px] text-muted-foreground",
+                  selectedCategory === category.name &&
+                    "bg-primary-foreground/14 text-primary-foreground"
                 )}
               >
-                {totalBooks}
+                {category.count}
               </Badge>
             </Button>
-            {categories.map((category) => (
-              <Button
-                key={category.name}
-                type="button"
-                variant={selectedCategory === category.name ? "default" : "outline"}
-                size="sm"
-                className="h-8 cursor-pointer rounded-lg px-3 text-xs"
-                onClick={() => setSelectedCategory(category.name)}
-              >
-                {selectedCategory === category.name ? <Check className="h-3.5 w-3.5" /> : null}
-                <span className="max-w-28 truncate">{category.name}</span>
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    "ml-1 border-current/20 px-1.5 py-0 text-[10px]",
-                    selectedCategory === category.name && "text-primary-foreground"
-                  )}
-                >
-                  {category.count}
-                </Badge>
-              </Button>
-            ))}
-          </div>
+          ))}
         </div>
 
         {/* Book Grid */}
