@@ -140,7 +140,7 @@ export const BookCard = memo(function BookCard({
     <Card
       ref={cardRef}
       className={cn(
-        "book-card-glass group relative overflow-hidden rounded-2xl py-0 transition-all duration-300 ease-out",
+        "book-card-glass group relative gap-3 overflow-hidden rounded-2xl py-0 transition-all duration-300 ease-out",
         "hover:-translate-y-0.5 hover:border-ring/35 hover:shadow-[0_26px_58px_-40px_color-mix(in_oklab,var(--foreground)_48%,transparent)]",
         spotlight && "animate-pulse-subtle ring-2 ring-primary/28"
       )}
@@ -153,7 +153,7 @@ export const BookCard = memo(function BookCard({
         onClick={handleOpenReader}
       >
         <div
-          className="relative m-1.5 aspect-[5/7] overflow-hidden rounded-xl bg-muted/70 shadow-[inset_0_1px_0_color-mix(in_oklab,white_42%,transparent),inset_0_-1px_0_color-mix(in_oklab,var(--foreground)_8%,transparent)]"
+          className="relative mx-1.5 mt-1.5 mb-[0.1875rem] aspect-[5/7] overflow-hidden rounded-xl bg-muted/70 shadow-[inset_0_1px_0_color-mix(in_oklab,white_42%,transparent),inset_0_-1px_0_color-mix(in_oklab,var(--foreground)_8%,transparent)]"
           data-reader-transition-cover
         >
           {/* Cover Image */}
@@ -187,80 +187,81 @@ export const BookCard = memo(function BookCard({
         </div>
       </Link>
 
+      <div className="mx-3 h-px bg-gradient-to-r from-transparent via-border/70 to-transparent" />
+
       {/* Card Content */}
-      <div className="flex min-h-[56px] flex-col px-3 pb-3 pt-1 sm:min-h-[58px]">
-        <div className="flex items-start justify-between gap-1.5">
-          <div className="min-w-0 flex-1">
-            <h3
-              className="line-clamp-1 text-[12px] font-semibold text-foreground/95 sm:text-[13px]"
-              title={book.title}
-            >
-              {book.title || "未命名书籍"}
-            </h3>
-            <div className="mt-0.5 line-clamp-1 text-[9px] text-muted-foreground/82 sm:text-[10px]">
+      <div className="relative flex min-h-[40px] flex-col px-3 pb-1.5 pt-0 sm:min-h-[42px]">
+        <h3
+          className="line-clamp-2 min-h-[2.2em] pr-7 text-[11px] font-semibold leading-[1.15] text-foreground/95 sm:text-[12px]"
+          title={book.title}
+        >
+          {book.title || "未命名书籍"}
+        </h3>
+
+        <div className="absolute top-0 right-2 flex shrink-0 flex-col items-end gap-0.5">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="菜单"
+                className="liquid-control -mr-1 h-5.5 w-5.5 shrink-0 rounded-lg text-muted-foreground/70 opacity-100 transition-all duration-200 hover:text-foreground sm:opacity-0 sm:group-hover:opacity-100"
+              >
+                <MoreVertical className="h-2.5 w-2.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem asChild className="cursor-pointer">
+                <Link href={readerHref} className="flex items-center gap-2">
+                  <BookOpen className="h-4 w-4" />
+                  <span>阅读</span>
+                </Link>
+              </DropdownMenuItem>
+              {onChangeCategory ? (
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={() => onChangeCategory(book)}
+                >
+                  <Tags className="h-4 w-4" />
+                  <span>设置分类</span>
+                </DropdownMenuItem>
+              ) : null}
+              <DropdownMenuItem
+                className="cursor-pointer text-destructive focus:text-destructive"
+                onClick={() => onDelete(book.id)}
+              >
+                <Trash2 className="h-4 w-4" />
+                <span>删除</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        <div className="mt-0.5 flex flex-col gap-1">
+          <div className="flex items-center justify-between gap-1">
+            <span className="min-w-0 truncate text-left text-[9px] text-muted-foreground/90 sm:text-[10px]">
               {book.author || "未知作者"}
-            </div>
+            </span>
             {book.category ? (
               <Badge
-                variant="outline"
-                className="mt-1 max-w-full rounded-lg border-border/45 bg-background/28 px-1.5 py-0.5 text-[8px] font-medium leading-none text-muted-foreground/82 shadow-[0_1px_0_color-mix(in_oklab,white_34%,transparent)_inset] sm:text-[9px]"
+                variant="secondary"
+                className="max-w-[60%] shrink-0 rounded px-1 py-0 text-[8px] font-medium leading-none text-muted-foreground sm:text-[9px]"
                 title={book.category}
               >
-                <Tags className="h-2.5 w-2.5 text-muted-foreground/58" />
-                <span className="truncate">{book.category}</span>
+                {book.category}
               </Badge>
             ) : null}
           </div>
-
-          <div className="flex shrink-0 flex-col items-end gap-1">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label="菜单"
-                  className="liquid-control -mr-1 h-6 w-6 shrink-0 rounded-lg text-muted-foreground/70 opacity-100 transition-all duration-200 hover:text-foreground sm:opacity-0 sm:group-hover:opacity-100"
-                >
-                  <MoreVertical className="h-3 w-3" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40">
-                <DropdownMenuItem asChild className="cursor-pointer">
-                  <Link href={readerHref} className="flex items-center gap-2">
-                    <BookOpen className="h-4 w-4" />
-                    <span>阅读</span>
-                  </Link>
-                </DropdownMenuItem>
-                {onChangeCategory ? (
-                  <DropdownMenuItem
-                    className="cursor-pointer"
-                    onClick={() => onChangeCategory(book)}
-                  >
-                    <Tags className="h-4 w-4" />
-                    <span>设置分类</span>
-                  </DropdownMenuItem>
-                ) : null}
-                <DropdownMenuItem
-                  className="cursor-pointer text-destructive focus:text-destructive"
-                  onClick={() => onDelete(book.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                  <span>删除</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          <div className="flex items-center justify-between gap-1">
+            <span className="min-w-0 truncate text-left text-[8px] font-medium text-foreground/80 sm:text-[9px]">
+              {statusText}
+            </span>
+            {lastReadText ? (
+              <span className="shrink-0 text-[8px] text-muted-foreground/85 sm:text-[9px]">
+                {lastReadText}
+              </span>
+            ) : null}
           </div>
-        </div>
-
-        <div className="mt-1.5 flex items-center justify-between gap-1.5">
-          <span className="min-w-0 truncate text-[8px] font-medium text-muted-foreground/72 sm:text-[9px]">
-            {statusText}
-          </span>
-          {lastReadText ? (
-            <div className="shrink-0 text-[8px] text-muted-foreground/72 sm:text-[9px]">
-              {lastReadText}
-            </div>
-          ) : null}
         </div>
       </div>
     </Card>

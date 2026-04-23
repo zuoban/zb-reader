@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function BookCardSkeleton() {
   return (
-    <Card className="book-card-glass relative overflow-hidden rounded-2xl py-0">
+    <Card className="book-card-glass relative gap-3 overflow-hidden rounded-2xl py-0">
       <div className="liquid-hairline absolute inset-x-3 top-0 z-10 h-px opacity-70" />
       <div className="relative m-1.5 aspect-[5/7] overflow-hidden rounded-xl bg-muted/70 shadow-[inset_0_1px_0_color-mix(in_oklab,white_42%,transparent),inset_0_-1px_0_color-mix(in_oklab,var(--foreground)_8%,transparent)]">
         <Skeleton className="h-full w-full" />

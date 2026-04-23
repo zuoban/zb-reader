@@ -54,8 +54,22 @@ describe("BookCard", () => {
   it("should render book information", () => {
     renderBookCard();
 
-    expect(screen.getAllByText("Test Book")[0]).toBeInTheDocument();
+    const title = screen.getAllByText("Test Book")[0];
+    expect(title).toBeInTheDocument();
+    expect(title).toHaveClass("line-clamp-2");
     expect(screen.getByText("Test Author")).toBeInTheDocument();
+  });
+
+  it("should render category next to author when present", () => {
+    renderBookCard({
+      book: {
+        ...mockBook,
+        category: "小说",
+      },
+    });
+
+    expect(screen.getByText("Test Author")).toBeInTheDocument();
+    expect(screen.getByText("小说")).toBeInTheDocument();
   });
 
   it("should show progress when progress > 0", () => {
