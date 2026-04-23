@@ -1,8 +1,21 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { beforeEach, describe, it, expect, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { BookCard } from "@/components/bookshelf/BookCard";
 import type { ComponentProps } from "react";
 import type { Book } from "@/lib/db/schema";
+
+const mockPrefetch = vi.fn();
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    refresh: vi.fn(),
+    prefetch: mockPrefetch,
+  }),
+}));
 
 const mockBook: Book = {
   id: "book-1",
@@ -34,6 +47,10 @@ function renderBookCard(props: Partial<ComponentProps<typeof BookCard>> = {}) {
 }
 
 describe("BookCard", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should render book information", () => {
     renderBookCard();
 
@@ -55,6 +72,17 @@ describe("BookCard", () => {
     renderBookCard();
     const link = screen.getByRole("link");
     expect(link).toHaveAttribute("href", "/reader/book-1");
+  });
+
+  it("should prefetch the reader route only once per card", () => {
+    renderBookCard();
+    const link = screen.getByRole("link");
+
+    fireEvent.mouseEnter(link);
+    fireEvent.mouseEnter(link);
+
+    expect(mockPrefetch).toHaveBeenCalledTimes(1);
+    expect(mockPrefetch).toHaveBeenCalledWith("/reader/book-1");
   });
 
   it("should call onDelete when delete is clicked", async () => {

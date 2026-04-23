@@ -58,8 +58,11 @@ export const BookCard = memo(function BookCard({
   const router = useRouter();
   const readerHref = `/reader/${book.id}`;
   const cardRef = useRef<HTMLDivElement>(null);
+  const hasPrefetchedRef = useRef(false);
 
   const handleMouseEnter = () => {
+    if (hasPrefetchedRef.current) return;
+    hasPrefetchedRef.current = true;
     router.prefetch(readerHref);
   };
 
