@@ -83,11 +83,11 @@
   --sidebar-accent-foreground: #20242d;
   --sidebar-border: #d9e0ec;
   --sidebar-ring: #0a84ff;
-  --glass: color-mix(in oklab, white 74%, transparent);
-  --glass-strong: color-mix(in oklab, white 86%, transparent);
-  --glass-border: color-mix(in oklab, white 72%, var(--border) 28%);
-  --glass-shadow: 0 24px 64px -42px color-mix(in oklab, #0b1220 38%, transparent);
-  --glass-highlight: color-mix(in oklab, white 86%, transparent);
+  --glass: color-mix(in oklab, white 58%, transparent);
+  --glass-strong: color-mix(in oklab, white 78%, transparent);
+  --glass-border: color-mix(in oklab, #8fa5c3 34%, white 66%);
+  --glass-shadow: 0 28px 72px -44px color-mix(in oklab, #0b1220 46%, transparent);
+  --glass-highlight: color-mix(in oklab, white 92%, transparent);
 }
 
 .dark {
@@ -125,9 +125,9 @@
   --sidebar-ring: #5ac8fa;
   --glass: color-mix(in oklab, #20242d 64%, transparent);
   --glass-strong: color-mix(in oklab, #242a34 78%, transparent);
-  --glass-border: color-mix(in oklab, white 16%, var(--border) 84%);
+  --glass-border: color-mix(in oklab, white 9%, var(--border) 91%);
   --glass-shadow: 0 26px 70px -44px color-mix(in oklab, black 78%, transparent);
-  --glass-highlight: color-mix(in oklab, white 26%, transparent);
+  --glass-highlight: color-mix(in oklab, white 16%, transparent);
 }
 
 @layer base {
@@ -268,16 +268,26 @@
 .surface-glass {
   background:
     linear-gradient(145deg, var(--glass-strong), var(--glass)),
-    linear-gradient(180deg, color-mix(in oklab, white 30%, transparent), transparent 42%);
+    linear-gradient(180deg, color-mix(in oklab, white 58%, transparent), transparent 38%),
+    linear-gradient(115deg, color-mix(in oklab, var(--cta) 7%, transparent), transparent 58%);
   border: 1px solid var(--glass-border);
-  backdrop-filter: blur(26px) saturate(1.35);
-  -webkit-backdrop-filter: blur(26px) saturate(1.35);
+  backdrop-filter: blur(30px) saturate(1.55) brightness(1.03);
+  -webkit-backdrop-filter: blur(30px) saturate(1.55) brightness(1.03);
 }
 
 .surface-elevated {
   box-shadow:
     0 1px 0 var(--glass-highlight) inset,
-    0 -1px 0 color-mix(in oklab, var(--foreground) 7%, transparent) inset,
+    0 0 0 1px color-mix(in oklab, white 40%, transparent) inset,
+    0 -1px 0 color-mix(in oklab, var(--foreground) 9%, transparent) inset,
+    var(--glass-shadow);
+}
+
+.dark .surface-elevated {
+  box-shadow:
+    0 1px 0 var(--glass-highlight) inset,
+    0 0 0 1px color-mix(in oklab, white 8%, transparent) inset,
+    0 -1px 0 color-mix(in oklab, black 22%, transparent) inset,
     var(--glass-shadow);
 }
 
@@ -295,13 +305,22 @@
 .liquid-control {
   border: 1px solid var(--glass-border);
   background:
-    linear-gradient(180deg, color-mix(in oklab, white 34%, transparent), transparent 56%),
+    linear-gradient(180deg, color-mix(in oklab, white 54%, transparent), transparent 54%),
+    linear-gradient(120deg, color-mix(in oklab, var(--cta) 5%, transparent), transparent 62%),
     var(--glass);
   box-shadow:
     0 1px 0 var(--glass-highlight) inset,
-    0 10px 26px -20px color-mix(in oklab, var(--foreground) 36%, transparent);
-  backdrop-filter: blur(18px) saturate(1.25);
-  -webkit-backdrop-filter: blur(18px) saturate(1.25);
+    0 0 0 1px color-mix(in oklab, white 28%, transparent) inset,
+    0 10px 28px -20px color-mix(in oklab, var(--foreground) 42%, transparent);
+  backdrop-filter: blur(20px) saturate(1.42) brightness(1.02);
+  -webkit-backdrop-filter: blur(20px) saturate(1.42) brightness(1.02);
+}
+
+.dark .liquid-control {
+  box-shadow:
+    0 1px 0 var(--glass-highlight) inset,
+    0 0 0 1px color-mix(in oklab, white 7%, transparent) inset,
+    0 10px 28px -20px color-mix(in oklab, black 62%, transparent);
 }
 
 .liquid-control:hover {
@@ -321,6 +340,13 @@
     0 12px 30px -26px color-mix(in oklab, var(--foreground) 34%, transparent);
   backdrop-filter: blur(18px) saturate(1.18);
   -webkit-backdrop-filter: blur(18px) saturate(1.18);
+}
+
+.dark .top-action-group {
+  border-color: color-mix(in oklab, var(--glass-border) 76%, transparent);
+  box-shadow:
+    0 1px 0 var(--glass-highlight) inset,
+    0 12px 30px -26px color-mix(in oklab, black 64%, transparent);
 }
 
 .top-action-primary {
@@ -377,6 +403,13 @@
   -webkit-backdrop-filter: blur(20px) saturate(1.2);
 }
 
+.dark .category-filter-shell {
+  border-color: color-mix(in oklab, var(--glass-border) 76%, transparent);
+  box-shadow:
+    0 1px 0 var(--glass-highlight) inset,
+    0 14px 36px -30px color-mix(in oklab, black 68%, transparent);
+}
+
 .category-filter-button {
   border: 1px solid transparent;
   background: transparent;
@@ -391,14 +424,30 @@
 }
 
 .category-filter-button-active {
-  border-color: color-mix(in oklab, var(--ring) 32%, var(--glass-border));
+  position: relative;
+  border-color: color-mix(in oklab, var(--ring) 28%, var(--glass-border));
   background:
-    linear-gradient(180deg, color-mix(in oklab, white 40%, transparent), transparent 58%),
-    color-mix(in oklab, var(--glass-strong) 82%, var(--cta) 18%);
+    linear-gradient(180deg, color-mix(in oklab, white 58%, transparent), transparent 54%),
+    linear-gradient(120deg, color-mix(in oklab, var(--cta) 12%, transparent), transparent 64%),
+    color-mix(in oklab, var(--glass-strong) 90%, var(--background) 10%);
   color: var(--foreground);
   box-shadow:
     0 1px 0 var(--glass-highlight) inset,
-    0 10px 24px -18px color-mix(in oklab, var(--cta) 46%, transparent);
+    0 0 0 1px color-mix(in oklab, white 34%, transparent) inset,
+    0 10px 24px -18px color-mix(in oklab, var(--foreground) 32%, transparent),
+    0 8px 22px -20px color-mix(in oklab, var(--cta) 48%, transparent);
+}
+
+.category-filter-button-active::after {
+  pointer-events: none;
+  content: "";
+  position: absolute;
+  inset-inline: 0.8rem;
+  bottom: 0.18rem;
+  height: 1px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--cta) 58%, white 42%);
+  opacity: 0.74;
 }
 
 .liquid-hairline {

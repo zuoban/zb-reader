@@ -191,9 +191,9 @@ export default function BookshelfPage() {
             <Badge
               variant="outline"
               className={cn(
-                "ml-0.5 border-transparent bg-foreground/6 px-1.5 py-0 text-[10px] text-muted-foreground",
+                "ml-0.5 border-transparent bg-foreground/6 px-1.5 py-0 text-[10px] text-muted-foreground shadow-none",
                 selectedCategory === ALL_CATEGORY &&
-                  "bg-background/44 text-foreground"
+                  "bg-background/56 text-foreground shadow-[0_1px_0_color-mix(in_oklab,white_42%,transparent)_inset]"
               )}
             >
               {totalBooks}
@@ -218,9 +218,9 @@ export default function BookshelfPage() {
               <Badge
                 variant="outline"
                 className={cn(
-                  "ml-0.5 border-transparent bg-foreground/6 px-1.5 py-0 text-[10px] text-muted-foreground",
+                  "ml-0.5 border-transparent bg-foreground/6 px-1.5 py-0 text-[10px] text-muted-foreground shadow-none",
                   selectedCategory === category.name &&
-                    "bg-background/44 text-foreground"
+                    "bg-background/56 text-foreground shadow-[0_1px_0_color-mix(in_oklab,white_42%,transparent)_inset]"
                 )}
               >
                 {category.count}
