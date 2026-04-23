@@ -6,3 +6,10 @@ export interface TocItem {
   level?: number;
   subitems?: TocItem[];
 }
+
+/** Text paragraph visible in the reader viewport for TTS and navigation. */
+export interface ReaderParagraph {
+  id: string;
+  text: string;
+  location?: string;
+}

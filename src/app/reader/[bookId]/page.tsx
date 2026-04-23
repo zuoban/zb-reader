@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { SessionProvider, useSession } from "next-auth/react";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
@@ -15,7 +15,6 @@ import { TextSelectionMenu } from "@/components/reader/TextSelectionMenu";
 import { NoteEditor } from "@/components/reader/NoteEditor";
 import { ReaderTtsLayer } from "@/components/reader/ReaderTtsLayer";
 import {
-  useCurrentChapterTitle,
   useIdleTimeout,
   useBookmarkActions,
   useMicrosoftTtsSpeech,
@@ -25,18 +24,19 @@ import {
   useReaderKeyboardShortcuts,
   useReaderMediaSessionActions,
   useReaderNavigation,
+  useReaderSelectionState,
   useReaderSettingsControls,
   useReaderSettingsLifecycle,
+  useReaderSidePanelState,
   useReaderTtsAudio,
   useReaderTtsSession,
+  useReaderTtsState,
 } from "@/components/reader/hooks";
 import { Loader2 } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import type { EpubReaderRef } from "@/components/reader/EpubReader";
-import type { TocItem } from "@/types/reader";
 import { useProgressSyncCompat } from "@/hooks/useProgressSyncCompat";
 import { useReaderSettingsStore, useDebouncedSettingsSave } from "@/stores/reader-settings";
-import type { Sentence } from "@/lib/textUtils";
 
 function ReaderContent() {
   const router = useRouter();
@@ -67,16 +67,27 @@ function ReaderContent() {
   const ttsHighlightColor = settings.ttsHighlightColor;
   const debouncedSaveSettings = useDebouncedSettingsSave();
 
-  // Local TTS state
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const [isTtsViewOpen, setIsTtsViewOpen] = useState(false);
-
-  // Side panel
-  const [sidePanelOpen, setSidePanelOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"toc" | "bookmarks" | "notes">("toc");
-  const [toc, setToc] = useState<TocItem[]>([]);
-  const [currentHref, setCurrentHref] = useState<string | undefined>();
+  const {
+    activeTtsLocation,
+    activeTtsParagraph,
+    activeTtsParagraphId,
+    allSentencesRef,
+    currentParagraphIndexRef,
+    isPaused,
+    isSpeaking,
+    isTtsViewOpen,
+    readSentencesHashRef,
+    resetTtsState,
+    setActiveTtsLocation,
+    setActiveTtsParagraph,
+    setActiveTtsParagraphId,
+    setIsPaused,
+    setIsSpeaking,
+    setIsTtsViewOpen,
+    ttsCurrentIndexRef,
+    ttsSessionRef,
+    ttsTotalSentencesRef,
+  } = useReaderTtsState();
 
   // Settings panel
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -111,24 +122,14 @@ function ReaderContent() {
     onProgressLoaded: handleProgressLoaded,
   });
 
-  // Text selection
-  const [selectionMenu, setSelectionMenu] = useState<{
-    visible: boolean;
-    position: { x: number; y: number };
-    cfiRange: string;
-    text: string;
-  }>({ visible: false, position: { x: 0, y: 0 }, cfiRange: "", text: "" });
-  const [selectionMenuKey, setSelectionMenuKey] = useState(0);
-
-  // Note editor
-  const [noteEditor, setNoteEditor] = useState<{
-    open: boolean;
-    selectedText: string;
-    cfiRange: string;
-    initialContent?: string;
-    initialColor?: string;
-    editingId?: string;
-  }>({ open: false, selectedText: "", cfiRange: "" });
+  const {
+    noteEditor,
+    selectionMenu,
+    selectionMenuKey,
+    setNoteEditor,
+    setSelectionMenu,
+    setSelectionMenuKey,
+  } = useReaderSelectionState();
 
   // Progress sync using compat hook
   const progressSync = useProgressSyncCompat(bookId);
@@ -139,48 +140,31 @@ function ReaderContent() {
 
   const currentCfiRef = useRef<string | null>(null);
 
-  const ttsSessionRef = useRef(0);
-  const [activeTtsParagraph, setActiveTtsParagraph] = useState("");
-  const [activeTtsParagraphId, setActiveTtsParagraphId] = useState<string | null>(null);
-  const [activeTtsLocation, setActiveTtsLocation] = useState<string | null>(null);
-  const currentParagraphIndexRef = useRef(0);
-  const allSentencesRef = useRef<Sentence[]>([]);
-  const readSentencesHashRef = useRef<Set<string>>(new Set<string>());
-  const ttsCurrentIndexRef = useRef(0);
-  const ttsTotalSentencesRef = useRef(0);
   const handleBackRef = useRef<(() => Promise<void>) | null>(null);
-
-  const currentChapterTitle = useCurrentChapterTitle(toc, currentHref, book?.title);
 
   const { browserVoices, currentTheme } = useReaderSettingsLifecycle(
     settings,
     debouncedSaveSettings
   );
 
-  const sidePanelBookmarks = useMemo(
-    () =>
-      bookmarks.map((bookmark) => ({
-        id: bookmark.id,
-        label: bookmark.label || "未命名书签",
-        location: bookmark.location,
-        progress: bookmark.progress || 0,
-        createdAt: bookmark.createdAt,
-      })),
-    [bookmarks]
-  );
-
-  const sidePanelNotes = useMemo(
-    () =>
-      notes.map((note) => ({
-        id: note.id,
-        selectedText: note.selectedText || "",
-        content: note.content || "",
-        color: note.color || "#facc15",
-        location: note.location,
-        createdAt: note.createdAt,
-      })),
-    [notes]
-  );
+  const {
+    activeTab,
+    currentChapterTitle,
+    currentHref,
+    open: sidePanelOpen,
+    openToc: handleOpenToc,
+    panelBookmarks: sidePanelBookmarks,
+    panelNotes: sidePanelNotes,
+    setActiveTab,
+    setCurrentHref,
+    setOpen: setSidePanelOpen,
+    setToc,
+    toc,
+  } = useReaderSidePanelState({
+    bookTitle: book?.title,
+    bookmarks,
+    notes,
+  });
 
   const handleBackToReader = useCallback(() => {
     setIsTtsViewOpen(false);
@@ -344,25 +328,14 @@ function ReaderContent() {
   });
 
   const stopSpeaking = useCallback(() => {
-    ttsSessionRef.current += 1;
-    allSentencesRef.current = [];
-    readSentencesHashRef.current.clear();
-    currentParagraphIndexRef.current = 0;
-    ttsCurrentIndexRef.current = 0;
-    ttsTotalSentencesRef.current = 0;
     stopTransport();
-    setActiveTtsParagraph("");
-    setActiveTtsParagraphId(null);
-    setActiveTtsLocation(null);
-    setIsSpeaking(false);
-    setIsPaused(false);
-    setIsTtsViewOpen(false);
+    resetTtsState();
 
     // Keep the reader on the currently spoken paragraph when stopping.
     if (book?.format === "epub") {
       epubReaderRef.current?.scrollToActiveParagraph();
     }
-  }, [book?.format, stopTransport]);
+  }, [book?.format, resetTtsState, stopTransport]);
 
   const { handleToggleTts, handleTtsNextParagraph, handleTtsPrevParagraph } =
     useReaderTtsSession({
@@ -486,10 +459,7 @@ function ReaderContent() {
         isBookmarked={isCurrentBookmarked}
         isFullscreen={isFullscreen}
         onBack={handleBack}
-        onToggleToc={() => {
-          setSidePanelOpen(true);
-          setActiveTab("toc");
-        }}
+        onToggleToc={handleOpenToc}
         onToggleBookmark={handleToggleBookmark}
         onToggleTts={handleToggleTts}
         onToggleFullscreen={handleToggleFullscreen}

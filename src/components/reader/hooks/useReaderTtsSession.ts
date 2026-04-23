@@ -2,9 +2,10 @@
 
 import { useCallback } from "react";
 import { toast } from "sonner";
-import type { EpubReaderRef, ReaderParagraph } from "@/components/reader/EpubReader";
+import type { EpubReaderRef } from "@/components/reader/EpubReader";
 import type { Book } from "@/lib/db/schema";
 import { paragraphsToSentences, type Sentence } from "@/lib/textUtils";
+import type { ReaderParagraph } from "@/types/reader";
 
 const MAX_TTS_RETRY_COUNT = 5;
 const TTS_RETRY_DELAY_MS = 450;
