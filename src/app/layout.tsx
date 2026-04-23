@@ -23,10 +23,7 @@ export const metadata: Metadata = {
   title: "ZB Reader - 在线电子书阅读器",
   description: "一个简洁的在线电子书阅读器，支持 EPUB 格式",
   icons: {
-    icon: [
-      { url: "/favicon.ico", sizes: "64x64" },
-      { url: "/favicon.png", sizes: "64x64", type: "image/png" },
-    ],
+    icon: [{ url: "/favicon.ico", sizes: "64x64" }],
     apple: "/apple-touch-icon.png",
   },
 };

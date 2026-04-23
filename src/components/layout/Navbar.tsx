@@ -54,12 +54,12 @@ export function Navbar({ onUploadComplete, className }: NavbarProps) {
             href="/bookshelf"
             className="group relative flex min-w-0 items-center gap-3 rounded-xl px-1.5 py-1 transition-all duration-200 hover:bg-background/34 focus-visible:ring-2 focus-visible:ring-ring/45 focus-visible:outline-none"
           >
-            <div className="liquid-control relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-shadow duration-300">
+            <div className="relative flex h-12 w-12 shrink-0 items-center justify-center">
               <Image
                 src="/logo.svg"
                 alt="ZB Reader"
-                width={26}
-                height={26}
+                width={44}
+                height={44}
                 className="transition-transform duration-300 group-hover:scale-[1.08]"
               />
             </div>

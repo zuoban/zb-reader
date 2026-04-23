@@ -77,8 +77,8 @@ export default function RegisterPage() {
       <CardHeader className="relative text-center pb-2">
         <div className="liquid-hairline absolute inset-x-6 top-0 h-px" />
         <div className="flex justify-center mb-4">
-          <div className="liquid-control flex h-16 w-16 items-center justify-center rounded-2xl">
-            <Image src="/logo.svg" alt="ZB Reader" width={48} height={48} />
+          <div className="flex h-24 w-24 items-center justify-center">
+            <Image src="/logo.svg" alt="ZB Reader" width={88} height={88} />
           </div>
         </div>
         <CardTitle className="text-2xl font-semibold tracking-tight">ZB Reader</CardTitle>
