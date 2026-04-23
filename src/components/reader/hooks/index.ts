@@ -3,6 +3,7 @@ export { useReaderFullscreen } from "./useReaderFullscreen";
 export { useReaderBookData } from "./useReaderBookData";
 export { useReaderSettingsLifecycle } from "./useReaderSettingsLifecycle";
 export { useReaderTtsAudio } from "./useReaderTtsAudio";
+export { useReaderTtsSession } from "./useReaderTtsSession";
 export { useBookmarkActions } from "./useBookmarkActions";
 export { useNoteActions } from "./useNoteActions";
 export { useReaderNavigation } from "./useReaderNavigation";

@@ -23,17 +23,17 @@ import {
   useReaderNavigation,
   useReaderSettingsLifecycle,
   useReaderTtsAudio,
+  useReaderTtsSession,
 } from "@/components/reader/hooks";
 import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
-import type { EpubReaderRef, ReaderParagraph } from "@/components/reader/EpubReader";
+import type { EpubReaderRef } from "@/components/reader/EpubReader";
 import type { TocItem } from "@/types/reader";
 import { ttsAudioCache, TtsAudioLruCache } from "@/lib/ttsAudioCache";
 import { useProgressSyncCompat } from "@/hooks/useProgressSyncCompat";
 import { useReaderSettingsStore, useDebouncedSettingsSave } from "@/stores/reader-settings";
 import type { FontFamily } from "@/stores/reader-settings";
-import { paragraphsToSentences, type Sentence } from "@/lib/textUtils";
+import type { Sentence } from "@/lib/textUtils";
 
 // Dynamic import for EpubReader (client-only, depends on browser APIs)
 const EpubReader = dynamic(() => import("@/components/reader/EpubReader"), {
@@ -47,8 +47,6 @@ const EpubReader = dynamic(() => import("@/components/reader/EpubReader"), {
 
 
 
-const MAX_TTS_RETRY_COUNT = 5;
-const TTS_RETRY_DELAY_MS = 450;
 function normalizeTocHref(href?: string) {
   if (!href) return "";
   return href.split("#")[0]?.trim().toLowerCase() ?? "";
@@ -219,22 +217,6 @@ function ReaderContent() {
 
   const handleBackToReader = useCallback(() => {
     setIsTtsViewOpen(false);
-  }, []);
-
-  const wait = useCallback((ms: number) => {
-    return new Promise<void>((resolve) => {
-      setTimeout(resolve, ms);
-    });
-  }, []);
-
-  const isRetryableTtsError = useCallback((error: unknown) => {
-    if (!(error instanceof Error)) return true;
-
-    if (!error.message.startsWith("audio_play_error")) {
-      return true;
-    }
-
-    return !error.message.includes("NotAllowedError");
   }, []);
 
   // Progress saving is now handled by useProgressSyncCompat hook
@@ -486,475 +468,41 @@ function ReaderContent() {
     }
   }, [book?.format, stopTransport]);
 
-  const speakWithBrowserParagraphs = useCallback(
-    async (sentences: Sentence[], sessionId: number, startIndex = 0) => {
-      const punctuationOnlyRegex = /^[\s\p{P}\p{S}\p{Z}]*$/u;
-      const queue = sentences.filter((item) => item.text.trim().length > 0 && !punctuationOnlyRegex.test(item.text));
-      if (queue.length === 0) {
-        toast.error("当前页面没有可朗读内容");
-        return;
-      }
-
-      setIsSpeaking(true);
-
-      const preparedTaskMap = new Map<number, Promise<string>>();
-      const preloadWindowSize = 5; // 预加载5句
-
-      const ensurePreloadWindow = (windowStart: number) => {
-        for (
-          let cursor = windowStart;
-          cursor < Math.min(queue.length, windowStart + preloadWindowSize);
-          cursor += 1
-        ) {
-          if (!preparedTaskMap.has(cursor)) {
-            const task = requestMicrosoftSpeech(queue[cursor].text, { prefetch: true });
-            task.catch(() => {
-              // avoid unhandled promise rejection for preloaded items
-            });
-            preparedTaskMap.set(cursor, task);
-          }
-        }
-      };
-
-      ensurePreloadWindow(0);
-
-      for (let i = 0; i < queue.length; i += 1) {
-        if (ttsSessionRef.current !== sessionId) {
-          return;
-        }
-
-        currentParagraphIndexRef.current = startIndex + i;
-        ttsCurrentIndexRef.current = startIndex + i;
-        const sentence = queue[i];
-        setActiveTtsParagraph(sentence.text);
-        setActiveTtsParagraphId(sentence.paragraphId);
-        setActiveTtsLocation(sentence.location ?? null);
-
-        // 跳过已读的句子（避免跨页重复朗读）
-        const hash = sentence.location || sentence.text.slice(0, 50);
-        if (readSentencesHashRef.current.has(hash)) {
-          // 跳过后，仍然需要预加载，因为 i 在继续递增
-          ensurePreloadWindow(i + 1);
-          continue;
-        }
-
-        ensurePreloadWindow(i + 1);
-
-        let sentenceSucceeded = false;
-        let lastError: unknown = null;
-
-        for (let attempt = 1; attempt <= MAX_TTS_RETRY_COUNT; attempt += 1) {
-          if (ttsSessionRef.current !== sessionId) {
-            return;
-          }
-
-          let objectUrl: string | null = null;
-
-          try {
-            objectUrl = await (
-              attempt === 1
-                ? preparedTaskMap.get(i) ?? requestMicrosoftSpeech(sentence.text)
-                : requestMicrosoftSpeech(sentence.text)
-            );
-
-            await new Promise<void>((resolve, reject) => {
-              if (ttsSessionRef.current !== sessionId) {
-                resolve();
-                return;
-              }
-
-              void playAudioSource(objectUrl as string, sessionId, {
-                debugMeta: {
-                  engine: "microsoft",
-                  sentenceIndex: startIndex + i,
-                },
-              })
-                .then(resolve)
-                .catch(reject);
-            });
-
-            sentenceSucceeded = true;
-            break;
-          } catch (error) {
-            lastError = error;
-            stopCurrentAudio();
-
-            const canRetry = isRetryableTtsError(error);
-
-            if (attempt < MAX_TTS_RETRY_COUNT && canRetry) {
-              if (ttsSessionRef.current === sessionId) {
-                toast(`朗读失败，正在重试（${attempt + 1}/${MAX_TTS_RETRY_COUNT}）`);
-              }
-              await wait(TTS_RETRY_DELAY_MS);
-              continue;
-            }
-
-            break;
-          }
-        }
-
-        if (!sentenceSucceeded) {
-          if (ttsSessionRef.current === sessionId) {
-            setActiveTtsParagraph("");
-            setActiveTtsParagraphId(null);
-            setActiveTtsLocation(null);
-            setIsSpeaking(false);
-            if (!isRetryableTtsError(lastError)) {
-              toast.error("音频播放失败，请检查浏览器自动播放权限");
-            } else {
-              toast.error(`朗读失败，已重试${MAX_TTS_RETRY_COUNT}次`);
-            }
-          }
-          throw new Error("speech_failed");
-        }
-      }
-
-      for (const [, task] of preparedTaskMap) {
-        task.catch(() => {
-          // ignore preload cleanup errors
-        });
-      }
-    },
-    [
-      isRetryableTtsError,
+  const { handleToggleTts, handleTtsNextParagraph, handleTtsPrevParagraph } =
+    useReaderTtsSession({
+      allSentencesRef,
+      book,
+      currentCfiRef,
+      currentParagraphIndexRef,
+      epubReaderRef,
+      handlePauseTts,
+      handleResumeTts,
+      hasPendingResume,
+      isPaused,
+      isSpeaking,
       playAudioSource,
+      readSentencesHashRef,
       requestMicrosoftSpeech,
+      resumePendingPlayback,
+      setActiveTtsLocation,
+      setActiveTtsParagraph,
+      setActiveTtsParagraphId,
+      setIsPaused,
+      setIsSpeaking,
+      setIsTtsViewOpen,
+      setToolbarVisible,
       stopCurrentAudio,
-      wait,
-    ]
-  );
-
-  const getReadableParagraphs = useCallback(() => {
-    if (!book) return [] as ReaderParagraph[];
-
-    if (book.format === "epub") {
-      const paragraphs = epubReaderRef.current?.getCurrentParagraphs?.() || [];
-      return paragraphs;
-    }
-
-    return [] as ReaderParagraph[];
-  }, [book]);
-
-  /**
-   * 获取朗读起始段落的索引：找到当前视口内第一个可见段落在段落列表中的位置。
-   * - EPUB：getCurrentParagraphs 已经只返回视口内段落，始终从 0 开始
-   */
-  const getInitialParagraphIndex = useCallback((paragraphs: ReaderParagraph[]): number => {
-    if (!book || paragraphs.length === 0) return 0;
-
-    if (book.format === "epub") {
-      // EPUB 已经只返回视口内段落，始终从头开始
-      return 0;
-    }
-
-    return 0;
-  }, [book]);
-
-  const getPageIdentity = useCallback(() => {
-    if (!book) return "";
-
-    if (book.format === "epub") {
-      // Use pure CFI (without scroll suffix) so TTS page-change detection
-      // only triggers on actual chapter/section navigation, not scroll movement.
-      return currentCfiRef.current || "";
-    }
-
-    return "";
-  }, [book, currentPage, totalPages]);
-
-  const waitForPageChange = useCallback(
-    async (previousIdentity: string, sessionId: number) => {
-      const startedAt = Date.now();
-      while (Date.now() - startedAt < 5000) {
-        if (ttsSessionRef.current !== sessionId) {
-          return false;
-        }
-
-        if (getPageIdentity() !== previousIdentity) {
-          return true;
-        }
-
-        await new Promise((resolve) => setTimeout(resolve, 120));
-      }
-      return false;
-    },
-    [getPageIdentity]
-  );
-
-  const tryAutoTurnPage = useCallback(
-    async (sessionId: number): Promise<boolean> => {
-      if (!book || !ttsAutoNextChapter) return false;
-
-      const previousIdentity = getPageIdentity();
-      const _previousHref = currentHref;
-
-      if (book.format === "epub") {
-        // 在 scrolled-doc 模式下，每次只显示一个章节
-        // 需要检测当前是否在章节末尾，然后调用 rendition.next()
-        const epubInstance = epubReaderRef.current;
-        if (!epubInstance) return false;
-        
-        const progress = epubInstance.getProgress();
-        const _currentLocation = epubInstance.getCurrentLocation();
-        
-        // 如果已到整本书的末尾
-        if (progress >= 0.995) {
-          return false;
-        }
-        
-        // 检查当前视口是否已经滚动到底部
-        const epubContainer = document.querySelector("#epub-viewer .epub-container") as HTMLElement | null;
-        if (epubContainer) {
-          const scrollBottom = epubContainer.scrollHeight - epubContainer.scrollTop - epubContainer.clientHeight;
-          const isNearBottom = scrollBottom < 50;
-          
-          if (isNearBottom) {
-            // 已在当前章节底部，调用 next() 进入下一章节
-            epubInstance.nextPage();
-          } else {
-            // 还在章节中间，继续向下滚动
-            epubInstance.scrollDown();
-          }
-        } else {
-          epubInstance.scrollDown();
-        }
-      } else {
-        return false;
-      }
-
-      return waitForPageChange(previousIdentity, sessionId);
-    },
-    [book, currentPage, currentHref, getPageIdentity, totalPages, ttsAutoNextChapter, waitForPageChange]
-  );
-
-  const handleToggleTts = useCallback(async () => {
-    if (isSpeaking) {
-      if (isPaused) {
-        handleResumeTts();
-      } else {
-        handlePauseTts();
-      }
-      return;
-    }
-
-    if (hasPendingResume()) {
-      setIsTtsViewOpen(true);
-      resumePendingPlayback();
-      return;
-    }
-
-    ttsSessionRef.current += 1;
-    readSentencesHashRef.current.clear();
-    const sessionId = ttsSessionRef.current;
-
-    // 获取当前页面的段落
-    let paragraphs = getReadableParagraphs();
-
-    // 如果获取不到，稍作等待重试（可能页面刚加载）
-    if (paragraphs.length === 0) {
-      await new Promise((resolve) => setTimeout(resolve, 220));
-      paragraphs = getReadableParagraphs();
-    }
-
-    if (paragraphs.length === 0) {
-      toast.error("当前页面没有可朗读内容");
-      return;
-    }
-
-    // 将段落分割为句子
-    const sentences = paragraphsToSentences(paragraphs);
-    if (sentences.length === 0) {
-      toast.error("当前页面没有可朗读内容");
-      return;
-    }
-
-    // 更新句子引用
-    allSentencesRef.current = sentences;
-    ttsTotalSentencesRef.current = sentences.length;
-
-    currentParagraphIndexRef.current = getInitialParagraphIndex(paragraphs);
-    ttsCurrentIndexRef.current = currentParagraphIndexRef.current;
-
-    setIsTtsViewOpen(true);
-    setToolbarVisible(false);
-    setIsSpeaking(true);
-
-    // 开始朗读循环
-    while (ttsSessionRef.current === sessionId) {
-      // 在循环开始时再次检查句子（因为翻页后会变）
-      if (sentences.length === 0) {
-        paragraphs = getReadableParagraphs();
-        if (paragraphs.length === 0) {
-          // 再次尝试等待
-          await new Promise((resolve) => setTimeout(resolve, 220));
-          paragraphs = getReadableParagraphs();
-        }
-        if (paragraphs.length === 0) {
-          toast.error("没有更多可朗读内容");
-          break;
-        }
-        const newSentences = paragraphsToSentences(paragraphs);
-        if (newSentences.length === 0) {
-          toast.error("没有更多可朗读内容");
-          break;
-        }
-        // 翻页后，从头开始读新的一页
-        currentParagraphIndexRef.current = 0;
-        ttsCurrentIndexRef.current = 0;
-        allSentencesRef.current = newSentences;
-        ttsTotalSentencesRef.current = newSentences.length;
-        // 使用新的句子列表继续循环
-        Object.assign(sentences, newSentences);
-      }
-
-      // 从当前索引开始切片
-      const startIndex = currentParagraphIndexRef.current;
-      const sentencesToRead = sentences.slice(startIndex);
-
-      if (sentencesToRead.length === 0) {
-        // 当前页读完了，尝试翻页
-        const moved = await tryAutoTurnPage(sessionId);
-        if (!moved) break;
-        // 翻页后清空当前句子列表，以便下一次循环重新获取
-        sentences.length = 0;
-        continue;
-      }
-
-      try {
-        await speakWithBrowserParagraphs(sentencesToRead, sessionId, startIndex);
-        // 朗读成功后，记录这些句子的哈希
-        sentencesToRead.forEach((s) => {
-          readSentencesHashRef.current.add(s.location || s.text.slice(0, 50));
-        });
-      } catch {
-        break;
-      }
-
-      if (ttsSessionRef.current !== sessionId) {
-        break;
-      }
-
-      // 当前页读完（speak 函数返回意味着这一批读完了），准备翻页
-      const moved = await tryAutoTurnPage(sessionId);
-      if (!moved) {
-        break;
-      }
-      // 翻页成功，清空句子缓存，下一轮循环会重新获取
-      sentences.length = 0;
-    }
-
-    if (ttsSessionRef.current === sessionId) {
-      setActiveTtsParagraph("");
-      setActiveTtsParagraphId(null);
-      setActiveTtsLocation(null);
-      setIsSpeaking(false);
-      setIsTtsViewOpen(false);
-    }
-  }, [
-    book,
-    getInitialParagraphIndex,
-    getReadableParagraphs,
-    handlePauseTts,
-    handleResumeTts,
-    hasPendingResume,
-    isPaused,
-    isSpeaking,
-    resumePendingPlayback,
-    speakWithBrowserParagraphs,
-    stopSpeaking,
-    tryAutoTurnPage,
-  ]);
+      ttsAutoNextChapter,
+      ttsCurrentIndexRef,
+      ttsSessionRef,
+      ttsTotalSentencesRef,
+    });
 
   useEffect(() => {
     return () => {
       stopSpeaking();
     };
   }, [stopSpeaking]);
-
-  const handleTtsPrevParagraph = useCallback(() => {
-    let sentences = allSentencesRef.current;
-    if (sentences.length === 0) {
-      const paragraphs = getReadableParagraphs();
-      sentences = paragraphsToSentences(paragraphs);
-      allSentencesRef.current = sentences;
-    }
-
-    if (sentences.length === 0) return;
-
-    const newIndex = Math.max(0, currentParagraphIndexRef.current - 1);
-
-    if (newIndex === currentParagraphIndexRef.current && currentParagraphIndexRef.current === 0) return;
-
-    const shouldResumePlayback = isSpeaking && !isPaused;
-
-    ttsSessionRef.current += 1;
-    const sessionId = ttsSessionRef.current;
-    stopCurrentAudio();
-
-    currentParagraphIndexRef.current = newIndex;
-    ttsCurrentIndexRef.current = newIndex;
-    setActiveTtsParagraph(sentences[newIndex].text);
-    setActiveTtsParagraphId(sentences[newIndex].paragraphId);
-    setActiveTtsLocation(sentences[newIndex].location ?? null);
-
-    if (!shouldResumePlayback) {
-      setIsSpeaking(true);
-      setIsPaused(true);
-      return;
-    }
-
-    const startSentences = sentences.slice(newIndex);
-    setTimeout(() => {
-      if (ttsSessionRef.current !== sessionId) return;
-      setIsSpeaking(true);
-      setIsPaused(false);
-      void speakWithBrowserParagraphs(startSentences, sessionId, newIndex);
-    }, 10);
-  }, [getReadableParagraphs, isPaused, isSpeaking, speakWithBrowserParagraphs, stopCurrentAudio]);
-
-  const handleTtsNextParagraph = useCallback(() => {
-    let sentences = allSentencesRef.current;
-    if (sentences.length === 0) {
-      const paragraphs = getReadableParagraphs();
-      sentences = paragraphsToSentences(paragraphs);
-      allSentencesRef.current = sentences;
-    }
-
-    if (sentences.length === 0) return;
-
-    const newIndex = Math.min(
-      sentences.length - 1,
-      currentParagraphIndexRef.current + 1
-    );
-
-    if (newIndex === currentParagraphIndexRef.current && currentParagraphIndexRef.current === sentences.length - 1) return;
-
-    const shouldResumePlayback = isSpeaking && !isPaused;
-
-    ttsSessionRef.current += 1;
-    const sessionId = ttsSessionRef.current;
-    stopCurrentAudio();
-
-    currentParagraphIndexRef.current = newIndex;
-    ttsCurrentIndexRef.current = newIndex;
-    setActiveTtsParagraph(sentences[newIndex].text);
-    setActiveTtsParagraphId(sentences[newIndex].paragraphId);
-    setActiveTtsLocation(sentences[newIndex].location ?? null);
-
-    if (!shouldResumePlayback) {
-      setIsSpeaking(true);
-      setIsPaused(true);
-      return;
-    }
-
-    const startSentences = sentences.slice(newIndex);
-    setTimeout(() => {
-      if (ttsSessionRef.current !== sessionId) return;
-      setIsSpeaking(true);
-      setIsPaused(false);
-      void speakWithBrowserParagraphs(startSentences, sessionId, newIndex);
-    }, 10);
-  }, [getReadableParagraphs, isPaused, isSpeaking, speakWithBrowserParagraphs, stopCurrentAudio]);
 
   // Setup Media Session action handlers
   useEffect(() => {
