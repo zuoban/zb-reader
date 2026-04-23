@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { SessionProvider, useSession } from "next-auth/react";
 import { IdleCountdownWarning } from "@/components/reader/IdleCountdownWarning";
 import { ReaderErrorBoundary } from "@/components/reader/ReaderErrorBoundary";
 import { ReaderCanvas } from "@/components/reader/ReaderCanvas";
@@ -31,6 +31,7 @@ import {
   useReaderTtsState,
 } from "@/components/reader/hooks";
 import { Loader2 } from "lucide-react";
+import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
 import type { EpubReaderRef } from "@/components/reader/EpubReader";
 import { useProgressSyncCompat } from "@/hooks/useProgressSyncCompat";
@@ -559,8 +560,17 @@ function ReaderContent() {
 
 export default function ReaderPage() {
   return (
-    <ReaderErrorBoundary>
-      <ReaderContent />
-    </ReaderErrorBoundary>
+    <SessionProvider>
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange
+      >
+        <ReaderErrorBoundary>
+          <ReaderContent />
+        </ReaderErrorBoundary>
+      </ThemeProvider>
+    </SessionProvider>
   );
 }
