@@ -82,15 +82,6 @@ export function ProgressHistoryDialog({
     });
   };
 
-  const formatDuration = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    if (hours > 0) {
-      return `${hours}小时${minutes}分钟`;
-    }
-    return `${minutes}分钟`;
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -138,9 +129,6 @@ export function ProgressHistoryDialog({
                           {formatDate(item.createdAt)}
                         </span>
                         <span>进度: {(item.progress * 100).toFixed(2)}%</span>
-                        {item.readingDuration > 0 && (
-                          <span>时长: {formatDuration(item.readingDuration)}</span>
-                        )}
                       </div>
                     </div>
 

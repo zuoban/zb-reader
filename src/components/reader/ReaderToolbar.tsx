@@ -29,7 +29,6 @@ interface ReaderToolbarProps {
   currentPage?: number;
   totalPages?: number;
   progress: number;
-  readingDuration?: number;
   isBookmarked: boolean;
   isFullscreen: boolean;
   onBack: () => void;
@@ -99,7 +98,6 @@ export function ReaderToolbar({
   title,
   currentChapterTitle,
   progress: _progress,
-  readingDuration: _readingDuration,
   isBookmarked,
   isFullscreen,
   onBack,

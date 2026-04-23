@@ -3,8 +3,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { memo, useEffect, useRef, useState } from "react";
-import { BookOpen, MoreVertical, Trash2, Clock, CheckCircle2 } from "lucide-react";
+import { memo, useEffect, useRef } from "react";
+import { BookOpen, MoreVertical, Trash2, CheckCircle2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { READER_ROUTE_TRANSITION_EVENT } from "@/components/layout/ReaderRouteTransition";
@@ -15,8 +15,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { formatDuration } from "@/lib/utils";
-import { SetReadingDurationDialog } from "./SetReadingDurationDialog";
 import type { MouseEvent as ReactMouseEvent } from "react";
 import type { Book } from "@/lib/db/schema";
 
@@ -43,16 +41,12 @@ interface BookCardProps {
   book: Book;
   progress?: number;
   lastReadAt?: string;
-  readingDuration?: number;
   spotlight?: boolean;
   onDelete: (id: string) => void;
-  onDurationUpdate?: (id: string, newDuration: number) => void;
 }
 
-export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt, readingDuration = 0, spotlight = false, onDelete, onDurationUpdate }: BookCardProps) {
+export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt, spotlight = false, onDelete }: BookCardProps) {
   const router = useRouter();
-  const [showDurationDialog, setShowDurationDialog] = useState(false);
-  const [localDuration, setLocalDuration] = useState(readingDuration);
   const readerHref = `/reader/${book.id}`;
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -127,9 +121,6 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
 
   const hasProgress = progress > 0 && progress < 1;
   const isCompleted = progress >= 1;
-  const durationText = localDuration > 0 || readingDuration > 0
-    ? formatDuration(localDuration || readingDuration)
-    : null;
   const lastReadText = lastReadAt ? formatLastRead(lastReadAt) : null;
   const statusText = isCompleted ? "已完成" : hasProgress ? `${Math.round(progress * 100)}%` : "未开始";
 
@@ -232,13 +223,6 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  className="cursor-pointer"
-                  onClick={() => setShowDurationDialog(true)}
-                >
-                  <Clock className="h-4 w-4" />
-                  <span>设置时长</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
                   className="cursor-pointer text-destructive focus:text-destructive"
                   onClick={() => onDelete(book.id)}
                 >
@@ -250,34 +234,14 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
           </div>
         </div>
 
-        {durationText || lastReadText ? (
-          <div className="mt-1.5 flex items-center justify-between gap-1.5">
-            {durationText ? (
-              <div className="inline-flex min-w-0 items-center gap-1 text-[8px] text-muted-foreground/76 sm:text-[9px]">
-                <Clock className="h-2.5 w-2.5 shrink-0" />
-                <span className="truncate">{durationText}</span>
-              </div>
-            ) : <div />}
-            {lastReadText ? (
-              <div className="shrink-0 text-[8px] text-muted-foreground/72 sm:text-[9px]">
-                {lastReadText}
-              </div>
-            ) : null}
+        {lastReadText ? (
+          <div className="mt-1.5 flex items-center justify-end gap-1.5">
+            <div className="shrink-0 text-[8px] text-muted-foreground/72 sm:text-[9px]">
+              {lastReadText}
+            </div>
           </div>
         ) : null}
       </div>
-
-      <SetReadingDurationDialog
-        open={showDurationDialog}
-        onOpenChange={setShowDurationDialog}
-        bookId={book.id}
-        bookTitle={book.title || "未知书籍"}
-        currentDuration={localDuration}
-        onSuccess={(newDuration) => {
-          setLocalDuration(newDuration);
-          onDurationUpdate?.(book.id, newDuration);
-        }}
-      />
     </Card>
   );
 });

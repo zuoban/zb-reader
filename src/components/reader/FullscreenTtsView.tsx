@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TtsSettingsDialog } from "@/components/reader/TtsSettingsDialog";
-import { cn, formatDuration } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import type { Book } from "@/lib/db/schema";
 import type { BrowserVoiceOption } from "@/lib/tts";
 
@@ -26,7 +26,6 @@ interface FullscreenTtsViewProps {
   isSpeaking: boolean;
   isPaused: boolean;
   progress: number;
-  readingDuration?: number;
   ttsRate: number;
   selectedBrowserVoiceId: string;
   browserVoices: BrowserVoiceOption[];
@@ -54,7 +53,6 @@ export function FullscreenTtsView({
   isSpeaking,
   isPaused,
   progress,
-  readingDuration,
   ttsRate,
   selectedBrowserVoiceId,
   browserVoices,
@@ -174,12 +172,6 @@ export function FullscreenTtsView({
                   <span>{statusLabel}</span>
                   <span className="text-white/24">/</span>
                   <span>{(overallProgress * 100).toFixed(1)}%</span>
-                  {readingDuration && readingDuration > 0 && (
-                    <>
-                      <span className="text-white/24">/</span>
-                      <span>{formatDuration(readingDuration)}</span>
-                    </>
-                  )}
                 </div>
               </div>
             </div>

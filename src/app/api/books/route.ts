@@ -40,7 +40,6 @@ export async function GET(req: NextRequest) {
         book: books,
         progress: readingProgress.progress,
         lastReadAt: readingProgress.lastReadAt,
-        readingDuration: readingProgress.readingDuration,
       })
       .from(books)
       .leftJoin(
@@ -74,14 +73,10 @@ export async function GET(req: NextRequest) {
     // 构建进度映射
     const progressMap: Record<string, number> = {};
     const lastReadAtMap: Record<string, string> = {};
-    const readingDurationMap: Record<string, number> = {};
     result.forEach((r) => {
       if (r.progress !== null && r.progress !== undefined) {
         progressMap[r.book.id] = r.progress;
         lastReadAtMap[r.book.id] = r.lastReadAt ?? "";
-        if (r.readingDuration !== null && r.readingDuration !== undefined) {
-          readingDurationMap[r.book.id] = r.readingDuration;
-        }
         logger.debug("books", "Progress record", {
           bookId: r.book.id,
           progress: r.progress,
@@ -96,7 +91,6 @@ export async function GET(req: NextRequest) {
       books: result.map((r) => r.book),
       progressMap,
       lastReadAtMap,
-      readingDurationMap,
       total,
       page,
       limit,

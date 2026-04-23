@@ -9,13 +9,11 @@ interface BookGridProps {
   books: Book[];
   progressMap: Record<string, number>;
   lastReadAtMap: Record<string, string>;
-  readingDurationMap?: Record<string, number>;
   spotlightBookId?: string | null;
   onDelete: (id: string) => void;
-  onDurationUpdate?: (id: string, newDuration: number) => void;
 }
 
-export const BookGrid = memo(function BookGrid({ books, progressMap, lastReadAtMap, readingDurationMap, spotlightBookId, onDelete, onDurationUpdate }: BookGridProps) {
+export const BookGrid = memo(function BookGrid({ books, progressMap, lastReadAtMap, spotlightBookId, onDelete }: BookGridProps) {
   if (books.length === 0) {
     return (
       <div className="animate-reader-fade-up relative overflow-hidden rounded-2xl border border-border/65 bg-card/76 px-5 py-10 text-center shadow-[0_24px_58px_-42px_color-mix(in_oklab,var(--foreground)_38%,transparent)] backdrop-blur-2xl sm:px-10 sm:py-14">
@@ -50,10 +48,8 @@ export const BookGrid = memo(function BookGrid({ books, progressMap, lastReadAtM
           book={book}
           progress={progressMap[book.id] || 0}
           lastReadAt={lastReadAtMap[book.id]}
-          readingDuration={readingDurationMap?.[book.id]}
           spotlight={spotlightBookId === book.id}
           onDelete={onDelete}
-          onDurationUpdate={onDurationUpdate}
         />
       ))}
     </div>
