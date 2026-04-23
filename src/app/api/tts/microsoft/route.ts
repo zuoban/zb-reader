@@ -1,7 +1,7 @@
 import { createHash } from "crypto";
 import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getAuthUserId } from "@/lib/api-utils";
 import { synthesizeMicrosoftSpeech } from "@/lib/microsoftTts";
 
 interface MicrosoftSpeakRequestBody {
@@ -17,6 +17,7 @@ interface MicrosoftSpeakRequestBody {
 const DEFAULT_VOICE = "zh-CN-XiaoxiaoMultilingualNeural";
 const AUDIO_CACHE_TTL_MS = 30 * 60 * 1000;
 const AUDIO_CACHE_MAX_SIZE = 100;
+const AUDIO_CACHE_MAX_BYTES = 10 * 1024 * 1024; // 10MB hard limit
 
 interface CachedMicrosoftAudio {
   body: Buffer;
@@ -25,6 +26,7 @@ interface CachedMicrosoftAudio {
 }
 
 const audioCache = new Map<string, CachedMicrosoftAudio>();
+let audioCacheTotalBytes = 0;
 const inflightAudioRequests = new Map<string, Promise<CachedMicrosoftAudio | null>>();
 
 function clampNumber(value: unknown, min: number, max: number, fallback: number) {
@@ -78,10 +80,12 @@ function getCachedAudio(cacheKey: string) {
   if (!cached) return null;
 
   if (cached.expiresAt <= Date.now()) {
+    audioCacheTotalBytes -= cached.body.byteLength;
     audioCache.delete(cacheKey);
     return null;
   }
 
+  // Re-insert to update LRU order
   audioCache.delete(cacheKey);
   audioCache.set(cacheKey, cached);
   return cached;
@@ -89,15 +93,22 @@ function getCachedAudio(cacheKey: string) {
 
 function setCachedAudio(cacheKey: string, value: CachedMicrosoftAudio) {
   if (audioCache.has(cacheKey)) {
+    const existing = audioCache.get(cacheKey)!;
+    audioCacheTotalBytes -= existing.body.byteLength;
     audioCache.delete(cacheKey);
-  } else if (audioCache.size >= AUDIO_CACHE_MAX_SIZE) {
+  }
+
+  // Evict oldest entries if memory or count limit exceeded
+  while (audioCache.size >= AUDIO_CACHE_MAX_SIZE || audioCacheTotalBytes + value.body.byteLength > AUDIO_CACHE_MAX_BYTES) {
     const oldestKey = audioCache.keys().next().value;
-    if (oldestKey) {
-      audioCache.delete(oldestKey);
-    }
+    if (!oldestKey) break;
+    const oldest = audioCache.get(oldestKey);
+    if (oldest) audioCacheTotalBytes -= oldest.body.byteLength;
+    audioCache.delete(oldestKey);
   }
 
   audioCache.set(cacheKey, value);
+  audioCacheTotalBytes += value.body.byteLength;
 }
 
 function createAudioResponse(body: Buffer, contentType: string) {
@@ -193,9 +204,9 @@ async function synthesizeAndRespond(body: MicrosoftSpeakRequestBody) {
 }
 
 async function ensureAuthenticated() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+  const authResult = await getAuthUserId();
+  if (authResult.error) {
+    return authResult.error;
   }
   return null;
 }

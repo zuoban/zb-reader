@@ -1,13 +1,11 @@
 import { logger } from "@/lib/logger";
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getAuthUserId } from "@/lib/api-utils";
 import { listMicrosoftVoices } from "@/lib/microsoftTts";
 
 export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
-  }
+  const authResult = await getAuthUserId();
+  if (authResult.error) return authResult.error;
 
   try {
     const voices = await listMicrosoftVoices();

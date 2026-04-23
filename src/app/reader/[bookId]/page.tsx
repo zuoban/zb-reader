@@ -2,9 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { SessionProvider, useSession } from "next-auth/react";
-import { ThemeProvider } from "@/components/layout/ThemeProvider";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { useSession } from "next-auth/react";
 import { IdleCountdownWarning } from "@/components/reader/IdleCountdownWarning";
 import { ReaderErrorBoundary } from "@/components/reader/ReaderErrorBoundary";
 import { ReaderCanvas } from "@/components/reader/ReaderCanvas";
@@ -397,14 +395,6 @@ function ReaderContent() {
     );
   }
 
-  if (!book) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <p className="text-muted-foreground">书籍不存在</p>
-      </div>
-    );
-  }
-
   return (
     <div
       className={`isolate h-screen w-screen overflow-hidden ${currentTheme.bg}`}
@@ -569,19 +559,8 @@ function ReaderContent() {
 
 export default function ReaderPage() {
   return (
-    <SessionProvider>
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="system"
-        enableSystem
-        disableTransitionOnChange
-      >
-        <TooltipProvider>
-          <ReaderErrorBoundary>
-            <ReaderContent />
-          </ReaderErrorBoundary>
-        </TooltipProvider>
-      </ThemeProvider>
-    </SessionProvider>
+    <ReaderErrorBoundary>
+      <ReaderContent />
+    </ReaderErrorBoundary>
   );
 }

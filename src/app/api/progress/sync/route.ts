@@ -1,22 +1,20 @@
 import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db, getSqlite } from "@/lib/db";
 import { readingProgress } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { resolveConflict, type ClientProgress } from "@/lib/conflict-resolver";
 import { findOwnedBook } from "@/lib/book-ownership";
-import { unauthorized, notFound, serverError, validateJson } from "@/lib/api-utils";
+import { notFound, serverError, validateJson, getAuthUserId } from "@/lib/api-utils";
 import { progressSchema } from "@/lib/validations";
 
 const MAX_HISTORY_COUNT = 50;
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return unauthorized();
-  }
+  const authResult = await getAuthUserId();
+  if (authResult.error) return authResult.error;
+  const { userId } = authResult;
 
   try {
     const parsed = await validateJson(req, progressSchema);
@@ -38,20 +36,20 @@ export async function POST(req: NextRequest) {
     } = parsed.data;
 
     logger.debug("api", "[Progress Sync] Request", {
-      userId: session.user.id,
+      userId: userId,
       bookId,
       clientVersion,
       progress,
     });
 
-    const book = await findOwnedBook(bookId, session.user.id);
+    const book = await findOwnedBook(bookId, userId);
     if (!book) {
       return notFound("书籍不存在");
     }
 
     const currentProgress = await db.query.readingProgress.findFirst({
       where: and(
-        eq(readingProgress.userId, session.user.id),
+        eq(readingProgress.userId, userId),
         eq(readingProgress.bookId, bookId)
       ),
     });
@@ -63,7 +61,7 @@ export async function POST(req: NextRequest) {
       
       await db.insert(readingProgress).values({
         id: uuidv4(),
-        userId: session.user.id,
+        userId: userId,
         bookId,
         version: newVersion,
         progress: progress ?? 0,
@@ -117,7 +115,7 @@ export async function POST(req: NextRequest) {
         })
         .where(
           and(
-            eq(readingProgress.userId, session.user.id),
+            eq(readingProgress.userId, userId),
             eq(readingProgress.bookId, bookId)
           )
         );
@@ -141,7 +139,7 @@ export async function POST(req: NextRequest) {
         )
         .run(
           uuidv4(),
-          session.user.id,
+          userId,
           bookId,
           currentProgress.version,
           currentProgress.progress,
@@ -160,7 +158,7 @@ export async function POST(req: NextRequest) {
         )
         .run(
           uuidv4(),
-          session.user.id,
+          userId,
           bookId,
           clientVersion,
           clientPayload.progress,
@@ -196,32 +194,33 @@ export async function POST(req: NextRequest) {
           finalDeviceId,
           now,
           now,
-          session.user.id,
+          userId,
           bookId
         );
 
       const historyCount = sqlite
         .prepare("SELECT COUNT(*) as count FROM progress_history WHERE user_id = ? AND book_id = ?")
-        .get(session.user.id, bookId) as { count: number };
+        .get(userId, bookId) as { count: number };
 
       if (historyCount.count > MAX_HISTORY_COUNT) {
         const toDelete = historyCount.count - MAX_HISTORY_COUNT;
-        const oldRecords = sqlite
+        sqlite
           .prepare(
-            `SELECT id FROM progress_history WHERE user_id = ? AND book_id = ? ORDER BY created_at ASC LIMIT ? OFFSET ?`
+            `DELETE FROM progress_history WHERE id IN (
+              SELECT id FROM progress_history
+              WHERE user_id = ? AND book_id = ?
+              ORDER BY created_at ASC
+              LIMIT ? OFFSET ?
+            )`
           )
-          .all(session.user.id, bookId, toDelete, MAX_HISTORY_COUNT) as { id: string }[];
-
-        for (const record of oldRecords) {
-          sqlite.prepare("DELETE FROM progress_history WHERE id = ?").run(record.id);
-        }
+          .run(userId, bookId, toDelete, MAX_HISTORY_COUNT);
       }
     });
 
     transaction();
 
     logger.info("api", "[Progress Sync] Conflict resolved", {
-      userId: session.user.id,
+      userId: userId,
       bookId,
       action: resolution.action,
       reason: resolution.reason,

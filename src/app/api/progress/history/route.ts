@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { and, desc, eq } from "drizzle-orm";
 
-import { auth } from "@/lib/auth";
-import { badRequest, serverError, unauthorized } from "@/lib/api-utils";
+import { badRequest, serverError, getAuthUserId } from "@/lib/api-utils";
 import { db } from "@/lib/db";
 import { progressHistory } from "@/lib/db/schema";
 import { logger } from "@/lib/logger";
@@ -21,10 +20,9 @@ export function normalizeProgressHistoryLimit(limitParam: string | null): number
 }
 
 export async function GET(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return unauthorized();
-  }
+  const authResult = await getAuthUserId();
+  if (authResult.error) return authResult.error;
+  const { userId } = authResult;
 
   const { searchParams } = new URL(req.url);
   const bookId = searchParams.get("bookId");
@@ -40,7 +38,7 @@ export async function GET(req: NextRequest) {
       .from(progressHistory)
       .where(
         and(
-          eq(progressHistory.userId, session.user.id),
+          eq(progressHistory.userId, userId),
           eq(progressHistory.bookId, bookId)
         )
       )

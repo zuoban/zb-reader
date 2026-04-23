@@ -1,9 +1,8 @@
 import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import path from "path";
 import fs from "fs";
-import { unauthorized, forbidden, notFound, serverError } from "@/lib/api-utils";
+import { forbidden, notFound, serverError, getAuthUserId } from "@/lib/api-utils";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const AVATAR_DIR = path.join(DATA_DIR, "avatars");
@@ -12,14 +11,13 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ userId: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return unauthorized();
-  }
+  const authResult = await getAuthUserId();
+  if (authResult.error) return authResult.error;
+  const { userId: currentUserId } = authResult;
 
   const { userId } = await params;
 
-  if (userId !== session.user.id) {
+  if (userId !== currentUserId) {
     return forbidden();
   }
 

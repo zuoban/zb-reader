@@ -1,16 +1,14 @@
 import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { readingProgress } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
-import { unauthorized, badRequest, serverError } from "@/lib/api-utils";
+import { badRequest, serverError, getAuthUserId } from "@/lib/api-utils";
 
 export async function GET(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return unauthorized();
-  }
+  const authResult = await getAuthUserId();
+  if (authResult.error) return authResult.error;
+  const { userId } = authResult;
 
   const { searchParams } = new URL(req.url);
   const bookId = searchParams.get("bookId");
@@ -22,7 +20,7 @@ export async function GET(req: NextRequest) {
   try {
     const progress = await db.query.readingProgress.findFirst({
       where: and(
-        eq(readingProgress.userId, session.user.id),
+        eq(readingProgress.userId, userId),
         eq(readingProgress.bookId, bookId)
       ),
     });

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
+import { useRef, useEffect, useCallback } from "react";
 
 export type FontFamily = "system" | "serif" | "sans" | "kaiti";
 
@@ -160,22 +161,28 @@ export const useReaderSettingsStore = create<
   )
 );
 
-let saveTimer: ReturnType<typeof setTimeout> | null = null;
-
 export function useDebouncedSettingsSave() {
   const saveToServer = useReaderSettingsStore((s) => s.saveToServer);
   const loaded = useReaderSettingsStore((s) => s.loaded);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  return () => {
+  useEffect(() => {
+    const timer = saveTimerRef.current;
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, []);
+
+  return useCallback(() => {
     if (!loaded) return;
 
-    if (saveTimer) {
-      clearTimeout(saveTimer);
-      saveTimer = null;
+    const timer = saveTimerRef.current;
+    if (timer) {
+      clearTimeout(timer);
     }
 
-    saveTimer = setTimeout(() => {
+    saveTimerRef.current = setTimeout(() => {
       saveToServer();
     }, 220);
-  };
+  }, [loaded, saveToServer]);
 }

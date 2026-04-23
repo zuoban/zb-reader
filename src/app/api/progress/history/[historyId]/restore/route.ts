@@ -1,19 +1,17 @@
 import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { readingProgress, progressHistory } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
-import { unauthorized, notFound, serverError } from "@/lib/api-utils";
+import { notFound, serverError, getAuthUserId } from "@/lib/api-utils";
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ historyId: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return unauthorized();
-  }
+  const authResult = await getAuthUserId();
+  if (authResult.error) return authResult.error;
+  const { userId } = authResult;
 
   const { historyId } = await params;
 
@@ -24,7 +22,7 @@ export async function POST(
       .where(
         and(
           eq(progressHistory.id, historyId),
-          eq(progressHistory.userId, session.user.id)
+          eq(progressHistory.userId, userId)
         )
       )
       .limit(1);
@@ -40,7 +38,7 @@ export async function POST(
       .from(readingProgress)
       .where(
         and(
-          eq(readingProgress.userId, session.user.id),
+          eq(readingProgress.userId, userId),
           eq(readingProgress.bookId, historyItem.bookId)
         )
       )
@@ -60,7 +58,7 @@ export async function POST(
     } else {
       await db.insert(readingProgress).values({
         id: crypto.randomUUID(),
-        userId: session.user.id,
+        userId: userId,
         bookId: historyItem.bookId,
         progress: historyItem.progress,
         location: historyItem.location,

@@ -1,17 +1,15 @@
 import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db, getSqlite } from "@/lib/db";
 import { progressHistory } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
-import { unauthorized, badRequest, notFound, serverError } from "@/lib/api-utils";
+import { badRequest, notFound, serverError, getAuthUserId } from "@/lib/api-utils";
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return unauthorized();
-  }
+  const authResult = await getAuthUserId();
+  if (authResult.error) return authResult.error;
+  const { userId } = authResult;
 
   try {
     const { historyId } = await req.json();
@@ -23,7 +21,7 @@ export async function POST(req: NextRequest) {
     const historyRecord = await db.query.progressHistory.findFirst({
       where: and(
         eq(progressHistory.id, historyId),
-        eq(progressHistory.userId, session.user.id)
+        eq(progressHistory.userId, userId)
       ),
     });
 
@@ -38,7 +36,7 @@ export async function POST(req: NextRequest) {
     const transaction = sqlite.transaction(() => {
       const current = sqlite
         .prepare("SELECT * FROM reading_progress WHERE user_id = ? AND book_id = ?")
-        .get(session.user.id, historyRecord.bookId) as
+        .get(userId, historyRecord.bookId) as
         | {
             id: string;
             book_id: string;
@@ -59,7 +57,7 @@ export async function POST(req: NextRequest) {
           )
           .run(
             uuidv4(),
-            session.user.id,
+            userId,
             current.book_id,
             current.version,
             current.progress,
@@ -86,7 +84,7 @@ export async function POST(req: NextRequest) {
             historyRecord.deviceId,
             now,
             now,
-            session.user.id,
+            userId,
             historyRecord.bookId
           );
       } else {
@@ -99,7 +97,7 @@ export async function POST(req: NextRequest) {
           )
           .run(
             uuidv4(),
-            session.user.id,
+            userId,
             historyRecord.bookId,
             newVersion,
             historyRecord.progress,
@@ -117,7 +115,7 @@ export async function POST(req: NextRequest) {
     transaction();
 
     logger.info("api", "[Progress Restore] Restored", {
-      userId: session.user.id,
+      userId: userId,
       bookId: historyRecord.bookId,
       historyId,
       newVersion,

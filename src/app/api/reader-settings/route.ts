@@ -164,11 +164,22 @@ export async function PUT(req: NextRequest) {
       });
     }
 
-    const updated = await db.query.readerSettings.findFirst({
-      where: eq(readerSettings.userId, authResult.userId),
+    return NextResponse.json({
+      settings: {
+        fontSize: nextValues.fontSize,
+        pageWidth: nextValues.pageWidth,
+        theme: nextValues.theme,
+        fontFamily: nextValues.fontFamily,
+        browserVoiceId: nextValues.browserVoiceId,
+        ttsRate: nextValues.ttsRate,
+        ttsPitch: nextValues.ttsPitch,
+        ttsVolume: nextValues.ttsVolume,
+        microsoftPreloadCount: nextValues.microsoftPreloadCount,
+        ttsAutoNextChapter: nextValues.ttsAutoNextChapter,
+        ttsHighlightColor: nextValues.ttsHighlightColor,
+        autoScrollToActive: nextValues.autoScrollToActive,
+      },
     });
-
-    return NextResponse.json({ settings: toResponseShape(updated) });
   } catch (error) {
     logger.error("api", "Update reader settings error:", error);
     return serverError("更新阅读设置失败");

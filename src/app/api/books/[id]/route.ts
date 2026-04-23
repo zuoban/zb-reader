@@ -1,26 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { books } from "@/lib/db/schema";
 import { deleteBookFile, deleteCoverImage } from "@/lib/storage";
 import { logger } from "@/lib/logger";
-import { badRequest, notFound, serverError, unauthorized } from "@/lib/api-utils";
+import { badRequest, notFound, serverError, getAuthUserId } from "@/lib/api-utils";
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return unauthorized();
-  }
+  const authResult = await getAuthUserId();
+  if (authResult.error) return authResult.error;
+  const { userId } = authResult;
 
   const { id } = await params;
 
   try {
     const book = await db.query.books.findFirst({
-      where: and(eq(books.id, id), eq(books.uploaderId, session.user.id)),
+      where: and(eq(books.id, id), eq(books.uploaderId, userId)),
     });
 
     if (!book) {
@@ -38,16 +36,15 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return unauthorized();
-  }
+  const authResult = await getAuthUserId();
+  if (authResult.error) return authResult.error;
+  const { userId } = authResult;
 
   const { id } = await params;
 
   try {
     const book = await db.query.books.findFirst({
-      where: and(eq(books.id, id), eq(books.uploaderId, session.user.id)),
+      where: and(eq(books.id, id), eq(books.uploaderId, userId)),
     });
 
     if (!book) {
@@ -72,10 +69,9 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return unauthorized();
-  }
+  const authResult = await getAuthUserId();
+  if (authResult.error) return authResult.error;
+  const { userId } = authResult;
 
   const { id } = await params;
 
@@ -88,7 +84,7 @@ export async function PATCH(
     }
 
     const book = await db.query.books.findFirst({
-      where: and(eq(books.id, id), eq(books.uploaderId, session.user.id)),
+      where: and(eq(books.id, id), eq(books.uploaderId, userId)),
     });
 
     if (!book) {
@@ -101,13 +97,11 @@ export async function PATCH(
         category: rawCategory || null,
         updatedAt: new Date().toISOString(),
       })
-      .where(and(eq(books.id, id), eq(books.uploaderId, session.user.id)));
+      .where(and(eq(books.id, id), eq(books.uploaderId, userId)));
 
-    const updatedBook = await db.query.books.findFirst({
-      where: and(eq(books.id, id), eq(books.uploaderId, session.user.id)),
+    return NextResponse.json({
+      book: { ...book, category: rawCategory || null, updatedAt: new Date().toISOString() },
     });
-
-    return NextResponse.json({ book: updatedBook });
   } catch (error) {
     logger.error("book", "Failed to update book", error);
     return serverError("更新书籍失败");

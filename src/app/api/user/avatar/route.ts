@@ -1,13 +1,12 @@
 import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { sql } from "drizzle-orm";
-import { unauthorized, badRequest, serverError } from "@/lib/api-utils";
+import { badRequest, serverError, getAuthUserId } from "@/lib/api-utils";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const AVATAR_DIR = path.join(DATA_DIR, "avatars");
@@ -37,10 +36,9 @@ function validateImageMagicNumber(buffer: Buffer): string | null {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return unauthorized();
-  }
+  const authResult = await getAuthUserId();
+  if (authResult.error) return authResult.error;
+  const { userId } = authResult;
 
   try {
     const formData = await req.formData();
@@ -89,7 +87,7 @@ export async function POST(req: NextRequest) {
 
     // 使用检测到的类型作为扩展名
     const fileExt = detectedType === "jpeg" ? "jpg" : detectedType;
-    const filename = `${session.user.id}.${fileExt}`;
+    const filename = `${userId}.${fileExt}`;
     const filepath = path.join(AVATAR_DIR, filename);
 
     await writeFile(filepath, buffer);
@@ -97,14 +95,14 @@ export async function POST(req: NextRequest) {
     await db
       .update(users)
       .set({
-        avatar: `/api/user/avatar/${session.user.id}`,
+        avatar: `/api/user/avatar/${userId}`,
         updatedAt: sql`(datetime('now'))`,
       })
-      .where(eq(users.id, session.user.id));
+      .where(eq(users.id, userId));
 
     return NextResponse.json({
       message: "头像上传成功",
-      avatar: `/api/user/avatar/${session.user.id}`,
+      avatar: `/api/user/avatar/${userId}`,
     });
   } catch (error) {
     logger.error("api", "头像上传失败:", error);

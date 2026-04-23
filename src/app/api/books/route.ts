@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { and, count, desc, eq, like, or, sql } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { books, readingProgress } from "@/lib/db/schema";
 import { deleteBookFile, deleteCoverImage, saveBookFile, saveCoverImage } from "@/lib/storage";
 import { logger } from "@/lib/logger";
-import { unauthorized, badRequest, serverError } from "@/lib/api-utils";
+import { badRequest, serverError, getAuthUserId } from "@/lib/api-utils";
 import { formatBytes } from "@/lib/utils";
 
 const MAX_EPUB_FILE_SIZE_BYTES = 100 * 1024 * 1024;
@@ -134,10 +133,9 @@ export function parseEpubOpfMetadata(opfContent: string): {
 }
 
 export async function GET(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return unauthorized();
-  }
+  const authResult = await getAuthUserId();
+  if (authResult.error) return authResult.error;
+  const { userId } = authResult;
 
   const { searchParams } = new URL(req.url);
   const search = searchParams.get("search") || "";
@@ -149,7 +147,7 @@ export async function GET(req: NextRequest) {
   const category = searchParams.get("category")?.trim() || "";
 
   try {
-    let whereClause = eq(books.uploaderId, session.user.id);
+    let whereClause = eq(books.uploaderId, userId);
 
     if (search) {
       whereClause = and(
@@ -177,7 +175,7 @@ export async function GET(req: NextRequest) {
         readingProgress,
         and(
           eq(readingProgress.bookId, books.id),
-          eq(readingProgress.userId, session.user.id)
+          eq(readingProgress.userId, userId)
         )
       )
       .where(whereClause)
@@ -192,7 +190,7 @@ export async function GET(req: NextRequest) {
     const allTotalResult = await db
       .select({ count: count() })
       .from(books)
-      .where(eq(books.uploaderId, session.user.id));
+      .where(eq(books.uploaderId, userId));
 
     const total = totalResult[0]?.count ?? 0;
     const allTotal = allTotalResult[0]?.count ?? total;
@@ -204,7 +202,7 @@ export async function GET(req: NextRequest) {
       .from(books)
       .where(
         and(
-          eq(books.uploaderId, session.user.id),
+          eq(books.uploaderId, userId),
           sql`coalesce(${books.category}, '') <> ''`
         )
       )
@@ -233,15 +231,8 @@ export async function GET(req: NextRequest) {
       if (r.progress !== null && r.progress !== undefined) {
         progressMap[r.book.id] = r.progress;
         lastReadAtMap[r.book.id] = r.lastReadAt ?? "";
-        logger.debug("books", "Progress record", {
-          bookId: r.book.id,
-          progress: r.progress,
-        });
       }
     });
-
-    logger.debug("books", "Final progressMap", progressMap);
-    logger.debug("books", "Final lastReadAtMap", lastReadAtMap);
 
     return NextResponse.json({
       books: result.map((r) => r.book),
@@ -260,10 +251,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return unauthorized();
-  }
+  const authResult = await getAuthUserId();
+  if (authResult.error) return authResult.error;
+  const { userId } = authResult;
 
   let savedFileName: string | null = null;
   let coverFileName: string | null = null;
@@ -317,7 +307,7 @@ export async function POST(req: NextRequest) {
       filePath: savedFileName,
       fileSize: buffer.length,
       format: ext as "epub",
-      uploaderId: session.user.id,
+      uploaderId: userId,
     });
 
     const book = await db.query.books.findFirst({

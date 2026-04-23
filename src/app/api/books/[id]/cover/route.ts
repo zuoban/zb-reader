@@ -1,25 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { findOwnedBook } from "@/lib/book-ownership";
 import { getCoverFilePath, coverExists } from "@/lib/storage";
 import { logger } from "@/lib/logger";
 import fs from "fs";
 import { Readable } from "stream";
-import { notFound, serverError, unauthorized } from "@/lib/api-utils";
+import { notFound, serverError, getAuthUserId } from "@/lib/api-utils";
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return unauthorized();
-  }
+  const authResult = await getAuthUserId();
+  if (authResult.error) return authResult.error;
+  const { userId } = authResult;
 
   const { id } = await params;
 
   try {
-    const book = await findOwnedBook(id, session.user.id);
+    const book = await findOwnedBook(id, userId);
 
     if (!book || !book.cover) {
       return notFound("封面不存在");

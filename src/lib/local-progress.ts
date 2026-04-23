@@ -242,6 +242,7 @@ export class LocalProgressManager {
     const existing = this.debounceTimers.get(item.bookId);
     if (existing) {
       clearTimeout(existing);
+      this.debounceTimers.delete(item.bookId);
     }
 
     const timer = setTimeout(() => {

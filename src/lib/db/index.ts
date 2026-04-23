@@ -449,6 +449,11 @@ function getConnection() {
   sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_reading_progress_user_id ON reading_progress (user_id);`);
   sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_reading_progress_last_read_at ON reading_progress (last_read_at);`);
   sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_books_category ON books (category);`);
+  sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_books_uploader_id ON books (uploader_id);`);
+  sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_progress_history_user_book ON progress_history (user_id, book_id);`);
+  sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_progress_history_created_at ON progress_history (created_at);`);
+  sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_bookmarks_user_book ON bookmarks (user_id, book_id);`);
+  sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_notes_user_book ON notes (user_id, book_id);`);
 
   _sqlite = sqlite;
   _db = drizzle(sqlite, { schema });

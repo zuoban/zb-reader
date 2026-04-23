@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { books } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
@@ -7,7 +6,7 @@ import { getBookFilePath, bookFileExists } from "@/lib/storage";
 import { logger } from "@/lib/logger";
 import fs from "fs";
 import { Readable } from "stream";
-import { unauthorized, notFound, serverError } from "@/lib/api-utils";
+import { notFound, serverError, getAuthUserId } from "@/lib/api-utils";
 
 export function buildBookDownloadName(title: string, format: string): string {
   const safeTitle = title
@@ -33,16 +32,15 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return unauthorized();
-  }
+  const authResult = await getAuthUserId();
+  if (authResult.error) return authResult.error;
+  const { userId } = authResult;
 
   const { id } = await params;
 
   try {
     const book = await db.query.books.findFirst({
-      where: and(eq(books.id, id), eq(books.uploaderId, session.user.id)),
+      where: and(eq(books.id, id), eq(books.uploaderId, userId)),
     });
 
     if (!book) {
