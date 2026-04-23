@@ -23,6 +23,26 @@ const DEFAULTS = {
 };
 
 const ALLOWED_FONT_FAMILIES = ["system", "serif", "sans", "kaiti"];
+const ALLOWED_MICROSOFT_PRELOAD_COUNTS = [1, 2, 3, 5, 8];
+
+export function clampReaderSettingNumber(
+  value: unknown,
+  min: number,
+  max: number,
+  fallback: number
+): number {
+  const numericValue = Number(value ?? fallback);
+  if (!Number.isFinite(numericValue)) {
+    return fallback;
+  }
+
+  return Math.min(max, Math.max(min, numericValue));
+}
+
+export function normalizeMicrosoftPreloadCount(value: unknown, fallback: number): number {
+  const numericValue = Number(value ?? fallback);
+  return ALLOWED_MICROSOFT_PRELOAD_COUNTS.includes(numericValue) ? numericValue : fallback;
+}
 
 function toResponseShape(settings: typeof readerSettings.$inferSelect | null | undefined) {
   if (!settings) {
@@ -76,8 +96,18 @@ export async function PUT(req: NextRequest) {
     });
 
     const nextValues = {
-      fontSize: Math.min(28, Math.max(12, Number(payload.fontSize ?? existing?.fontSize ?? DEFAULTS.fontSize))),
-      pageWidth: Math.min(100, Math.max(50, Number(payload.pageWidth ?? existing?.pageWidth ?? DEFAULTS.pageWidth))),
+      fontSize: clampReaderSettingNumber(
+        payload.fontSize ?? existing?.fontSize,
+        12,
+        28,
+        DEFAULTS.fontSize
+      ),
+      pageWidth: clampReaderSettingNumber(
+        payload.pageWidth ?? existing?.pageWidth,
+        50,
+        100,
+        DEFAULTS.pageWidth
+      ),
       theme:
         payload.theme === "dark" || payload.theme === "sepia" || payload.theme === "light"
           ? payload.theme
@@ -89,12 +119,23 @@ export async function PUT(req: NextRequest) {
         typeof payload.browserVoiceId === "string"
           ? payload.browserVoiceId
           : existing?.browserVoiceId ?? DEFAULTS.browserVoiceId,
-      ttsRate: Math.min(5, Math.max(1, Number(payload.ttsRate ?? existing?.ttsRate ?? DEFAULTS.ttsRate))),
-      ttsPitch: Math.min(2, Math.max(0.5, Number(payload.ttsPitch ?? existing?.ttsPitch ?? DEFAULTS.ttsPitch))),
-      ttsVolume: Math.min(1, Math.max(0, Number(payload.ttsVolume ?? existing?.ttsVolume ?? DEFAULTS.ttsVolume))),
-      microsoftPreloadCount: [1, 2, 3, 5, 8].includes(Number(payload.microsoftPreloadCount))
-        ? Number(payload.microsoftPreloadCount)
-        : existing?.microsoftPreloadCount ?? DEFAULTS.microsoftPreloadCount,
+      ttsRate: clampReaderSettingNumber(payload.ttsRate ?? existing?.ttsRate, 1, 5, DEFAULTS.ttsRate),
+      ttsPitch: clampReaderSettingNumber(
+        payload.ttsPitch ?? existing?.ttsPitch,
+        0.5,
+        2,
+        DEFAULTS.ttsPitch
+      ),
+      ttsVolume: clampReaderSettingNumber(
+        payload.ttsVolume ?? existing?.ttsVolume,
+        0,
+        1,
+        DEFAULTS.ttsVolume
+      ),
+      microsoftPreloadCount: normalizeMicrosoftPreloadCount(
+        payload.microsoftPreloadCount ?? existing?.microsoftPreloadCount,
+        DEFAULTS.microsoftPreloadCount
+      ),
       ttsAutoNextChapter:
         typeof payload.ttsAutoNextChapter === "boolean"
           ? payload.ttsAutoNextChapter
