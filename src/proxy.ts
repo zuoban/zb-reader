@@ -32,7 +32,7 @@ export async function proxy(req: NextRequest) {
 
   const response = NextResponse.next();
   
-  response.headers.set("X-Response-Time", Date.now().toString());
+  response.headers.set("X-Request-Checked-At", new Date().toISOString());
   
   return response;
 }

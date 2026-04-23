@@ -1,6 +1,6 @@
 "use client";
 
-import { Volume2, Type, Palette } from "lucide-react";
+import { Type } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/sheet";
 import type { BrowserVoiceOption } from "@/lib/tts";
 import type { FontFamily } from "@/stores/reader-settings";
-import { cn } from "@/lib/utils";
 import { TypographySettings, ThemeSettings, TtsSettings } from "./settings";
 
 type ThemeValue = "light" | "dark" | "sepia";

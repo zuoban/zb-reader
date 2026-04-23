@@ -2,6 +2,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 
 const mockAuth = vi.fn();
+const mockBookFindFirst = vi.fn().mockResolvedValue({
+  id: "book-1",
+  uploaderId: "user-1",
+});
 const mockSelect = vi.fn(() => ({
   from: vi.fn(() => ({
     where: vi.fn(() => ({
@@ -34,6 +38,9 @@ vi.mock("@/lib/db", () => ({
     select: () => mockSelect(),
     insert: () => mockInsert(),
     query: {
+      books: {
+        findFirst: () => mockBookFindFirst(),
+      },
       bookmarks: {
         findFirst: vi.fn().mockResolvedValue(null),
       },
@@ -52,6 +59,10 @@ function createRequest(url: string, body?: unknown): NextRequest {
 describe("Bookmarks API", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockBookFindFirst.mockResolvedValue({
+      id: "book-1",
+      uploaderId: "user-1",
+    });
   });
 
   describe("GET /api/bookmarks", () => {

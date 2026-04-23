@@ -6,6 +6,7 @@ import { CheckCircle, FileText, Loader2, Upload, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -144,6 +145,9 @@ export function UploadDialog({
                 添加新书
               </div>
               <DialogTitle className="text-lg tracking-tight sm:text-2xl">上传电子书</DialogTitle>
+              <DialogDescription>
+                选择一个或多个 EPUB 文件添加到你的书架。
+              </DialogDescription>
             </DialogHeader>
 
             <div

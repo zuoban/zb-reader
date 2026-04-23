@@ -5,7 +5,8 @@ import { db } from "@/lib/db";
 import { bookmarks } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
-import { unauthorized, badRequest, serverError, validateJson } from "@/lib/api-utils";
+import { findOwnedBook } from "@/lib/book-ownership";
+import { unauthorized, badRequest, notFound, serverError, validateJson } from "@/lib/api-utils";
 import { bookmarkSchema } from "@/lib/validations";
 
 export async function GET(req: NextRequest) {
@@ -51,6 +52,10 @@ export async function POST(req: NextRequest) {
     if (validation.error) return validation.error;
 
     const { bookId, location, label, pageNumber, progress } = validation.data;
+    const book = await findOwnedBook(bookId, session.user.id);
+    if (!book) {
+      return notFound("书籍不存在");
+    }
 
     const id = uuidv4();
 

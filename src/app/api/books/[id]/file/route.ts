@@ -6,6 +6,7 @@ import { eq, and } from "drizzle-orm";
 import { getBookFilePath, bookFileExists } from "@/lib/storage";
 import { logger } from "@/lib/logger";
 import fs from "fs";
+import { Readable } from "stream";
 import { unauthorized, notFound, serverError } from "@/lib/api-utils";
 
 export async function GET(
@@ -33,17 +34,18 @@ export async function GET(
     }
 
     const filePath = getBookFilePath(book.filePath);
-    const fileBuffer = fs.readFileSync(filePath);
+    const fileStat = fs.statSync(filePath);
+    const fileStream = fs.createReadStream(filePath);
 
     const contentTypeMap: Record<string, string> = {
       epub: "application/epub+zip",
     };
 
-    return new NextResponse(fileBuffer, {
+    return new NextResponse(Readable.toWeb(fileStream) as ReadableStream, {
       headers: {
         "Content-Type": contentTypeMap[book.format] || "application/octet-stream",
         "Content-Disposition": `inline; filename="${encodeURIComponent(book.title)}.${book.format}"`,
-        "Content-Length": fileBuffer.length.toString(),
+        "Content-Length": fileStat.size.toString(),
         "Cache-Control": "private, max-age=31536000, immutable",
       },
     });

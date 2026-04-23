@@ -3,6 +3,7 @@ import { NextRequest } from "next/server";
 
 const mockAuth = vi.fn();
 const mockFindFirst = vi.fn();
+const mockBookFindFirst = vi.fn();
 const mockSelect = vi.fn();
 const mockFrom = vi.fn();
 const mockWhere = vi.fn();
@@ -17,6 +18,9 @@ vi.mock("@/lib/auth", () => ({
 vi.mock("@/lib/db", () => ({
   db: {
     query: {
+      books: {
+        findFirst: () => mockBookFindFirst(),
+      },
       notes: {
         findFirst: () => mockFindFirst(),
       },
@@ -37,6 +41,10 @@ function createRequest(url: string, body?: unknown): NextRequest {
 describe("Notes API", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockBookFindFirst.mockResolvedValue({
+      id: "book-1",
+      uploaderId: "user-1",
+    });
   });
 
   describe("GET /api/notes", () => {

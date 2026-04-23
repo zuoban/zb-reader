@@ -1,4 +1,4 @@
-import { Check, ChevronDown, Minus, Plus } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import {
   Select,
   SelectContent,

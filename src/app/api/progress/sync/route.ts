@@ -2,10 +2,11 @@ import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db, getSqlite } from "@/lib/db";
-import { readingProgress, books } from "@/lib/db/schema";
+import { readingProgress } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { resolveConflict, type ClientProgress } from "@/lib/conflict-resolver";
+import { findOwnedBook } from "@/lib/book-ownership";
 import { unauthorized, badRequest, notFound, serverError } from "@/lib/api-utils";
 
 const MAX_HISTORY_COUNT = 50;
@@ -46,11 +47,8 @@ export async function POST(req: NextRequest) {
       return badRequest("缺少 clientVersion 参数");
     }
 
-    const bookExists = await db.query.books.findFirst({
-      where: eq(books.id, bookId),
-    });
-
-    if (!bookExists) {
+    const book = await findOwnedBook(bookId, session.user.id);
+    if (!book) {
       return notFound("书籍不存在");
     }
 

@@ -19,6 +19,10 @@ const nextConfig: NextConfig = {
 
   compress: true,
   poweredByHeader: false,
+
+  turbopack: {
+    root: process.cwd(),
+  },
   
   experimental: {
     optimizePackageImports: [

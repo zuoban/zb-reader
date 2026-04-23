@@ -160,6 +160,7 @@ export const BookCard = memo(function BookCard({
                 src={`/api/books/${book.id}/cover`}
                 alt={book.title || "书籍封面"}
                 fill
+                unoptimized
                 sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
                 className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.018]"
               />
