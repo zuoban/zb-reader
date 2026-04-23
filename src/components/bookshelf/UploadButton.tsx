@@ -8,9 +8,10 @@ import { toast } from "sonner";
 interface UploadButtonProps {
   onUploadComplete: () => void;
   className?: string;
+  variant?: "default" | "outline" | "ghost";
 }
 
-export function UploadButton({ onUploadComplete, className }: UploadButtonProps) {
+export function UploadButton({ onUploadComplete, className, variant = "outline" }: UploadButtonProps) {
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -67,7 +68,7 @@ export function UploadButton({ onUploadComplete, className }: UploadButtonProps)
         onChange={handleFileChange}
       />
       <Button
-        variant="outline"
+        variant={variant}
         size="sm"
         onClick={handleClick}
         disabled={uploading}

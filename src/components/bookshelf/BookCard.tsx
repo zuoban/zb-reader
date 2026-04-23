@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { memo, useEffect, useRef } from "react";
-import { BookOpen, CheckCircle2, MoreVertical, Tags, Trash2 } from "lucide-react";
+import { BookOpen, MoreVertical, Tags, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -180,22 +180,6 @@ export const BookCard = memo(function BookCard({
             </div>
           )}
 
-          <div className="absolute inset-x-0 bottom-0 flex items-end justify-end bg-gradient-to-t from-black/28 via-black/8 to-transparent px-2 py-2 sm:px-2.5 sm:py-2.5">
-            <span
-              className={cn(
-                "inline-flex shrink-0 items-center gap-1 rounded-lg border px-1.5 py-0.5 text-[8px] font-medium shadow-[0_8px_18px_-14px_rgba(0,0,0,0.65)] backdrop-blur-xl sm:text-[9px]",
-                isCompleted
-                  ? "border-green-300/18 bg-green-500/22 text-white/95"
-                  : hasProgress
-                    ? "border-amber-300/18 bg-amber-500/22 text-white/95"
-                    : "border-white/14 bg-black/24 text-white/86"
-              )}
-            >
-              {isCompleted ? <CheckCircle2 className="h-2.5 w-2.5" /> : null}
-              <span>{statusText}</span>
-            </span>
-          </div>
-
         </div>
       </Link>
 
@@ -215,10 +199,10 @@ export const BookCard = memo(function BookCard({
             {book.category ? (
               <Badge
                 variant="outline"
-                className="mt-1 max-w-full rounded-lg border-[color:var(--cta)]/25 bg-[color:var(--cta)]/10 px-1.5 py-0 text-[8px] font-medium text-foreground/78 shadow-[0_1px_0_color-mix(in_oklab,white_38%,transparent)_inset] sm:text-[9px]"
+                className="mt-1 max-w-full rounded-lg border-border/45 bg-background/28 px-1.5 py-0.5 text-[8px] font-medium leading-none text-muted-foreground/82 shadow-[0_1px_0_color-mix(in_oklab,white_34%,transparent)_inset] sm:text-[9px]"
                 title={book.category}
               >
-                <Tags className="h-2.5 w-2.5 text-[color:var(--cta)]" />
+                <Tags className="h-2.5 w-2.5 text-muted-foreground/58" />
                 <span className="truncate">{book.category}</span>
               </Badge>
             ) : null}
@@ -264,13 +248,16 @@ export const BookCard = memo(function BookCard({
           </div>
         </div>
 
-        {lastReadText ? (
-          <div className="mt-1.5 flex items-center justify-end gap-1.5">
+        <div className="mt-1.5 flex items-center justify-between gap-1.5">
+          <span className="min-w-0 truncate text-[8px] font-medium text-muted-foreground/72 sm:text-[9px]">
+            {statusText}
+          </span>
+          {lastReadText ? (
             <div className="shrink-0 text-[8px] text-muted-foreground/72 sm:text-[9px]">
               {lastReadText}
             </div>
-          </div>
-        ) : null}
+          ) : null}
+        </div>
       </div>
     </Card>
   );

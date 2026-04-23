@@ -311,6 +311,49 @@
   border-color: color-mix(in oklab, var(--ring) 38%, var(--glass-border));
 }
 
+.top-action-group {
+  border: 1px solid color-mix(in oklab, var(--glass-border) 78%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in oklab, white 18%, transparent), transparent 66%),
+    color-mix(in oklab, var(--glass) 56%, transparent);
+  box-shadow:
+    0 1px 0 var(--glass-highlight) inset,
+    0 12px 30px -26px color-mix(in oklab, var(--foreground) 34%, transparent);
+  backdrop-filter: blur(18px) saturate(1.18);
+  -webkit-backdrop-filter: blur(18px) saturate(1.18);
+}
+
+.top-action-primary {
+  border: 1px solid color-mix(in oklab, var(--ring) 34%, var(--glass-border));
+  background:
+    linear-gradient(180deg, color-mix(in oklab, white 38%, transparent), transparent 58%),
+    color-mix(in oklab, var(--cta) 16%, var(--glass-strong));
+  color: var(--foreground);
+  box-shadow:
+    0 1px 0 var(--glass-highlight) inset,
+    0 12px 28px -20px color-mix(in oklab, var(--cta) 48%, transparent);
+}
+
+.top-action-primary:hover {
+  border-color: color-mix(in oklab, var(--ring) 52%, var(--glass-border));
+  background:
+    linear-gradient(180deg, color-mix(in oklab, white 46%, transparent), transparent 58%),
+    color-mix(in oklab, var(--cta) 23%, var(--glass-strong));
+}
+
+.top-icon-button {
+  border: 1px solid transparent;
+  background: transparent;
+  color: color-mix(in oklab, var(--muted-foreground) 76%, var(--foreground) 24%);
+  box-shadow: none;
+}
+
+.top-icon-button:hover {
+  border-color: color-mix(in oklab, var(--glass-border) 74%, transparent);
+  background: color-mix(in oklab, var(--background) 34%, transparent);
+  color: var(--foreground);
+}
+
 .liquid-pill-active {
   border-color: color-mix(in oklab, var(--ring) 48%, var(--glass-border));
   background:
@@ -320,6 +363,42 @@
   box-shadow:
     0 1px 0 var(--glass-highlight) inset,
     0 12px 30px -22px color-mix(in oklab, var(--cta) 54%, transparent);
+}
+
+.category-filter-shell {
+  border: 1px solid color-mix(in oklab, var(--glass-border) 86%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in oklab, white 24%, transparent), transparent 64%),
+    color-mix(in oklab, var(--glass) 78%, transparent);
+  box-shadow:
+    0 1px 0 var(--glass-highlight) inset,
+    0 14px 36px -30px color-mix(in oklab, var(--foreground) 34%, transparent);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+}
+
+.category-filter-button {
+  border: 1px solid transparent;
+  background: transparent;
+  color: color-mix(in oklab, var(--muted-foreground) 88%, var(--foreground) 12%);
+  box-shadow: none;
+}
+
+.category-filter-button:hover {
+  border-color: color-mix(in oklab, var(--glass-border) 78%, transparent);
+  background: color-mix(in oklab, var(--background) 34%, transparent);
+  color: var(--foreground);
+}
+
+.category-filter-button-active {
+  border-color: color-mix(in oklab, var(--ring) 32%, var(--glass-border));
+  background:
+    linear-gradient(180deg, color-mix(in oklab, white 40%, transparent), transparent 58%),
+    color-mix(in oklab, var(--glass-strong) 82%, var(--cta) 18%);
+  color: var(--foreground);
+  box-shadow:
+    0 1px 0 var(--glass-highlight) inset,
+    0 10px 24px -18px color-mix(in oklab, var(--cta) 46%, transparent);
 }
 
 .liquid-hairline {

@@ -48,7 +48,6 @@ export function Navbar({ onUploadComplete, className }: NavbarProps) {
       <nav className="mx-auto w-full max-w-7xl px-4 sm:px-6">
         <div className="surface-glass surface-elevated relative flex h-14 items-center justify-between overflow-hidden rounded-2xl px-2.5 transition-all duration-300 sm:h-15 sm:px-3">
           <div className="liquid-hairline pointer-events-none absolute inset-x-3 top-0 h-px" />
-          <div className="pointer-events-none absolute inset-y-1 left-1 w-32 rounded-l-[1.1rem] bg-[linear-gradient(90deg,color-mix(in_oklab,var(--cta)_12%,transparent),transparent)]" />
 
           {/* Logo */}
           <Link
@@ -75,11 +74,12 @@ export function Navbar({ onUploadComplete, className }: NavbarProps) {
           </Link>
 
           {/* Actions */}
-          <div className="relative flex items-center gap-2">
+          <div className="top-action-group relative flex items-center gap-1 rounded-2xl p-1">
             {onUploadComplete && (
               <UploadButton
                 onUploadComplete={onUploadComplete}
-                className="liquid-control h-9 gap-2 rounded-xl px-3 text-foreground transition-all duration-200"
+                variant="ghost"
+                className="top-action-primary h-8.5 gap-1.5 rounded-xl px-2.5 text-xs font-medium transition-all duration-200 sm:h-9 sm:gap-2 sm:px-3"
               />
             )}
 
@@ -88,10 +88,10 @@ export function Navbar({ onUploadComplete, className }: NavbarProps) {
               size="icon"
               onClick={handleThemeToggle}
               aria-label="切换主题"
-              className="liquid-control relative h-9 w-9 rounded-xl transition-all duration-200"
+              className="top-icon-button relative h-8.5 w-8.5 rounded-xl transition-all duration-200 sm:h-9 sm:w-9"
             >
-              <Sun className="h-[18px] w-[18px] rotate-0 scale-100 transition-all duration-300 dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-[18px] w-[18px] rotate-90 scale-0 transition-all duration-300 dark:rotate-0 dark:scale-100" />
+              <Sun className="h-[17px] w-[17px] rotate-0 scale-100 transition-all duration-300 dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-[17px] w-[17px] rotate-90 scale-0 transition-all duration-300 dark:rotate-0 dark:scale-100" />
               <span className="sr-only">切换主题</span>
             </Button>
 
@@ -101,9 +101,9 @@ export function Navbar({ onUploadComplete, className }: NavbarProps) {
                   <Button
                     variant="ghost"
                     aria-label="打开用户菜单"
-                    className="liquid-control relative h-9 w-9 rounded-full p-0 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-[color:var(--cta)]/50 focus-visible:ring-offset-2"
+                    className="top-icon-button relative h-8.5 w-8.5 rounded-full p-0 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-[color:var(--cta)]/50 focus-visible:ring-offset-2 sm:h-9 sm:w-9"
                   >
-                    <Avatar className="h-8 w-8">
+                    <Avatar className="h-7.5 w-7.5 sm:h-8 sm:w-8">
                       <AvatarImage src={session.user.avatar || undefined} alt={session.user.username || "用户头像"} />
                       <AvatarFallback className="bg-gradient-to-br from-[color:var(--cta)]/30 to-primary/10 text-primary font-semibold text-sm">
                         {session.user.username?.[0]?.toUpperCase() || "U"}
