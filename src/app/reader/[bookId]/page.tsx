@@ -1730,6 +1730,9 @@ function ReaderContent() {
         "--reader-destructive": currentTheme.destructive,
       } as React.CSSProperties}
     >
+      <div className="pointer-events-none fixed inset-x-0 top-0 z-0 h-28 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--reader-card-bg)_62%,transparent),transparent)]" />
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-0 h-24 bg-[linear-gradient(0deg,color-mix(in_srgb,var(--reader-card-bg)_42%,transparent),transparent)]" />
+
       {/* 简化的主容器 */}
       <div className="relative h-full w-full">
         {/* 阅读内容区域 */}
@@ -1739,12 +1742,8 @@ function ReaderContent() {
             {!isSpeaking && !isTtsViewOpen ? (
               <div className="pointer-events-none absolute left-1/2 top-0 z-10 -translate-x-1/2">
                 <div
-                  className="pointer-events-auto inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs backdrop-blur-sm"
-                  style={{
-                    background: "color-mix(in srgb, var(--reader-card-bg) 85%, transparent)",
-                    borderColor: "var(--reader-border)",
-                    color: "var(--reader-muted-text)",
-                  }}
+                  className="reader-liquid-control pointer-events-auto inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs"
+                  style={{ color: "var(--reader-muted-text)" }}
                 >
                   <span className="truncate max-w-[120px]">{book.title}</span>
                   <span className="text-[10px]">{(progress * 100).toFixed(0)}%</span>
@@ -1931,10 +1930,8 @@ function ReaderContent() {
       {/* Idle countdown warning */}
       {idleCountdown !== null && idleCountdown > 0 && (
         <div
-          className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg shadow-sm"
+          className="reader-liquid-surface fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-xl"
           style={{
-            background: "var(--reader-card-bg)",
-            border: "1px solid var(--reader-border)",
             color: "var(--reader-text)",
           }}
         >

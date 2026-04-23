@@ -58,11 +58,8 @@ export function ReadingSettings({
       <SheetContent
         side="bottom"
         showBackground={false}
-        className="overflow-hidden rounded-t-[28px] border-t px-0 sm:mx-auto sm:max-w-xl xl:max-w-[850px]"
-        style={{
-          background: "var(--reader-bg)",
-          borderColor: "var(--reader-border)",
-        }}
+        className="reader-liquid-surface overflow-hidden rounded-t-[28px] px-0 sm:mx-auto sm:max-w-xl xl:max-w-[850px]"
+        style={{ color: "var(--reader-text)" }}
       >
         {/* Handle + Title */}
         <SheetHeader className="px-5 pb-4 pt-5 sm:px-6">
@@ -89,11 +86,7 @@ export function ReadingSettings({
         <div className="px-5 sm:px-6 pb-10 max-h-[70vh] overflow-y-auto space-y-6 scrollbar-hide">
           {/* Current preset card */}
           <div
-            className="rounded-2xl border px-5 py-5 shadow-sm"
-            style={{
-              background: "var(--reader-card-bg)",
-              borderColor: "var(--reader-border)",
-            }}
+            className="reader-liquid-control rounded-2xl px-5 py-5"
           >
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -128,11 +121,7 @@ export function ReadingSettings({
               ].map((item) => (
                 <div
                   key={item.label}
-                  className="rounded-xl border px-3 py-3 text-center shadow-sm"
-                  style={{
-                    background: "var(--reader-bg)",
-                    borderColor: "var(--reader-border)",
-                  }}
+                  className="reader-liquid-surface rounded-xl px-3 py-3 text-center"
                 >
                   <p
                     className="text-[12px]"

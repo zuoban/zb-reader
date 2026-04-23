@@ -484,6 +484,56 @@
   );
 }
 
+.reader-liquid-surface {
+  border: 1px solid color-mix(in srgb, var(--reader-border, var(--glass-border)) 72%, transparent);
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--reader-card-bg, white) 78%, transparent), color-mix(in srgb, var(--reader-card-bg, white) 54%, transparent)),
+    linear-gradient(180deg, color-mix(in srgb, white 24%, transparent), transparent 48%);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, white 30%, transparent) inset,
+    0 0 0 1px color-mix(in srgb, white 12%, transparent) inset,
+    0 24px 56px -42px color-mix(in srgb, var(--reader-text, #111) 36%, transparent);
+  backdrop-filter: blur(24px) saturate(1.35);
+  -webkit-backdrop-filter: blur(24px) saturate(1.35);
+}
+
+[data-reader-theme="dark"] .reader-liquid-surface {
+  border-color: color-mix(in srgb, var(--reader-border, #333) 88%, transparent);
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--reader-card-bg, #111) 72%, transparent), color-mix(in srgb, var(--reader-card-bg, #111) 52%, transparent)),
+    linear-gradient(180deg, color-mix(in srgb, white 7%, transparent), transparent 50%);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, white 10%, transparent) inset,
+    0 0 0 1px color-mix(in srgb, white 5%, transparent) inset,
+    0 24px 56px -42px color-mix(in srgb, black 72%, transparent);
+}
+
+.reader-liquid-control {
+  border: 1px solid color-mix(in srgb, var(--reader-border, var(--glass-border)) 68%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, white 22%, transparent), transparent 58%),
+    color-mix(in srgb, var(--reader-card-bg, white) 44%, transparent);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, white 24%, transparent) inset,
+    0 12px 26px -22px color-mix(in srgb, var(--reader-text, #111) 32%, transparent);
+  backdrop-filter: blur(18px) saturate(1.22);
+  -webkit-backdrop-filter: blur(18px) saturate(1.22);
+}
+
+.reader-liquid-control:hover {
+  border-color: color-mix(in srgb, var(--reader-primary, #111) 22%, var(--reader-border, #ddd));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, white 28%, transparent), transparent 58%),
+    color-mix(in srgb, var(--reader-primary, #111) 8%, var(--reader-card-bg, white));
+}
+
+[data-reader-theme="dark"] .reader-liquid-control {
+  border-color: color-mix(in srgb, var(--reader-border, #333) 82%, transparent);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, white 8%, transparent) inset,
+    0 12px 26px -22px color-mix(in srgb, black 64%, transparent);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

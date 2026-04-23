@@ -70,10 +70,11 @@ export const SidePanel = memo(function SidePanel({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="left"
-        className="w-[85vw] sm:w-[340px] border-r p-0 rounded-r-2xl"
-        style={{ background: "var(--reader-bg)", borderColor: "var(--reader-border)" }}
+        showBackground={false}
+        className="reader-liquid-surface w-[85vw] sm:w-[340px] border-r p-0 rounded-r-2xl"
+        style={{ color: "var(--reader-text)" }}
       >
-        <SheetHeader className="px-5 py-4 border-b" style={{ borderColor: "var(--reader-border)" }}>
+        <SheetHeader className="px-5 py-4 border-b" style={{ borderColor: "color-mix(in srgb, var(--reader-border) 72%, transparent)" }}>
           <SheetTitle className="sr-only">侧边栏</SheetTitle>
         </SheetHeader>
 
@@ -83,19 +84,18 @@ export const SidePanel = memo(function SidePanel({
           className="flex flex-col h-full"
         >
           <TabsList
-            className="mx-5 mt-4 grid h-11 grid-cols-3 rounded-xl p-1 gap-1"
-            style={{ background: "color-mix(in srgb, var(--reader-text) 4%, transparent)" }}
+            className="reader-liquid-control mx-5 mt-4 grid h-11 grid-cols-3 rounded-xl p-1 gap-1"
           >
             <TabsTrigger
               value="toc"
-              className="gap-2 rounded-lg text-sm font-medium transition-all data-[state=active]:bg-[var(--reader-card-bg)] data-[state=active]:text-[var(--reader-primary)] data-[state=active]:shadow-sm"
+              className="gap-2 rounded-lg text-sm font-medium transition-all data-[state=active]:bg-[var(--reader-card-bg)]/70 data-[state=active]:text-[var(--reader-primary)] data-[state=active]:shadow-sm"
             >
               <List className="size-4" />
               <span className="hidden sm:inline">目录</span>
             </TabsTrigger>
             <TabsTrigger
               value="bookmarks"
-              className="gap-2 rounded-lg text-sm font-medium transition-all data-[state=active]:bg-[var(--reader-card-bg)] data-[state=active]:text-[var(--reader-primary)] data-[state=active]:shadow-sm"
+              className="gap-2 rounded-lg text-sm font-medium transition-all data-[state=active]:bg-[var(--reader-card-bg)]/70 data-[state=active]:text-[var(--reader-primary)] data-[state=active]:shadow-sm"
             >
               <Bookmark className="size-4" />
               <span className="hidden sm:inline">书签</span>
@@ -107,7 +107,7 @@ export const SidePanel = memo(function SidePanel({
             </TabsTrigger>
             <TabsTrigger
               value="notes"
-              className="gap-2 rounded-lg text-sm font-medium transition-all data-[state=active]:bg-[var(--reader-card-bg)] data-[state=active]:text-[var(--reader-primary)] data-[state=active]:shadow-sm"
+              className="gap-2 rounded-lg text-sm font-medium transition-all data-[state=active]:bg-[var(--reader-card-bg)]/70 data-[state=active]:text-[var(--reader-primary)] data-[state=active]:shadow-sm"
             >
               <StickyNote className="size-4" />
               <span className="hidden sm:inline">笔记</span>

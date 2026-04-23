@@ -73,11 +73,11 @@ export default function RegisterPage() {
   };
 
   return (
-    <Card className="overflow-hidden rounded-2xl border-border/70 bg-card/82 py-5 shadow-[0_30px_70px_-48px_color-mix(in_oklab,var(--foreground)_46%,transparent)]">
+    <Card className="book-card-glass overflow-hidden rounded-2xl py-5">
       <CardHeader className="relative text-center pb-2">
-        <div className="absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent dark:via-white/12" />
+        <div className="liquid-hairline absolute inset-x-6 top-0 h-px" />
         <div className="flex justify-center mb-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-xl border border-border/80 bg-background/70 shadow-[0_18px_40px_-30px_color-mix(in_oklab,var(--foreground)_38%,transparent)]">
+          <div className="liquid-control flex h-16 w-16 items-center justify-center rounded-2xl">
             <Image src="/logo.svg" alt="ZB Reader" width={48} height={48} />
           </div>
         </div>
@@ -85,8 +85,8 @@ export default function RegisterPage() {
         <CardDescription className="text-base mt-2">
           创建账号，开始你的阅读收藏
         </CardDescription>
-        <div className="mx-auto mt-4 inline-flex items-center gap-2 rounded-lg border border-border/60 bg-background/58 px-3 py-1.5 text-xs text-muted-foreground">
-          <BookOpen className="h-3.5 w-3.5 text-[color:var(--cta)]" />
+        <div className="liquid-control mx-auto mt-4 inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs text-muted-foreground">
+          <BookOpen className="h-3.5 w-3.5 text-muted-foreground/70" />
           <span>同步进度与个人书架</span>
         </div>
       </CardHeader>
@@ -108,7 +108,7 @@ export default function RegisterPage() {
               required
               minLength={2}
               maxLength={20}
-              className="h-11 rounded-xl bg-background/70"
+              className="h-11 rounded-xl bg-background/42"
             />
           </div>
           <div className="space-y-2">
@@ -120,7 +120,7 @@ export default function RegisterPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="h-11 rounded-xl bg-background/70"
+              className="h-11 rounded-xl bg-background/42"
             />
           </div>
           <div className="space-y-2">
@@ -133,7 +133,7 @@ export default function RegisterPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              className="h-11 rounded-xl bg-background/70"
+              className="h-11 rounded-xl bg-background/42"
             />
           </div>
           <div className="space-y-2">
@@ -146,14 +146,14 @@ export default function RegisterPage() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
               minLength={6}
-              className="h-11 rounded-xl bg-background/70"
+              className="h-11 rounded-xl bg-background/42"
             />
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4 pt-2">
           <Button 
             type="submit" 
-            className="w-full h-11 rounded-xl font-semibold" 
+            className="top-action-primary w-full h-11 rounded-xl font-semibold" 
             disabled={loading}
           >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

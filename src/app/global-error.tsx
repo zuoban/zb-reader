@@ -1,8 +1,9 @@
 "use client";
 
+import { AlertTriangle, RefreshCw, Home } from "lucide-react";
+import { BackgroundDecoration } from "@/components/bookshelf/BackgroundDecoration";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { AlertTriangle, RefreshCw, Home } from "lucide-react";
 import { logger } from "@/lib/logger";
 
 export default function GlobalError({
@@ -18,10 +19,11 @@ export default function GlobalError({
   return (
     <html lang="zh-CN">
       <body className="antialiased">
-        <div className="flex items-center justify-center min-h-screen p-4 bg-background">
-          <Card className="max-w-md w-full p-6 text-center space-y-4">
+        <div className="app-noise relative flex min-h-screen items-center justify-center overflow-hidden bg-background p-4">
+          <BackgroundDecoration />
+          <Card className="book-card-glass relative z-10 max-w-md w-full p-6 text-center space-y-4">
             <div className="flex justify-center">
-              <div className="rounded-full bg-destructive/10 p-3">
+              <div className="liquid-control rounded-2xl p-3">
                 <AlertTriangle className="h-8 w-8 text-destructive" />
               </div>
             </div>
@@ -41,7 +43,7 @@ export default function GlobalError({
             <div className="flex gap-2">
               <Button
                 onClick={() => reset()}
-                className="flex-1 cursor-pointer"
+                className="top-action-primary flex-1 cursor-pointer rounded-xl"
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
                 重试
@@ -49,7 +51,7 @@ export default function GlobalError({
               <Button
                 onClick={() => (window.location.href = "/")}
                 variant="outline"
-                className="flex-1 cursor-pointer"
+                className="liquid-control flex-1 cursor-pointer rounded-xl"
               >
                 <Home className="h-4 w-4 mr-2" />
                 返回首页

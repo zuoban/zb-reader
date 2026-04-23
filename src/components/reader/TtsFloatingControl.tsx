@@ -76,20 +76,9 @@ export function TtsFloatingControl({
         <div
           className={cn(
             "animate-reader-fade-up mr-2 flex max-w-[calc(100vw-5rem)] flex-wrap items-center justify-center gap-1 px-2 py-1.5 sm:gap-1.5 sm:px-2.5 sm:py-2",
-            "rounded-2xl",
-            "backdrop-blur-2xl",
-            "border",
-            "shadow-lg",
+            "reader-liquid-surface rounded-2xl",
             "animate-in slide-in-from-right-3 fade-in duration-300 ease-out",
           )}
-          style={{
-            background:
-              "linear-gradient(145deg, color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.95)) 94%, white 6%), color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.95)) 82%, transparent))",
-            borderColor:
-              "color-mix(in srgb, var(--reader-text, #171717) 10%, transparent)",
-            boxShadow:
-              "0 24px 48px -34px color-mix(in srgb, var(--reader-text, #171717) 42%, transparent)",
-          }}
         >
           {onPrev && (
             <button
@@ -209,19 +198,12 @@ export function TtsFloatingControl({
         type="button"
         onClick={handleMainClick}
         className={cn(
-          "group animate-reader-surface relative flex size-10 sm:size-11 items-center justify-center rounded-xl cursor-pointer overflow-hidden",
+          "reader-liquid-surface group animate-reader-surface relative flex size-10 sm:size-11 items-center justify-center rounded-xl cursor-pointer overflow-hidden",
           "transition-all duration-300 ease-out",
-          "border",
           "active:scale-95",
           isExpanded && "rotate-180"
         )}
         style={{
-          background:
-            "linear-gradient(145deg, color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.95)) 92%, white 8%), color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.95)) 78%, transparent))",
-          borderColor:
-            "color-mix(in srgb, var(--reader-text, #171717) 10%, transparent)",
-          boxShadow:
-            "0 18px 32px -24px color-mix(in srgb, var(--reader-text, #171717) 35%, transparent)",
           color: "var(--reader-text, #171717)",
         }}
         title="朗读控制"
