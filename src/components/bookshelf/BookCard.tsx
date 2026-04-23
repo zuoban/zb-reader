@@ -153,7 +153,7 @@ export const BookCard = memo(function BookCard({
         onClick={handleOpenReader}
       >
         <div
-          className="relative mx-1.5 mt-1.5 mb-[0.1875rem] aspect-[5/7] overflow-hidden rounded-xl bg-muted/70 shadow-[inset_0_1px_0_color-mix(in_oklab,white_42%,transparent),inset_0_-1px_0_color-mix(in_oklab,var(--foreground)_8%,transparent)]"
+          className="relative mx-1.5 mt-1.5 mb-[0.1875rem] aspect-[4/5] overflow-hidden rounded-xl bg-muted/70 shadow-[inset_0_1px_0_color-mix(in_oklab,white_42%,transparent),inset_0_-1px_0_color-mix(in_oklab,var(--foreground)_8%,transparent)]"
           data-reader-transition-cover
         >
           {/* Cover Image */}
@@ -190,9 +190,9 @@ export const BookCard = memo(function BookCard({
       <div className="mx-3 h-px bg-gradient-to-r from-transparent via-border/70 to-transparent" />
 
       {/* Card Content */}
-      <div className="relative flex min-h-[40px] flex-col px-3 pb-1.5 pt-0 sm:min-h-[42px]">
+      <div className="relative flex min-h-[48px] flex-col px-3 pb-2 pt-0 sm:min-h-[52px]">
         <h3
-          className="line-clamp-2 min-h-[2.2em] pr-7 text-[11px] font-semibold leading-[1.15] text-foreground/95 sm:text-[12px]"
+          className="line-clamp-2 min-h-[2.25em] pr-7 text-[13px] font-semibold leading-[1.18] text-foreground/95 sm:text-[14px]"
           title={book.title}
         >
           {book.title || "未命名书籍"}
@@ -239,13 +239,13 @@ export const BookCard = memo(function BookCard({
 
         <div className="mt-0.5 flex flex-col gap-1">
           <div className="flex items-center justify-between gap-1">
-            <span className="min-w-0 truncate text-left text-[9px] text-muted-foreground/90 sm:text-[10px]">
+            <span className="min-w-0 truncate text-left text-[10px] text-muted-foreground/90 sm:text-[11px]">
               {book.author || "未知作者"}
             </span>
             {book.category ? (
               <Badge
                 variant="secondary"
-                className="max-w-[60%] shrink-0 rounded px-1 py-0 text-[8px] font-medium leading-none text-muted-foreground sm:text-[9px]"
+                className="max-w-[60%] shrink-0 rounded px-1.5 py-0.5 text-[9px] font-medium leading-none text-muted-foreground sm:text-[10px]"
                 title={book.category}
               >
                 {book.category}
@@ -253,11 +253,11 @@ export const BookCard = memo(function BookCard({
             ) : null}
           </div>
           <div className="flex items-center justify-between gap-1">
-            <span className="min-w-0 truncate text-left text-[8px] font-medium text-foreground/80 sm:text-[9px]">
+            <span className="min-w-0 truncate text-left text-[9px] font-medium text-foreground/80 sm:text-[10px]">
               {statusText}
             </span>
             {lastReadText ? (
-              <span className="shrink-0 text-[8px] text-muted-foreground/85 sm:text-[9px]">
+              <span className="shrink-0 text-[9px] text-muted-foreground/85 sm:text-[10px]">
                 {lastReadText}
               </span>
             ) : null}
