@@ -1,10 +1,24 @@
-import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
+
+import { and, desc, eq } from "drizzle-orm";
+
 import { auth } from "@/lib/auth";
+import { badRequest, serverError, unauthorized } from "@/lib/api-utils";
 import { db } from "@/lib/db";
 import { progressHistory } from "@/lib/db/schema";
-import { eq, and, desc } from "drizzle-orm";
-import { unauthorized, badRequest, serverError } from "@/lib/api-utils";
+import { logger } from "@/lib/logger";
+
+const DEFAULT_HISTORY_LIMIT = 50;
+const MAX_HISTORY_LIMIT = 50;
+
+export function normalizeProgressHistoryLimit(limitParam: string | null): number {
+  const parsedLimit = Number.parseInt(limitParam || "", 10);
+  if (!Number.isFinite(parsedLimit) || parsedLimit < 1) {
+    return DEFAULT_HISTORY_LIMIT;
+  }
+
+  return Math.min(parsedLimit, MAX_HISTORY_LIMIT);
+}
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -14,7 +28,7 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const bookId = searchParams.get("bookId");
-  const limit = Math.min(parseInt(searchParams.get("limit") || "50"), 50);
+  const limit = normalizeProgressHistoryLimit(searchParams.get("limit"));
 
   if (!bookId) {
     return badRequest("缺少 bookId 参数");
