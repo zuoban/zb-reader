@@ -2,22 +2,10 @@ import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { readerSettings } from "@/lib/db/schema";
-import { unauthorized, serverError } from "@/lib/api-utils";
-
-interface ReaderSettingsPayload {
-  fontSize?: number;
-  pageWidth?: number;
-  theme?: "light" | "dark" | "sepia";
-  fontFamily?: string;
-  browserVoiceId?: string;
-  ttsRate?: number;
-  microsoftPreloadCount?: number;
-  ttsAutoNextChapter?: boolean;
-  ttsHighlightColor?: string;
-}
+import { getAuthUserId, serverError, validateJson } from "@/lib/api-utils";
+import { readerSettingsSchema } from "@/lib/validations";
 
 const DEFAULTS = {
   fontSize: 16,
@@ -26,9 +14,12 @@ const DEFAULTS = {
   fontFamily: "system" as const,
   browserVoiceId: "",
   ttsRate: 1,
+  ttsPitch: 1,
+  ttsVolume: 1,
   microsoftPreloadCount: 5,
   ttsAutoNextChapter: false,
   ttsHighlightColor: "#3b82f6",
+  autoScrollToActive: true,
 };
 
 const ALLOWED_FONT_FAMILIES = ["system", "serif", "sans", "kaiti"];
@@ -45,21 +36,22 @@ function toResponseShape(settings: typeof readerSettings.$inferSelect | null | u
     fontFamily: settings.fontFamily || DEFAULTS.fontFamily,
     browserVoiceId: settings.browserVoiceId || "",
     ttsRate: settings.ttsRate,
+    ttsPitch: settings.ttsPitch,
+    ttsVolume: settings.ttsVolume,
     microsoftPreloadCount: settings.microsoftPreloadCount,
     ttsAutoNextChapter: settings.ttsAutoNextChapter,
     ttsHighlightColor: settings.ttsHighlightColor || "#3b82f6",
+    autoScrollToActive: settings.autoScrollToActive,
   };
 }
 
 export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return unauthorized();
-  }
+  const authResult = await getAuthUserId();
+  if (authResult.error) return authResult.error;
 
   try {
     const settings = await db.query.readerSettings.findFirst({
-      where: eq(readerSettings.userId, session.user.id),
+      where: eq(readerSettings.userId, authResult.userId),
     });
 
     return NextResponse.json({ settings: toResponseShape(settings) });
@@ -70,17 +62,17 @@ export async function GET() {
 }
 
 export async function PUT(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return unauthorized();
-  }
+  const authResult = await getAuthUserId();
+  if (authResult.error) return authResult.error;
 
   try {
-    const payload = (await req.json()) as ReaderSettingsPayload;
+    const validation = await validateJson(req, readerSettingsSchema);
+    if (validation.error) return validation.error;
+    const payload = validation.data;
     const now = new Date().toISOString().replace("T", " ").replace("Z", "");
 
     const existing = await db.query.readerSettings.findFirst({
-      where: eq(readerSettings.userId, session.user.id),
+      where: eq(readerSettings.userId, authResult.userId),
     });
 
     const nextValues = {
@@ -98,6 +90,8 @@ export async function PUT(req: NextRequest) {
           ? payload.browserVoiceId
           : existing?.browserVoiceId ?? DEFAULTS.browserVoiceId,
       ttsRate: Math.min(5, Math.max(1, Number(payload.ttsRate ?? existing?.ttsRate ?? DEFAULTS.ttsRate))),
+      ttsPitch: Math.min(2, Math.max(0.5, Number(payload.ttsPitch ?? existing?.ttsPitch ?? DEFAULTS.ttsPitch))),
+      ttsVolume: Math.min(1, Math.max(0, Number(payload.ttsVolume ?? existing?.ttsVolume ?? DEFAULTS.ttsVolume))),
       microsoftPreloadCount: [1, 2, 3, 5, 8].includes(Number(payload.microsoftPreloadCount))
         ? Number(payload.microsoftPreloadCount)
         : existing?.microsoftPreloadCount ?? DEFAULTS.microsoftPreloadCount,
@@ -109,6 +103,10 @@ export async function PUT(req: NextRequest) {
         typeof payload.ttsHighlightColor === "string"
           ? payload.ttsHighlightColor
           : existing?.ttsHighlightColor ?? DEFAULTS.ttsHighlightColor,
+      autoScrollToActive:
+        typeof payload.autoScrollToActive === "boolean"
+          ? payload.autoScrollToActive
+          : existing?.autoScrollToActive ?? DEFAULTS.autoScrollToActive,
       updatedAt: now,
     };
 
@@ -116,17 +114,17 @@ export async function PUT(req: NextRequest) {
       await db
         .update(readerSettings)
         .set(nextValues)
-        .where(and(eq(readerSettings.id, existing.id), eq(readerSettings.userId, session.user.id)));
+        .where(and(eq(readerSettings.id, existing.id), eq(readerSettings.userId, authResult.userId)));
     } else {
       await db.insert(readerSettings).values({
         id: uuidv4(),
-        userId: session.user.id,
+        userId: authResult.userId,
         ...nextValues,
       });
     }
 
     const updated = await db.query.readerSettings.findFirst({
-      where: eq(readerSettings.userId, session.user.id),
+      where: eq(readerSettings.userId, authResult.userId),
     });
 
     return NextResponse.json({ settings: toResponseShape(updated) });

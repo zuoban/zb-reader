@@ -1,27 +1,27 @@
 import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { notes } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
-import { unauthorized, notFound, serverError } from "@/lib/api-utils";
+import { getAuthUserId, notFound, serverError, validateJson } from "@/lib/api-utils";
+import { noteUpdateSchema } from "@/lib/validations";
 
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return unauthorized();
-  }
+  const authResult = await getAuthUserId();
+  if (authResult.error) return authResult.error;
 
   const { id } = await params;
 
   try {
-    const { content, color } = await req.json();
+    const validation = await validateJson(req, noteUpdateSchema);
+    if (validation.error) return validation.error;
+    const { content, color } = validation.data;
 
     const note = await db.query.notes.findFirst({
-      where: and(eq(notes.id, id), eq(notes.userId, session.user.id)),
+      where: and(eq(notes.id, id), eq(notes.userId, authResult.userId)),
     });
 
     if (!note) {
@@ -54,16 +54,14 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return unauthorized();
-  }
+  const authResult = await getAuthUserId();
+  if (authResult.error) return authResult.error;
 
   const { id } = await params;
 
   try {
     const note = await db.query.notes.findFirst({
-      where: and(eq(notes.id, id), eq(notes.userId, session.user.id)),
+      where: and(eq(notes.id, id), eq(notes.userId, authResult.userId)),
     });
 
     if (!note) {

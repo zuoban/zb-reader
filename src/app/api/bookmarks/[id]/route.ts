@@ -1,29 +1,29 @@
 import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { bookmarks } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
-import { unauthorized, notFound, serverError } from "@/lib/api-utils";
+import { getAuthUserId, notFound, serverError, validateJson } from "@/lib/api-utils";
+import { bookmarkUpdateSchema } from "@/lib/validations";
 
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return unauthorized();
-  }
+  const authResult = await getAuthUserId();
+  if (authResult.error) return authResult.error;
 
   const { id } = await params;
 
   try {
-    const { label } = await req.json();
+    const validation = await validateJson(req, bookmarkUpdateSchema);
+    if (validation.error) return validation.error;
+    const { label } = validation.data;
 
     const bookmark = await db.query.bookmarks.findFirst({
       where: and(
         eq(bookmarks.id, id),
-        eq(bookmarks.userId, session.user.id)
+        eq(bookmarks.userId, authResult.userId)
       ),
     });
 
@@ -53,10 +53,8 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return unauthorized();
-  }
+  const authResult = await getAuthUserId();
+  if (authResult.error) return authResult.error;
 
   const { id } = await params;
 
@@ -64,7 +62,7 @@ export async function DELETE(
     const bookmark = await db.query.bookmarks.findFirst({
       where: and(
         eq(bookmarks.id, id),
-        eq(bookmarks.userId, session.user.id)
+        eq(bookmarks.userId, authResult.userId)
       ),
     });
 

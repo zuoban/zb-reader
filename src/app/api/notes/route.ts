@@ -1,19 +1,16 @@
 import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { notes } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { findOwnedBook } from "@/lib/book-ownership";
-import { unauthorized, badRequest, notFound, serverError, validateJson } from "@/lib/api-utils";
+import { badRequest, getAuthUserId, notFound, serverError, validateJson } from "@/lib/api-utils";
 import { noteSchema } from "@/lib/validations";
 
 export async function GET(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return unauthorized();
-  }
+  const authResult = await getAuthUserId();
+  if (authResult.error) return authResult.error;
 
   const { searchParams } = new URL(req.url);
   const bookId = searchParams.get("bookId");
@@ -27,7 +24,7 @@ export async function GET(req: NextRequest) {
       .select()
       .from(notes)
       .where(
-        and(eq(notes.userId, session.user.id), eq(notes.bookId, bookId))
+        and(eq(notes.userId, authResult.userId), eq(notes.bookId, bookId))
       )
       .orderBy(desc(notes.createdAt));
 
@@ -39,17 +36,15 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return unauthorized();
-  }
+  const authResult = await getAuthUserId();
+  if (authResult.error) return authResult.error;
 
   try {
     const validation = await validateJson(req, noteSchema);
     if (validation.error) return validation.error;
 
     const { bookId, location, selectedText, content, color, pageNumber, progress } = validation.data;
-    const book = await findOwnedBook(bookId, session.user.id);
+    const book = await findOwnedBook(bookId, authResult.userId);
     if (!book) {
       return notFound("书籍不存在");
     }
@@ -59,7 +54,7 @@ export async function POST(req: NextRequest) {
     await db.insert(notes)
       .values({
         id,
-        userId: session.user.id,
+        userId: authResult.userId,
         bookId,
         location: typeof location === "string" ? location : JSON.stringify(location),
         selectedText,

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const optionalNumber = z.coerce.number().finite().optional();
+
 /** 书签创建/更新校验 */
 export const bookmarkSchema = z.object({
   bookId: z.string().min(1, "无效的书籍 ID"),
@@ -7,6 +9,11 @@ export const bookmarkSchema = z.object({
   label: z.string().max(100).optional(),
   pageNumber: z.number().int().min(0).optional(),
   progress: z.number().min(0).optional(),
+});
+
+/** 书签更新校验 */
+export const bookmarkUpdateSchema = z.object({
+  label: z.string().max(100, "书签名称不能超过 100 个字符").optional(),
 });
 
 /** 笔记创建/更新校验 */
@@ -18,6 +25,40 @@ export const noteSchema = z.object({
   color: z.string().max(20).optional(),
   pageNumber: z.number().int().min(0).optional(),
   progress: z.number().min(0).optional(),
+});
+
+/** 笔记更新校验 */
+export const noteUpdateSchema = z.object({
+  content: z.string().max(5000, "笔记内容不能超过 5000 个字符").optional(),
+  color: z.string().max(20, "颜色值不能超过 20 个字符").optional(),
+});
+
+/** 阅读设置更新校验 */
+export const readerSettingsSchema = z.object({
+  fontSize: optionalNumber,
+  pageWidth: optionalNumber,
+  theme: z.enum(["light", "dark", "sepia"]).optional(),
+  fontFamily: z.string().optional(),
+  browserVoiceId: z.string().optional(),
+  ttsRate: optionalNumber,
+  ttsPitch: optionalNumber,
+  ttsVolume: optionalNumber,
+  microsoftPreloadCount: optionalNumber,
+  ttsAutoNextChapter: z.boolean().optional(),
+  ttsHighlightColor: z.string().optional(),
+  autoScrollToActive: z.boolean().optional(),
+});
+
+/** 用户资料更新校验 */
+export const userUpdateSchema = z.object({
+  username: z
+    .string()
+    .min(2, "用户名长度应在 2-20 个字符之间")
+    .max(20, "用户名长度应在 2-20 个字符之间")
+    .optional(),
+  email: z.string().email("邮箱格式不正确").optional(),
+  password: z.string().min(6, "密码长度至少 6 个字符").optional(),
+  avatar: z.string().nullable().optional(),
 });
 
 /** 进度保存校验 */

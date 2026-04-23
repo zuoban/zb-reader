@@ -1,22 +1,20 @@
 import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { sql } from "drizzle-orm";
-import { unauthorized, notFound, badRequest, serverError } from "@/lib/api-utils";
+import { getAuthUserId, notFound, serverError, validateJson } from "@/lib/api-utils";
+import { userUpdateSchema } from "@/lib/validations";
 
 export async function GET(_req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return unauthorized();
-  }
+  const authResult = await getAuthUserId();
+  if (authResult.error) return authResult.error;
 
   try {
     const user = await db.query.users.findFirst({
-      where: eq(users.id, session.user.id),
+      where: eq(users.id, authResult.userId),
     });
 
     if (!user) {
@@ -41,28 +39,24 @@ export async function GET(_req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return unauthorized();
-  }
+  const authResult = await getAuthUserId();
+  if (authResult.error) return authResult.error;
 
   try {
-    const { username, email, password, avatar } = await req.json();
+    const validation = await validateJson(req, userUpdateSchema);
+    if (validation.error) return validation.error;
+    const { username, email, password, avatar } = validation.data;
 
     const updates: Record<string, unknown> = {
       updatedAt: sql`(datetime('now'))`,
     };
 
     if (username !== undefined) {
-      if (username.length < 2 || username.length > 20) {
-        return badRequest("用户名长度应在 2-20 个字符之间");
-      }
-
       const existingUser = await db.query.users.findFirst({
         where: eq(users.username, username),
       });
 
-      if (existingUser && existingUser.id !== session.user.id) {
+      if (existingUser && existingUser.id !== authResult.userId) {
         return NextResponse.json(
           { error: "用户名已被使用" },
           { status: 409 }
@@ -73,16 +67,11 @@ export async function PATCH(req: NextRequest) {
     }
 
     if (email !== undefined) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        return badRequest("邮箱格式不正确");
-      }
-
       const existingUser = await db.query.users.findFirst({
         where: eq(users.email, email),
       });
 
-      if (existingUser && existingUser.id !== session.user.id) {
+      if (existingUser && existingUser.id !== authResult.userId) {
         return NextResponse.json(
           { error: "邮箱已被使用" },
           { status: 409 }
@@ -93,10 +82,6 @@ export async function PATCH(req: NextRequest) {
     }
 
     if (password !== undefined) {
-      if (password.length < 6) {
-        return badRequest("密码长度至少 6 个字符");
-      }
-
       updates.password = await bcrypt.hash(password, 12);
     }
 
@@ -107,10 +92,10 @@ export async function PATCH(req: NextRequest) {
     await db
       .update(users)
       .set(updates)
-      .where(eq(users.id, session.user.id));
+      .where(eq(users.id, authResult.userId));
 
     const updatedUser = await db.query.users.findFirst({
-      where: eq(users.id, session.user.id),
+      where: eq(users.id, authResult.userId),
     });
 
     if (!updatedUser) {

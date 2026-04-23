@@ -50,6 +50,21 @@ export async function requireAuth(): Promise<NextResponse | null> {
 }
 
 /**
+ * 获取当前认证用户 ID，失败时返回未登录响应
+ */
+export async function getAuthUserId(): Promise<
+  | { userId: string; error?: undefined }
+  | { error: NextResponse; userId?: undefined }
+> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { error: unauthorized() };
+  }
+
+  return { userId: session.user.id };
+}
+
+/**
  * 获取当前用户 ID
  * @throws 如果用户未认证则抛出错误
  */
