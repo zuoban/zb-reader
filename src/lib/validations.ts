@@ -61,6 +61,41 @@ export const userUpdateSchema = z.object({
   avatar: z.string().nullable().optional(),
 });
 
+const ttsConfigItemSchema = z.object({
+  name: z.string().optional(),
+  url: z.string().optional(),
+  method: z.string().optional(),
+  headers: z.unknown().optional(),
+  header: z.string().optional(),
+  body: z.unknown().optional(),
+  contentType: z.string().optional(),
+  concurrentRate: optionalNumber,
+});
+
+/** TTS 配置导入校验 */
+export const ttsConfigImportSchema = z.union([
+  ttsConfigItemSchema,
+  z.array(ttsConfigItemSchema),
+]);
+
+/** TTS 配置更新校验 */
+export const ttsConfigUpdateSchema = z.object({
+  name: z.string().min(1, "配置名称不能为空"),
+  url: z.string().min(1, "配置地址不能为空"),
+  method: z.string().default("GET"),
+  headers: z.unknown().optional(),
+  body: z.unknown().optional(),
+  contentType: z.string().nullable().optional(),
+  concurrentRate: optionalNumber,
+});
+
+/** TTS 朗读请求校验 */
+export const ttsSpeakSchema = z.object({
+  configId: z.string().min(1, "参数不完整"),
+  text: z.string().min(1, "参数不完整"),
+  speakSpeed: optionalNumber,
+});
+
 /** 进度保存校验 */
 export const progressSchema = z.object({
   bookId: z.string().uuid("无效的书籍 ID"),

@@ -1,9 +1,9 @@
 import { logger } from "@/lib/logger";
 import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ttsConfigs } from "@/lib/db/schema";
+import { badRequest, getAuthUserId, notFound, serverError, validateJson } from "@/lib/api-utils";
 import {
   buildLegadoRequestBody,
   parseLegadoSpeechResult,
@@ -11,12 +11,7 @@ import {
   resolveConfigHeaders,
   type TtsConfigApiItem,
 } from "@/lib/tts";
-
-interface SpeakRequestBody {
-  configId?: string;
-  text?: string;
-  speakSpeed?: number;
-}
+import { ttsSpeakSchema } from "@/lib/validations";
 
 interface SafeRequestResult {
   response: Response;
@@ -50,13 +45,18 @@ async function requestWithFallback(
 }
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
-  }
+  const authResult = await getAuthUserId();
+  if (authResult.error) return authResult.error;
 
   try {
-    const body = (await req.json()) as SpeakRequestBody;
+    const validation = await validateJson(req, ttsSpeakSchema);
+    if (validation.error) {
+      if (validation.error.status === 400) {
+        return badRequest("参数不完整");
+      }
+      return validation.error;
+    }
+    const body = validation.data;
     const configId = body.configId?.trim();
     const text = body.text?.trim();
     const speakSpeed =
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
         : 1;
 
     if (!configId || !text) {
-      return NextResponse.json({ error: "参数不完整" }, { status: 400 });
+      return badRequest("参数不完整");
     }
 
     const config = await db
@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
       .get();
 
     if (!config) {
-      return NextResponse.json({ error: "TTS配置不存在" }, { status: 404 });
+      return notFound("TTS配置不存在");
     }
 
     const normalizedConfig: TtsConfigApiItem = {
@@ -168,6 +168,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ text: parsed.text, audioUrl: parsed.audioUrl });
   } catch (error) {
     logger.error("api", "Failed to request TTS speech text:", error);
-    return NextResponse.json({ error: "获取朗读内容失败" }, { status: 500 });
+    return serverError("获取朗读内容失败");
   }
 }

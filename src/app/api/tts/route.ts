@@ -1,10 +1,11 @@
 import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ttsConfigs } from "@/lib/db/schema";
 import { v4 as uuidv4 } from "uuid";
 import { desc } from "drizzle-orm";
+import { badRequest, getAuthUserId, serverError, validateJson } from "@/lib/api-utils";
+import { ttsConfigImportSchema } from "@/lib/validations";
 
 interface TtsImportItem {
   name?: string;
@@ -23,10 +24,8 @@ interface ValidTtsImportItem extends TtsImportItem {
 }
 
 export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
-  }
+  const authResult = await getAuthUserId();
+  if (authResult.error) return authResult.error;
 
   try {
     const configs = await db
@@ -36,18 +35,18 @@ export async function GET() {
     return NextResponse.json(configs);
   } catch (error) {
     logger.error("api", "Failed to fetch TTS configs:", error);
-    return NextResponse.json({ error: "获取TTS配置失败" }, { status: 500 });
+    return serverError("获取TTS配置失败");
   }
 }
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
-  }
+  const authResult = await getAuthUserId();
+  if (authResult.error) return authResult.error;
 
   try {
-    const body = await req.json();
+    const validation = await validateJson(req, ttsConfigImportSchema);
+    if (validation.error) return validation.error;
+    const body = validation.data;
     const configsToInsert: (typeof ttsConfigs.$inferInsert)[] = [];
 
     const processItem = (item: ValidTtsImportItem) => {
@@ -101,7 +100,7 @@ export async function POST(req: NextRequest) {
     } else if (body.url && body.name) {
       configsToInsert.push(processItem(body as ValidTtsImportItem));
     } else {
-        return NextResponse.json({ error: "无效的配置格式" }, { status: 400 });
+        return badRequest("无效的配置格式");
     }
 
     if (configsToInsert.length > 0) {
@@ -115,6 +114,6 @@ export async function POST(req: NextRequest) {
 
   } catch (error) {
     logger.error("api", "Failed to create TTS config:", error);
-    return NextResponse.json({ error: "创建TTS配置失败" }, { status: 500 });
+    return serverError("创建TTS配置失败");
   }
 }

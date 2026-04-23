@@ -1,22 +1,23 @@
 import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ttsConfigs } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { getAuthUserId, notFound, serverError, validateJson } from "@/lib/api-utils";
+import { ttsConfigUpdateSchema } from "@/lib/validations";
 
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
-  }
+  const authResult = await getAuthUserId();
+  if (authResult.error) return authResult.error;
 
   try {
     const { id } = await params;
-    const body = await req.json();
+    const validation = await validateJson(req, ttsConfigUpdateSchema);
+    if (validation.error) return validation.error;
+    const body = validation.data;
 
     // Validate if exists
     const existing = await db
@@ -26,7 +27,7 @@ export async function PUT(
       .get();
 
     if (!existing) {
-      return NextResponse.json({ error: "配置不存在" }, { status: 404 });
+      return notFound("配置不存在");
     }
 
     await db
@@ -46,7 +47,7 @@ export async function PUT(
     return NextResponse.json({ message: "更新成功" });
   } catch (error) {
     logger.error("api", "Failed to update TTS config:", error);
-    return NextResponse.json({ error: "更新TTS配置失败" }, { status: 500 });
+    return serverError("更新TTS配置失败");
   }
 }
 
@@ -54,10 +55,8 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
-  }
+  const authResult = await getAuthUserId();
+  if (authResult.error) return authResult.error;
 
   try {
     const { id } = await params;
@@ -67,6 +66,6 @@ export async function DELETE(
     return NextResponse.json({ message: "删除成功" });
   } catch (error) {
     logger.error("api", "Failed to delete TTS config:", error);
-    return NextResponse.json({ error: "删除TTS配置失败" }, { status: 500 });
+    return serverError("删除TTS配置失败");
   }
 }

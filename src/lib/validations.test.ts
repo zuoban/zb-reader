@@ -4,6 +4,9 @@ import {
   noteUpdateSchema,
   progressSchema,
   readerSettingsSchema,
+  ttsConfigImportSchema,
+  ttsConfigUpdateSchema,
+  ttsSpeakSchema,
   userUpdateSchema,
 } from "@/lib/validations";
 
@@ -102,5 +105,54 @@ describe("userUpdateSchema", () => {
     if (!result.success) {
       expect(result.error.issues[0]?.message).toBe("邮箱格式不正确");
     }
+  });
+});
+
+describe("ttsConfigImportSchema", () => {
+  it("accepts Legado-style config arrays", () => {
+    const result = ttsConfigImportSchema.safeParse([
+      {
+        name: "测试语音",
+        url: "https://example.com/tts?text={{speakText}}",
+        header: "{\"User-Agent\":\"ZB Reader\"}",
+        concurrentRate: "2",
+      },
+    ]);
+
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("ttsConfigUpdateSchema", () => {
+  it("requires name and url", () => {
+    const result = ttsConfigUpdateSchema.safeParse({
+      name: "",
+      url: "",
+    });
+
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("ttsSpeakSchema", () => {
+  it("accepts complete speak requests", () => {
+    const result = ttsSpeakSchema.safeParse({
+      configId: "config-1",
+      text: "你好",
+      speakSpeed: "1.2",
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.speakSpeed).toBe(1.2);
+    }
+  });
+
+  it("rejects missing text", () => {
+    const result = ttsSpeakSchema.safeParse({
+      configId: "config-1",
+    });
+
+    expect(result.success).toBe(false);
   });
 });
