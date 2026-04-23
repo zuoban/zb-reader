@@ -178,10 +178,7 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
             </div>
           )}
 
-          <div className="absolute inset-x-0 bottom-0 flex items-end justify-between bg-gradient-to-t from-black/26 via-black/8 to-transparent px-2 py-2 sm:px-2.5 sm:py-2.5">
-            <span className="rounded-full border border-white/12 bg-black/20 px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-[0.12em] text-white/82 backdrop-blur-sm sm:text-[9px] sm:tracking-[0.14em]">
-              {book.format?.toUpperCase() || "BOOK"}
-            </span>
+          <div className="absolute inset-x-0 bottom-0 flex items-end justify-end bg-gradient-to-t from-black/26 via-black/8 to-transparent px-2 py-2 sm:px-2.5 sm:py-2.5">
             <span
               className={cn(
                 "inline-flex shrink-0 items-center gap-1 rounded-full border px-1.5 py-0.5 text-[8px] font-medium backdrop-blur-sm sm:text-[9px]",
