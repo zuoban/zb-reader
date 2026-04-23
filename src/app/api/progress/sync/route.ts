@@ -7,7 +7,8 @@ import { eq, and } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { resolveConflict, type ClientProgress } from "@/lib/conflict-resolver";
 import { findOwnedBook } from "@/lib/book-ownership";
-import { unauthorized, badRequest, notFound, serverError } from "@/lib/api-utils";
+import { unauthorized, notFound, serverError, validateJson } from "@/lib/api-utils";
+import { progressSchema } from "@/lib/validations";
 
 const MAX_HISTORY_COUNT = 50;
 
@@ -18,7 +19,11 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const body = await req.json();
+    const parsed = await validateJson(req, progressSchema);
+    if (parsed.error) {
+      return parsed.error;
+    }
+
     const {
       bookId,
       clientVersion,
@@ -30,7 +35,7 @@ export async function POST(req: NextRequest) {
       clientTimestamp,
       currentPage,
       totalPages,
-    } = body;
+    } = parsed.data;
 
     logger.debug("api", "[Progress Sync] Request", {
       userId: session.user.id,
@@ -38,14 +43,6 @@ export async function POST(req: NextRequest) {
       clientVersion,
       progress,
     });
-
-    if (!bookId) {
-      return badRequest("缺少 bookId 参数");
-    }
-
-    if (typeof clientVersion !== "number") {
-      return badRequest("缺少 clientVersion 参数");
-    }
 
     const book = await findOwnedBook(bookId, session.user.id);
     if (!book) {

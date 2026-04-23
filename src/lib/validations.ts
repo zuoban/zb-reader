@@ -26,10 +26,12 @@ export const progressSchema = z.object({
   clientVersion: z.number().int().positive(),
   progress: z.number().min(0).max(1).optional(),
   location: z.string().optional(),
-  scrollRatio: z.number().min(0).max(1).optional(),
+  scrollRatio: z.number().min(0).max(1).nullable().optional(),
   readingDuration: z.number().int().nonnegative().optional(),
-  currentPage: z.number().int().positive().optional(),
-  totalPages: z.number().int().positive().optional(),
+  deviceId: z.string().optional(),
+  clientTimestamp: z.string().optional(),
+  currentPage: z.number().int().positive().nullable().optional(),
+  totalPages: z.number().int().positive().nullable().optional(),
 });
 
 /** 书籍分类更新校验 */

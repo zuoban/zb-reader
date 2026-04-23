@@ -15,6 +15,105 @@ if (!fs.existsSync(DATA_DIR)) {
 let _sqlite: Database.Database | null = null;
 let _db: ReturnType<typeof drizzle<typeof schema>> | null = null;
 
+function ensureReaderSettingsTtsEngineConstraint(sqlite: Database.Database) {
+  const row = sqlite
+    .prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'reader_settings'")
+    .get() as { sql?: string } | undefined;
+  const tableSql = row?.sql ?? "";
+
+  if (!tableSql.includes("tts_engine") || tableSql.includes("'microsoft'")) {
+    return;
+  }
+
+  const migrateConstraint = sqlite.transaction(() => {
+    sqlite.exec(`
+    DROP TABLE IF EXISTS reader_settings_new;
+
+    CREATE TABLE reader_settings_new (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+      font_size INTEGER NOT NULL DEFAULT 16,
+      page_width INTEGER NOT NULL DEFAULT 800,
+      theme TEXT NOT NULL DEFAULT 'light' CHECK(theme IN ('light', 'dark', 'sepia')),
+      tts_engine TEXT NOT NULL DEFAULT 'browser' CHECK(tts_engine IN ('browser', 'legado', 'microsoft')),
+      browser_voice_id TEXT,
+      tts_rate REAL NOT NULL DEFAULT 1,
+      tts_pitch REAL NOT NULL DEFAULT 1,
+      tts_volume REAL NOT NULL DEFAULT 1,
+      microsoft_preload_count INTEGER NOT NULL DEFAULT 3,
+      tts_auto_next_chapter INTEGER NOT NULL DEFAULT 0,
+      tts_highlight_color TEXT NOT NULL DEFAULT '#3b82f6',
+      auto_scroll_to_active INTEGER NOT NULL DEFAULT 1,
+      font_family TEXT NOT NULL DEFAULT 'system',
+      flip_mode TEXT NOT NULL DEFAULT 'scroll',
+      legado_rate INTEGER NOT NULL DEFAULT 50,
+      legado_config_id TEXT,
+      legado_preload_count INTEGER NOT NULL DEFAULT 3,
+      tts_immersive_mode INTEGER NOT NULL DEFAULT 0,
+      tts_highlight_style TEXT NOT NULL DEFAULT 'indicator' CHECK(tts_highlight_style IN ('background', 'indicator')),
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    INSERT INTO reader_settings_new (
+      id,
+      user_id,
+      font_size,
+      page_width,
+      theme,
+      tts_engine,
+      browser_voice_id,
+      tts_rate,
+      tts_pitch,
+      tts_volume,
+      microsoft_preload_count,
+      tts_auto_next_chapter,
+      tts_highlight_color,
+      auto_scroll_to_active,
+      font_family,
+      flip_mode,
+      legado_rate,
+      legado_config_id,
+      legado_preload_count,
+      tts_immersive_mode,
+      tts_highlight_style,
+      created_at,
+      updated_at
+    )
+    SELECT
+      id,
+      user_id,
+      font_size,
+      page_width,
+      theme,
+      tts_engine,
+      browser_voice_id,
+      tts_rate,
+      tts_pitch,
+      tts_volume,
+      microsoft_preload_count,
+      tts_auto_next_chapter,
+      tts_highlight_color,
+      auto_scroll_to_active,
+      font_family,
+      flip_mode,
+      legado_rate,
+      legado_config_id,
+      legado_preload_count,
+      tts_immersive_mode,
+      tts_highlight_style,
+      created_at,
+      updated_at
+    FROM reader_settings;
+
+    DROP TABLE reader_settings;
+    ALTER TABLE reader_settings_new RENAME TO reader_settings;
+  `);
+  });
+
+  migrateConstraint();
+}
+
 function getConnection() {
   if (_sqlite && _db) return { sqlite: _sqlite, db: _db };
 
@@ -117,16 +216,22 @@ function getConnection() {
       font_size INTEGER NOT NULL DEFAULT 16,
       page_width INTEGER NOT NULL DEFAULT 800,
       theme TEXT NOT NULL DEFAULT 'light' CHECK(theme IN ('light', 'dark', 'sepia')),
-      tts_engine TEXT NOT NULL DEFAULT 'browser' CHECK(tts_engine IN ('browser', 'legado')),
+      tts_engine TEXT NOT NULL DEFAULT 'browser' CHECK(tts_engine IN ('browser', 'legado', 'microsoft')),
       browser_voice_id TEXT,
       tts_rate REAL NOT NULL DEFAULT 1,
       tts_pitch REAL NOT NULL DEFAULT 1,
       tts_volume REAL NOT NULL DEFAULT 1,
       microsoft_preload_count INTEGER NOT NULL DEFAULT 3,
+      tts_auto_next_chapter INTEGER NOT NULL DEFAULT 0,
+      tts_highlight_color TEXT NOT NULL DEFAULT '#3b82f6',
+      auto_scroll_to_active INTEGER NOT NULL DEFAULT 1,
+      font_family TEXT NOT NULL DEFAULT 'system',
+      flip_mode TEXT NOT NULL DEFAULT 'scroll',
       legado_rate INTEGER NOT NULL DEFAULT 50,
       legado_config_id TEXT,
       legado_preload_count INTEGER NOT NULL DEFAULT 3,
       tts_immersive_mode INTEGER NOT NULL DEFAULT 0,
+      tts_highlight_style TEXT NOT NULL DEFAULT 'indicator' CHECK(tts_highlight_style IN ('background', 'indicator')),
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
@@ -330,6 +435,7 @@ function getConnection() {
       sqlite.exec(`ALTER TABLE reader_settings ADD COLUMN ${col} ${def};`);
     }
   }
+  ensureReaderSettingsTtsEngineConstraint(sqlite);
 
   // Migration: Add category support to books (2026-04-23)
   const booksInfo = sqlite.prepare("PRAGMA table_info(books)").all() as { name: string }[];
