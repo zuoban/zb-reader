@@ -177,8 +177,13 @@ export async function POST(req: NextRequest) {
           now
         );
 
-      // 始终使用客户端的最新位置（用户当前正在阅读的位置），而不是服务器上的旧位置
-      // 阅读时长需要累加而不是选择较长的
+      // 根据冲突解决结果决定写入哪方数据
+      const useClient = resolution.action === "keep_client";
+      const finalProgress = useClient ? clientPayload.progress : currentProgress.progress;
+      const finalLocation = useClient ? clientPayload.location : currentProgress.location;
+      const finalScrollRatio = useClient ? clientPayload.scrollRatio : currentProgress.scrollRatio;
+      const finalDeviceId = useClient ? clientPayload.deviceId : currentProgress.deviceId;
+      // 阅读时长始终累加
       const finalReadingDuration = (currentProgress.readingDuration || 0) + (clientPayload.readingDuration || 0);
 
       sqlite
@@ -187,13 +192,13 @@ export async function POST(req: NextRequest) {
         )
         .run(
           newVersion,
-          clientPayload.progress,  // 始终使用客户端的进度
-          clientPayload.location,  // 始终使用客户端的位置
-          clientPayload.scrollRatio,  // 始终使用客户端的滚动比例
+          finalProgress,
+          finalLocation,
+          finalScrollRatio,
           currentPage ?? currentProgress.currentPage,
           totalPages ?? currentProgress.totalPages,
           finalReadingDuration,
-          clientPayload.deviceId,
+          finalDeviceId,
           now,
           now,
           session.user.id,
@@ -234,6 +239,8 @@ export async function POST(req: NextRequest) {
       resolution: {
         kept: resolution.action === "keep_client" ? "client" : "server",
         reason: resolution.reason,
+        serverProgress: resolution.action === "keep_server" ? resolution.winner : undefined,
+        clientProgress: resolution.action === "keep_client" ? resolution.winner : undefined,
       },
     });
   } catch (error) {

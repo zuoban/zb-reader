@@ -313,6 +313,24 @@ function getConnection() {
     sqlite.exec(`ALTER TABLE reader_settings ADD COLUMN flip_mode TEXT NOT NULL DEFAULT 'scroll';`);
   }
 
+  // Migration: Add missing TTS and reader_settings columns (2026-04-23)
+  const rsInfo = sqlite.prepare("PRAGMA table_info(reader_settings)").all() as { name: string }[];
+  const missingColumns: Record<string, string> = {
+    tts_engine: `TEXT NOT NULL DEFAULT 'browser'`,
+    tts_pitch: `REAL NOT NULL DEFAULT 1`,
+    tts_volume: `REAL NOT NULL DEFAULT 1`,
+    legado_rate: `INTEGER NOT NULL DEFAULT 50`,
+    legado_config_id: `TEXT`,
+    legado_preload_count: `INTEGER NOT NULL DEFAULT 3`,
+    tts_immersive_mode: `INTEGER NOT NULL DEFAULT 0`,
+    tts_highlight_style: `TEXT NOT NULL DEFAULT 'indicator'`,
+  };
+  for (const [col, def] of Object.entries(missingColumns)) {
+    if (!rsInfo.some((c) => c.name === col)) {
+      sqlite.exec(`ALTER TABLE reader_settings ADD COLUMN ${col} ${def};`);
+    }
+  }
+
   // Migration: Add category support to books (2026-04-23)
   const booksInfo = sqlite.prepare("PRAGMA table_info(books)").all() as { name: string }[];
   const hasCategory = booksInfo.some((col) => col.name === "category");

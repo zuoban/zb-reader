@@ -187,7 +187,7 @@ export const readerSettings = sqliteTable("reader_settings", {
     .unique()
     .references(() => users.id, { onDelete: "cascade" }),
   fontSize: integer("font_size").default(16).notNull(),
-  pageWidth: integer("page_width").default(100).notNull(),
+  pageWidth: integer("page_width").default(800).notNull(),
   theme: text("theme", { enum: ["light", "dark", "sepia"] })
     .default("light")
     .notNull(),
@@ -204,6 +204,20 @@ export const readerSettings = sqliteTable("reader_settings", {
     .notNull(),
   flipMode: text("flip_mode", { enum: ["scroll", "page"] })
     .default("scroll")
+    .notNull(),
+  ttsEngine: text("tts_engine", { enum: ["browser", "legado", "microsoft"] })
+    .default("browser")
+    .notNull(),
+  ttsPitch: real("tts_pitch").default(1).notNull(),
+  ttsVolume: real("tts_volume").default(1).notNull(),
+  legadoRate: integer("legado_rate").default(50).notNull(),
+  legadoConfigId: text("legado_config_id"),
+  legadoPreloadCount: integer("legado_preload_count").default(3).notNull(),
+  ttsImmersiveMode: integer("tts_immersive_mode", { mode: "boolean" })
+    .default(false)
+    .notNull(),
+  ttsHighlightStyle: text("tts_highlight_style", { enum: ["background", "indicator"] })
+    .default("indicator")
     .notNull(),
   createdAt: text("created_at")
     .default(sql`(datetime('now'))`)

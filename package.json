@@ -10,7 +10,11 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "analyze": "ANALYZE=true next build"
+    "analyze": "ANALYZE=true next build",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
     "@chenglou/pretext": "^0.0.3",

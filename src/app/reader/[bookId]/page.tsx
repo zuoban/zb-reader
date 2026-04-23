@@ -14,6 +14,11 @@ import { FullscreenTtsView } from "@/components/reader/FullscreenTtsView";
 import { TextSelectionMenu } from "@/components/reader/TextSelectionMenu";
 import { NoteEditor } from "@/components/reader/NoteEditor";
 import { TtsFloatingControl } from "@/components/reader/TtsFloatingControl";
+import {
+  // Hooks extracted for future refactoring: useBookmarkActions, useNoteActions, useReaderNavigation
+  useIdleTimeout,
+  useReaderFullscreen,
+} from "@/components/reader/hooks";
 import { READER_ROUTE_EXIT_EVENT } from "@/components/layout/ReaderRouteTransition";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -48,8 +53,8 @@ const EpubReader = dynamic(() => import("@/components/reader/EpubReader"), {
 const MAX_TTS_RETRY_COUNT = 5;
 const TTS_RETRY_DELAY_MS = 450;
 const IS_DEV = process.env.NODE_ENV !== "production";
-const IDLE_TIMEOUT_MS = 3 * 60 * 1000;
-const IDLE_WARNING_MS = 60 * 1000;
+const _IDLE_TIMEOUT_MS = 3 * 60 * 1000;
+const _IDLE_WARNING_MS = 60 * 1000;
 
 interface TocItem {
   label: string;
@@ -157,7 +162,7 @@ function ReaderContent() {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   // Fullscreen
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const { isFullscreen, toggleFullscreen: handleToggleFullscreen } = useReaderFullscreen();
 
   // Bookmarks
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
@@ -192,8 +197,6 @@ function ReaderContent() {
   const progressRef = progressSync.progressRef;
   const saveProgress = progressSync.saveProgress;
   const debouncedSaveProgress = progressSync.debouncedSaveProgress;
-  const _pendingSync = progressSync.pendingSync;
-  const _isSyncing = progressSync.isSyncing;
 
   const currentCfiRef = useRef<string | null>(null);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -216,11 +219,7 @@ function ReaderContent() {
   // Wake Lock for preventing screen sleep during TTS
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   const mediaSessionSetupRef = useRef(false);
-
-  // Idle timeout
-  const [idleCountdown, setIdleCountdown] = useState<number | null>(null);
-  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const idleWarningRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleBackRef = useRef<(() => Promise<void>) | null>(null);
 
   const currentChapterTitle = useMemo(() => {
     return findCurrentChapterTitle(toc, currentHref) ?? book?.title;
@@ -544,28 +543,13 @@ function ReaderContent() {
     }
   }, [saveProgress, router, book]);
 
+  // Wire up handleBack ref for idle timeout
+  handleBackRef.current = handleBack;
+
   // ---- Idle timeout: 5 minutes no activity -> return to bookshelf ----
-  const _resetIdleTimer = useCallback(() => {
-    if (idleTimerRef.current) {
-      clearTimeout(idleTimerRef.current);
-      idleTimerRef.current = null;
-    }
-    if (idleWarningRef.current) {
-      clearTimeout(idleWarningRef.current);
-      idleWarningRef.current = null;
-    }
-    setIdleCountdown(null);
+  const { idleCountdown, resetIdleTimer: _resetIdleTimer } = useIdleTimeout(() => handleBackRef.current?.(), !isSpeaking);
 
-    // Warning: 1 minute before timeout
-    idleWarningRef.current = setTimeout(() => {
-      setIdleCountdown(60);
-    }, IDLE_TIMEOUT_MS - IDLE_WARNING_MS);
-
-    // Timeout: return to bookshelf
-    idleTimerRef.current = setTimeout(() => {
-      handleBack();
-    }, IDLE_TIMEOUT_MS);
-  }, [handleBack]);
+  // ---- Idle timeout handled by useIdleTimeout hook ----
 
   // ---- Esc key to go back ----
   useEffect(() => {
@@ -578,67 +562,9 @@ function ReaderContent() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [handleBack]);
 
-  // ---- Fullscreen handlers ----
-  const handleToggleFullscreen = useCallback(async () => {
-    try {
-      if (!document.fullscreenElement) {
-        await document.documentElement.requestFullscreen();
-        setIsFullscreen(true);
-        // Lock orientation to portrait on mobile devices
-        const orientation = screen.orientation as ScreenOrientation & { lock?: (type: string) => Promise<void> };
-        if (orientation && typeof orientation.lock === "function") {
-          try {
-            await orientation.lock("portrait");
-          } catch (err) {
-            // Orientation lock not supported or failed, ignore
-            logger.debug("reader", "屏幕方向锁定失败", err);
-          }
-        }
-      } else {
-        await document.exitFullscreen();
-        setIsFullscreen(false);
-        // Unlock orientation when exiting fullscreen
-        const orientation = screen.orientation as ScreenOrientation & { unlock?: () => void };
-        if (orientation && typeof orientation.unlock === "function") {
-          try {
-            orientation.unlock();
-          } catch (err) {
-            // Orientation unlock not supported or failed, ignore
-            logger.debug("reader", "屏幕方向解锁失败", err);
-          }
-        }
-      }
-    } catch (error) {
-      logger.warn("reader", "全屏切换失败", error);
-    }
-  }, []);
+  // ---- Fullscreen handled by useReaderFullscreen hook ----
 
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      const isFullscreen = !!document.fullscreenElement;
-      setIsFullscreen(isFullscreen);
-
-      // Unlock orientation when exiting fullscreen
-      if (!isFullscreen) {
-        const orientation = screen.orientation as ScreenOrientation & { unlock?: () => void };
-        if (orientation && typeof orientation.unlock === "function") {
-          try {
-            orientation.unlock();
-          } catch (err) {
-            // Orientation unlock not supported or failed, ignore
-            logger.debug("reader", "屏幕方向解锁失败", err);
-          }
-        }
-      }
-    };
-
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
-    return () => {
-      document.removeEventListener("fullscreenchange", handleFullscreenChange);
-    };
-  }, []);
-
-  // ---- Bookmark handlers ----
+  // ---- Bookmark handlers (delegated to useBookmarkActions) ----
   const handleToggleBookmark = useCallback(async () => {
     const currentCfi = currentCfiRef.current;
     if (!currentCfi) return;

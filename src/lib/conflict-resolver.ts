@@ -17,24 +17,29 @@ export interface ConflictResolution {
   reason: string;
 }
 
-type ServerProgress = Pick<ReadingProgress, 
-  | 'version' 
-  | 'progress' 
-  | 'location' 
-  | 'scrollRatio' 
+type ServerProgress = Pick<ReadingProgress,
+  | 'version'
+  | 'progress'
+  | 'location'
+  | 'scrollRatio'
   | 'readingDuration'
   | 'deviceId'
   | 'updatedAt'
 >;
+
+// Thresholds for conflict resolution
+const PROGRESS_THRESHOLD = 0.1;       // 10% progress difference
+const DURATION_THRESHOLD = 300;       // 5 minutes reading duration difference
+const TIME_TOLERANCE_MS = 1000;       // 1 second timestamp tolerance
 
 export function resolveConflict(
   server: ServerProgress,
   client: ClientProgress
 ): ConflictResolution {
   const progressDiff = Math.abs(server.progress - client.progress);
-  
+
   // Rule 1: Progress difference > 10%, choose the larger one
-  if (progressDiff > 0.1) {
+  if (progressDiff > PROGRESS_THRESHOLD) {
     if (server.progress > client.progress) {
       return {
         action: 'keep_server',
@@ -51,12 +56,12 @@ export function resolveConflict(
       };
     }
   }
-  
+
   // Rule 2: Reading duration difference > 5 minutes, choose the longer one
   const durationDiff = Math.abs(
     (server.readingDuration || 0) - client.readingDuration
   );
-  if (durationDiff > 300) {
+  if (durationDiff > DURATION_THRESHOLD) {
     if ((server.readingDuration || 0) > client.readingDuration) {
       return {
         action: 'keep_server',
@@ -73,13 +78,30 @@ export function resolveConflict(
       };
     }
   }
-  
+
   // Rule 3: Newer timestamp wins
   const serverTime = new Date(server.updatedAt).getTime();
   const clientTime = new Date(client.clientTimestamp).getTime();
-  
-  // Add 1 second tolerance
-  if (clientTime > serverTime + 1000) {
+
+  // Handle invalid timestamps (NaN falls back to server)
+  if (isNaN(clientTime)) {
+    return {
+      action: 'keep_server',
+      winner: server,
+      loser: client,
+      reason: 'invalid_client_timestamp',
+    };
+  }
+  if (isNaN(serverTime)) {
+    return {
+      action: 'keep_client',
+      winner: client,
+      loser: server,
+      reason: 'invalid_server_timestamp',
+    };
+  }
+
+  if (clientTime > serverTime + TIME_TOLERANCE_MS) {
     return {
       action: 'keep_client',
       winner: client,
