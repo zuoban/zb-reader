@@ -1246,7 +1246,6 @@ function ReaderContent() {
   /**
    * 获取朗读起始段落的索引：找到当前视口内第一个可见段落在段落列表中的位置。
    * - EPUB：getCurrentParagraphs 已经只返回视口内段落，始终从 0 开始
-   * - PDF/其他：始终从 0 开始
    */
   const getInitialParagraphIndex = useCallback((paragraphs: ReaderParagraph[]): number => {
     if (!book || paragraphs.length === 0) return 0;
@@ -1256,7 +1255,6 @@ function ReaderContent() {
       return 0;
     }
 
-    // PDF 及其他格式从头开始
     return 0;
   }, [book]);
 

@@ -97,7 +97,7 @@ POST /api/books
 
 | 字段 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| file | File | 是 | 电子书文件（EPUB/PDF/TXT/MOBI） |
+| file | File | 是 | 电子书文件（EPUB） |
 | title | string | 否 | 自定义标题（覆盖元数据） |
 | author | string | 否 | 自定义作者（覆盖元数据） |
 
@@ -131,9 +131,6 @@ POST /api/books
 **支持的格式**
 
 - EPUB (`.epub`)
-- PDF (`.pdf`)
-- TXT (`.txt`)
-- MOBI (`.mobi`) - 仅支持上传，阅读功能开发中
 
 ---
 
@@ -340,7 +337,7 @@ PUT /api/progress
 |------|------|------|------|
 | bookId | string | 是 | 书籍 ID |
 | progress | number | 否 | 进度百分比（0-1） |
-| location | string | 否 | 位置标识（EPUB: CFI, PDF: 页码） |
+| location | string | 否 | 位置标识（EPUB: CFI） |
 | currentPage | number | 否 | 当前页码 |
 | totalPages | number | 否 | 总页数 |
 

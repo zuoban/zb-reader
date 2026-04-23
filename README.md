@@ -16,7 +16,7 @@
 - **文件管理**: 轻松上传和管理电子书
 
 ### 📱 阅读体验
-- **流畅阅读**: 优化的阅读体验，支持多种格式
+- **流畅阅读**: 优化的 EPUB 阅读体验
 - **阅读进度**: 自动保存阅读位置和进度
 - **书签功能**: 快速标记重要位置
 - **笔记标注**: 添加笔记和高亮（开发中）
@@ -302,7 +302,6 @@ npm run test:coverage    # 生成覆盖率报告
 - [Next.js](https://nextjs.org/) - React 框架
 - [shadcn/ui](https://ui.shadcn.com/) - UI 组件库
 - [epub.js](https://github.com/futurepress/epub.js/) - EPUB 阅读器
-- [react-pdf](https://github.com/wojtekmaj/react-pdf) - PDF 阅读器
 - [Drizzle ORM](https://orm.drizzle.team/) - TypeScript ORM
 
 ## 📮 联系方式

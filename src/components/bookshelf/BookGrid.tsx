@@ -35,7 +35,7 @@ export const BookGrid = memo(function BookGrid({ books, progressMap, lastReadAtM
           </p>
           <div className="mt-5 flex items-center gap-2 rounded-full border border-border/60 bg-background px-3 py-2 text-[11px] text-muted-foreground sm:mt-6 sm:text-xs">
             <Upload className="h-4 w-4" />
-            <span>支持 EPUB、PDF、TXT 格式</span>
+            <span>支持 EPUB 格式</span>
           </div>
         </div>
       </div>

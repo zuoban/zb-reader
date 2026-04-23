@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-ZB Reader is a self-hosted web-based e-book reader built with Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, shadcn/ui, SQLite (better-sqlite3 + Drizzle ORM), and NextAuth v5. It supports EPUB, PDF, and TXT formats. All UI text is in Chinese (zh-CN).
+ZB Reader is a self-hosted web-based e-book reader built with Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, shadcn/ui, SQLite (better-sqlite3 + Drizzle ORM), and NextAuth v5. It supports EPUB format only. All UI text is in Chinese (zh-CN).
 
 ## Build / Lint / Dev Commands
 
@@ -144,5 +144,4 @@ See `design-system/zb-reader/MASTER.md` for colors, typography, spacing, shadows
 - Reader page: wraps own `SessionProvider`/`ThemeProvider` (doesn't inherit from `(main)` layout).
 - Database: WAL mode, foreign keys enabled, 5s busy timeout, lazy init via Proxy.
 - Docker: `output: "standalone"` in next.config, `better-sqlite3` in `serverExternalPackages`.
-- MOBI: upload supported but reader shows "开发中" message.
 - TTS: supports browser TTS and custom TTS engines (Legado-compatible API).

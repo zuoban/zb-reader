@@ -154,7 +154,7 @@ Push/PR → Lint → Test → Build → Docker Publish
 ## 🎯 项目现状
 
 ### 核心功能 ✅
-- 📖 多格式支持（EPUB, PDF, TXT）
+- 📖 EPUB 格式支持
 - 📱 流畅阅读体验
 - 📊 自动保存进度
 - 🔖 书签功能
@@ -217,7 +217,6 @@ Push/PR → Lint → Test → Build → Docker Publish
 
 ### 可选扩展
 1. **功能增强**
-   - MOBI 格式阅读支持
    - 书籍分类和标签
    - 阅读统计可视化
    - 导出笔记功能
