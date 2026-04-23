@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import { SessionProvider, useSession } from "next-auth/react";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { IdleCountdownWarning } from "@/components/reader/IdleCountdownWarning";
 import { ReaderErrorBoundary } from "@/components/reader/ReaderErrorBoundary";
 import { ReaderCanvas } from "@/components/reader/ReaderCanvas";
 import { ReaderToolbar } from "@/components/reader/ReaderToolbar";
@@ -14,13 +15,17 @@ import { TextSelectionMenu } from "@/components/reader/TextSelectionMenu";
 import { NoteEditor } from "@/components/reader/NoteEditor";
 import { ReaderTtsLayer } from "@/components/reader/ReaderTtsLayer";
 import {
+  useCurrentChapterTitle,
   useIdleTimeout,
   useBookmarkActions,
   useMicrosoftTtsSpeech,
   useNoteActions,
   useReaderBookData,
   useReaderFullscreen,
+  useReaderKeyboardShortcuts,
+  useReaderMediaSessionActions,
   useReaderNavigation,
+  useReaderSettingsControls,
   useReaderSettingsLifecycle,
   useReaderTtsAudio,
   useReaderTtsSession,
@@ -31,32 +36,7 @@ import type { EpubReaderRef } from "@/components/reader/EpubReader";
 import type { TocItem } from "@/types/reader";
 import { useProgressSyncCompat } from "@/hooks/useProgressSyncCompat";
 import { useReaderSettingsStore, useDebouncedSettingsSave } from "@/stores/reader-settings";
-import type { FontFamily } from "@/stores/reader-settings";
 import type { Sentence } from "@/lib/textUtils";
-
-function normalizeTocHref(href?: string) {
-  if (!href) return "";
-  return href.split("#")[0]?.trim().toLowerCase() ?? "";
-}
-
-function findCurrentChapterTitle(items: TocItem[], currentHref?: string): string | undefined {
-  const targetHref = normalizeTocHref(currentHref);
-  if (!targetHref) return undefined;
-
-  for (const item of items) {
-    const itemHref = normalizeTocHref(item.href);
-    if (itemHref === targetHref || (itemHref && targetHref.startsWith(itemHref))) {
-      return item.label;
-    }
-
-    if (item.subitems?.length) {
-      const nestedMatch = findCurrentChapterTitle(item.subitems, currentHref);
-      if (nestedMatch) return nestedMatch;
-    }
-  }
-
-  return undefined;
-}
 
 function ReaderContent() {
   const router = useRouter();
@@ -170,9 +150,7 @@ function ReaderContent() {
   const ttsTotalSentencesRef = useRef(0);
   const handleBackRef = useRef<(() => Promise<void>) | null>(null);
 
-  const currentChapterTitle = useMemo(() => {
-    return findCurrentChapterTitle(toc, currentHref) ?? book?.title;
-  }, [book?.title, currentHref, toc]);
+  const currentChapterTitle = useCurrentChapterTitle(toc, currentHref, book?.title);
 
   const { browserVoices, currentTheme } = useReaderSettingsLifecycle(
     settings,
@@ -264,16 +242,7 @@ function ReaderContent() {
 
   // ---- Idle timeout handled by useIdleTimeout hook ----
 
-  // ---- Esc key to go back ----
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        handleBack();
-      }
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [handleBack]);
+  useReaderKeyboardShortcuts({ onBack: handleBack });
 
   // ---- Fullscreen handled by useReaderFullscreen hook ----
 
@@ -341,22 +310,12 @@ function ReaderContent() {
     setNoteEditor,
   });
 
-  // ---- Settings handlers ----
-  const handleFontSizeChange = useCallback((size: number) => {
-    settings.setFontSize(size);
-  }, [settings]);
-
-  const handleFontFamilyChange = useCallback((family: FontFamily) => {
-    settings.setFontFamily(family);
-  }, [settings]);
-
-  const handleThemeChange = useCallback(async (theme: "light" | "dark" | "sepia") => {
-    settings.setTheme(theme);
-  }, [settings]);
-
-  const handleSelectedBrowserVoiceIdChange = useCallback((voiceId: string) => {
-    settings.setBrowserVoiceId(voiceId);
-  }, [settings]);
+  const {
+    handleFontFamilyChange,
+    handleFontSizeChange,
+    handleSelectedBrowserVoiceIdChange,
+    handleThemeChange,
+  } = useReaderSettingsControls(settings);
 
   const requestMicrosoftSpeech = useMicrosoftTtsSpeech(selectedBrowserVoiceId, ttsRate);
 
@@ -441,53 +400,16 @@ function ReaderContent() {
     };
   }, [stopSpeaking]);
 
-  // Setup Media Session action handlers
-  useEffect(() => {
-    if (!("mediaSession" in navigator)) return;
-    
-    navigator.mediaSession.setActionHandler("play", () => {
-      if (!isSpeaking && hasPendingResume()) {
-        resumePendingPlayback();
-      }
-      navigator.mediaSession.playbackState = "playing";
-    });
-    
-    navigator.mediaSession.setActionHandler("pause", () => {
-      if (isSpeaking && !isPaused) {
-        handlePauseTts();
-      }
-      navigator.mediaSession.playbackState = "paused";
-    });
-    
-    navigator.mediaSession.setActionHandler("stop", () => {
-      stopSpeaking();
-    });
-    
-    navigator.mediaSession.setActionHandler("previoustrack", () => {
-      handleTtsPrevParagraph();
-    });
-    
-    navigator.mediaSession.setActionHandler("nexttrack", () => {
-      handleTtsNextParagraph();
-    });
-    
-    return () => {
-      navigator.mediaSession.setActionHandler("play", null);
-      navigator.mediaSession.setActionHandler("pause", null);
-      navigator.mediaSession.setActionHandler("stop", null);
-      navigator.mediaSession.setActionHandler("previoustrack", null);
-      navigator.mediaSession.setActionHandler("nexttrack", null);
-    };
-  }, [
-    handlePauseTts,
-    handleTtsNextParagraph,
-    handleTtsPrevParagraph,
+  useReaderMediaSessionActions({
     hasPendingResume,
     isPaused,
     isSpeaking,
-    resumePendingPlayback,
-    stopSpeaking,
-  ]);
+    onNext: handleTtsNextParagraph,
+    onPause: handlePauseTts,
+    onPrev: handleTtsPrevParagraph,
+    onResumePending: resumePendingPlayback,
+    onStop: stopSpeaking,
+  });
 
   const handleOpenTtsView = useCallback(() => {
     setIsTtsViewOpen(true);
@@ -668,19 +590,7 @@ function ReaderContent() {
         onTtsRateChange={settings.setTtsRate}
       />
 
-      {/* Idle countdown warning */}
-      {idleCountdown !== null && idleCountdown > 0 && (
-        <div
-          className="reader-liquid-surface fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-xl"
-          style={{
-            color: "var(--reader-text)",
-          }}
-        >
-          <span className="text-sm">
-            即将返回书架 ({idleCountdown}秒)
-          </span>
-        </div>
-      )}
+      <IdleCountdownWarning seconds={idleCountdown} />
 
       <Toaster />
     </div>

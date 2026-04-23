@@ -1,7 +1,11 @@
 export { useIdleTimeout } from "./useIdleTimeout";
+export { useCurrentChapterTitle } from "./useCurrentChapterTitle";
 export { useMicrosoftTtsSpeech } from "./useMicrosoftTtsSpeech";
 export { useReaderFullscreen } from "./useReaderFullscreen";
+export { useReaderKeyboardShortcuts } from "./useReaderKeyboardShortcuts";
+export { useReaderMediaSessionActions } from "./useReaderMediaSessionActions";
 export { useReaderBookData } from "./useReaderBookData";
+export { useReaderSettingsControls } from "./useReaderSettingsControls";
 export { useReaderSettingsLifecycle } from "./useReaderSettingsLifecycle";
 export { useReaderTtsAudio } from "./useReaderTtsAudio";
 export { useReaderTtsSession } from "./useReaderTtsSession";
