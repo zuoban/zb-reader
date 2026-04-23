@@ -137,12 +137,12 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
     <Card
       ref={cardRef}
       className={cn(
-        "group relative overflow-hidden rounded-[0.85rem] border border-border/60 bg-card/96 transition-all duration-300 sm:rounded-[0.95rem]",
-        "hover:border-border/75 hover:shadow-[0_14px_28px_-26px_color-mix(in_oklab,var(--foreground)_12%,transparent)]",
-        spotlight && "animate-pulse-subtle ring-2 ring-primary/30"
+        "group relative overflow-hidden rounded-lg border border-border/45 bg-card/90 shadow-[0_1px_0_color-mix(in_oklab,var(--foreground)_5%,transparent)] transition-all duration-300 ease-out",
+        "hover:-translate-y-0.5 hover:border-border/70 hover:bg-card hover:shadow-[0_16px_34px_-28px_color-mix(in_oklab,var(--foreground)_34%,transparent)]",
+        spotlight && "animate-pulse-subtle ring-2 ring-primary/28"
       )}
     >
-      <div className="absolute inset-x-0 top-0 z-10 h-px bg-gradient-to-r from-transparent via-foreground/12 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      <div className="absolute inset-x-0 top-0 z-10 h-px bg-gradient-to-r from-transparent via-foreground/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
       <Link
         href={readerHref}
         className={cn("block cursor-pointer", spotlight && "animate-reader-fade-up")}
@@ -150,7 +150,7 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
         onClick={handleOpenReader}
       >
         <div
-          className="relative aspect-[5/7] overflow-hidden bg-muted"
+          className="relative aspect-[5/7] overflow-hidden bg-muted/70 shadow-[inset_0_-1px_0_color-mix(in_oklab,var(--foreground)_8%,transparent)]"
           data-reader-transition-cover
         >
           {/* Cover Image */}
@@ -161,16 +161,16 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
                 alt={book.title || "书籍封面"}
                 fill
                 sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
-                className="object-cover transition-transform duration-500 group-hover:scale-[1.015]"
+                className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.025]"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-65" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/24 via-black/3 to-transparent opacity-70 transition-opacity duration-300 group-hover:opacity-80" />
             </>
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-muted/55 dark:bg-muted/20">
+            <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(145deg,color-mix(in_oklab,var(--muted)_88%,white_12%),color-mix(in_oklab,var(--muted)_72%,var(--foreground)_8%))] dark:bg-muted/20">
               <div className="relative">
-                <div className="flex h-[4.35rem] w-[3.25rem] items-center justify-center overflow-hidden rounded-r-lg rounded-l-sm border border-black/5 bg-gradient-to-b from-foreground/78 to-foreground/68 text-white shadow-[0_12px_20px_-18px_rgba(15,23,42,0.26)] transition-transform duration-500 group-hover:scale-[1.01] sm:h-[4.8rem] sm:w-[3.55rem]">
-                  <div className="absolute inset-y-0 left-0 w-1.5 bg-black/12" />
-                  <span className="text-lg font-semibold tracking-[-0.04em] text-white/92 sm:text-xl">
+                <div className="flex h-[4.35rem] w-[3.25rem] items-center justify-center overflow-hidden rounded-r-md rounded-l-sm border border-black/5 bg-gradient-to-b from-foreground/82 to-foreground/68 text-white shadow-[0_14px_28px_-20px_color-mix(in_oklab,var(--foreground)_50%,transparent)] transition-transform duration-500 ease-out group-hover:scale-[1.025] sm:h-[4.8rem] sm:w-[3.55rem]">
+                  <div className="absolute inset-y-0 left-0 w-1 bg-black/14" />
+                  <span className="text-lg font-semibold text-white/92 sm:text-xl">
                     {book.title?.charAt(0) || "书"}
                   </span>
                 </div>
@@ -178,15 +178,15 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
             </div>
           )}
 
-          <div className="absolute inset-x-0 bottom-0 flex items-end justify-end bg-gradient-to-t from-black/26 via-black/8 to-transparent px-2 py-2 sm:px-2.5 sm:py-2.5">
+          <div className="absolute inset-x-0 bottom-0 flex items-end justify-end bg-gradient-to-t from-black/28 via-black/8 to-transparent px-2 py-2 sm:px-2.5 sm:py-2.5">
             <span
               className={cn(
-                "inline-flex shrink-0 items-center gap-1 rounded-full border px-1.5 py-0.5 text-[8px] font-medium backdrop-blur-sm sm:text-[9px]",
+                "inline-flex shrink-0 items-center gap-1 rounded-full border px-1.5 py-0.5 text-[8px] font-medium shadow-[0_8px_18px_-14px_rgba(0,0,0,0.65)] backdrop-blur-md sm:text-[9px]",
                 isCompleted
-                  ? "border-green-400/16 bg-green-500/16 text-white/94"
+                  ? "border-green-300/18 bg-green-500/22 text-white/95"
                   : hasProgress
-                    ? "border-primary/18 bg-primary/18 text-white/94"
-                    : "border-white/12 bg-black/20 text-white/84"
+                    ? "border-primary/20 bg-primary/22 text-white/95"
+                    : "border-white/14 bg-black/24 text-white/86"
               )}
             >
               {isCompleted ? <CheckCircle2 className="h-2.5 w-2.5" /> : null}
@@ -198,16 +198,16 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
       </Link>
 
       {/* Card Content */}
-      <div className="flex flex-col px-2 pb-1.5 pt-1">
-        <div className="flex items-start justify-between gap-1">
+      <div className="flex min-h-[51px] flex-col px-2.5 pb-2 pt-1.5 sm:min-h-[53px]">
+        <div className="flex items-start justify-between gap-1.5">
           <div className="min-w-0 flex-1">
             <h3
-              className="line-clamp-1 text-[11px] font-semibold tracking-[-0.025em] text-foreground sm:text-[12px]"
+              className="line-clamp-1 text-[11px] font-semibold text-foreground/95 sm:text-[12px]"
               title={book.title}
             >
               {book.title || "未命名书籍"}
             </h3>
-            <div className="mt-0.5 line-clamp-1 text-[9px] text-muted-foreground sm:text-[10px]">
+            <div className="mt-0.5 line-clamp-1 text-[9px] text-muted-foreground/82 sm:text-[10px]">
               {book.author || "未知作者"}
             </div>
           </div>
@@ -219,7 +219,7 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
                   variant="ghost"
                   size="icon"
                   aria-label="菜单"
-                  className="-mr-1 h-5.5 w-5.5 shrink-0 rounded-md text-muted-foreground/70 opacity-100 transition-all duration-200 hover:bg-accent/70 hover:text-foreground sm:rounded-lg sm:opacity-45 sm:group-hover:opacity-100"
+                  className="-mr-1 h-5.5 w-5.5 shrink-0 rounded-md text-muted-foreground/58 opacity-100 transition-all duration-200 hover:bg-accent/75 hover:text-foreground sm:opacity-0 sm:group-hover:opacity-100"
                 >
                   <MoreVertical className="h-2.5 w-2.5" />
                 </Button>
@@ -251,15 +251,15 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
         </div>
 
         {durationText || lastReadText ? (
-          <div className="mt-1 flex items-center justify-between">
+          <div className="mt-1.5 flex items-center justify-between gap-1.5">
             {durationText ? (
-              <div className="inline-flex items-center gap-1 text-[8px] text-muted-foreground/88 sm:text-[9px]">
+              <div className="inline-flex min-w-0 items-center gap-1 text-[8px] text-muted-foreground/76 sm:text-[9px]">
                 <Clock className="h-2.5 w-2.5 shrink-0" />
-                <span>{durationText}</span>
+                <span className="truncate">{durationText}</span>
               </div>
             ) : <div />}
             {lastReadText ? (
-              <div className="text-[8px] text-muted-foreground/88 sm:text-[9px]">
+              <div className="shrink-0 text-[8px] text-muted-foreground/72 sm:text-[9px]">
                 {lastReadText}
               </div>
             ) : null}

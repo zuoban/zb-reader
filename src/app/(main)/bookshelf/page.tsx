@@ -168,7 +168,7 @@ export default function BookshelfPage() {
 
         {/* Book Grid */}
         {loading ? (
-          <div className="animate-reader-fade-up grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5" style={{ animationDelay: "120ms" }}>
+          <div className="animate-reader-fade-up grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-3.5 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6" style={{ animationDelay: "120ms" }}>
             {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
               <BookCardSkeleton key={i} />
             ))}
