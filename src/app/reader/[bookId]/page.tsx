@@ -15,28 +15,24 @@ import { TextSelectionMenu } from "@/components/reader/TextSelectionMenu";
 import { NoteEditor } from "@/components/reader/NoteEditor";
 import { TtsFloatingControl } from "@/components/reader/TtsFloatingControl";
 import {
-  // Hooks extracted for future refactoring: useBookmarkActions, useNoteActions, useReaderNavigation
   useIdleTimeout,
+  useBookmarkActions,
+  useNoteActions,
+  useReaderBookData,
   useReaderFullscreen,
+  useReaderSettingsLifecycle,
 } from "@/components/reader/hooks";
 import { READER_ROUTE_EXIT_EVENT } from "@/components/layout/ReaderRouteTransition";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import type { EpubReaderRef, ReaderParagraph } from "@/components/reader/EpubReader";
-import type { Book, Bookmark, Note } from "@/lib/db/schema";
 import type { TocItem } from "@/types/reader";
-import type { BrowserVoiceOption } from "@/lib/tts";
-import {
-  cacheBook,
-  getCachedBook,
-} from "@/lib/book-cache";
 import { ttsAudioCache, TtsAudioLruCache } from "@/lib/ttsAudioCache";
 import { logger } from "@/lib/logger";
 import { useProgressSyncCompat } from "@/hooks/useProgressSyncCompat";
 import { useReaderSettingsStore, useDebouncedSettingsSave } from "@/stores/reader-settings";
 import type { FontFamily } from "@/stores/reader-settings";
-import { READER_THEME_STYLES } from "@/lib/reader-theme";
 import { paragraphsToSentences, type Sentence } from "@/lib/textUtils";
 
 // Dynamic import for EpubReader (client-only, depends on browser APIs)
@@ -110,12 +106,6 @@ function ReaderContent() {
 
   const epubReaderRef = useRef<EpubReaderRef>(null);
 
-  // Book data
-  const [book, setBook] = useState<Book | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [bookUrl, setBookUrl] = useState<string | null>(null);
-  const bookUrlRef = useRef<string | null>(null);
-
   // Reader state
   const [toolbarVisible, setToolbarVisible] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -124,7 +114,6 @@ function ReaderContent() {
   // Refs for saveProgress to read without adding state to useCallback deps
   const currentPageRef = useRef<number | undefined>(undefined);
   const totalPagesRef = useRef<number | undefined>(undefined);
-  const [initialLocation, setInitialLocation] = useState<string | undefined>();
 
   // Settings from store
   const settings = useReaderSettingsStore();
@@ -138,8 +127,7 @@ function ReaderContent() {
   const ttsHighlightColor = settings.ttsHighlightColor;
   const debouncedSaveSettings = useDebouncedSettingsSave();
 
-  // Local settings states (browser voices, TTS state)
-  const [browserVoices, setBrowserVoices] = useState<BrowserVoiceOption[]>([]);
+  // Local TTS state
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [isTtsViewOpen, setIsTtsViewOpen] = useState(false);
@@ -156,13 +144,32 @@ function ReaderContent() {
   // Fullscreen
   const { isFullscreen, toggleFullscreen: handleToggleFullscreen } = useReaderFullscreen();
 
-  // Bookmarks
-  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [isCurrentBookmarked, setIsCurrentBookmarked] = useState(false);
 
-  // Notes
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [highlights, setHighlights] = useState<Array<{ cfiRange: string; color: string; id: string }>>([]);
+  const handleMissingBook = useCallback(() => {
+    router.push("/bookshelf");
+  }, [router]);
+
+  const handleProgressLoaded = useCallback((loadedProgress: number) => {
+    setProgress(loadedProgress);
+  }, []);
+
+  const {
+    book,
+    loading,
+    bookUrl,
+    initialLocation,
+    bookmarks,
+    setBookmarks,
+    notes,
+    setNotes,
+    highlights,
+    setHighlights,
+  } = useReaderBookData({
+    bookId,
+    onMissingBook: handleMissingBook,
+    onProgressLoaded: handleProgressLoaded,
+  });
 
   // Text selection
   const [selectionMenu, setSelectionMenu] = useState<{
@@ -217,6 +224,11 @@ function ReaderContent() {
     return findCurrentChapterTitle(toc, currentHref) ?? book?.title;
   }, [book?.title, currentHref, toc]);
 
+  const { browserVoices, currentTheme } = useReaderSettingsLifecycle(
+    settings,
+    debouncedSaveSettings
+  );
+
   const handleBackToReader = useCallback(() => {
     setIsTtsViewOpen(false);
   }, []);
@@ -236,105 +248,6 @@ function ReaderContent() {
 
     return !error.message.includes("NotAllowedError");
   }, []);
-
-  // ---- Load book data ----
-  useEffect(() => {
-    async function loadBook() {
-      try {
-        const res = await fetch(`/api/books/${bookId}`);
-        if (!res.ok) {
-          toast.error("书籍不存在");
-          router.push("/bookshelf");
-          return;
-        }
-        const data = await res.json();
-        setBook(data.book);
-
-        // Load reading progress
-        const progressRes = await fetch(`/api/progress?bookId=${bookId}`);
-        const progressData = await progressRes.json();
-        if (progressData.progress?.location) {
-          setInitialLocation(progressData.progress.location);
-          setProgress(progressData.progress.progress || 0);
-        }
-
-        // Load bookmarks
-        const bmRes = await fetch(`/api/bookmarks?bookId=${bookId}`);
-        const bmData = await bmRes.json();
-        setBookmarks(bmData.bookmarks || []);
-
-        // Load notes
-        const notesRes = await fetch(`/api/notes?bookId=${bookId}`);
-        const notesData = await notesRes.json();
-        setNotes(notesData.notes || []);
-
-        // Load or cache book file
-        const cached = await getCachedBook(bookId);
-        let fileUrl: string;
-
-        if (cached) {
-          fileUrl = URL.createObjectURL(new Blob([cached]));
-        } else {
-          const fileRes = await fetch(`/api/books/${bookId}/file`);
-          if (!fileRes.ok) {
-            throw new Error("Failed to load book file");
-          }
-          const fileBuffer = await fileRes.arrayBuffer();
-          fileUrl = URL.createObjectURL(new Blob([fileBuffer]));
-          await cacheBook(bookId, fileBuffer);
-        }
-
-        setBookUrl(fileUrl);
-        bookUrlRef.current = fileUrl;
-      } catch (error) {
-        logger.error("reader", "加载书籍失败", error);
-        toast.error("加载失败");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadBook();
-
-    return () => {
-      if (bookUrlRef.current) {
-        URL.revokeObjectURL(bookUrlRef.current);
-      }
-    };
-  }, [bookId, router]);
-
-  // ---- Build highlights from notes ----
-  useEffect(() => {
-    const hl = notes
-      .filter((n) => n.location && n.color)
-      .map((n) => ({
-        cfiRange: n.location,
-        color: n.color || "#facc15",
-        id: n.id,
-      }));
-    setHighlights(hl);
-  }, [notes]);
-
-  // ---- Load settings from store ----
-  useEffect(() => {
-    settings.loadFromServer();
-  }, []);
-
-  // Auto-save settings when they change
-  useEffect(() => {
-    if (!settings.loaded) return;
-    debouncedSaveSettings();
-  }, [
-    settings.fontSize,
-    settings.theme,
-    settings.fontFamily,
-    settings.browserVoiceId,
-    settings.ttsRate,
-    settings.microsoftPreloadCount,
-    settings.ttsAutoNextChapter,
-    settings.ttsHighlightColor,
-    settings.autoScrollToActive,
-  ]);
 
   const stopSpeaking = useCallback(() => {
     ttsSessionRef.current += 1;
@@ -407,31 +320,6 @@ function ReaderContent() {
       // Wake Lock not supported or failed
     }
   }, []);
-
-  useEffect(() => {
-    if (!settings.loaded) return;
-
-    const loadVoices = async () => {
-      try {
-        const res = await fetch("/api/tts/microsoft/voices");
-        if (!res.ok) return;
-        const data = (await res.json()) as { voices?: BrowserVoiceOption[] };
-        const mapped = data.voices || [];
-        setBrowserVoices(mapped);
-        const currentVoiceId = settings.browserVoiceId;
-        if (mapped.length > 0) {
-          if (currentVoiceId && mapped.some((voice) => voice.id === currentVoiceId)) {
-            return;
-          }
-          settings.setBrowserVoiceId(mapped[0].id);
-        }
-      } catch {
-        // ignore
-      }
-    };
-
-    loadVoices();
-  }, [settings.loaded]);
 
   // Progress saving is now handled by useProgressSyncCompat hook
   // Use saveProgress() and debouncedSaveProgress() from the hook
@@ -556,229 +444,69 @@ function ReaderContent() {
 
   // ---- Fullscreen handled by useReaderFullscreen hook ----
 
-  // ---- Bookmark handlers (delegated to useBookmarkActions) ----
-  const handleToggleBookmark = useCallback(async () => {
-    const currentCfi = currentCfiRef.current;
-    if (!currentCfi) return;
-
-    const existing = bookmarks.find((b) => b.location === currentCfi);
-
-    if (existing) {
-      // Remove bookmark
-      try {
-        await fetch(`/api/bookmarks/${existing.id}`, { method: "DELETE" });
-        setBookmarks((prev) => prev.filter((b) => b.id !== existing.id));
-        setIsCurrentBookmarked(false);
-        toast.success("已取消书签");
-      } catch {
-        toast.error("操作失败");
-      }
-    } else {
-      // Add bookmark
-      try {
-        const res = await fetch("/api/bookmarks", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            bookId,
-            location: currentCfi,
-            progress: progressRef.current,
-            pageNumber: currentPage,
-          }),
-        });
-        const data = await res.json();
-        if (res.ok) {
-          setBookmarks((prev) => [data.bookmark, ...prev]);
-          setIsCurrentBookmarked(true);
-          toast.success("已添加书签");
-        }
-      } catch {
-        toast.error("操作失败");
-      }
-    }
-  }, [bookmarks, bookId, currentPage]);
-
-  const handleBookmarkEdit = useCallback(async (id: string, label: string) => {
-    try {
-      await fetch(`/api/bookmarks/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ label }),
-      });
-      setBookmarks((prev) =>
-        prev.map((b) => (b.id === id ? { ...b, label } : b))
-      );
-    } catch {
-      toast.error("修改失败");
-    }
-  }, []);
-
-  const handleBookmarkDelete = useCallback(async (id: string) => {
-    try {
-      await fetch(`/api/bookmarks/${id}`, { method: "DELETE" });
-      setBookmarks((prev) => prev.filter((b) => b.id !== id));
-      toast.success("已删除书签");
-    } catch {
-      toast.error("删除失败");
-    }
-  }, []);
-
-  // ---- Note handlers ----
-  const handleHighlight = useCallback(
-    async (color: string) => {
-      const { cfiRange, text } = selectionMenu;
-      if (!cfiRange) return;
-
-      // Optimistically add highlight immediately for instant visual feedback
-      const tempId = `temp-${Date.now()}`;
-      setHighlights((prev) => [...prev, { cfiRange, color, id: tempId }]);
-      setSelectionMenu((prev) => ({ ...prev, visible: false }));
-
-      try {
-        const res = await fetch("/api/notes", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            bookId,
-            location: cfiRange,
-            selectedText: text,
-            color,
-            progress: progressRef.current,
-            pageNumber: currentPage,
-          }),
-        });
-        const data = await res.json();
-        if (res.ok) {
-          setNotes((prev) => [data.note, ...prev]);
-          // Replace temp highlight with real id
-          setHighlights((prev) =>
-            prev.map((h) => (h.id === tempId ? { ...h, id: data.note.id } : h))
-          );
-          toast.success("已添加高亮");
-        } else {
-          // Remove optimistic highlight on failure
-          setHighlights((prev) => prev.filter((h) => h.id !== tempId));
-        }
-      } catch {
-        setHighlights((prev) => prev.filter((h) => h.id !== tempId));
-        toast.error("操作失败");
-      }
-    },
-    [selectionMenu, bookId, currentPage]
-  );
-
-  const handleAddNote = useCallback(() => {
-    setNoteEditor({
-      open: true,
-      selectedText: selectionMenu.text,
-      cfiRange: selectionMenu.cfiRange,
-    });
-    setSelectionMenu((prev) => ({ ...prev, visible: false }));
-  }, [selectionMenu]);
-
-  const handleCopyText = useCallback(() => {
-    navigator.clipboard.writeText(selectionMenu.text);
-    toast.success("已复制");
-    setSelectionMenu((prev) => ({ ...prev, visible: false }));
-  }, [selectionMenu.text]);
-
-  const handleSaveNote = useCallback(
-    async (content: string, color: string) => {
-      if (noteEditor.editingId) {
-        // Edit existing note — optimistically update highlight color
-        setHighlights((prev) =>
-          prev.map((h) =>
-            h.id === noteEditor.editingId ? { ...h, color } : h
+  const { handleToggleBookmark, handleBookmarkEdit, handleBookmarkDelete } =
+    useBookmarkActions({
+      bookId,
+      currentCfiRef,
+      currentPage,
+      bookmarks,
+      progressRef,
+      onBookmarkAdded: (bookmark) => {
+        setBookmarks((prev) => [bookmark, ...prev]);
+      },
+      onBookmarkRemoved: (id) => {
+        setBookmarks((prev) => prev.filter((bookmark) => bookmark.id !== id));
+      },
+      onBookmarkUpdated: (id, updates) => {
+        setBookmarks((prev) =>
+          prev.map((bookmark) =>
+            bookmark.id === id ? { ...bookmark, ...updates } : bookmark
           )
         );
-        try {
-          await fetch(`/api/notes/${noteEditor.editingId}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ content, color }),
-          });
-          setNotes((prev) =>
-            prev.map((n) =>
-              n.id === noteEditor.editingId ? { ...n, content, color } : n
-            )
-          );
-          toast.success("已更新笔记");
-        } catch {
-          toast.error("更新失败");
-        }
-      } else {
-        // Create new note — optimistic highlight
-        const tempId = `temp-${Date.now()}`;
-        if (noteEditor.cfiRange) {
-          setHighlights((prev) => [
-            ...prev,
-            { cfiRange: noteEditor.cfiRange, color, id: tempId },
-          ]);
-        }
-        try {
-          const res = await fetch("/api/notes", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              bookId,
-              location: noteEditor.cfiRange,
-              selectedText: noteEditor.selectedText,
-              content,
-              color,
-              progress: progressRef.current,
-              pageNumber: currentPage,
-            }),
-          });
-          const data = await res.json();
-          if (res.ok) {
-            setNotes((prev) => [data.note, ...prev]);
-            setHighlights((prev) =>
-              prev.map((h) =>
-                h.id === tempId ? { ...h, id: data.note.id } : h
-              )
-            );
-            toast.success("已添加笔记");
-          } else {
-            setHighlights((prev) => prev.filter((h) => h.id !== tempId));
-          }
-        } catch {
-          setHighlights((prev) => prev.filter((h) => h.id !== tempId));
-          toast.error("操作失败");
-        }
-      }
-      setNoteEditor({ open: false, selectedText: "", cfiRange: "" });
-    },
-    [noteEditor, bookId, currentPage]
-  );
+      },
+      setIsCurrentBookmarked,
+    });
 
-  const handleNoteDelete = useCallback(async (id: string) => {
-    try {
-      await fetch(`/api/notes/${id}`, { method: "DELETE" });
-      setNotes((prev) => prev.filter((n) => n.id !== id));
-      toast.success("已删除笔记");
-    } catch {
-      toast.error("删除失败");
-    }
-  }, []);
-
-  const handleNoteEdit = useCallback(
-    async (id: string, content: string, color: string) => {
-      try {
-        await fetch(`/api/notes/${id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content, color }),
-        });
-        setNotes((prev) =>
-          prev.map((n) => (n.id === id ? { ...n, content, color } : n))
-        );
-        toast.success("已更新笔记");
-      } catch {
-        toast.error("更新失败");
-      }
+  const {
+    handleHighlight,
+    handleAddNote,
+    handleCopyText,
+    handleSaveNote,
+    handleNoteDelete,
+    handleNoteEdit,
+  } = useNoteActions({
+    bookId,
+    selectionMenu,
+    noteEditor,
+    progressRef,
+    currentPage,
+    onHighlightAdded: (highlight) => {
+      setHighlights((prev) => [...prev, highlight]);
     },
-    []
-  );
+    onHighlightRemoved: (id) => {
+      setHighlights((prev) => prev.filter((highlight) => highlight.id !== id));
+    },
+    onHighlightUpdated: (id, updates) => {
+      setHighlights((prev) =>
+        prev.map((highlight) =>
+          highlight.id === id ? { ...highlight, ...updates } : highlight
+        )
+      );
+    },
+    onNoteAdded: (note) => {
+      setNotes((prev) => [note, ...prev]);
+    },
+    onNoteRemoved: (id) => {
+      setNotes((prev) => prev.filter((note) => note.id !== id));
+    },
+    onNoteUpdated: (id, updates) => {
+      setNotes((prev) =>
+        prev.map((note) => (note.id === id ? { ...note, ...updates } : note))
+      );
+    },
+    setSelectionMenu,
+    setNoteEditor,
+  });
 
   // ---- Settings handlers ----
   const handleFontSizeChange = useCallback((size: number) => {
@@ -1681,22 +1409,6 @@ function ReaderContent() {
     setIsTtsViewOpen(true);
     setToolbarVisible(false);
   }, []);
-
-  // ---- Theme styles ----
-  const currentTheme = READER_THEME_STYLES[readerTheme] || READER_THEME_STYLES.light;
-  // Apply CSS variables to root for Portal access
-  useEffect(() => {
-    const root = document.documentElement;
-    root.style.setProperty("--reader-bg", currentTheme.solidBg);
-    root.style.setProperty("--reader-card-bg", currentTheme.cardBg);
-    root.style.setProperty("--reader-text", currentTheme.text);
-    root.style.setProperty("--reader-muted-text", currentTheme.mutedText);
-    root.style.setProperty("--reader-border", currentTheme.border);
-    root.style.setProperty("--reader-shadow", currentTheme.shadow);
-    root.style.setProperty("--reader-primary", currentTheme.primary);
-    root.style.setProperty("--reader-primary-light", currentTheme.primaryLight);
-    root.style.setProperty("--reader-destructive", currentTheme.destructive);
-  }, [readerTheme]);
 
   if (loading || !book || !bookUrl) {
     return (

@@ -21,7 +21,7 @@ interface Note {
   id: string;
   bookId: string;
   userId: string;
-  location: string | null;
+  location: string;
   selectedText: string | null;
   content: string | null;
   color: string | null;
@@ -43,7 +43,7 @@ interface UseNoteActionsParams {
   bookId: string;
   selectionMenu: SelectionMenu;
   noteEditor: NoteEditor;
-  progressRef: React.MutableRefObject<number | null>;
+  progressRef: React.MutableRefObject<number>;
   currentPage: number | undefined;
   onHighlightAdded: (highlight: Highlight) => void;
   onHighlightRemoved: (tempId: string) => void;

@@ -7,7 +7,7 @@ interface UseBookmarkActionsParams {
   currentCfiRef: React.MutableRefObject<string | null>;
   currentPage: number | undefined;
   bookmarks: Bookmark[];
-  progressRef: React.MutableRefObject<number | null>;
+  progressRef: React.MutableRefObject<number>;
   onBookmarkAdded: (bookmark: Bookmark) => void;
   onBookmarkRemoved: (id: string) => void;
   onBookmarkUpdated: (id: string, updates: Partial<Bookmark>) => void;
