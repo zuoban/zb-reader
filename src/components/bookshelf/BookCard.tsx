@@ -142,7 +142,7 @@ export const BookCard = memo(function BookCard({
       className={cn(
         "book-card-glass group relative gap-3 overflow-hidden rounded-2xl py-0 transition-all duration-300 ease-out",
         "hover:-translate-y-0.5 hover:border-ring/35 hover:shadow-[0_26px_58px_-40px_color-mix(in_oklab,var(--foreground)_48%,transparent)]",
-        spotlight && "animate-pulse-subtle ring-2 ring-primary/28"
+        spotlight && "ring-2 ring-primary/28"
       )}
     >
       <div className="liquid-hairline absolute inset-x-3 top-0 z-10 h-px opacity-70 transition-opacity duration-300 group-hover:opacity-100" />
