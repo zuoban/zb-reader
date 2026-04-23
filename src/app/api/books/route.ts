@@ -4,9 +4,12 @@ import { v4 as uuidv4 } from "uuid";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { books, readingProgress } from "@/lib/db/schema";
-import { saveBookFile, saveCoverImage } from "@/lib/storage";
+import { deleteBookFile, deleteCoverImage, saveBookFile, saveCoverImage } from "@/lib/storage";
 import { logger } from "@/lib/logger";
 import { unauthorized, badRequest, serverError } from "@/lib/api-utils";
+import { formatBytes } from "@/lib/utils";
+
+const MAX_EPUB_FILE_SIZE_BYTES = 100 * 1024 * 1024;
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -139,6 +142,9 @@ export async function POST(req: NextRequest) {
     return unauthorized();
   }
 
+  let savedFileName: string | null = null;
+  let coverFileName: string | null = null;
+
   try {
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
@@ -155,13 +161,16 @@ export async function POST(req: NextRequest) {
       return badRequest("不支持的文件格式，仅支持 EPUB");
     }
 
+    if (file.size > MAX_EPUB_FILE_SIZE_BYTES) {
+      return badRequest(`文件不能超过 ${formatBytes(MAX_EPUB_FILE_SIZE_BYTES)}`);
+    }
+
     const bookId = uuidv4();
     const buffer = Buffer.from(await file.arrayBuffer());
-    const savedFileName = saveBookFile(buffer, bookId, ext);
+    savedFileName = saveBookFile(buffer, bookId, ext);
 
     let title = fileName.replace(`.${ext}`, "");
     let author = "未知作者";
-    let coverFileName: string | null = null;
 
     try {
       const metadata = await extractEpubMetadata(buffer, bookId);
@@ -194,6 +203,20 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ book }, { status: 201 });
   } catch (error) {
+    if (savedFileName) {
+      try {
+        deleteBookFile(savedFileName);
+      } catch (cleanupError) {
+        logger.warn("books", "Failed to cleanup uploaded book file", cleanupError);
+      }
+    }
+    if (coverFileName) {
+      try {
+        deleteCoverImage(coverFileName);
+      } catch (cleanupError) {
+        logger.warn("books", "Failed to cleanup uploaded cover file", cleanupError);
+      }
+    }
     logger.error("books", "Failed to upload book", error);
     return serverError("上传失败");
   }
