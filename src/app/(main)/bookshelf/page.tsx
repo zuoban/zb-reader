@@ -179,10 +179,10 @@ export default function BookshelfPage() {
             variant="ghost"
             size="sm"
             className={cn(
-              "h-8 cursor-pointer rounded-full border px-3 text-xs shadow-none",
+              "liquid-control h-8 cursor-pointer rounded-full px-3 text-xs shadow-none",
               selectedCategory === ALL_CATEGORY
-                ? "border-primary bg-primary text-primary-foreground hover:bg-primary/92 hover:text-primary-foreground"
-                : "border-border/65 bg-background/35 text-muted-foreground hover:border-ring/45 hover:bg-accent/55 hover:text-foreground"
+                ? "liquid-pill-active text-foreground hover:text-foreground"
+                : "text-muted-foreground hover:text-foreground"
             )}
             onClick={() => setSelectedCategory(ALL_CATEGORY)}
           >
@@ -191,9 +191,9 @@ export default function BookshelfPage() {
             <Badge
               variant="outline"
               className={cn(
-                "ml-1 border-transparent bg-muted/70 px-1.5 py-0 text-[10px] text-muted-foreground",
+                "ml-1 border-transparent bg-background/36 px-1.5 py-0 text-[10px] text-muted-foreground",
                 selectedCategory === ALL_CATEGORY &&
-                  "bg-primary-foreground/14 text-primary-foreground"
+                  "bg-background/42 text-foreground"
               )}
             >
               {totalBooks}
@@ -206,10 +206,10 @@ export default function BookshelfPage() {
               variant="ghost"
               size="sm"
               className={cn(
-                "h-8 cursor-pointer rounded-full border px-3 text-xs shadow-none",
+                "liquid-control h-8 cursor-pointer rounded-full px-3 text-xs shadow-none",
                 selectedCategory === category.name
-                  ? "border-primary bg-primary text-primary-foreground hover:bg-primary/92 hover:text-primary-foreground"
-                  : "border-border/65 bg-background/35 text-muted-foreground hover:border-ring/45 hover:bg-accent/55 hover:text-foreground"
+                  ? "liquid-pill-active text-foreground hover:text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               )}
               onClick={() => setSelectedCategory(category.name)}
             >
@@ -218,9 +218,9 @@ export default function BookshelfPage() {
               <Badge
                 variant="outline"
                 className={cn(
-                  "ml-1 border-transparent bg-muted/70 px-1.5 py-0 text-[10px] text-muted-foreground",
+                  "ml-1 border-transparent bg-background/36 px-1.5 py-0 text-[10px] text-muted-foreground",
                   selectedCategory === category.name &&
-                    "bg-primary-foreground/14 text-primary-foreground"
+                    "bg-background/42 text-foreground"
                 )}
               >
                 {category.count}
@@ -259,7 +259,8 @@ export default function BookshelfPage() {
           }
         }}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="overflow-hidden rounded-2xl border-[color:var(--glass-border)] bg-card/80 shadow-[0_28px_80px_-48px_color-mix(in_oklab,var(--foreground)_54%,transparent)] sm:max-w-md">
+          <div className="liquid-hairline absolute inset-x-4 top-0 h-px" />
           <DialogHeader>
             <DialogTitle>设置分类</DialogTitle>
             <DialogDescription>
@@ -286,7 +287,7 @@ export default function BookshelfPage() {
           {categories.length > 0 ? (
             <div className="grid gap-2">
               <Label>已有分类</Label>
-              <div className="flex max-h-28 flex-wrap gap-2 overflow-y-auto rounded-lg border border-border/60 bg-background/45 p-2">
+              <div className="flex max-h-28 flex-wrap gap-2 overflow-y-auto rounded-xl border border-border/60 bg-background/36 p-2 backdrop-blur-xl">
                 {categories.map((category) => {
                   const isSelected = categoryInput.trim() === category.name;
 
@@ -294,9 +295,12 @@ export default function BookshelfPage() {
                     <Button
                       key={category.name}
                       type="button"
-                      variant={isSelected ? "default" : "outline"}
+                      variant="ghost"
                       size="xs"
-                      className="h-7 cursor-pointer rounded-md px-2 text-xs"
+                      className={cn(
+                        "h-7 cursor-pointer rounded-lg px-2 text-xs",
+                        isSelected ? "liquid-pill-active" : "liquid-control"
+                      )}
                       onClick={() => setCategoryInput(category.name)}
                     >
                       {isSelected ? <Check className="h-3 w-3" /> : <Tags className="h-3 w-3" />}

@@ -3,12 +3,13 @@
 export function BackgroundDecoration() {
   return (
     <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_0%,rgba(185,130,36,0.16),transparent_28%),radial-gradient(circle_at_92%_8%,rgba(47,118,111,0.12),transparent_30%),linear-gradient(115deg,transparent_0%,rgba(255,255,255,0.22)_48%,transparent_100%)] dark:bg-[radial-gradient(circle_at_12%_0%,rgba(213,162,64,0.12),transparent_30%),radial-gradient(circle_at_92%_8%,rgba(85,167,160,0.1),transparent_30%),linear-gradient(115deg,transparent_0%,rgba(255,255,255,0.035)_48%,transparent_100%)]" />
-      <div className="absolute inset-0 opacity-[0.18] [background-image:linear-gradient(to_right,color-mix(in_oklab,var(--foreground)_8%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_oklab,var(--foreground)_8%,transparent)_1px,transparent_1px)] [background-size:44px_44px] [mask-image:linear-gradient(to_bottom,black,transparent_70%)] dark:opacity-[0.12]" />
+      <div className="absolute inset-0 bg-[linear-gradient(110deg,color-mix(in_oklab,var(--cta)_10%,transparent)_0%,transparent_34%,color-mix(in_oklab,var(--chart-3)_10%,transparent)_67%,transparent_100%),linear-gradient(180deg,color-mix(in_oklab,white_34%,transparent)_0%,transparent_42%)] dark:bg-[linear-gradient(110deg,color-mix(in_oklab,var(--cta)_9%,transparent)_0%,transparent_36%,color-mix(in_oklab,var(--chart-3)_8%,transparent)_70%,transparent_100%),linear-gradient(180deg,color-mix(in_oklab,white_5%,transparent)_0%,transparent_45%)]" />
+      <div className="absolute inset-0 opacity-[0.16] [background-image:linear-gradient(to_right,color-mix(in_oklab,var(--foreground)_7%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_oklab,var(--foreground)_7%,transparent)_1px,transparent_1px)] [background-size:48px_48px] [mask-image:linear-gradient(to_bottom,black,transparent_72%)] dark:opacity-[0.11]" />
+      <div className="absolute inset-x-0 top-0 h-32 bg-[linear-gradient(180deg,color-mix(in_oklab,white_52%,transparent),transparent)] dark:bg-[linear-gradient(180deg,color-mix(in_oklab,white_6%,transparent),transparent)]" />
 
       <svg
         viewBox="0 0 1440 960"
-        className="absolute inset-0 h-full w-full opacity-[0.24] sm:opacity-[0.32] dark:opacity-[0.22]"
+        className="absolute inset-0 h-full w-full opacity-[0.18] sm:opacity-[0.24] dark:opacity-[0.18]"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
@@ -44,10 +45,10 @@ export function BackgroundDecoration() {
           />
         </g>
 
-        <g transform="translate(124 124)" className="hidden animate-reader-breathe lg:block opacity-55 dark:opacity-45" style={{ animationDelay: "0.8s" }}>
-          <circle cx="0" cy="0" r="6" fill="currentColor" className="text-[color:var(--cta)]/35" />
-          <circle cx="176" cy="94" r="4" fill="currentColor" className="text-teal-700/25 dark:text-teal-300/25" />
-          <circle cx="80" cy="222" r="5" fill="currentColor" className="text-foreground/18" />
+        <g transform="translate(124 124)" className="hidden animate-reader-breathe lg:block opacity-45 dark:opacity-35" style={{ animationDelay: "0.8s" }}>
+          <path d="M0 0H92" stroke="currentColor" className="text-[color:var(--cta)]/24" strokeWidth="2" strokeLinecap="round" />
+          <path d="M150 94H246" stroke="currentColor" className="text-cyan-700/18 dark:text-cyan-300/18" strokeWidth="2" strokeLinecap="round" />
+          <path d="M42 222H184" stroke="currentColor" className="text-foreground/14" strokeWidth="1.5" strokeLinecap="round" />
           <path d="M38 54C74 42 112 46 150 66" stroke="currentColor" className="text-foreground/10 dark:text-white/10" strokeWidth="2" strokeLinecap="round" strokeDasharray="4 10" />
         </g>
       </svg>

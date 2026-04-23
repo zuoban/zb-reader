@@ -71,11 +71,11 @@ const ToolbarButton = memo(function ToolbarButton({
           size="icon"
           onClick={onClick}
           className={cn(
-            "cursor-pointer h-9 w-9 rounded-xl transition-all duration-200",
-            "hover:-translate-y-0.5 hover:shadow-sm",
+            "liquid-control h-9 w-9 cursor-pointer rounded-xl transition-all duration-200",
+            "hover:-translate-y-0.5",
             isActive
-              ? "bg-[var(--reader-primary)]/15 text-[var(--reader-primary)] shadow-inner"
-              : "hover:bg-[var(--reader-primary)]/10 hover:text-[var(--reader-primary)]",
+              ? "border-[var(--reader-primary)]/35 bg-[var(--reader-primary)]/15 text-[var(--reader-primary)] shadow-inner"
+              : "hover:text-[var(--reader-primary)]",
             className
           )}
           style={{ color: isActive ? "var(--reader-primary)" : "var(--reader-text)" }}
@@ -87,7 +87,7 @@ const ToolbarButton = memo(function ToolbarButton({
         side="bottom" 
         sideOffset={8}
         hideArrow
-        className="text-xs bg-background/95 backdrop-blur-sm border border-border/50 text-foreground shadow-lg"
+        className="border border-border/50 bg-background/80 text-xs text-foreground shadow-lg backdrop-blur-xl"
       >
         {tooltip}
       </TooltipContent>
@@ -128,12 +128,13 @@ export const ReaderToolbar = memo(function ReaderToolbar({
       >
         <div className="mx-auto max-w-3xl px-4 pt-4">
           <div
-            className="pointer-events-auto flex items-center justify-between rounded-2xl border px-2 py-2 shadow-[0_24px_54px_-38px_rgba(0,0,0,0.32)] backdrop-blur-2xl transition-shadow duration-300"
+            className="surface-elevated pointer-events-auto relative flex items-center justify-between overflow-hidden rounded-2xl border px-2 py-2 backdrop-blur-2xl transition-shadow duration-300"
             style={{
-              background: "linear-gradient(145deg, color-mix(in srgb, var(--reader-card-bg) 92%, transparent), color-mix(in srgb, var(--reader-card-bg) 78%, transparent))",
+              background: "linear-gradient(145deg, color-mix(in srgb, var(--reader-card-bg) 84%, transparent), color-mix(in srgb, var(--reader-card-bg) 62%, transparent))",
               borderColor: "var(--reader-border)",
             }}
           >
+            <div className="liquid-hairline pointer-events-none absolute inset-x-4 top-0 h-px" />
             {/* 左侧：返回和目录 */}
             <div className="flex items-center gap-1">
               <ToolbarButton onClick={onBack} tooltip="返回书架">
@@ -229,7 +230,7 @@ export const ReaderToolbar = memo(function ReaderToolbar({
                 onClick={onPrevChapter}
                 disabled={!hasPrevChapter}
                 className={cn(
-                  "pointer-events-auto h-11 w-11 rounded-xl border shadow-lg backdrop-blur-2xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl",
+                  "liquid-control pointer-events-auto h-11 w-11 rounded-xl transition-all duration-200 hover:-translate-y-0.5",
                   !hasPrevChapter && "opacity-30 cursor-not-allowed hover:translate-y-0"
                 )}
                 style={{ 
@@ -249,7 +250,7 @@ export const ReaderToolbar = memo(function ReaderToolbar({
                 onClick={onNextChapter}
                 disabled={!hasNextChapter}
                 className={cn(
-                  "pointer-events-auto h-11 w-11 rounded-xl border shadow-lg backdrop-blur-2xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl",
+                  "liquid-control pointer-events-auto h-11 w-11 rounded-xl transition-all duration-200 hover:-translate-y-0.5",
                   !hasNextChapter && "opacity-30 cursor-not-allowed hover:translate-y-0"
                 )}
                 style={{ 

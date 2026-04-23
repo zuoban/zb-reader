@@ -46,16 +46,16 @@ export function Navbar({ onUploadComplete, className }: NavbarProps) {
   return (
     <header className={cn("sticky top-2 z-50 w-full sm:top-3", className)}>
       <nav className="mx-auto w-full max-w-7xl px-4 sm:px-6">
-        <div className="surface-glass surface-elevated relative flex h-14 items-center justify-between overflow-hidden rounded-xl px-2.5 transition-all duration-300 sm:h-15 sm:px-3">
-          <div className="pointer-events-none absolute inset-x-2 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent dark:via-white/14" />
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-28 bg-[radial-gradient(circle_at_20%_50%,color-mix(in_oklab,var(--cta)_18%,transparent),transparent_68%)]" />
+        <div className="surface-glass surface-elevated relative flex h-14 items-center justify-between overflow-hidden rounded-2xl px-2.5 transition-all duration-300 sm:h-15 sm:px-3">
+          <div className="liquid-hairline pointer-events-none absolute inset-x-3 top-0 h-px" />
+          <div className="pointer-events-none absolute inset-y-1 left-1 w-32 rounded-l-[1.1rem] bg-[linear-gradient(90deg,color-mix(in_oklab,var(--cta)_12%,transparent),transparent)]" />
 
           {/* Logo */}
           <Link
             href="/bookshelf"
-            className="group relative flex min-w-0 items-center gap-3 rounded-lg px-1.5 py-1 transition-all duration-200 hover:bg-background/40 focus-visible:ring-2 focus-visible:ring-ring/45 focus-visible:outline-none"
+            className="group relative flex min-w-0 items-center gap-3 rounded-xl px-1.5 py-1 transition-all duration-200 hover:bg-background/34 focus-visible:ring-2 focus-visible:ring-ring/45 focus-visible:outline-none"
           >
-            <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border/50 bg-background/55 shadow-[0_1px_2px_-0.5px_color-mix(in_oklab,var(--foreground)_8%,transparent),0_1px_0_color-mix(in_oklab,white_45%,transparent)_inset] backdrop-blur-sm transition-shadow duration-300 group-hover:shadow-[0_2px_8px_-2px_color-mix(in_oklab,var(--foreground)_10%,transparent),0_1px_0_color-mix(in_oklab,white_45%,transparent)_inset]">
+            <div className="liquid-control relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-shadow duration-300">
               <Image
                 src="/logo.svg"
                 alt="ZB Reader"
@@ -79,7 +79,7 @@ export function Navbar({ onUploadComplete, className }: NavbarProps) {
             {onUploadComplete && (
               <UploadButton
                 onUploadComplete={onUploadComplete}
-                className="h-9 gap-2 rounded-lg border border-[color:var(--cta)]/30 bg-[color:var(--cta)]/10 px-3 text-foreground shadow-[0_2px_12px_-4px_color-mix(in_oklab,var(--cta)_35%,transparent)] backdrop-blur-sm transition-all duration-200 hover:border-[color:var(--cta)]/50 hover:bg-[color:var(--cta)]/18 hover:shadow-[0_4px_16px_-4px_color-mix(in_oklab,var(--cta)_45%,transparent)]"
+                className="liquid-control h-9 gap-2 rounded-xl px-3 text-foreground transition-all duration-200"
               />
             )}
 
@@ -88,7 +88,7 @@ export function Navbar({ onUploadComplete, className }: NavbarProps) {
               size="icon"
               onClick={handleThemeToggle}
               aria-label="切换主题"
-              className="relative h-9 w-9 rounded-lg border border-border/50 bg-background/50 shadow-[0_1px_0_color-mix(in_oklab,white_40%,transparent)_inset] backdrop-blur-sm transition-all duration-200 hover:bg-background/75 hover:shadow-[0_2px_8px_-2px_color-mix(in_oklab,var(--foreground)_12%,transparent)]"
+              className="liquid-control relative h-9 w-9 rounded-xl transition-all duration-200"
             >
               <Sun className="h-[18px] w-[18px] rotate-0 scale-100 transition-all duration-300 dark:-rotate-90 dark:scale-0" />
               <Moon className="absolute h-[18px] w-[18px] rotate-90 scale-0 transition-all duration-300 dark:rotate-0 dark:scale-100" />
@@ -101,7 +101,7 @@ export function Navbar({ onUploadComplete, className }: NavbarProps) {
                   <Button
                     variant="ghost"
                     aria-label="打开用户菜单"
-                    className="relative h-9 w-9 rounded-full border-2 border-transparent p-0 transition-all duration-200 hover:border-[color:var(--cta)]/40 hover:shadow-[0_4px_16px_-8px_color-mix(in_oklab,var(--foreground)_15%,transparent)] focus-visible:ring-2 focus-visible:ring-[color:var(--cta)]/50 focus-visible:ring-offset-2"
+                    className="liquid-control relative h-9 w-9 rounded-full p-0 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-[color:var(--cta)]/50 focus-visible:ring-offset-2"
                   >
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={session.user.avatar || undefined} alt={session.user.username || "用户头像"} />
