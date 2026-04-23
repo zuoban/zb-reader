@@ -1,16 +1,12 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
 import { SyncQueue, type SyncItem } from './sync-queue';
 
 describe('sync-queue', () => {
   let syncQueue: SyncQueue;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let mockSyncFn: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let mockOnSyncComplete: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let mockOnSyncError: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let mockOnQueueChange: any;
+  let mockSyncFn: Mock;
+  let mockOnSyncComplete: Mock;
+  let mockOnSyncError: Mock;
+  let mockOnQueueChange: Mock<(n: number) => void>;
 
   beforeEach(() => {
     const storage = new Map<string, string>();

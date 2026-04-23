@@ -1,5 +1,7 @@
 "use client";
 
+import { memo } from "react";
+
 import {
   ArrowLeft,
   Bookmark,
@@ -48,7 +50,7 @@ interface ReaderToolbarProps {
   rightContent?: React.ReactNode;
 }
 
-function ToolbarButton({
+const ToolbarButton = memo(function ToolbarButton({
   children,
   onClick,
   tooltip,
@@ -91,9 +93,9 @@ function ToolbarButton({
       </TooltipContent>
     </Tooltip>
   );
-}
+});
 
-export function ReaderToolbar({
+export const ReaderToolbar = memo(function ReaderToolbar({
   visible,
   title,
   currentChapterTitle,
@@ -264,4 +266,4 @@ export function ReaderToolbar({
       </div>
     </TooltipProvider>
   );
-}
+});

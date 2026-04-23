@@ -1,3 +1,5 @@
+import React from "react";
+
 export class PerformanceMonitor {
   private static instance: PerformanceMonitor;
   private metrics: Map<string, number[]> = new Map();
@@ -96,5 +98,3 @@ export function lazyWithPreload<T extends React.ComponentType<unknown>>(
   (Component as T & { preload: () => Promise<void> }).preload = preload;
   return Component as T & { preload: () => Promise<void> };
 }
-
-import React from "react";

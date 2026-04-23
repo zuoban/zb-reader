@@ -10,6 +10,7 @@ import {
 } from "react";
 import ePub, { Book, Rendition } from "epubjs";
 import { logger } from "@/lib/logger";
+import type { TocItem } from "@/types/reader";
 import { EpubContext } from "@/lib/epub-context";
 import {
   prepareParagraphs,
@@ -70,12 +71,7 @@ export interface EpubReaderRef {
   scrollToActiveParagraph: () => void;
 }
 
-export interface TocItem {
-  label: string;
-  href: string;
-  id?: string;
-  subitems?: TocItem[];
-}
+export { type TocItem };
 
 interface RawTocItem {
   label: string;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, memo } from "react";
 import { Highlighter, StickyNote, Copy, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -23,7 +23,7 @@ const highlightColors = [
   { value: "#c084fc", label: "紫色" },
 ];
 
-export function TextSelectionMenu({
+export const TextSelectionMenu = memo(function TextSelectionMenu({
   visible,
   position,
   instanceKey = 0,
@@ -79,7 +79,7 @@ export function TextSelectionMenu({
       handleAction={handleAction}
     />
   );
-}
+});
 
 interface TextSelectionMenuInnerProps {
   menuRef: React.RefObject<HTMLDivElement | null>;
@@ -91,7 +91,7 @@ interface TextSelectionMenuInnerProps {
   handleAction: (action: () => void) => void;
 }
 
-function TextSelectionMenuInner({
+const TextSelectionMenuInner = memo(function TextSelectionMenuInner({
   menuRef,
   position,
   onHighlight,
@@ -260,4 +260,4 @@ function TextSelectionMenuInner({
       </div>
     </div>
   );
-}
+});

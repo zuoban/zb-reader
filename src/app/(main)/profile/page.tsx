@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
 import { BackgroundDecoration } from "@/components/bookshelf/BackgroundDecoration";
 import { Button } from "@/components/ui/button";
@@ -29,8 +28,7 @@ interface UserProfile {
 }
 
 export default function ProfilePage() {
-  const { data: _session, update } = useSession();
-  const _router = useRouter();
+  const { update } = useSession();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [profile, setProfile] = useState<UserProfile | null>(null);

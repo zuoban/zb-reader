@@ -25,6 +25,7 @@ import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import type { EpubReaderRef, ReaderParagraph } from "@/components/reader/EpubReader";
 import type { Book, Bookmark, Note } from "@/lib/db/schema";
+import type { TocItem } from "@/types/reader";
 import type { BrowserVoiceOption } from "@/lib/tts";
 import {
   cacheBook,
@@ -53,15 +54,6 @@ const EpubReader = dynamic(() => import("@/components/reader/EpubReader"), {
 const MAX_TTS_RETRY_COUNT = 5;
 const TTS_RETRY_DELAY_MS = 450;
 const IS_DEV = process.env.NODE_ENV !== "production";
-const _IDLE_TIMEOUT_MS = 3 * 60 * 1000;
-const _IDLE_WARNING_MS = 60 * 1000;
-
-interface TocItem {
-  label: string;
-  href: string;
-  id?: string;
-  subitems?: TocItem[];
-}
 
 function normalizeTocHref(href?: string) {
   if (!href) return "";
@@ -1684,12 +1676,6 @@ function ReaderContent() {
       hasNextChapter = true;
     }
   }
-
-  const _handleJumpToReading = useCallback(() => {
-    if (book?.format === "epub") {
-      epubReaderRef.current?.scrollToActiveParagraph();
-    }
-  }, [book?.format]);
 
   const handleOpenTtsView = useCallback(() => {
     setIsTtsViewOpen(true);

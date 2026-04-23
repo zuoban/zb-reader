@@ -2,13 +2,7 @@ import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import type { EpubReaderRef } from "@/components/reader/EpubReader";
 import { READER_ROUTE_EXIT_EVENT } from "@/components/layout/ReaderRouteTransition";
-
-interface TocItem {
-  label: string;
-  href: string;
-  id?: string;
-  subitems?: TocItem[];
-}
+import type { TocItem } from "@/types/reader";
 
 interface Book {
   id: number;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, memo } from "react";
 import {
   List,
   Bookmark,
@@ -24,14 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-
-interface TocItem {
-  label: string;
-  href: string;
-  id?: string;
-  level?: number;
-  subitems?: TocItem[];
-}
+import type { TocItem } from "@/types/reader";
 
 interface SidePanelProps {
   open: boolean;
@@ -74,7 +67,7 @@ function formatDate(dateStr: string) {
   });
 }
 
-function TocItemRow({
+const TocItemRow = memo(function TocItemRow({
   item,
   level = 0,
   currentHref,
@@ -165,9 +158,9 @@ function TocItemRow({
       )}
     </div>
   );
-}
+});
 
-export function SidePanel({
+export const SidePanel = memo(function SidePanel({
   open,
   onOpenChange,
   activeTab,
@@ -599,4 +592,4 @@ export function SidePanel({
       </SheetContent>
     </Sheet>
   );
-}
+});
