@@ -5,18 +5,18 @@ import { useRouter, useParams } from "next/navigation";
 import { SessionProvider, useSession } from "next-auth/react";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import dynamic from "next/dynamic";
 import { ReaderErrorBoundary } from "@/components/reader/ReaderErrorBoundary";
+import { ReaderCanvas } from "@/components/reader/ReaderCanvas";
 import { ReaderToolbar } from "@/components/reader/ReaderToolbar";
 import { SidePanel } from "@/components/reader/SidePanel";
 import { ReadingSettings } from "@/components/reader/ReadingSettings";
-import { FullscreenTtsView } from "@/components/reader/FullscreenTtsView";
 import { TextSelectionMenu } from "@/components/reader/TextSelectionMenu";
 import { NoteEditor } from "@/components/reader/NoteEditor";
-import { TtsFloatingControl } from "@/components/reader/TtsFloatingControl";
+import { ReaderTtsLayer } from "@/components/reader/ReaderTtsLayer";
 import {
   useIdleTimeout,
   useBookmarkActions,
+  useMicrosoftTtsSpeech,
   useNoteActions,
   useReaderBookData,
   useReaderFullscreen,
@@ -29,50 +29,14 @@ import { Loader2 } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import type { EpubReaderRef } from "@/components/reader/EpubReader";
 import type { TocItem } from "@/types/reader";
-import { ttsAudioCache, TtsAudioLruCache } from "@/lib/ttsAudioCache";
 import { useProgressSyncCompat } from "@/hooks/useProgressSyncCompat";
 import { useReaderSettingsStore, useDebouncedSettingsSave } from "@/stores/reader-settings";
 import type { FontFamily } from "@/stores/reader-settings";
 import type { Sentence } from "@/lib/textUtils";
 
-// Dynamic import for EpubReader (client-only, depends on browser APIs)
-const EpubReader = dynamic(() => import("@/components/reader/EpubReader"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex items-center justify-center h-full">
-      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-    </div>
-  ),
-});
-
-
-
 function normalizeTocHref(href?: string) {
   if (!href) return "";
   return href.split("#")[0]?.trim().toLowerCase() ?? "";
-}
-
-function buildMicrosoftTtsAudioUrl(params: {
-  text: string;
-  voiceName: string;
-  rate: number;
-  pitch: number;
-  volume: number;
-  prefetch?: boolean;
-}) {
-  const searchParams = new URLSearchParams({
-    text: params.text,
-    voiceName: params.voiceName,
-    rate: String(params.rate),
-    pitch: String(params.pitch),
-    volume: String(params.volume),
-  });
-
-  if (params.prefetch) {
-    searchParams.set("prefetch", "1");
-  }
-
-  return `/api/tts/microsoft?${searchParams.toString()}`;
 }
 
 function findCurrentChapterTitle(items: TocItem[], currentHref?: string): string | undefined {
@@ -213,6 +177,31 @@ function ReaderContent() {
   const { browserVoices, currentTheme } = useReaderSettingsLifecycle(
     settings,
     debouncedSaveSettings
+  );
+
+  const sidePanelBookmarks = useMemo(
+    () =>
+      bookmarks.map((bookmark) => ({
+        id: bookmark.id,
+        label: bookmark.label || "未命名书签",
+        location: bookmark.location,
+        progress: bookmark.progress || 0,
+        createdAt: bookmark.createdAt,
+      })),
+    [bookmarks]
+  );
+
+  const sidePanelNotes = useMemo(
+    () =>
+      notes.map((note) => ({
+        id: note.id,
+        selectedText: note.selectedText || "",
+        content: note.content || "",
+        color: note.color || "#facc15",
+        location: note.location,
+        createdAt: note.createdAt,
+      })),
+    [notes]
   );
 
   const handleBackToReader = useCallback(() => {
@@ -369,59 +358,7 @@ function ReaderContent() {
     settings.setBrowserVoiceId(voiceId);
   }, [settings]);
 
-  const requestMicrosoftSpeech = useCallback(
-    async (text: string, options?: { prefetch?: boolean }) => {
-      const ratePercent = Math.round((ttsRate - 1) * 100);
-
-      // 检查缓存
-      const cacheKey = TtsAudioLruCache.hashKey({
-        engine: "microsoft",
-        text,
-        voiceName: selectedBrowserVoiceId,
-        rate: ratePercent,
-        pitch: 0,
-        volume: 100,
-      });
-      const cached = ttsAudioCache.get(cacheKey);
-      if (cached?.kind === "url" && !options?.prefetch) {
-        return cached.audioUrl;
-      }
-
-      const audioUrl = buildMicrosoftTtsAudioUrl({
-        text,
-        voiceName: selectedBrowserVoiceId,
-        rate: ratePercent,
-        pitch: 0,
-        volume: 100,
-      });
-
-      if (options?.prefetch) {
-        const prefetchUrl = buildMicrosoftTtsAudioUrl({
-          text,
-          voiceName: selectedBrowserVoiceId,
-          rate: ratePercent,
-          pitch: 0,
-          volume: 100,
-          prefetch: true,
-        });
-        const res = await fetch(prefetchUrl, { method: "GET" });
-        if (!res.ok && res.status !== 204) {
-          const data = (await res.json().catch(() => null)) as
-            | { error?: string; details?: string }
-            | null;
-          const message = data?.error || "朗读失败";
-          const details = data?.details ? `: ${data.details}` : "";
-          throw new Error(`${message}${details}`);
-        }
-      } else {
-        // 使用稳定的同源 URL，避免移动端后台对 blob: 音频的兼容性问题
-        ttsAudioCache.set(cacheKey, { kind: "url", audioUrl });
-      }
-
-      return audioUrl;
-    },
-    [selectedBrowserVoiceId, ttsRate]
-  );
+  const requestMicrosoftSpeech = useMicrosoftTtsSpeech(selectedBrowserVoiceId, ttsRate);
 
   const {
     hasPendingResume,
@@ -592,56 +529,29 @@ function ReaderContent() {
       <div className="pointer-events-none fixed inset-x-0 top-0 z-0 h-28 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--reader-card-bg)_62%,transparent),transparent)]" />
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-0 h-24 bg-[linear-gradient(0deg,color-mix(in_srgb,var(--reader-card-bg)_42%,transparent),transparent)]" />
 
-      {/* 简化的主容器 */}
-      <div className="relative h-full w-full">
-        {/* 阅读内容区域 */}
-        <div className="h-full w-full px-1.5 py-4 sm:px-6">
-          <div className="relative mx-auto h-full">
-            {/* 顶部浮动标题 - 简化版 */}
-            {!isSpeaking && !isTtsViewOpen ? (
-              <div className="pointer-events-none absolute left-1/2 top-0 z-10 -translate-x-1/2">
-                <div
-                  className="reader-liquid-control pointer-events-auto inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs"
-                  style={{ color: "var(--reader-muted-text)" }}
-                >
-                  <span className="truncate max-w-[120px]">{book.title}</span>
-                  <span className="text-[10px]">{(progress * 100).toFixed(0)}%</span>
-                </div>
-              </div>
-            ) : null}
-
-            {/* 阅读器主体 */}
-            <div
-              className="h-full w-full"
-              style={{
-                paddingTop: isTtsViewOpen ? 0 : 40,
-                paddingBottom: isTtsViewOpen ? 0 : 24,
-              }}
-            >
-              {book.format === "epub" && (
-                <EpubReader
-                  key={bookId}
-                  ref={epubReaderRef}
-                  url={bookUrl}
-                  initialLocation={initialLocation}
-                  fontSize={fontSize}
-                  fontFamily={fontFamily}
-                  theme={readerTheme}
-                  onLocationChange={handleLocationChange}
-                  onTocLoaded={handleTocLoaded}
-                  onTextSelected={handleTextSelected}
-                  onClick={isSpeaking ? undefined : handleToggleToolbar}
-                  highlights={highlights}
-                  activeTtsParagraph={activeTtsParagraph}
-                  activeTtsParagraphId={activeTtsParagraphId}
-                  activeTtsLocation={activeTtsLocation}
-                  ttsHighlightColor={ttsHighlightColor}
-                />
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+      <ReaderCanvas
+        activeTtsLocation={activeTtsLocation}
+        activeTtsParagraph={activeTtsParagraph}
+        activeTtsParagraphId={activeTtsParagraphId}
+        bookFormat={book.format}
+        bookId={bookId}
+        bookTitle={book.title}
+        bookUrl={bookUrl}
+        epubReaderRef={epubReaderRef}
+        fontFamily={fontFamily}
+        fontSize={fontSize}
+        highlights={highlights}
+        initialLocation={initialLocation}
+        isSpeaking={isSpeaking}
+        isTtsViewOpen={isTtsViewOpen}
+        progress={progress}
+        readerTheme={readerTheme}
+        ttsHighlightColor={ttsHighlightColor}
+        onClick={handleToggleToolbar}
+        onLocationChange={handleLocationChange}
+        onTextSelected={handleTextSelected}
+        onTocLoaded={handleTocLoaded}
+      />
 
       {/* Toolbar */}
       <ReaderToolbar
@@ -680,21 +590,8 @@ function ReaderContent() {
         onTabChange={setActiveTab}
         toc={toc}
         currentHref={currentHref}
-        bookmarks={bookmarks.map((b) => ({
-          id: b.id,
-          label: b.label || "未命名书签",
-          location: b.location,
-          progress: b.progress || 0,
-          createdAt: b.createdAt,
-        }))}
-        notes={notes.map((n) => ({
-          id: n.id,
-          selectedText: n.selectedText || "",
-          content: n.content || "",
-          color: n.color || "#facc15",
-          location: n.location,
-          createdAt: n.createdAt,
-        }))}
+        bookmarks={sidePanelBookmarks}
+        notes={sidePanelNotes}
         onTocItemClick={handleTocItemClick}
         onBookmarkClick={handleBookmarkClick}
         onBookmarkDelete={handleBookmarkDelete}
@@ -748,42 +645,27 @@ function ReaderContent() {
         onSave={handleSaveNote}
       />
 
-      {book && (
-        <FullscreenTtsView
-          open={isTtsViewOpen}
-          book={book}
-          currentChapterTitle={currentChapterTitle}
-          activeParagraph={activeTtsParagraph}
-          isSpeaking={isSpeaking}
-          isPaused={isPaused}
-          progress={progress}
-          ttsRate={ttsRate}
-          selectedBrowserVoiceId={selectedBrowserVoiceId}
-          browserVoices={browserVoices}
-          isFullscreen={isFullscreen}
-          onBackToReader={handleBackToReader}
-          onToggle={handleToggleTts}
-          onStop={stopSpeaking}
-          onPrev={handleTtsPrevParagraph}
-          onNext={handleTtsNextParagraph}
-          onSelectedBrowserVoiceIdChange={handleSelectedBrowserVoiceIdChange}
-          onTtsRateChange={settings.setTtsRate}
-          onToggleFullscreen={handleToggleFullscreen}
-        />
-      )}
-
-      <TtsFloatingControl
-        hidden={isTtsViewOpen}
-        isSpeaking={isSpeaking}
+      <ReaderTtsLayer
+        activeParagraph={activeTtsParagraph}
+        book={book}
+        browserVoices={browserVoices}
+        currentChapterTitle={currentChapterTitle}
+        isFullscreen={isFullscreen}
         isPaused={isPaused}
-        onToggle={handleToggleTts}
-        onStop={stopSpeaking}
-        onPrev={handleTtsPrevParagraph}
+        isSpeaking={isSpeaking}
+        isTtsViewOpen={isTtsViewOpen}
+        progress={progress}
+        selectedBrowserVoiceId={selectedBrowserVoiceId}
+        ttsRate={ttsRate}
+        onBackToReader={handleBackToReader}
         onNext={handleTtsNextParagraph}
         onOpenImmersiveView={handleOpenTtsView}
-        isFullscreen={isFullscreen}
+        onPrev={handleTtsPrevParagraph}
+        onSelectedBrowserVoiceIdChange={handleSelectedBrowserVoiceIdChange}
+        onStop={stopSpeaking}
+        onToggle={handleToggleTts}
         onToggleFullscreen={handleToggleFullscreen}
-        progress={progress}
+        onTtsRateChange={settings.setTtsRate}
       />
 
       {/* Idle countdown warning */}

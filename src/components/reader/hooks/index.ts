@@ -1,4 +1,5 @@
 export { useIdleTimeout } from "./useIdleTimeout";
+export { useMicrosoftTtsSpeech } from "./useMicrosoftTtsSpeech";
 export { useReaderFullscreen } from "./useReaderFullscreen";
 export { useReaderBookData } from "./useReaderBookData";
 export { useReaderSettingsLifecycle } from "./useReaderSettingsLifecycle";
