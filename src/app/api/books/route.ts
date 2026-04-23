@@ -10,6 +10,25 @@ import { unauthorized, badRequest, serverError } from "@/lib/api-utils";
 import { formatBytes } from "@/lib/utils";
 
 const MAX_EPUB_FILE_SIZE_BYTES = 100 * 1024 * 1024;
+const DEFAULT_BOOKS_PAGE = 1;
+const DEFAULT_BOOKS_LIMIT = 20;
+const MAX_BOOKS_LIMIT = 100;
+
+export function normalizeBooksPagination(pageParam: string | null, limitParam: string | null) {
+  const parsedPage = Number.parseInt(pageParam || "", 10);
+  const parsedLimit = Number.parseInt(limitParam || "", 10);
+  const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : DEFAULT_BOOKS_PAGE;
+  const limit =
+    Number.isFinite(parsedLimit) && parsedLimit > 0
+      ? Math.min(parsedLimit, MAX_BOOKS_LIMIT)
+      : DEFAULT_BOOKS_LIMIT;
+
+  return {
+    page,
+    limit,
+    offset: (page - 1) * limit,
+  };
+}
 
 export function resolveEpubRelativePath(basePath: string, href: string): string | null {
   const normalizedHref = href.replace(/\\/g, "/").trim();
@@ -122,11 +141,12 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const search = searchParams.get("search") || "";
-  const page = parseInt(searchParams.get("page") || "1");
-  const limit = parseInt(searchParams.get("limit") || "20");
+  const { page, limit, offset } = normalizeBooksPagination(
+    searchParams.get("page"),
+    searchParams.get("limit")
+  );
   const withProgress = searchParams.get("withProgress") === "true";
   const category = searchParams.get("category")?.trim() || "";
-  const offset = (page - 1) * limit;
 
   try {
     let whereClause = eq(books.uploaderId, session.user.id);

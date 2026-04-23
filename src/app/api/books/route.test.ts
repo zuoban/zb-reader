@@ -99,6 +99,38 @@ describe("Books API upload", () => {
   });
 });
 
+describe("normalizeBooksPagination", () => {
+  it("falls back to defaults for invalid values", async () => {
+    const { normalizeBooksPagination } = await import("./route");
+
+    expect(normalizeBooksPagination("-3", "abc")).toEqual({
+      page: 1,
+      limit: 20,
+      offset: 0,
+    });
+  });
+
+  it("caps the limit to the maximum page size", async () => {
+    const { normalizeBooksPagination } = await import("./route");
+
+    expect(normalizeBooksPagination("2", "999")).toEqual({
+      page: 2,
+      limit: 100,
+      offset: 100,
+    });
+  });
+
+  it("calculates offset for valid page and limit", async () => {
+    const { normalizeBooksPagination } = await import("./route");
+
+    expect(normalizeBooksPagination("3", "25")).toEqual({
+      page: 3,
+      limit: 25,
+      offset: 50,
+    });
+  });
+});
+
 describe("resolveEpubRelativePath", () => {
   it("resolves relative paths from the OPF directory", async () => {
     const { resolveEpubRelativePath } = await import("./route");
