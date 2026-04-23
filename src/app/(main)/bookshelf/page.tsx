@@ -186,7 +186,6 @@ export default function BookshelfPage() {
             )}
             onClick={() => setSelectedCategory(ALL_CATEGORY)}
           >
-            {selectedCategory === ALL_CATEGORY ? <Check className="h-3.5 w-3.5" /> : null}
             全部
             <Badge
               variant="outline"
@@ -213,7 +212,6 @@ export default function BookshelfPage() {
               )}
               onClick={() => setSelectedCategory(category.name)}
             >
-              {selectedCategory === category.name ? <Check className="h-3.5 w-3.5" /> : null}
               <span className="max-w-28 truncate">{category.name}</span>
               <Badge
                 variant="outline"

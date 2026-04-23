@@ -291,6 +291,42 @@
     var(--glass-shadow);
 }
 
+.book-card-glass {
+  border: 1px solid color-mix(in oklab, var(--glass-border) 82%, transparent);
+  background:
+    linear-gradient(150deg, color-mix(in oklab, white 66%, transparent), color-mix(in oklab, white 34%, transparent)),
+    linear-gradient(115deg, color-mix(in oklab, var(--cta) 8%, transparent), transparent 52%),
+    linear-gradient(300deg, color-mix(in oklab, var(--chart-3) 7%, transparent), transparent 56%);
+  box-shadow:
+    0 1px 0 color-mix(in oklab, white 78%, transparent) inset,
+    0 0 0 1px color-mix(in oklab, white 34%, transparent) inset,
+    0 -1px 0 color-mix(in oklab, var(--foreground) 8%, transparent) inset,
+    0 22px 54px -40px color-mix(in oklab, #0b1220 48%, transparent);
+  backdrop-filter: blur(28px) saturate(1.6) brightness(1.04);
+  -webkit-backdrop-filter: blur(28px) saturate(1.6) brightness(1.04);
+}
+
+.book-card-glass:hover {
+  border-color: color-mix(in oklab, var(--ring) 24%, var(--glass-border));
+  background:
+    linear-gradient(150deg, color-mix(in oklab, white 72%, transparent), color-mix(in oklab, white 40%, transparent)),
+    linear-gradient(115deg, color-mix(in oklab, var(--cta) 11%, transparent), transparent 54%),
+    linear-gradient(300deg, color-mix(in oklab, var(--chart-3) 9%, transparent), transparent 58%);
+}
+
+.dark .book-card-glass {
+  border-color: color-mix(in oklab, var(--glass-border) 88%, transparent);
+  background:
+    linear-gradient(150deg, color-mix(in oklab, #252b35 70%, transparent), color-mix(in oklab, #161b23 58%, transparent)),
+    linear-gradient(115deg, color-mix(in oklab, var(--cta) 5%, transparent), transparent 54%),
+    linear-gradient(300deg, color-mix(in oklab, var(--chart-3) 4%, transparent), transparent 58%);
+  box-shadow:
+    0 1px 0 color-mix(in oklab, white 12%, transparent) inset,
+    0 0 0 1px color-mix(in oklab, white 6%, transparent) inset,
+    0 -1px 0 color-mix(in oklab, black 28%, transparent) inset,
+    0 22px 54px -40px color-mix(in oklab, black 76%, transparent);
+}
+
 .section-shell {
   @apply rounded-2xl border backdrop-blur-2xl;
   background:
@@ -436,18 +472,6 @@
     0 0 0 1px color-mix(in oklab, white 34%, transparent) inset,
     0 10px 24px -18px color-mix(in oklab, var(--foreground) 32%, transparent),
     0 8px 22px -20px color-mix(in oklab, var(--cta) 48%, transparent);
-}
-
-.category-filter-button-active::after {
-  pointer-events: none;
-  content: "";
-  position: absolute;
-  inset-inline: 0.8rem;
-  bottom: 0.18rem;
-  height: 1px;
-  border-radius: 999px;
-  background: color-mix(in oklab, var(--cta) 58%, white 42%);
-  opacity: 0.74;
 }
 
 .liquid-hairline {
