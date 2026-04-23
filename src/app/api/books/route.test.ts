@@ -98,3 +98,34 @@ describe("Books API upload", () => {
     expect(mockDeleteBookFile).toHaveBeenCalledWith("book-1.epub");
   });
 });
+
+describe("resolveEpubRelativePath", () => {
+  it("resolves relative paths from the OPF directory", async () => {
+    const { resolveEpubRelativePath } = await import("./route");
+
+    expect(resolveEpubRelativePath("OPS/package.opf", "images/cover.jpg")).toBe(
+      "OPS/images/cover.jpg"
+    );
+  });
+
+  it("allows parent traversal that stays within the EPUB root", async () => {
+    const { resolveEpubRelativePath } = await import("./route");
+
+    expect(resolveEpubRelativePath("OPS/content/package.opf", "../images/cover.jpg")).toBe(
+      "OPS/images/cover.jpg"
+    );
+  });
+
+  it("rejects paths that escape the EPUB root", async () => {
+    const { resolveEpubRelativePath } = await import("./route");
+
+    expect(resolveEpubRelativePath("OPS/package.opf", "../../cover.jpg")).toBeNull();
+  });
+
+  it("rejects absolute and URL-like paths", async () => {
+    const { resolveEpubRelativePath } = await import("./route");
+
+    expect(resolveEpubRelativePath("OPS/package.opf", "/cover.jpg")).toBeNull();
+    expect(resolveEpubRelativePath("OPS/package.opf", "https://example.com/cover.jpg")).toBeNull();
+  });
+});

@@ -11,6 +11,30 @@ import { formatBytes } from "@/lib/utils";
 
 const MAX_EPUB_FILE_SIZE_BYTES = 100 * 1024 * 1024;
 
+export function resolveEpubRelativePath(basePath: string, href: string): string | null {
+  const normalizedHref = href.replace(/\\/g, "/").trim();
+  if (!normalizedHref || normalizedHref.startsWith("/") || /^[a-z][a-z0-9+.-]*:/i.test(normalizedHref)) {
+    return null;
+  }
+
+  const baseParts = basePath.split("/").filter(Boolean);
+  baseParts.pop();
+  const hrefParts = normalizedHref.split("/").filter(Boolean);
+  const resultParts = [...baseParts];
+
+  for (const part of hrefParts) {
+    if (part === ".") continue;
+    if (part === "..") {
+      if (resultParts.length === 0) return null;
+      resultParts.pop();
+      continue;
+    }
+    resultParts.push(part);
+  }
+
+  return resultParts.length > 0 ? resultParts.join("/") : null;
+}
+
 export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -241,7 +265,9 @@ async function extractEpubMetadata(
   const rootFileMatch = containerXml.match(/full-path="([^"]+)"/);
   if (!rootFileMatch) return {};
 
-  const opfPath = rootFileMatch[1];
+  const opfPath = resolveEpubRelativePath("", rootFileMatch[1]);
+  if (!opfPath) return {};
+
   const opfContent = await zip.file(opfPath)?.async("string");
   if (!opfContent) return {};
 
@@ -282,10 +308,8 @@ async function extractEpubMetadata(
     }
 
     if (coverItemHref) {
-      const opfDir = opfPath.substring(0, opfPath.lastIndexOf("/") + 1);
-      const coverPath = coverItemHref.startsWith("/")
-        ? coverItemHref.substring(1)
-        : opfDir + coverItemHref;
+      const coverPath = resolveEpubRelativePath(opfPath, coverItemHref);
+      if (!coverPath) return { title, author };
 
       const coverData = await zip.file(coverPath)?.async("nodebuffer");
       if (coverData) {
