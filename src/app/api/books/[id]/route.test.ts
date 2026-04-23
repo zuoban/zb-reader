@@ -4,6 +4,8 @@ import { NextRequest } from "next/server";
 const mockAuth = vi.fn();
 const mockFindFirst = vi.fn();
 const mockDelete = vi.fn();
+const mockUpdate = vi.fn();
+const mockSet = vi.fn();
 const mockWhere = vi.fn();
 
 vi.mock("@/lib/auth", () => ({
@@ -18,6 +20,7 @@ vi.mock("@/lib/db", () => ({
       },
     },
     delete: () => mockDelete(),
+    update: () => mockUpdate(),
   },
 }));
 
@@ -29,6 +32,14 @@ vi.mock("@/lib/storage", () => ({
 function createRequest(url: string, _params: { id: string }): NextRequest {
   return new NextRequest(new URL(url, "http://localhost:3000"), {
     method: "GET",
+  });
+}
+
+function createPatchRequest(url: string, body: Record<string, unknown>): NextRequest {
+  return new NextRequest(new URL(url, "http://localhost:3000"), {
+    method: "PATCH",
+    body: JSON.stringify(body),
+    headers: { "Content-Type": "application/json" },
   });
 }
 
@@ -197,6 +208,89 @@ describe("Book by ID API", () => {
       const res = await DELETE(req, { params: Promise.resolve({ id: "book-2" }) });
 
       expect(res.status).toBe(404);
+    });
+  });
+
+  describe("PATCH /api/books/[id]", () => {
+    it("should update category successfully", async () => {
+      mockAuth.mockResolvedValue({
+        user: { id: "user-1", username: "test", email: "test@test.com" },
+        expires: new Date().toISOString(),
+      });
+
+      const existingBook = {
+        id: "book-1",
+        title: "Test Book",
+        author: "Test Author",
+        category: null,
+        uploaderId: "user-1",
+      };
+      const updatedBook = { ...existingBook, category: "技术" };
+
+      mockFindFirst.mockResolvedValueOnce(existingBook).mockResolvedValueOnce(updatedBook);
+      mockUpdate.mockReturnValue({
+        set: mockSet.mockReturnValue({
+          where: mockWhere.mockResolvedValue(undefined),
+        }),
+      });
+
+      const { PATCH } = await import("./route");
+      const req = createPatchRequest("/api/books/book-1", { category: " 技术 " });
+      const res = await PATCH(req, { params: Promise.resolve({ id: "book-1" }) });
+      const data = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(data.book.category).toBe("技术");
+      expect(mockSet).toHaveBeenCalledWith(
+        expect.objectContaining({ category: "技术" })
+      );
+    });
+
+    it("should clear category when category is empty", async () => {
+      mockAuth.mockResolvedValue({
+        user: { id: "user-1", username: "test", email: "test@test.com" },
+        expires: new Date().toISOString(),
+      });
+
+      const existingBook = {
+        id: "book-1",
+        title: "Test Book",
+        author: "Test Author",
+        category: "技术",
+        uploaderId: "user-1",
+      };
+      const updatedBook = { ...existingBook, category: null };
+
+      mockFindFirst.mockResolvedValueOnce(existingBook).mockResolvedValueOnce(updatedBook);
+      mockUpdate.mockReturnValue({
+        set: mockSet.mockReturnValue({
+          where: mockWhere.mockResolvedValue(undefined),
+        }),
+      });
+
+      const { PATCH } = await import("./route");
+      const req = createPatchRequest("/api/books/book-1", { category: " " });
+      const res = await PATCH(req, { params: Promise.resolve({ id: "book-1" }) });
+
+      expect(res.status).toBe(200);
+      expect(mockSet).toHaveBeenCalledWith(
+        expect.objectContaining({ category: null })
+      );
+    });
+
+    it("should reject category names longer than 40 characters", async () => {
+      mockAuth.mockResolvedValue({
+        user: { id: "user-1", username: "test", email: "test@test.com" },
+        expires: new Date().toISOString(),
+      });
+
+      const { PATCH } = await import("./route");
+      const req = createPatchRequest("/api/books/book-1", { category: "a".repeat(41) });
+      const res = await PATCH(req, { params: Promise.resolve({ id: "book-1" }) });
+      const data = await res.json();
+
+      expect(res.status).toBe(400);
+      expect(data.error).toBe("分类名称不能超过 40 个字符");
     });
   });
 });

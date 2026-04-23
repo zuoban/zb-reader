@@ -50,6 +50,7 @@ function getConnection() {
       publisher TEXT,
       publish_date TEXT,
       language TEXT,
+      category TEXT,
       uploader_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -312,9 +313,18 @@ function getConnection() {
     sqlite.exec(`ALTER TABLE reader_settings ADD COLUMN flip_mode TEXT NOT NULL DEFAULT 'scroll';`);
   }
 
+  // Migration: Add category support to books (2026-04-23)
+  const booksInfo = sqlite.prepare("PRAGMA table_info(books)").all() as { name: string }[];
+  const hasCategory = booksInfo.some((col) => col.name === "category");
+
+  if (!hasCategory) {
+    sqlite.exec(`ALTER TABLE books ADD COLUMN category TEXT;`);
+  }
+
   // Migration: Add missing indexes for reading_progress (2026-03-31)
   sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_reading_progress_user_id ON reading_progress (user_id);`);
   sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_reading_progress_last_read_at ON reading_progress (last_read_at);`);
+  sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_books_category ON books (category);`);
 
   _sqlite = sqlite;
   _db = drizzle(sqlite, { schema });

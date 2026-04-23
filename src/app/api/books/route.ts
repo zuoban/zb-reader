@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { and, count, desc, eq, like, or, sql } from "drizzle-orm";
+import { v4 as uuidv4 } from "uuid";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { books, readingProgress } from "@/lib/db/schema";
-import { eq, and, like, or, desc, count } from "drizzle-orm";
-import { v4 as uuidv4 } from "uuid";
 import { saveBookFile, saveCoverImage } from "@/lib/storage";
 import { logger } from "@/lib/logger";
 import { unauthorized, badRequest, serverError } from "@/lib/api-utils";
@@ -19,6 +19,7 @@ export async function GET(req: NextRequest) {
   const page = parseInt(searchParams.get("page") || "1");
   const limit = parseInt(searchParams.get("limit") || "20");
   const withProgress = searchParams.get("withProgress") === "true";
+  const category = searchParams.get("category")?.trim() || "";
   const offset = (page - 1) * limit;
 
   try {
@@ -32,6 +33,10 @@ export async function GET(req: NextRequest) {
           like(books.author, `%${search}%`)
         )
       )!;
+    }
+
+    if (category) {
+      whereClause = and(whereClause, eq(books.category, category))!;
     }
 
     // 使用 leftJoin 在单次查询中获取书籍和进度
@@ -58,13 +63,38 @@ export async function GET(req: NextRequest) {
       .select({ count: count() })
       .from(books)
       .where(whereClause);
+    const allTotalResult = await db
+      .select({ count: count() })
+      .from(books)
+      .where(eq(books.uploaderId, session.user.id));
 
     const total = totalResult[0]?.count ?? 0;
+    const allTotal = allTotalResult[0]?.count ?? total;
+    const categoryRows = await db
+      .select({
+        name: books.category,
+        count: count(),
+      })
+      .from(books)
+      .where(
+        and(
+          eq(books.uploaderId, session.user.id),
+          sql`coalesce(${books.category}, '') <> ''`
+        )
+      )
+      .groupBy(books.category)
+      .orderBy(books.category);
+    const categories = categoryRows.map((row) => ({
+      name: row.name ?? "",
+      count: row.count,
+    }));
 
     if (!withProgress || result.length === 0) {
       return NextResponse.json({
         books: result.map((r) => r.book),
+        categories,
         total,
+        allTotal,
         page,
         limit,
       });
@@ -89,9 +119,11 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       books: result.map((r) => r.book),
+      categories,
       progressMap,
       lastReadAtMap,
       total,
+      allTotal,
       page,
       limit,
     });

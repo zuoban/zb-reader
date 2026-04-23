@@ -30,6 +30,7 @@ export const books = sqliteTable(
     publisher: text("publisher"),
     publishDate: text("publish_date"),
     language: text("language"),
+    category: text("category"),
     uploaderId: text("uploader_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
@@ -42,6 +43,7 @@ export const books = sqliteTable(
   },
   (table) => ({
     uploaderIdIdx: index("idx_books_uploader_id").on(table.uploaderId),
+    categoryIdx: index("idx_books_category").on(table.category),
   })
 );
 

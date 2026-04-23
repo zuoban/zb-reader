@@ -4,7 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { memo, useEffect, useRef } from "react";
-import { BookOpen, MoreVertical, Trash2, CheckCircle2 } from "lucide-react";
+import { BookOpen, CheckCircle2, MoreVertical, Tags, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { READER_ROUTE_TRANSITION_EVENT } from "@/components/layout/ReaderRouteTransition";
@@ -43,9 +44,17 @@ interface BookCardProps {
   lastReadAt?: string;
   spotlight?: boolean;
   onDelete: (id: string) => void;
+  onChangeCategory?: (book: Book) => void;
 }
 
-export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt, spotlight = false, onDelete }: BookCardProps) {
+export const BookCard = memo(function BookCard({
+  book,
+  progress = 0,
+  lastReadAt,
+  spotlight = false,
+  onDelete,
+  onChangeCategory,
+}: BookCardProps) {
   const router = useRouter();
   const readerHref = `/reader/${book.id}`;
   const cardRef = useRef<HTMLDivElement>(null);
@@ -201,6 +210,16 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
             <div className="mt-0.5 line-clamp-1 text-[9px] text-muted-foreground/82 sm:text-[10px]">
               {book.author || "未知作者"}
             </div>
+            {book.category ? (
+              <Badge
+                variant="outline"
+                className="mt-1 max-w-full border-[color:var(--cta)]/25 bg-[color:var(--cta)]/10 px-1.5 py-0 text-[8px] font-medium text-foreground/78 sm:text-[9px]"
+                title={book.category}
+              >
+                <Tags className="h-2.5 w-2.5 text-[color:var(--cta)]" />
+                <span className="truncate">{book.category}</span>
+              </Badge>
+            ) : null}
           </div>
 
           <div className="flex shrink-0 flex-col items-end gap-1">
@@ -222,6 +241,15 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
                     <span>阅读</span>
                   </Link>
                 </DropdownMenuItem>
+                {onChangeCategory ? (
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    onClick={() => onChangeCategory(book)}
+                  >
+                    <Tags className="h-4 w-4" />
+                    <span>设置分类</span>
+                  </DropdownMenuItem>
+                ) : null}
                 <DropdownMenuItem
                   className="cursor-pointer text-destructive focus:text-destructive"
                   onClick={() => onDelete(book.id)}
