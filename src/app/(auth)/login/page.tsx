@@ -16,7 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { BookOpen, Loader2 } from "lucide-react";
 
 export default function LoginPage() {
   return (
@@ -61,10 +61,11 @@ function LoginForm() {
   };
 
   return (
-    <Card className="rounded-3xl border-border/70 py-5">
-      <CardHeader className="text-center pb-2">
+    <Card className="overflow-hidden rounded-2xl border-border/70 bg-card/82 py-5 shadow-[0_30px_70px_-48px_color-mix(in_oklab,var(--foreground)_46%,transparent)]">
+      <CardHeader className="relative text-center pb-2">
+        <div className="absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent dark:via-white/12" />
         <div className="flex justify-center mb-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-border/80 bg-card/80">
+          <div className="relative flex h-16 w-16 items-center justify-center rounded-xl border border-border/80 bg-background/70 shadow-[0_18px_40px_-30px_color-mix(in_oklab,var(--foreground)_38%,transparent)]">
             <Image src="/logo.svg" alt="ZB Reader" width={48} height={48} />
           </div>
         </div>
@@ -72,6 +73,10 @@ function LoginForm() {
         <CardDescription className="text-base mt-2">
           登录后继续你的阅读进度
         </CardDescription>
+        <div className="mx-auto mt-4 inline-flex items-center gap-2 rounded-lg border border-border/60 bg-background/58 px-3 py-1.5 text-xs text-muted-foreground">
+          <BookOpen className="h-3.5 w-3.5 text-[color:var(--cta)]" />
+          <span>私人 EPUB 阅读空间</span>
+        </div>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-5 pt-4">
@@ -89,7 +94,7 @@ function LoginForm() {
               value={login}
               onChange={(e) => setLogin(e.target.value)}
               required
-              className="h-11"
+              className="h-11 rounded-xl bg-background/70"
             />
           </div>
           <div className="space-y-2">
@@ -101,14 +106,14 @@ function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="h-11"
+              className="h-11 rounded-xl bg-background/70"
             />
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4 pt-2">
           <Button 
             type="submit" 
-            className="w-full h-11 font-semibold" 
+            className="w-full h-11 rounded-xl font-semibold" 
             disabled={loading}
           >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

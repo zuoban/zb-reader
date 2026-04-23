@@ -71,7 +71,7 @@ function ToolbarButton({
           onClick={onClick}
           className={cn(
             "cursor-pointer h-9 w-9 rounded-xl transition-all duration-200",
-            "hover:scale-105 hover:shadow-sm",
+            "hover:-translate-y-0.5 hover:shadow-sm",
             isActive
               ? "bg-[var(--reader-primary)]/15 text-[var(--reader-primary)] shadow-inner"
               : "hover:bg-[var(--reader-primary)]/10 hover:text-[var(--reader-primary)]",
@@ -128,9 +128,9 @@ export function ReaderToolbar({
       >
         <div className="mx-auto max-w-3xl px-4 pt-4">
           <div
-            className="pointer-events-auto flex items-center justify-between rounded-2xl border px-2 py-2 shadow-[0_8px_32px_rgba(0,0,0,0.12)] backdrop-blur-xl transition-shadow duration-300"
+            className="pointer-events-auto flex items-center justify-between rounded-2xl border px-2 py-2 shadow-[0_24px_54px_-38px_rgba(0,0,0,0.32)] backdrop-blur-2xl transition-shadow duration-300"
             style={{
-              background: "color-mix(in srgb, var(--reader-card-bg) 88%, transparent)",
+              background: "linear-gradient(145deg, color-mix(in srgb, var(--reader-card-bg) 92%, transparent), color-mix(in srgb, var(--reader-card-bg) 78%, transparent))",
               borderColor: "var(--reader-border)",
             }}
           >
@@ -229,8 +229,8 @@ export function ReaderToolbar({
                 onClick={onPrevChapter}
                 disabled={!hasPrevChapter}
                 className={cn(
-                  "pointer-events-auto h-11 w-11 rounded-full border shadow-lg backdrop-blur-xl transition-all duration-200 hover:scale-110 hover:shadow-xl",
-                  !hasPrevChapter && "opacity-30 cursor-not-allowed hover:scale-100"
+                  "pointer-events-auto h-11 w-11 rounded-xl border shadow-lg backdrop-blur-2xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl",
+                  !hasPrevChapter && "opacity-30 cursor-not-allowed hover:translate-y-0"
                 )}
                 style={{ 
                   color: "var(--reader-text)",
@@ -249,8 +249,8 @@ export function ReaderToolbar({
                 onClick={onNextChapter}
                 disabled={!hasNextChapter}
                 className={cn(
-                  "pointer-events-auto h-11 w-11 rounded-full border shadow-lg backdrop-blur-xl transition-all duration-200 hover:scale-110 hover:shadow-xl",
-                  !hasNextChapter && "opacity-30 cursor-not-allowed hover:scale-100"
+                  "pointer-events-auto h-11 w-11 rounded-xl border shadow-lg backdrop-blur-2xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl",
+                  !hasNextChapter && "opacity-30 cursor-not-allowed hover:translate-y-0"
                 )}
                 style={{ 
                   color: "var(--reader-text)",

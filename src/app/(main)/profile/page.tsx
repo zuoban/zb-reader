@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
+import { BackgroundDecoration } from "@/components/bookshelf/BackgroundDecoration";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -150,9 +151,10 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen">
+      <div className="app-noise min-h-screen">
+        <BackgroundDecoration />
         <Navbar />
-        <main className="mx-auto w-full max-w-5xl px-3 py-8 sm:px-4">
+        <main className="relative z-10 mx-auto w-full max-w-5xl px-3 py-8 sm:px-4">
           <div className="flex items-center justify-center min-h-[400px]">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
@@ -162,11 +164,16 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="app-noise min-h-screen">
+      <BackgroundDecoration />
       <Navbar />
 
-      <main className="mx-auto w-full max-w-5xl px-3 py-8 sm:px-4">
-        <div className="section-shell mb-6 px-5 py-5 sm:mb-8 sm:px-6">
+      <main className="relative z-10 mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">
+        <div className="section-shell mb-6 overflow-hidden px-5 py-5 sm:mb-8 sm:px-6">
+          <div className="mb-2 inline-flex items-center gap-2 rounded-lg border border-border/60 bg-background/58 px-3 py-1 text-xs text-muted-foreground">
+            <UserIcon className="h-3.5 w-3.5 text-[color:var(--cta)]" />
+            <span>账户中心</span>
+          </div>
           <h1 className="text-3xl font-semibold tracking-tight text-foreground">个人资料</h1>
           <p className="text-sm text-muted-foreground mt-1">
             管理您的账户信息和安全设置
@@ -174,7 +181,7 @@ export default function ProfilePage() {
         </div>
 
         <div className="grid gap-6">
-          <Card className="border-border/70">
+          <Card className="overflow-hidden rounded-2xl border-border/70 bg-card/78">
             <CardHeader>
               <CardTitle className="text-xl">头像</CardTitle>
               <CardDescription>
@@ -187,7 +194,7 @@ export default function ProfilePage() {
                   className="relative group transition-all duration-200"
                   onClick={handleAvatarClick}
                 >
-                  <Avatar className="h-24 w-24 border-4 border-border/80 transition-colors duration-200 group-hover:border-ring/40">
+                  <Avatar className="h-24 w-24 border-4 border-border/80 shadow-[0_18px_40px_-30px_color-mix(in_oklab,var(--foreground)_38%,transparent)] transition-colors duration-200 group-hover:border-ring/45">
                     <AvatarImage src={profile?.avatar || undefined} />
                     <AvatarFallback className="bg-accent text-foreground text-2xl font-semibold">
                       {profile?.username?.[0]?.toUpperCase() || "U"}
@@ -218,7 +225,7 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
 
-          <Card className="border-border/70">
+          <Card className="overflow-hidden rounded-2xl border-border/70 bg-card/78">
             <CardHeader>
               <CardTitle className="text-xl flex items-center gap-2">
                 <UserIcon className="h-5 w-5" />
@@ -240,7 +247,7 @@ export default function ProfilePage() {
                   required
                   minLength={2}
                   maxLength={20}
-                  className="h-11"
+                  className="h-11 rounded-xl bg-background/70"
                 />
               </div>
               <div className="space-y-2">
@@ -252,13 +259,13 @@ export default function ProfilePage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="h-11"
+                  className="h-11 rounded-xl bg-background/70"
                 />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-border/70">
+          <Card className="overflow-hidden rounded-2xl border-border/70 bg-card/78">
             <CardHeader>
               <CardTitle className="text-xl flex items-center gap-2">
                 <KeyRound className="h-5 w-5" />
@@ -278,7 +285,7 @@ export default function ProfilePage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   minLength={6}
-                  className="h-11"
+                  className="h-11 rounded-xl bg-background/70"
                 />
               </div>
               <div className="space-y-2">
@@ -290,15 +297,15 @@ export default function ProfilePage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   minLength={6}
-                  className="h-11"
+                  className="h-11 rounded-xl bg-background/70"
                 />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-border/70">
+          <Card className="overflow-hidden rounded-2xl border-border/70 bg-card/78">
             <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Mail className="h-4 w-4" />
                   <span>{profile?.email}</span>
@@ -316,7 +323,7 @@ export default function ProfilePage() {
             <Button
               onClick={handleSave}
               disabled={saving}
-              className="h-11 min-w-[120px] font-semibold"
+              className="h-11 min-w-[120px] rounded-xl font-semibold"
             >
               {saving ? (
                 <>

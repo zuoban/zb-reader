@@ -123,42 +123,56 @@ export default function BookshelfPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="app-noise min-h-screen bg-background">
       <BackgroundDecoration />
       <Navbar onUploadComplete={fetchBooks} />
 
-      <main className="relative mx-auto w-full max-w-7xl px-4 pb-10 pt-4 sm:px-6 sm:pb-14 sm:pt-5">
+      <main className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-10 pt-4 sm:px-6 sm:pb-14 sm:pt-5">
         {/* Header Section */}
         <section className="animate-reader-fade-up mb-7 space-y-3 sm:mb-8 sm:space-y-4">
-          <div className="relative overflow-hidden rounded-[1.25rem] border border-border/60 bg-background/78 px-4 py-3 shadow-[0_16px_36px_-30px_color-mix(in_oklab,var(--foreground)_14%,transparent)] backdrop-blur-xl sm:rounded-[1.4rem] sm:px-5 sm:py-3.5">
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-foreground/10 to-transparent" />
+          <div className="relative overflow-hidden rounded-2xl border border-border/65 bg-card/76 px-4 py-4 shadow-[0_24px_58px_-42px_color-mix(in_oklab,var(--foreground)_38%,transparent)] backdrop-blur-2xl sm:px-5 lg:px-6">
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent dark:via-white/12" />
+            <div className="absolute bottom-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-border/80 to-transparent" />
 
-            <div className="relative">
+            <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="min-w-0">
+                <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/60 px-3 py-1 text-[11px] font-medium text-muted-foreground">
+                  <Library className="h-3.5 w-3.5 text-[color:var(--cta)]" />
+                  <span>私人 EPUB 阅读库</span>
+                </div>
+                <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+                  我的书架
+                </h1>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  管理收藏、同步进度，继续打开上次停下的章节。
+                </p>
+              </div>
+
               <div className="w-full lg:max-w-xl">
                 <SearchBar value={search} onChange={setSearch} />
               </div>
             </div>
           </div>
 
-          <div className="rounded-[1.1rem] border border-border/55 bg-background/88 px-3 py-2.5 shadow-[0_12px_28px_-26px_color-mix(in_oklab,var(--foreground)_12%,transparent)] sm:px-4">
-            <div className="grid grid-cols-2 gap-y-2 sm:grid-cols-4 sm:gap-y-0">
-              <div className="flex min-w-0 items-center gap-2 px-1.5 sm:px-3">
-                <Library className="h-3.5 w-3.5 shrink-0 text-primary/75" />
+          <div className="rounded-2xl border border-border/60 bg-card/72 px-3 py-3 shadow-[0_18px_44px_-38px_color-mix(in_oklab,var(--foreground)_28%,transparent)] backdrop-blur-xl sm:px-4">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <div className="flex min-w-0 items-center gap-2 rounded-xl bg-background/48 px-3 py-2 ring-1 ring-border/45">
+                <Library className="h-3.5 w-3.5 shrink-0 text-foreground/75" />
                 <span className="text-[11px] text-muted-foreground">书籍总数</span>
                 <span className="text-base font-semibold tracking-[-0.03em] text-foreground">{stats.total}</span>
               </div>
-              <div className="flex min-w-0 items-center gap-2 px-1.5 sm:border-l sm:border-border/50 sm:px-3">
-                <BookOpen className="h-3.5 w-3.5 shrink-0 text-blue-500/75" />
+              <div className="flex min-w-0 items-center gap-2 rounded-xl bg-background/48 px-3 py-2 ring-1 ring-border/45">
+                <BookOpen className="h-3.5 w-3.5 shrink-0 text-teal-700/80 dark:text-teal-300/80" />
                 <span className="text-[11px] text-muted-foreground">进行中</span>
                 <span className="text-base font-semibold tracking-[-0.03em] text-foreground">{stats.reading}</span>
               </div>
-              <div className="flex min-w-0 items-center gap-2 px-1.5 sm:border-l sm:border-border/50 sm:px-3">
-                <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-green-500/75" />
+              <div className="flex min-w-0 items-center gap-2 rounded-xl bg-background/48 px-3 py-2 ring-1 ring-border/45">
+                <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-700/75 dark:text-emerald-300/75" />
                 <span className="text-[11px] text-muted-foreground">已完成</span>
                 <span className="text-base font-semibold tracking-[-0.03em] text-foreground">{stats.completed}</span>
               </div>
-              <div className="flex min-w-0 items-center gap-2 px-1.5 sm:border-l sm:border-border/50 sm:px-3">
-                <Clock className="h-3.5 w-3.5 shrink-0 text-amber-500/80" />
+              <div className="flex min-w-0 items-center gap-2 rounded-xl bg-background/48 px-3 py-2 ring-1 ring-border/45">
+                <Clock className="h-3.5 w-3.5 shrink-0 text-[color:var(--cta)]" />
                 <span className="text-[11px] text-muted-foreground">阅读时长</span>
                 <span className="truncate text-base font-semibold tracking-[-0.03em] text-foreground">{stats.duration}</span>
               </div>

@@ -76,7 +76,7 @@ export function TtsFloatingControl({
         <div
           className={cn(
             "animate-reader-fade-up mr-2 flex max-w-[calc(100vw-5rem)] flex-wrap items-center justify-center gap-1 px-2 py-1.5 sm:gap-1.5 sm:px-2.5 sm:py-2",
-            "rounded-[28px]",
+            "rounded-2xl",
             "backdrop-blur-2xl",
             "border",
             "shadow-lg",
@@ -84,18 +84,18 @@ export function TtsFloatingControl({
           )}
           style={{
             background:
-              "color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.95)) 90%, white 10%)",
+              "linear-gradient(145deg, color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.95)) 94%, white 6%), color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.95)) 82%, transparent))",
             borderColor:
               "color-mix(in srgb, var(--reader-text, #171717) 10%, transparent)",
             boxShadow:
-              "0 18px 36px -30px color-mix(in srgb, var(--reader-text, #171717) 35%, transparent)",
+              "0 24px 48px -34px color-mix(in srgb, var(--reader-text, #171717) 42%, transparent)",
           }}
         >
           {onPrev && (
             <button
               type="button"
               onClick={onPrev}
-              className="group flex size-7 sm:size-8 items-center justify-center rounded-full border transition-all duration-200 cursor-pointer border-[color-mix(in_srgb,var(--reader-border)_45%,_transparent)]"
+              className="group flex size-7 sm:size-8 items-center justify-center rounded-lg border transition-all duration-200 cursor-pointer border-[color-mix(in_srgb,var(--reader-border)_45%,_transparent)]"
               style={{
                 color: "var(--reader-text, #09090b)",
                 background:
@@ -110,7 +110,7 @@ export function TtsFloatingControl({
           <button
             type="button"
             onClick={onToggle}
-            className="group flex size-8 sm:size-9 items-center justify-center rounded-full transition-all duration-200 cursor-pointer border border-[color-mix(in_srgb,var(--reader-border)_45%,_transparent)]"
+            className="group flex size-8 sm:size-9 items-center justify-center rounded-lg transition-all duration-200 cursor-pointer border border-[color-mix(in_srgb,var(--reader-border)_45%,_transparent)]"
             style={{
               color: "var(--reader-text, #09090b)",
               background:
@@ -128,7 +128,7 @@ export function TtsFloatingControl({
           <button
             type="button"
             onClick={onStop}
-            className="group flex size-7 sm:size-8 items-center justify-center rounded-full transition-all duration-200 cursor-pointer border border-[color-mix(in_srgb,var(--reader-border)_45%,_transparent)]"
+            className="group flex size-7 sm:size-8 items-center justify-center rounded-lg transition-all duration-200 cursor-pointer border border-[color-mix(in_srgb,var(--reader-border)_45%,_transparent)]"
             style={{
               color: "var(--reader-destructive, #dc2626)",
               background:
@@ -143,7 +143,7 @@ export function TtsFloatingControl({
             <button
               type="button"
               onClick={onNext}
-              className="group flex size-7 sm:size-8 items-center justify-center rounded-full transition-all duration-200 cursor-pointer border border-[color-mix(in_srgb,var(--reader-border)_45%,_transparent)]"
+              className="group flex size-7 sm:size-8 items-center justify-center rounded-lg transition-all duration-200 cursor-pointer border border-[color-mix(in_srgb,var(--reader-border)_45%,_transparent)]"
               style={{
                 color: "var(--reader-text, #09090b)",
                 background:
@@ -164,7 +164,7 @@ export function TtsFloatingControl({
               <button
                 type="button"
                 onClick={handleOpenImmersiveView}
-                className="group flex size-7 sm:size-8 items-center justify-center rounded-full transition-all duration-200 cursor-pointer border border-[color-mix(in_srgb,var(--reader-border)_45%,_transparent)]"
+                className="group flex size-7 sm:size-8 items-center justify-center rounded-lg transition-all duration-200 cursor-pointer border border-[color-mix(in_srgb,var(--reader-border)_45%,_transparent)]"
                 style={{
                   color: "var(--reader-text, #09090b)",
                   background:
@@ -186,7 +186,7 @@ export function TtsFloatingControl({
               <button
                 type="button"
                 onClick={onToggleFullscreen}
-                className="group flex size-7 sm:size-8 items-center justify-center rounded-full transition-all duration-200 cursor-pointer border border-[color-mix(in_srgb,var(--reader-border)_45%,_transparent)]"
+                className="group flex size-7 sm:size-8 items-center justify-center rounded-lg transition-all duration-200 cursor-pointer border border-[color-mix(in_srgb,var(--reader-border)_45%,_transparent)]"
                 style={{
                   color: "var(--reader-text, #09090b)",
                   background:
@@ -209,7 +209,7 @@ export function TtsFloatingControl({
         type="button"
         onClick={handleMainClick}
         className={cn(
-          "group animate-reader-surface relative flex size-10 sm:size-11 items-center justify-center rounded-full cursor-pointer overflow-hidden",
+          "group animate-reader-surface relative flex size-10 sm:size-11 items-center justify-center rounded-xl cursor-pointer overflow-hidden",
           "transition-all duration-300 ease-out",
           "border",
           "active:scale-95",
@@ -217,7 +217,7 @@ export function TtsFloatingControl({
         )}
         style={{
           background:
-            "color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.95)) 88%, white 12%)",
+            "linear-gradient(145deg, color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.95)) 92%, white 8%), color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.95)) 78%, transparent))",
           borderColor:
             "color-mix(in srgb, var(--reader-text, #171717) 10%, transparent)",
           boxShadow:

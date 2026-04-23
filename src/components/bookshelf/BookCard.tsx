@@ -137,12 +137,12 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
     <Card
       ref={cardRef}
       className={cn(
-        "group relative overflow-hidden rounded-lg border border-border/45 bg-card/90 shadow-[0_1px_0_color-mix(in_oklab,var(--foreground)_5%,transparent)] transition-all duration-300 ease-out",
-        "hover:-translate-y-0.5 hover:border-border/70 hover:bg-card hover:shadow-[0_16px_34px_-28px_color-mix(in_oklab,var(--foreground)_34%,transparent)]",
+        "group relative overflow-hidden rounded-xl border border-border/60 bg-card/88 py-0 shadow-[0_1px_0_color-mix(in_oklab,white_48%,transparent)_inset,0_16px_34px_-30px_color-mix(in_oklab,var(--foreground)_30%,transparent)] transition-all duration-300 ease-out",
+        "hover:-translate-y-0.5 hover:border-ring/35 hover:bg-card hover:shadow-[0_24px_44px_-34px_color-mix(in_oklab,var(--foreground)_42%,transparent)]",
         spotlight && "animate-pulse-subtle ring-2 ring-primary/28"
       )}
     >
-      <div className="absolute inset-x-0 top-0 z-10 h-px bg-gradient-to-r from-transparent via-foreground/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      <div className="absolute inset-x-0 top-0 z-10 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 dark:via-white/14" />
       <Link
         href={readerHref}
         className={cn("block cursor-pointer", spotlight && "animate-reader-fade-up")}
@@ -150,7 +150,7 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
         onClick={handleOpenReader}
       >
         <div
-          className="relative aspect-[5/7] overflow-hidden bg-muted/70 shadow-[inset_0_-1px_0_color-mix(in_oklab,var(--foreground)_8%,transparent)]"
+          className="relative m-1.5 aspect-[5/7] overflow-hidden rounded-lg bg-muted/70 shadow-[inset_0_-1px_0_color-mix(in_oklab,var(--foreground)_8%,transparent)]"
           data-reader-transition-cover
         >
           {/* Cover Image */}
@@ -163,12 +163,12 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
                 sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
                 className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.025]"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/24 via-black/3 to-transparent opacity-70 transition-opacity duration-300 group-hover:opacity-80" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-black/4 to-transparent opacity-70 transition-opacity duration-300 group-hover:opacity-85" />
             </>
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(145deg,color-mix(in_oklab,var(--muted)_88%,white_12%),color-mix(in_oklab,var(--muted)_72%,var(--foreground)_8%))] dark:bg-muted/20">
+            <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(145deg,color-mix(in_oklab,var(--muted)_88%,white_12%),color-mix(in_oklab,var(--accent)_68%,var(--foreground)_8%))] dark:bg-muted/20">
               <div className="relative">
-                <div className="flex h-[4.35rem] w-[3.25rem] items-center justify-center overflow-hidden rounded-r-md rounded-l-sm border border-black/5 bg-gradient-to-b from-foreground/82 to-foreground/68 text-white shadow-[0_14px_28px_-20px_color-mix(in_oklab,var(--foreground)_50%,transparent)] transition-transform duration-500 ease-out group-hover:scale-[1.025] sm:h-[4.8rem] sm:w-[3.55rem]">
+                <div className="flex h-[4.35rem] w-[3.25rem] items-center justify-center overflow-hidden rounded-r-md rounded-l-sm border border-black/5 bg-gradient-to-b from-foreground/90 to-foreground/70 text-white shadow-[0_14px_28px_-20px_color-mix(in_oklab,var(--foreground)_50%,transparent)] transition-transform duration-500 ease-out group-hover:scale-[1.025] sm:h-[4.8rem] sm:w-[3.55rem]">
                   <div className="absolute inset-y-0 left-0 w-1 bg-black/14" />
                   <span className="text-lg font-semibold text-white/92 sm:text-xl">
                     {book.title?.charAt(0) || "书"}
@@ -181,11 +181,11 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
           <div className="absolute inset-x-0 bottom-0 flex items-end justify-end bg-gradient-to-t from-black/28 via-black/8 to-transparent px-2 py-2 sm:px-2.5 sm:py-2.5">
             <span
               className={cn(
-                "inline-flex shrink-0 items-center gap-1 rounded-full border px-1.5 py-0.5 text-[8px] font-medium shadow-[0_8px_18px_-14px_rgba(0,0,0,0.65)] backdrop-blur-md sm:text-[9px]",
+                "inline-flex shrink-0 items-center gap-1 rounded-md border px-1.5 py-0.5 text-[8px] font-medium shadow-[0_8px_18px_-14px_rgba(0,0,0,0.65)] backdrop-blur-md sm:text-[9px]",
                 isCompleted
                   ? "border-green-300/18 bg-green-500/22 text-white/95"
                   : hasProgress
-                    ? "border-primary/20 bg-primary/22 text-white/95"
+                    ? "border-amber-300/18 bg-amber-500/22 text-white/95"
                     : "border-white/14 bg-black/24 text-white/86"
               )}
             >
@@ -198,11 +198,11 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
       </Link>
 
       {/* Card Content */}
-      <div className="flex min-h-[51px] flex-col px-2.5 pb-2 pt-1.5 sm:min-h-[53px]">
+      <div className="flex min-h-[56px] flex-col px-3 pb-3 pt-1 sm:min-h-[58px]">
         <div className="flex items-start justify-between gap-1.5">
           <div className="min-w-0 flex-1">
             <h3
-              className="line-clamp-1 text-[11px] font-semibold text-foreground/95 sm:text-[12px]"
+              className="line-clamp-1 text-[12px] font-semibold text-foreground/95 sm:text-[13px]"
               title={book.title}
             >
               {book.title || "未命名书籍"}
@@ -219,9 +219,9 @@ export const BookCard = memo(function BookCard({ book, progress = 0, lastReadAt,
                   variant="ghost"
                   size="icon"
                   aria-label="菜单"
-                  className="-mr-1 h-5.5 w-5.5 shrink-0 rounded-md text-muted-foreground/58 opacity-100 transition-all duration-200 hover:bg-accent/75 hover:text-foreground sm:opacity-0 sm:group-hover:opacity-100"
+                  className="-mr-1 h-6 w-6 shrink-0 rounded-md text-muted-foreground/58 opacity-100 transition-all duration-200 hover:bg-accent/75 hover:text-foreground sm:opacity-0 sm:group-hover:opacity-100"
                 >
-                  <MoreVertical className="h-2.5 w-2.5" />
+                  <MoreVertical className="h-3 w-3" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-40">

@@ -50,74 +50,74 @@
 }
 
 :root {
-  --radius: 0.9rem;
-  --background: #f8f8f7;
-  --foreground: #171717;
-  --card: #FFFFFF;
-  --card-foreground: #171717;
-  --popover: #FFFFFF;
-  --popover-foreground: #171717;
-  --primary: #171717;
+  --radius: 0.75rem;
+  --background: #f7f4ee;
+  --foreground: #181610;
+  --card: #fffdf8;
+  --card-foreground: #181610;
+  --popover: #fffdf8;
+  --popover-foreground: #181610;
+  --primary: #181610;
   --primary-foreground: #ffffff;
-  --secondary: #f3f3f1;
-  --secondary-foreground: #262626;
-  --cta: #d4af37;
-  --muted: #f2f2ef;
-  --muted-foreground: #666666;
-  --accent: #ecebe7;
-  --accent-foreground: #171717;
-  --destructive: #dc2626;
-  --border: #e6e5e1;
-  --input: #e6e5e1;
-  --ring: #d4af37;
-  --chart-1: #171717;
-  --chart-2: #404040;
-  --chart-3: #737373;
-  --chart-4: #a3a3a3;
-  --chart-5: #d4af37;
-  --sidebar: #FFFFFF;
-  --sidebar-foreground: #171717;
-  --sidebar-primary: #171717;
+  --secondary: #ebe4d6;
+  --secondary-foreground: #2b2519;
+  --cta: #b98224;
+  --muted: #eee8dc;
+  --muted-foreground: #716858;
+  --accent: #e6dac5;
+  --accent-foreground: #201b12;
+  --destructive: #c24130;
+  --border: #dfd4c0;
+  --input: #d8ccb7;
+  --ring: #b98224;
+  --chart-1: #181610;
+  --chart-2: #b98224;
+  --chart-3: #2f766f;
+  --chart-4: #865d36;
+  --chart-5: #6b7280;
+  --sidebar: #fffdf8;
+  --sidebar-foreground: #181610;
+  --sidebar-primary: #181610;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f3f3f1;
-  --sidebar-accent-foreground: #262626;
-  --sidebar-border: #e6e5e1;
-  --sidebar-ring: #d4af37;
+  --sidebar-accent: #ebe4d6;
+  --sidebar-accent-foreground: #2b2519;
+  --sidebar-border: #dfd4c0;
+  --sidebar-ring: #b98224;
 }
 
 .dark {
-  --background: #121212;
-  --foreground: #fafafa;
-  --card: #1a1a1a;
-  --card-foreground: #fafafa;
-  --popover: #1a1a1a;
-  --popover-foreground: #fafafa;
-  --primary: #f2f2f0;
-  --primary-foreground: #171717;
-  --secondary: #262626;
-  --secondary-foreground: #f0f0f0;
-  --cta: #e0bc4b;
-  --muted: #202020;
-  --muted-foreground: #a3a3a3;
-  --accent: #2a2a2a;
-  --accent-foreground: #f0f0f0;
-  --destructive: #f87171;
-  --border: #313131;
-  --input: #313131;
-  --ring: #d4af37;
-  --chart-1: #f2f2f0;
-  --chart-2: #a3a3a3;
-  --chart-3: #737373;
-  --chart-4: #525252;
-  --chart-5: #d4af37;
-  --sidebar: #1a1a1a;
-  --sidebar-foreground: #fafafa;
-  --sidebar-primary: #f2f2f0;
-  --sidebar-primary-foreground: #171717;
-  --sidebar-accent: #262626;
-  --sidebar-accent-foreground: #f0f0f0;
-  --sidebar-border: #313131;
-  --sidebar-ring: #d4af37;
+  --background: #11100d;
+  --foreground: #f7f1e6;
+  --card: #1d1a15;
+  --card-foreground: #f7f1e6;
+  --popover: #1d1a15;
+  --popover-foreground: #f7f1e6;
+  --primary: #f7f1e6;
+  --primary-foreground: #15120e;
+  --secondary: #29241c;
+  --secondary-foreground: #f2eadc;
+  --cta: #d5a240;
+  --muted: #242018;
+  --muted-foreground: #b9ad99;
+  --accent: #332b1f;
+  --accent-foreground: #f5edde;
+  --destructive: #f07865;
+  --border: #3b3327;
+  --input: #42382b;
+  --ring: #d5a240;
+  --chart-1: #f7f1e6;
+  --chart-2: #d5a240;
+  --chart-3: #55a7a0;
+  --chart-4: #b88a5b;
+  --chart-5: #9ca3af;
+  --sidebar: #1d1a15;
+  --sidebar-foreground: #f7f1e6;
+  --sidebar-primary: #f7f1e6;
+  --sidebar-primary-foreground: #15120e;
+  --sidebar-accent: #29241c;
+  --sidebar-accent-foreground: #f2eadc;
+  --sidebar-border: #3b3327;
+  --sidebar-ring: #d5a240;
 }
 
 @layer base {
@@ -127,10 +127,11 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     background-image:
-      radial-gradient(circle at 0% 0%, color-mix(in oklab, var(--cta) 12%, transparent) 0, transparent 40%),
-      radial-gradient(circle at 100% 10%, color-mix(in oklab, var(--primary) 8%, transparent) 0, transparent 30%),
-      linear-gradient(to bottom, color-mix(in oklab, var(--background) 98%, #fff 2%), var(--background));
+      radial-gradient(circle at 7% -8%, color-mix(in oklab, var(--cta) 18%, transparent) 0, transparent 34%),
+      radial-gradient(circle at 98% 4%, color-mix(in oklab, #2f766f 12%, transparent) 0, transparent 30%),
+      linear-gradient(135deg, color-mix(in oklab, var(--background) 94%, #fff 6%), var(--background) 46%, color-mix(in oklab, var(--background) 92%, var(--accent) 8%));
     min-height: 100vh;
+    text-rendering: geometricPrecision;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-heading;
@@ -144,6 +145,28 @@
   ::selection {
     background: color-mix(in oklab, var(--cta) 55%, transparent);
     color: var(--foreground);
+  }
+}
+
+@layer components {
+  .app-noise {
+    position: relative;
+  }
+
+  .app-noise::before {
+    pointer-events: none;
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    opacity: 0.22;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 220 220' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E");
+    mix-blend-mode: multiply;
+  }
+
+  .dark .app-noise::before {
+    opacity: 0.12;
+    mix-blend-mode: screen;
   }
 }
 
@@ -233,17 +256,22 @@
 }
 
 .surface-glass {
-  background: color-mix(in oklab, var(--card) 78%, transparent);
-  border: 1px solid color-mix(in oklab, var(--border) 82%, transparent);
-  backdrop-filter: blur(12px);
+  background: linear-gradient(145deg, color-mix(in oklab, var(--card) 86%, transparent), color-mix(in oklab, var(--card) 62%, transparent));
+  border: 1px solid color-mix(in oklab, var(--border) 78%, transparent);
+  backdrop-filter: blur(18px) saturate(1.15);
 }
 
 .surface-elevated {
-  box-shadow: 0 12px 36px -18px color-mix(in oklab, var(--foreground) 30%, transparent);
+  box-shadow:
+    0 1px 0 color-mix(in oklab, white 48%, transparent) inset,
+    0 18px 48px -34px color-mix(in oklab, var(--foreground) 42%, transparent);
 }
 
 .section-shell {
-  @apply rounded-3xl border border-border/80 bg-card/70 backdrop-blur-md;
+  @apply rounded-2xl border border-border/70 bg-card/75 backdrop-blur-xl;
+  box-shadow:
+    0 1px 0 color-mix(in oklab, white 42%, transparent) inset,
+    0 18px 46px -36px color-mix(in oklab, var(--foreground) 34%, transparent);
 }
 
 @media (prefers-reduced-motion: reduce) {
