@@ -7,11 +7,11 @@ import { synthesizeMicrosoftSpeech } from "@/lib/microsoftTts";
 interface MicrosoftSpeakRequestBody {
   text?: string;
   voiceName?: string;
-  rate?: number;
-  pitch?: number;
-  volume?: number;
+  rate?: number | string;
+  pitch?: number | string;
+  volume?: number | string;
   outputFormat?: string;
-  prefetch?: boolean;
+  prefetch?: boolean | string;
 }
 
 const DEFAULT_VOICE = "zh-CN-XiaoxiaoMultilingualNeural";
@@ -27,12 +27,25 @@ interface CachedMicrosoftAudio {
 const audioCache = new Map<string, CachedMicrosoftAudio>();
 const inflightAudioRequests = new Map<string, Promise<CachedMicrosoftAudio | null>>();
 
-function parseMicrosoftSpeakPayload(body: MicrosoftSpeakRequestBody) {
-  const text = body.text?.trim() || "";
-  const voiceName = body.voiceName?.trim() || DEFAULT_VOICE;
-  const rate = Number.isFinite(body.rate) ? Number(body.rate) : 0;
-  const pitch = Number.isFinite(body.pitch) ? Number(body.pitch) : 0;
-  const volume = Number.isFinite(body.volume) ? Number(body.volume) : 50;
+function clampNumber(value: unknown, min: number, max: number, fallback: number) {
+  const numericValue = typeof value === "number" ? value : typeof value === "string" ? Number(value) : NaN;
+  if (!Number.isFinite(numericValue)) {
+    return fallback;
+  }
+
+  return Math.min(max, Math.max(min, Math.round(numericValue)));
+}
+
+function normalizePrefetchFlag(value: unknown): boolean {
+  return value === true || value === "true" || value === "1";
+}
+
+export function normalizeMicrosoftSpeakPayload(body: MicrosoftSpeakRequestBody) {
+  const text = typeof body.text === "string" ? body.text.trim() : "";
+  const voiceName = typeof body.voiceName === "string" && body.voiceName.trim() ? body.voiceName.trim() : DEFAULT_VOICE;
+  const rate = clampNumber(body.rate, -100, 100, 0);
+  const pitch = clampNumber(body.pitch, -100, 100, 0);
+  const volume = clampNumber(body.volume, 0, 100, 50);
 
   return {
     text,
@@ -40,11 +53,12 @@ function parseMicrosoftSpeakPayload(body: MicrosoftSpeakRequestBody) {
     rate,
     pitch,
     volume,
-    outputFormat: body.outputFormat,
+    outputFormat: typeof body.outputFormat === "string" && body.outputFormat.trim() ? body.outputFormat.trim() : undefined,
+    prefetch: normalizePrefetchFlag(body.prefetch),
   };
 }
 
-function buildAudioCacheKey(payload: ReturnType<typeof parseMicrosoftSpeakPayload>) {
+function buildAudioCacheKey(payload: ReturnType<typeof normalizeMicrosoftSpeakPayload>) {
   return createHash("sha256")
     .update(
       JSON.stringify({
@@ -97,8 +111,8 @@ function createAudioResponse(body: Buffer, contentType: string) {
 }
 
 async function synthesizeAndRespond(body: MicrosoftSpeakRequestBody) {
-  const payload = parseMicrosoftSpeakPayload(body);
-  const prefetchOnly = body.prefetch === true;
+  const payload = normalizeMicrosoftSpeakPayload(body);
+  const prefetchOnly = payload.prefetch;
   if (!payload.text) {
     return NextResponse.json({ error: "朗读文本不能为空" }, { status: 400 });
   }
@@ -197,11 +211,11 @@ export async function GET(req: NextRequest) {
   return synthesizeAndRespond({
     text: searchParams.get("text") ?? undefined,
     voiceName: searchParams.get("voiceName") ?? undefined,
-    rate: searchParams.has("rate") ? Number(searchParams.get("rate")) : undefined,
-    pitch: searchParams.has("pitch") ? Number(searchParams.get("pitch")) : undefined,
-    volume: searchParams.has("volume") ? Number(searchParams.get("volume")) : undefined,
+    rate: searchParams.get("rate") ?? undefined,
+    pitch: searchParams.get("pitch") ?? undefined,
+    volume: searchParams.get("volume") ?? undefined,
     outputFormat: searchParams.get("outputFormat") ?? undefined,
-    prefetch: searchParams.get("prefetch") === "1",
+    prefetch: searchParams.get("prefetch") ?? undefined,
   });
 }
 
