@@ -1,9 +1,10 @@
-import { logger } from "@/lib/logger";
-import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { ttsConfigs } from "@/lib/db/schema";
 import { badRequest, getAuthUserId, notFound, serverError, validateJson } from "@/lib/api-utils";
+import { logger } from "@/lib/logger";
+import { assertSafeServerFetchUrl, createServerFetchSignal } from "@/lib/server-url-safety";
 import {
   buildLegadoRequestBody,
   parseLegadoSpeechResult,
@@ -20,8 +21,7 @@ interface SafeRequestResult {
 
 async function requestWithFallback(
   url: string,
-  init: RequestInit,
-  fallbackBody?: BodyInit
+  init: RequestInit
 ): Promise<SafeRequestResult> {
   const firstResponse = await fetch(url, init);
   if (firstResponse.ok) {
@@ -39,7 +39,7 @@ async function requestWithFallback(
   const secondResponse = await fetch(url, {
     method: "GET",
     headers: init.headers,
-    body: fallbackBody,
+    signal: createServerFetchSignal(),
   });
   return { response: secondResponse, retried: true };
 }
@@ -47,6 +47,7 @@ async function requestWithFallback(
 export async function POST(req: NextRequest) {
   const authResult = await getAuthUserId();
   if (authResult.error) return authResult.error;
+  const { userId } = authResult;
 
   try {
     const validation = await validateJson(req, ttsSpeakSchema);
@@ -74,7 +75,7 @@ export async function POST(req: NextRequest) {
       .where(eq(ttsConfigs.id, configId))
       .get();
 
-    if (!config) {
+    if (!config || (config.userId && config.userId !== userId)) {
       return notFound("TTS配置不存在");
     }
 
@@ -96,8 +97,8 @@ export async function POST(req: NextRequest) {
     const init: RequestInit = {
       method,
       headers,
+      signal: createServerFetchSignal(),
     };
-    let requestBodyForRetry: BodyInit | undefined;
 
     if (method !== "GET" && method !== "HEAD") {
       const requestBody = buildLegadoRequestBody(
@@ -107,7 +108,6 @@ export async function POST(req: NextRequest) {
       );
       if (requestBody) {
         init.body = requestBody;
-        requestBodyForRetry = requestBody;
       }
 
       if (
@@ -124,10 +124,10 @@ export async function POST(req: NextRequest) {
       text,
       speakSpeed
     );
+    await assertSafeServerFetchUrl(resolvedUrl);
     const requestResult = await requestWithFallback(
       resolvedUrl,
-      init,
-      requestBodyForRetry
+      init
     );
     const response = requestResult.response;
     const responseContentType = response.headers.get("content-type") || "";
@@ -167,6 +167,15 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ text: parsed.text, audioUrl: parsed.audioUrl });
   } catch (error) {
+    if (error instanceof Error && error.name === "TimeoutError") {
+      return NextResponse.json({ error: "TTS服务请求超时" }, { status: 504 });
+    }
+    if (
+      error instanceof Error &&
+      ["URL格式不正确", "仅支持 HTTP/HTTPS 地址", "URL不能包含用户名或密码", "不允许请求内网或本机地址"].includes(error.message)
+    ) {
+      return badRequest(error.message);
+    }
     logger.error("api", "Failed to request TTS speech text:", error);
     return serverError("获取朗读内容失败");
   }

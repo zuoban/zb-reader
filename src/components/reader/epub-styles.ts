@@ -5,9 +5,9 @@ export const THEME_STYLES: Record<
   Record<string, Record<string, string>>
 > = {
   light: {
-    html: { background: "transparent" },
+    html: { background: "#ffffff" },
     body: {
-      background: "transparent",
+      background: "#ffffff",
       color: "hsl(240 10% 3.9%)",
       "font-family": '"Baskerville", "Iowan Old Style", "Palatino Linotype", "Noto Serif SC", "Songti SC", "Source Han Serif SC", "LXGW WenKai", "ZCOOL XiaoWei", serif',
       "line-height": "2.12",
@@ -100,9 +100,9 @@ export const THEME_STYLES: Record<
     td: { padding: "0.68em 1em", "border-bottom": "1px solid rgba(24,24,27,0.08)" },
   },
   dark: {
-    html: { background: "transparent" },
+    html: { background: "#09090b" },
     body: {
-      background: "transparent",
+      background: "#09090b",
       color: "hsl(0 0% 98%)",
       "font-family": '"Baskerville", "Iowan Old Style", "Palatino Linotype", "Noto Serif SC", "Songti SC", "Source Han Serif SC", "LXGW WenKai", "ZCOOL XiaoWei", serif',
       "line-height": "2.12",
@@ -172,9 +172,9 @@ export const THEME_STYLES: Record<
     td: { padding: "0.68em 1em", "border-bottom": "1px solid rgba(255,255,255,0.1)" },
   },
   sepia: {
-    html: { background: "transparent" },
+    html: { background: "#F5F1E8" },
     body: {
-      background: "transparent",
+      background: "#F5F1E8",
       color: "#5B4636",
       "font-family": '"Baskerville", "Iowan Old Style", "Palatino Linotype", "Noto Serif SC", "Songti SC", "Source Han Serif SC", "LXGW WenKai", "ZCOOL XiaoWei", serif',
       "line-height": "2.18",

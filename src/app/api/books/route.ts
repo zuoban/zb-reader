@@ -163,51 +163,44 @@ export async function GET(req: NextRequest) {
       whereClause = and(whereClause, eq(books.category, category))!;
     }
 
-    // 使用 leftJoin 在单次查询中获取书籍和进度
-    const result = await db
-      .select({
-        book: books,
-        progress: readingProgress.progress,
-        lastReadAt: readingProgress.lastReadAt,
-      })
-      .from(books)
-      .leftJoin(
-        readingProgress,
-        and(
-          eq(readingProgress.bookId, books.id),
-          eq(readingProgress.userId, userId)
+    const [result, totalResult, allTotalResult, categoryRows] = await Promise.all([
+      db
+        .select({
+          book: books,
+          progress: readingProgress.progress,
+          lastReadAt: readingProgress.lastReadAt,
+        })
+        .from(books)
+        .leftJoin(
+          readingProgress,
+          and(
+            eq(readingProgress.bookId, books.id),
+            eq(readingProgress.userId, userId)
+          )
         )
-      )
-      .where(whereClause)
-      .orderBy(desc(books.updatedAt))
-      .limit(limit)
-      .offset(offset);
-
-    const totalResult = await db
-      .select({ count: count() })
-      .from(books)
-      .where(whereClause);
-    const allTotalResult = await db
-      .select({ count: count() })
-      .from(books)
-      .where(eq(books.uploaderId, userId));
-
+        .where(whereClause)
+        .orderBy(desc(books.updatedAt))
+        .limit(limit)
+        .offset(offset),
+      db.select({ count: count() }).from(books).where(whereClause),
+      db.select({ count: count() }).from(books).where(eq(books.uploaderId, userId)),
+      db
+        .select({
+          name: books.category,
+          count: count(),
+        })
+        .from(books)
+        .where(
+          and(
+            eq(books.uploaderId, userId),
+            sql`coalesce(${books.category}, '') <> ''`
+          )
+        )
+        .groupBy(books.category)
+        .orderBy(books.category),
+    ]);
     const total = totalResult[0]?.count ?? 0;
     const allTotal = allTotalResult[0]?.count ?? total;
-    const categoryRows = await db
-      .select({
-        name: books.category,
-        count: count(),
-      })
-      .from(books)
-      .where(
-        and(
-          eq(books.uploaderId, userId),
-          sql`coalesce(${books.category}, '') <> ''`
-        )
-      )
-      .groupBy(books.category)
-      .orderBy(books.category);
     const categories = categoryRows.map((row) => ({
       name: row.name ?? "",
       count: row.count,

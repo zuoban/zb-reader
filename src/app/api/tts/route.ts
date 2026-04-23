@@ -1,10 +1,10 @@
-import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
+import { desc, eq, isNull, or } from "drizzle-orm";
+import { v4 as uuidv4 } from "uuid";
 import { db } from "@/lib/db";
 import { ttsConfigs } from "@/lib/db/schema";
-import { v4 as uuidv4 } from "uuid";
-import { desc } from "drizzle-orm";
 import { badRequest, getAuthUserId, serverError, validateJson } from "@/lib/api-utils";
+import { logger } from "@/lib/logger";
 import { ttsConfigImportSchema } from "@/lib/validations";
 
 interface TtsImportItem {
@@ -26,11 +26,13 @@ interface ValidTtsImportItem extends TtsImportItem {
 export async function GET() {
   const authResult = await getAuthUserId();
   if (authResult.error) return authResult.error;
+  const { userId } = authResult;
 
   try {
     const configs = await db
       .select()
       .from(ttsConfigs)
+      .where(or(eq(ttsConfigs.userId, userId), isNull(ttsConfigs.userId)))
       .orderBy(desc(ttsConfigs.createdAt));
     return NextResponse.json(configs);
   } catch (error) {
@@ -42,6 +44,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const authResult = await getAuthUserId();
   if (authResult.error) return authResult.error;
+  const { userId } = authResult;
 
   try {
     const validation = await validateJson(req, ttsConfigImportSchema);
@@ -80,6 +83,7 @@ export async function POST(req: NextRequest) {
 
       return {
         id: uuidv4(),
+        userId,
         name: item.name || "未命名配置",
         url: item.url,
         method: method,

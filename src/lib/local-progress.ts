@@ -237,6 +237,7 @@ export class LocalProgressManager {
   }
 
   private debounceTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  private pendingDebouncedItems = new Map<string, SyncItem>();
 
   private debouncedEnqueue(item: SyncItem): void {
     const existing = this.debounceTimers.get(item.bookId);
@@ -244,9 +245,11 @@ export class LocalProgressManager {
       clearTimeout(existing);
       this.debounceTimers.delete(item.bookId);
     }
+    this.pendingDebouncedItems.set(item.bookId, item);
 
     const timer = setTimeout(() => {
       this.debounceTimers.delete(item.bookId);
+      this.pendingDebouncedItems.delete(item.bookId);
       this.syncQueue.enqueue(item);
     }, 500);
 
@@ -254,7 +257,24 @@ export class LocalProgressManager {
   }
 
   async forceSync(): Promise<void> {
+    await this.flushPendingDebounced();
     await this.syncQueue.sync();
+  }
+
+  async flushPendingDebounced(bookId?: string): Promise<void> {
+    const entries = Array.from(this.pendingDebouncedItems.entries()).filter(
+      ([pendingBookId]) => !bookId || pendingBookId === bookId
+    );
+
+    for (const [pendingBookId, item] of entries) {
+      const timer = this.debounceTimers.get(pendingBookId);
+      if (timer) {
+        clearTimeout(timer);
+        this.debounceTimers.delete(pendingBookId);
+      }
+      this.pendingDebouncedItems.delete(pendingBookId);
+      await this.syncQueue.enqueue(item);
+    }
   }
 
   getPendingSyncCount(): number {

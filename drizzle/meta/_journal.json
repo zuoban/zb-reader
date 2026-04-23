@@ -15,6 +15,13 @@
       "when": 1776916465679,
       "tag": "0001_add_book_category",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1776931200000,
+      "tag": "0002_scope_tts_configs",
+      "breakpoints": true
     }
   ]
 }

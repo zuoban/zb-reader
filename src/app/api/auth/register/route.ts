@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
+import { eq, or } from "drizzle-orm";
+import { v4 as uuidv4 } from "uuid";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
-import { eq, or } from "drizzle-orm";
-import bcrypt from "bcryptjs";
-import { v4 as uuidv4 } from "uuid";
 import { logger } from "@/lib/logger";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { badRequest, serverError } from "@/lib/api-utils";
+import { serverError, validateJson } from "@/lib/api-utils";
+import { registerSchema } from "@/lib/validations";
 
 export async function POST(req: NextRequest) {
   // 速率限制检查：每分钟 3 次
@@ -20,24 +21,9 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { username, email, password } = await req.json();
-
-    if (!username || !email || !password) {
-      return badRequest("用户名、邮箱和密码不能为空");
-    }
-
-    if (username.length < 2 || username.length > 20) {
-      return badRequest("用户名长度应在 2-20 个字符之间");
-    }
-
-    if (password.length < 6) {
-      return badRequest("密码长度至少 6 个字符");
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return badRequest("邮箱格式不正确");
-    }
+    const validation = await validateJson(req, registerSchema);
+    if (validation.error) return validation.error;
+    const { username, email, password } = validation.data;
 
     // Check if username or email already exists
     const existing = await db.query.users.findFirst({

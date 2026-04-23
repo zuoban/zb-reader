@@ -13,6 +13,7 @@ export function useProgressSyncCompat(bookId: string) {
   const {
     updateProgress,
     forceSync,
+    flushPendingDebounced,
     pendingSync,
     isSyncing,
   } = useProgressSync(bookId);
@@ -39,15 +40,26 @@ export function useProgressSyncCompat(bookId: string) {
 
   // Force sync on unmount
   useEffect(() => {
-    const handleBeforeUnload = () => {
-      forceSync();
+    const syncPending = () => {
+      void flushPendingDebounced();
+      void forceSync();
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        syncPending();
+      }
     };
 
-    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("pagehide", syncPending);
+    window.addEventListener("beforeunload", syncPending);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
     return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("pagehide", syncPending);
+      window.removeEventListener("beforeunload", syncPending);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [forceSync]);
+  }, [flushPendingDebounced, forceSync]);
 
   // Compatible saveProgress function
   const saveProgress = useCallback(
@@ -115,6 +127,7 @@ export function useProgressSyncCompat(bookId: string) {
     pendingSync,
     isSyncing,
     forceSync,
+    flushPendingDebounced,
     accumulatedDuration,
   };
 }

@@ -33,9 +33,17 @@ export function useEpubAppearance({
     if (!rendition) return;
 
     const themeStyle = THEME_STYLES[theme];
+    rendition.themes.select(theme);
     rendition.themes.override("background", themeStyle.body.background);
     rendition.themes.override("color", themeStyle.body.color);
-  }, [renditionRef, theme]);
+
+    const doc = epubContextRef.current.getDocument();
+    if (doc?.documentElement && doc.body) {
+      doc.documentElement.style.background = themeStyle.html.background;
+      doc.body.style.background = themeStyle.body.background;
+      doc.body.style.color = themeStyle.body.color;
+    }
+  }, [epubContextRef, renditionRef, theme]);
 
   useEffect(() => {
     const rendition = renditionRef.current;

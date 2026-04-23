@@ -23,6 +23,7 @@ export interface UseProgressSyncReturn {
   readingDuration: number;
   updateProgress: (update: ProgressUpdate, forceSync?: boolean) => void;
   forceSync: () => Promise<void>;
+  flushPendingDebounced: () => Promise<void>;
   getHistory: () => Promise<ProgressHistory[]>;
   restoreTo: (historyId: string) => Promise<void>;
 }
@@ -92,6 +93,11 @@ export function useProgressSync(bookId: string): UseProgressSyncReturn {
     await manager.forceSync();
   }, []);
 
+  const flushPendingDebounced = useCallback(async () => {
+    const manager = managerRef.current;
+    await manager.flushPendingDebounced(bookId);
+  }, [bookId]);
+
   const getHistory = useCallback(async () => {
     try {
       const response = await fetch(`/api/progress/history?bookId=${bookId}`);
@@ -143,6 +149,7 @@ export function useProgressSync(bookId: string): UseProgressSyncReturn {
     readingDuration,
     updateProgress,
     forceSync,
+    flushPendingDebounced,
     getHistory,
     restoreTo,
   };

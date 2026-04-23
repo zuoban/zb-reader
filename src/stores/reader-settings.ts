@@ -186,3 +186,55 @@ export function useDebouncedSettingsSave() {
     }, 220);
   }, [loaded, saveToServer]);
 }
+
+export function useReaderSettingsValues() {
+  const fontSize = useReaderSettingsStore((s) => s.fontSize);
+  const fontFamily = useReaderSettingsStore((s) => s.fontFamily);
+  const theme = useReaderSettingsStore((s) => s.theme);
+  const browserVoiceId = useReaderSettingsStore((s) => s.browserVoiceId);
+  const ttsRate = useReaderSettingsStore((s) => s.ttsRate);
+  const microsoftPreloadCount = useReaderSettingsStore((s) => s.microsoftPreloadCount);
+  const ttsAutoNextChapter = useReaderSettingsStore((s) => s.ttsAutoNextChapter);
+  const ttsHighlightColor = useReaderSettingsStore((s) => s.ttsHighlightColor);
+
+  return {
+    fontSize,
+    fontFamily,
+    theme,
+    browserVoiceId,
+    ttsRate,
+    microsoftPreloadCount,
+    ttsAutoNextChapter,
+    ttsHighlightColor,
+  };
+}
+
+export function useReaderSettingsLifecycleState() {
+  const values = useReaderSettingsValues();
+  const autoScrollToActive = useReaderSettingsStore((s) => s.autoScrollToActive);
+  const loaded = useReaderSettingsStore((s) => s.loaded);
+  const loadFromServer = useReaderSettingsStore((s) => s.loadFromServer);
+  const setBrowserVoiceId = useReaderSettingsStore((s) => s.setBrowserVoiceId);
+
+  return {
+    ...values,
+    autoScrollToActive,
+    loaded,
+    loadFromServer,
+    setBrowserVoiceId,
+  };
+}
+
+export function useReaderSettingsControlsState() {
+  const setBrowserVoiceId = useReaderSettingsStore((s) => s.setBrowserVoiceId);
+  const setFontFamily = useReaderSettingsStore((s) => s.setFontFamily);
+  const setFontSize = useReaderSettingsStore((s) => s.setFontSize);
+  const setTheme = useReaderSettingsStore((s) => s.setTheme);
+
+  return {
+    setBrowserVoiceId,
+    setFontFamily,
+    setFontSize,
+    setTheme,
+  };
+}

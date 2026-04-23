@@ -199,6 +199,7 @@ function getConnection() {
 
     CREATE TABLE IF NOT EXISTS tts_configs (
       id TEXT PRIMARY KEY,
+      user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
       name TEXT NOT NULL,
       url TEXT NOT NULL,
       method TEXT NOT NULL DEFAULT 'GET',
@@ -445,6 +446,14 @@ function getConnection() {
     sqlite.exec(`ALTER TABLE books ADD COLUMN category TEXT;`);
   }
 
+  // Migration: Scope custom TTS configs to users while preserving legacy global configs (2026-04-23)
+  const ttsConfigsInfo = sqlite.prepare("PRAGMA table_info(tts_configs)").all() as { name: string }[];
+  const hasTtsUserId = ttsConfigsInfo.some((col) => col.name === "user_id");
+
+  if (!hasTtsUserId) {
+    sqlite.exec(`ALTER TABLE tts_configs ADD COLUMN user_id TEXT REFERENCES users(id) ON DELETE CASCADE;`);
+  }
+
   // Migration: Add missing indexes for reading_progress (2026-03-31)
   sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_reading_progress_user_id ON reading_progress (user_id);`);
   sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_reading_progress_last_read_at ON reading_progress (last_read_at);`);
@@ -454,6 +463,7 @@ function getConnection() {
   sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_progress_history_created_at ON progress_history (created_at);`);
   sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_bookmarks_user_book ON bookmarks (user_id, book_id);`);
   sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_notes_user_book ON notes (user_id, book_id);`);
+  sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_tts_configs_user_id ON tts_configs (user_id);`);
 
   _sqlite = sqlite;
   _db = drizzle(sqlite, { schema });

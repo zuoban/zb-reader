@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { MutableRefObject, RefObject } from "react";
 import ePub, { Book, Rendition } from "epubjs";
 import { logger } from "@/lib/logger";
@@ -55,6 +55,13 @@ function applyTransparentShell(viewer: HTMLDivElement | null) {
     iframeEl.style.background = "transparent";
     iframeEl.style.boxShadow = "none";
   }
+}
+
+function applyDocumentTheme(doc: Document, theme: "light" | "dark" | "sepia") {
+  const themeStyle = THEME_STYLES[theme];
+  doc.documentElement.style.background = themeStyle.html.background;
+  doc.body.style.background = themeStyle.body.background;
+  doc.body.style.color = themeStyle.body.color;
 }
 
 function parseInitialLocation(initialLocation?: string) {
@@ -127,6 +134,12 @@ export function useEpubInitializer({
   url,
   viewerRef,
 }: UseEpubInitializerParams) {
+  const themeRef = useRef(theme);
+
+  useEffect(() => {
+    themeRef.current = theme;
+  }, [theme]);
+
   useEffect(() => {
     if (!viewerRef.current) return;
 
@@ -187,6 +200,7 @@ export function useEpubInitializer({
           const iframeEl = viewerRef.current?.querySelector("iframe") as HTMLIFrameElement | null;
           const doc = iframeEl?.contentDocument;
           if (doc) {
+            applyDocumentTheme(doc, themeRef.current);
             injectSupSubImageStyle(doc);
           }
 

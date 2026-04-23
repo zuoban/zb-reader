@@ -61,6 +61,17 @@ export const userUpdateSchema = z.object({
   avatar: z.string().nullable().optional(),
 });
 
+/** 注册校验 */
+export const registerSchema = z.object({
+  username: z
+    .string()
+    .trim()
+    .min(2, "用户名长度应在 2-20 个字符之间")
+    .max(20, "用户名长度应在 2-20 个字符之间"),
+  email: z.string().trim().toLowerCase().email("邮箱格式不正确"),
+  password: z.string().min(6, "密码长度至少 6 个字符"),
+});
+
 const ttsConfigItemSchema = z.object({
   name: z.string().optional(),
   url: z.string().optional(),

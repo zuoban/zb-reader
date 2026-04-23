@@ -163,22 +163,29 @@ export const notes = sqliteTable(
   })
 );
 
-export const ttsConfigs = sqliteTable("tts_configs", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(),
-  url: text("url").notNull(),
-  method: text("method").default("GET").notNull(),
-  headers: text("headers", { mode: "json" }),
-  body: text("body", { mode: "json" }),
-  contentType: text("content_type"),
-  concurrentRate: integer("concurrent_rate"),
-  createdAt: text("created_at")
-    .default(sql`(datetime('now'))`)
-    .notNull(),
-  updatedAt: text("updated_at")
-    .default(sql`(datetime('now'))`)
-    .notNull(),
-});
+export const ttsConfigs = sqliteTable(
+  "tts_configs",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    url: text("url").notNull(),
+    method: text("method").default("GET").notNull(),
+    headers: text("headers", { mode: "json" }),
+    body: text("body", { mode: "json" }),
+    contentType: text("content_type"),
+    concurrentRate: integer("concurrent_rate"),
+    createdAt: text("created_at")
+      .default(sql`(datetime('now'))`)
+      .notNull(),
+    updatedAt: text("updated_at")
+      .default(sql`(datetime('now'))`)
+      .notNull(),
+  },
+  (table) => ({
+    userIdIdx: index("idx_tts_configs_user_id").on(table.userId),
+  })
+);
 
 export const readerSettings = sqliteTable("reader_settings", {
   id: text("id").primaryKey(),

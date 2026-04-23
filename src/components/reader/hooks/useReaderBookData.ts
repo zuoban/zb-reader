@@ -33,6 +33,8 @@ export function useReaderBookData({
   const bookUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function loadBook() {
       try {
         const res = await fetch(`/api/books/${bookId}`);
@@ -42,24 +44,31 @@ export function useReaderBookData({
           return;
         }
         const data = await res.json();
+        if (cancelled) return;
         setBook(data.book);
 
-        const progressRes = await fetch(`/api/progress?bookId=${bookId}`);
-        const progressData = await progressRes.json();
+        const [progressRes, bmRes, notesRes, cached] = await Promise.all([
+          fetch(`/api/progress?bookId=${bookId}`),
+          fetch(`/api/bookmarks?bookId=${bookId}`),
+          fetch(`/api/notes?bookId=${bookId}`),
+          getCachedBook(bookId),
+        ]);
+
+        const [progressData, bmData, notesData] = await Promise.all([
+          progressRes.ok ? progressRes.json() : Promise.resolve({}),
+          bmRes.ok ? bmRes.json() : Promise.resolve({ bookmarks: [] }),
+          notesRes.ok ? notesRes.json() : Promise.resolve({ notes: [] }),
+        ]);
+
+        if (cancelled) return;
+
         if (progressData.progress?.location) {
           setInitialLocation(progressData.progress.location);
           onProgressLoaded(progressData.progress.progress || 0);
         }
-
-        const bmRes = await fetch(`/api/bookmarks?bookId=${bookId}`);
-        const bmData = await bmRes.json();
         setBookmarks(bmData.bookmarks || []);
-
-        const notesRes = await fetch(`/api/notes?bookId=${bookId}`);
-        const notesData = await notesRes.json();
         setNotes(notesData.notes || []);
 
-        const cached = await getCachedBook(bookId);
         let fileUrl: string;
 
         if (cached) {
@@ -74,19 +83,27 @@ export function useReaderBookData({
           await cacheBook(bookId, fileBuffer);
         }
 
+        if (cancelled) {
+          URL.revokeObjectURL(fileUrl);
+          return;
+        }
+
         setBookUrl(fileUrl);
         bookUrlRef.current = fileUrl;
       } catch (error) {
         logger.error("reader", "加载书籍失败", error);
         toast.error("加载失败");
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     }
 
     loadBook();
 
     return () => {
+      cancelled = true;
       if (bookUrlRef.current) {
         URL.revokeObjectURL(bookUrlRef.current);
         bookUrlRef.current = null;

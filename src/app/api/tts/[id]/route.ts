@@ -1,9 +1,9 @@
-import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
+import { and, eq, isNull, or } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { ttsConfigs } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
 import { getAuthUserId, notFound, serverError, validateJson } from "@/lib/api-utils";
+import { logger } from "@/lib/logger";
 import { ttsConfigUpdateSchema } from "@/lib/validations";
 
 export async function PUT(
@@ -12,6 +12,7 @@ export async function PUT(
 ) {
   const authResult = await getAuthUserId();
   if (authResult.error) return authResult.error;
+  const { userId } = authResult;
 
   try {
     const { id } = await params;
@@ -23,7 +24,12 @@ export async function PUT(
     const existing = await db
       .select()
       .from(ttsConfigs)
-      .where(eq(ttsConfigs.id, id))
+      .where(
+        and(
+          eq(ttsConfigs.id, id),
+          or(eq(ttsConfigs.userId, userId), isNull(ttsConfigs.userId))
+        )
+      )
       .get();
 
     if (!existing) {
@@ -40,6 +46,7 @@ export async function PUT(
         body: body.body,
         contentType: body.contentType,
         concurrentRate: body.concurrentRate,
+        userId: existing.userId ?? userId,
         updatedAt: new Date().toISOString().replace("T", " ").split(".")[0], // Simple SQLite datetime
       })
       .where(eq(ttsConfigs.id, id));
@@ -57,11 +64,28 @@ export async function DELETE(
 ) {
   const authResult = await getAuthUserId();
   if (authResult.error) return authResult.error;
+  const { userId } = authResult;
 
   try {
     const { id } = await params;
+    const existing = await db
+      .select({ id: ttsConfigs.id })
+      .from(ttsConfigs)
+      .where(and(eq(ttsConfigs.id, id), eq(ttsConfigs.userId, userId)))
+      .get();
 
-    await db.delete(ttsConfigs).where(eq(ttsConfigs.id, id));
+    if (!existing) {
+      return notFound("配置不存在");
+    }
+
+    await db
+      .delete(ttsConfigs)
+      .where(
+        and(
+          eq(ttsConfigs.id, id),
+          eq(ttsConfigs.userId, userId)
+        )
+      );
 
     return NextResponse.json({ message: "删除成功" });
   } catch (error) {

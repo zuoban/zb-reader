@@ -35,7 +35,13 @@ import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
 import type { EpubReaderRef } from "@/components/reader/EpubReader";
 import { useProgressSyncCompat } from "@/hooks/useProgressSyncCompat";
-import { useReaderSettingsStore, useDebouncedSettingsSave } from "@/stores/reader-settings";
+import {
+  useDebouncedSettingsSave,
+  useReaderSettingsControlsState,
+  useReaderSettingsLifecycleState,
+  useReaderSettingsStore,
+  useReaderSettingsValues,
+} from "@/stores/reader-settings";
 
 function ReaderContent() {
   const router = useRouter();
@@ -55,15 +61,21 @@ function ReaderContent() {
   const totalPagesRef = useRef<number | undefined>(undefined);
 
   // Settings from store
-  const settings = useReaderSettingsStore();
-  const fontSize = settings.fontSize;
-  const fontFamily = settings.fontFamily;
-  const readerTheme = settings.theme;
-  const selectedBrowserVoiceId = settings.browserVoiceId;
-  const ttsRate = settings.ttsRate;
-  const microsoftPreloadCount = settings.microsoftPreloadCount;
-  const ttsAutoNextChapter = settings.ttsAutoNextChapter;
-  const ttsHighlightColor = settings.ttsHighlightColor;
+  const {
+    fontSize,
+    fontFamily,
+    theme: readerTheme,
+    browserVoiceId: selectedBrowserVoiceId,
+    ttsRate,
+    microsoftPreloadCount,
+    ttsAutoNextChapter,
+    ttsHighlightColor,
+  } = useReaderSettingsValues();
+  const setTtsRate = useReaderSettingsStore((s) => s.setTtsRate);
+  const setMicrosoftPreloadCount = useReaderSettingsStore((s) => s.setMicrosoftPreloadCount);
+  const setTtsHighlightColor = useReaderSettingsStore((s) => s.setTtsHighlightColor);
+  const settingsLifecycleState = useReaderSettingsLifecycleState();
+  const settingsControlsState = useReaderSettingsControlsState();
   const debouncedSaveSettings = useDebouncedSettingsSave();
 
   const {
@@ -142,7 +154,7 @@ function ReaderContent() {
   const handleBackRef = useRef<(() => Promise<void>) | null>(null);
 
   const { browserVoices, currentTheme } = useReaderSettingsLifecycle(
-    settings,
+    settingsLifecycleState,
     debouncedSaveSettings
   );
 
@@ -298,7 +310,7 @@ function ReaderContent() {
     handleFontSizeChange,
     handleSelectedBrowserVoiceIdChange,
     handleThemeChange,
-  } = useReaderSettingsControls(settings);
+  } = useReaderSettingsControls(settingsControlsState);
 
   const requestMicrosoftSpeech = useMicrosoftTtsSpeech(selectedBrowserVoiceId, ttsRate);
 
@@ -498,11 +510,11 @@ function ReaderContent() {
         selectedBrowserVoiceId={selectedBrowserVoiceId}
         onSelectedBrowserVoiceIdChange={handleSelectedBrowserVoiceIdChange}
         ttsRate={ttsRate}
-        onTtsRateChange={settings.setTtsRate}
+        onTtsRateChange={setTtsRate}
         microsoftPreloadCount={microsoftPreloadCount}
-        onMicrosoftPreloadCountChange={settings.setMicrosoftPreloadCount}
+        onMicrosoftPreloadCountChange={setMicrosoftPreloadCount}
         ttsHighlightColor={ttsHighlightColor}
-        onTtsHighlightColorChange={settings.setTtsHighlightColor}
+        onTtsHighlightColorChange={setTtsHighlightColor}
       />
 
       {/* Text selection menu */}
@@ -548,7 +560,7 @@ function ReaderContent() {
         onStop={stopSpeaking}
         onToggle={handleToggleTts}
         onToggleFullscreen={handleToggleFullscreen}
-        onTtsRateChange={settings.setTtsRate}
+        onTtsRateChange={setTtsRate}
       />
 
       <IdleCountdownWarning seconds={idleCountdown} />
