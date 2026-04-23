@@ -9,6 +9,26 @@ import fs from "fs";
 import { Readable } from "stream";
 import { unauthorized, notFound, serverError } from "@/lib/api-utils";
 
+export function buildBookDownloadName(title: string, format: string): string {
+  const safeTitle = title
+    .trim()
+    .replaceAll(/["\\]/g, "_")
+    .replace(/\s+/g, " ");
+  const fallbackTitle = safeTitle || "book";
+  return `${fallbackTitle}.${format}`;
+}
+
+export function buildBookDownloadAsciiName(title: string, format: string): string {
+  const safeTitle = title
+    .trim()
+    .replaceAll(/["\\]/g, "_")
+    .replace(/\s+/g, " ")
+    .replace(/[^\x20-\x7E]/g, "")
+    .trim();
+  const fallbackTitle = safeTitle || "book";
+  return `${fallbackTitle}.${format}`;
+}
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -34,17 +54,29 @@ export async function GET(
     }
 
     const filePath = getBookFilePath(book.filePath);
-    const fileStat = fs.statSync(filePath);
-    const fileStream = fs.createReadStream(filePath);
+    let fileStat: fs.Stats;
+    let fileStream: fs.ReadStream;
+
+    try {
+      fileStat = fs.statSync(filePath);
+      fileStream = fs.createReadStream(filePath);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+        return notFound("文件不存在");
+      }
+      throw error;
+    }
 
     const contentTypeMap: Record<string, string> = {
       epub: "application/epub+zip",
     };
+    const downloadName = buildBookDownloadName(book.title, book.format);
+    const asciiDownloadName = buildBookDownloadAsciiName(book.title, book.format);
 
     return new NextResponse(Readable.toWeb(fileStream) as ReadableStream, {
       headers: {
         "Content-Type": contentTypeMap[book.format] || "application/octet-stream",
-        "Content-Disposition": `inline; filename="${encodeURIComponent(book.title)}.${book.format}"`,
+        "Content-Disposition": `inline; filename="${asciiDownloadName}"; filename*=UTF-8''${encodeURIComponent(downloadName)}`,
         "Content-Length": fileStat.size.toString(),
         "Cache-Control": "private, max-age=31536000, immutable",
       },
