@@ -26,6 +26,13 @@ interface VoiceGroup {
   voices: VoiceOption[];
 }
 
+const TTS_RATE_OPTIONS = [1, 1.25, 1.5, 1.75, 2];
+
+function formatRateLabel(rate: number) {
+  const value = Number.isInteger(rate) ? String(rate) : rate.toFixed(2).replace(/0$/, "");
+  return `${value} 倍`;
+}
+
 function VoiceSelect({
   value,
   groups,
@@ -213,7 +220,7 @@ export function TtsSettingsDialog({
         <div className="relative space-y-4">
           <div className="grid grid-cols-2 gap-3">
             {[
-              { label: "当前语速", value: `${ttsRate.toFixed(1)}x` },
+              { label: "当前语速", value: formatRateLabel(ttsRate) },
               { label: "当前语音", value: activeVoiceLabel },
             ].map((item) => (
               <div
@@ -249,30 +256,32 @@ export function TtsSettingsDialog({
             <div className="space-y-3.5">
               <div className="flex items-center justify-between gap-3 text-xs text-white/62">
                 <p className="font-medium tracking-[0.12em]">语速</p>
-                <span className="rounded-full border border-white/16 bg-[linear-gradient(180deg,rgba(255,255,255,0.18),rgba(255,255,255,0.08))] px-2.5 py-1 text-[11px] font-semibold text-white/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]">
-                  {ttsRate.toFixed(1)}x
+                <span className="text-[11px] font-semibold text-white/76">
+                  {formatRateLabel(ttsRate)}
                 </span>
               </div>
-              <div className="relative flex h-10 items-center">
-                <div className="absolute inset-x-0 h-1.5 rounded-full bg-white/14">
-                  <div
-                    className="h-full rounded-full bg-[linear-gradient(90deg,rgba(255,255,255,0.98),rgba(209,228,255,0.78))] shadow-[0_0_12px_rgba(214,232,255,0.28)]"
-                    style={{ width: `${((ttsRate - 1) / (2 - 1)) * 100}%` }}
-                  />
-                </div>
-                <input
-                  type="range"
-                  min={1}
-                  max={2}
-                  step={0.1}
-                  value={ttsRate}
-                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                  onChange={(e) => onTtsRateChange(Number(e.target.value))}
-                />
-                <div
-                  className="pointer-events-none absolute h-5 w-5 rounded-full border border-white/40 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(228,238,255,0.82))] shadow-[inset_0_1px_0_rgba(255,255,255,0.82),0_8px_18px_-10px_rgba(176,206,255,0.7)]"
-                  style={{ left: `calc(${((ttsRate - 1) / (2 - 1)) * 100}% - 10px)` }}
-                />
+              <div className="grid grid-cols-5 gap-1 rounded-2xl border border-white/14 bg-white/8 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]">
+                {TTS_RATE_OPTIONS.map((rate) => {
+                  const isActive = Math.abs(ttsRate - rate) < 0.05;
+                  return (
+                    <button
+                      key={rate}
+                      type="button"
+                      onClick={() => onTtsRateChange(rate)}
+                      className={cn(
+                        "inline-flex h-8 min-w-0 cursor-pointer items-center justify-center gap-0.5 rounded-xl px-1 text-[11px] font-semibold transition-all duration-200",
+                        isActive
+                          ? "bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(228,238,255,0.82))] text-black shadow-[inset_0_1px_0_rgba(255,255,255,0.78),0_10px_24px_-18px_rgba(184,214,255,0.72)]"
+                          : "text-white/72 hover:bg-white/10 hover:text-white"
+                      )}
+                    >
+                      <span className="tabular-nums">
+                        {Number.isInteger(rate) ? rate : rate.toFixed(2).replace(/0$/, "")}
+                      </span>
+                      <span>倍</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>

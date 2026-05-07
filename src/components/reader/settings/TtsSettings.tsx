@@ -1,7 +1,7 @@
 import { Volume2 } from "lucide-react";
 import type { BrowserVoiceOption } from "@/lib/tts";
 import { cn } from "@/lib/utils";
-import { SettingCard, SettingRow, CompactSelect, SliderRow } from "../ReadingSettings-shared";
+import { SettingCard, SettingRow, CompactSelect } from "../ReadingSettings-shared";
 
 interface TtsSettingsProps {
   browserVoices: BrowserVoiceOption[];
@@ -16,6 +16,7 @@ interface TtsSettingsProps {
 }
 
 const HIGHLIGHT_COLORS = ["#3b82f6", "#ef4444", "#22c55e", "#eab308", "#a855f7", "#ec4899"];
+const TTS_RATE_OPTIONS = [1, 1.25, 1.5, 1.75, 2];
 
 export function TtsSettings({
   browserVoices,
@@ -63,15 +64,44 @@ export function TtsSettings({
           />
         </SettingRow>
 
-        <SliderRow
-          label="语速"
-          value={ttsRate}
-          min={1}
-          max={2}
-          step={0.1}
-          onChange={onTtsRateChange}
-          unit="x"
-        />
+        <SettingRow label="语速">
+          <div
+            className="grid grid-cols-5 gap-1 rounded-2xl border p-1 shadow-sm"
+            style={{
+              background:
+                "color-mix(in srgb, var(--reader-card-bg) 72%, transparent)",
+              borderColor: "var(--reader-border)",
+            }}
+          >
+            {TTS_RATE_OPTIONS.map((rate) => {
+              const isActive = Math.abs(ttsRate - rate) < 0.05;
+              return (
+                <button
+                  key={rate}
+                  type="button"
+                  onClick={() => onTtsRateChange(rate)}
+                  className={cn(
+                    "inline-flex h-8 min-w-0 cursor-pointer items-center justify-center gap-0.5 rounded-xl px-2 text-[12px] font-semibold transition-all duration-200 sm:h-9 sm:px-3 sm:text-[13px]",
+                    isActive
+                      ? "shadow-[0_8px_20px_-14px_color-mix(in_srgb,var(--reader-text)_56%,transparent)]"
+                      : "hover:bg-[color-mix(in_srgb,var(--reader-primary)_7%,transparent)]"
+                  )}
+                  style={{
+                    background: isActive
+                      ? "var(--reader-primary)"
+                      : "transparent",
+                    color: isActive ? "var(--reader-bg)" : "var(--reader-text)",
+                  }}
+                >
+                  <span className="tabular-nums">
+                    {Number.isInteger(rate) ? rate : rate.toFixed(2).replace(/0$/, "")}
+                  </span>
+                  <span>倍</span>
+                </button>
+              );
+            })}
+          </div>
+        </SettingRow>
         <SettingRow label="预加载段数" noBorder>
           <CompactSelect
             value={String(microsoftPreloadCount)}
