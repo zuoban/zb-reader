@@ -72,6 +72,7 @@ const ToolbarButton = memo(function ToolbarButton({
           onClick={onClick}
           className={cn(
             "reader-liquid-control h-9 w-9 cursor-pointer rounded-xl transition-all duration-200",
+            "reader-toolbar-button",
             "hover:-translate-y-0.5",
             isActive
               ? "border-[var(--reader-primary)]/35 bg-[var(--reader-primary)]/15 text-[var(--reader-primary)] shadow-inner"
@@ -128,7 +129,7 @@ export const ReaderToolbar = memo(function ReaderToolbar({
       >
         <div className="mx-auto max-w-3xl px-4 pt-4">
           <div
-            className="reader-liquid-surface pointer-events-auto relative flex items-center justify-between overflow-hidden rounded-2xl px-2 py-2 transition-shadow duration-300"
+            className="reader-liquid-surface reader-toolbar-surface pointer-events-auto relative flex items-center justify-between overflow-hidden rounded-2xl px-2 py-2 transition-shadow duration-300"
             style={{
               color: "var(--reader-text)",
             }}

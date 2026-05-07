@@ -14,8 +14,8 @@ export interface ReaderThemeStyle {
 export const READER_THEME_STYLES: Record<string, ReaderThemeStyle> = {
   light: {
     bg: "bg-background",
-    solidBg: "#ffffff",
-    cardBg: "rgba(255, 255, 255, 0.95)",
+    solidBg: "#f5f7fb",
+    cardBg: "rgba(245, 247, 251, 0.94)",
     text: "#09090b",
     mutedText: "#71717a",
     border: "rgba(228, 228, 231, 0.7)",

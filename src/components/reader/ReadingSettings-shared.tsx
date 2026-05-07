@@ -9,7 +9,7 @@ import {
 import { cn } from "@/lib/utils";
 
 export const themeOptions = [
-  { value: "light" as const, label: "白色", bg: "#ffffff", textColor: "#334155", borderColor: "#e2e8f0" },
+  { value: "light" as const, label: "白色", bg: "#f5f7fb", textColor: "#334155", borderColor: "#e2e8f0" },
   { value: "dark" as const, label: "深色", bg: "#1e293b", textColor: "#e2e8f0", borderColor: "#334155" },
   { value: "sepia" as const, label: "护眼", bg: "#f4ecd8", textColor: "#5c4a32", borderColor: "#d6c9a8" },
 ];

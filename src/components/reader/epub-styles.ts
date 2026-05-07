@@ -5,9 +5,9 @@ export const THEME_STYLES: Record<
   Record<string, Record<string, string>>
 > = {
   light: {
-    html: { background: "#ffffff" },
+    html: { background: "#f5f7fb" },
     body: {
-      background: "#ffffff",
+      background: "#f5f7fb",
       color: "hsl(240 10% 3.9%)",
       "font-family": '"Baskerville", "Iowan Old Style", "Palatino Linotype", "Noto Serif SC", "Songti SC", "Source Han Serif SC", "LXGW WenKai", "ZCOOL XiaoWei", serif',
       "line-height": "2.12",

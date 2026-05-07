@@ -527,11 +527,52 @@
     color-mix(in srgb, var(--reader-primary, #111) 8%, var(--reader-card-bg, white));
 }
 
+.reader-toolbar-surface {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, white 34%, transparent), transparent 56%),
+    color-mix(in srgb, var(--reader-card-bg, white) 94%, var(--reader-bg, white));
+  box-shadow:
+    0 1px 0 color-mix(in srgb, white 38%, transparent) inset,
+    0 0 0 1px color-mix(in srgb, white 16%, transparent) inset,
+    0 18px 44px -34px color-mix(in srgb, var(--reader-text, #111) 34%, transparent);
+}
+
+.reader-toolbar-button {
+  background: color-mix(in srgb, var(--reader-card-bg, white) 72%, transparent);
+}
+
+.reader-toolbar-button:hover {
+  color: var(--reader-primary) !important;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, white 36%, transparent), transparent 58%),
+    color-mix(in srgb, var(--reader-card-bg, white) 92%, var(--reader-primary, #111) 8%);
+}
+
 [data-reader-theme="dark"] .reader-liquid-control {
   border-color: color-mix(in srgb, var(--reader-border, #333) 82%, transparent);
   box-shadow:
     0 1px 0 color-mix(in srgb, white 8%, transparent) inset,
     0 12px 26px -22px color-mix(in srgb, black 64%, transparent);
+}
+
+[data-reader-theme="dark"] .reader-toolbar-surface {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, white 8%, transparent), transparent 58%),
+    color-mix(in srgb, var(--reader-card-bg, #111) 94%, var(--reader-bg, #111));
+  box-shadow:
+    0 1px 0 color-mix(in srgb, white 10%, transparent) inset,
+    0 0 0 1px color-mix(in srgb, white 5%, transparent) inset,
+    0 18px 44px -34px color-mix(in srgb, black 70%, transparent);
+}
+
+[data-reader-theme="dark"] .reader-toolbar-button {
+  background: color-mix(in srgb, var(--reader-card-bg, #111) 76%, transparent);
+}
+
+[data-reader-theme="dark"] .reader-toolbar-button:hover {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, white 10%, transparent), transparent 58%),
+    color-mix(in srgb, var(--reader-card-bg, #111) 88%, var(--reader-primary, white) 12%);
 }
 
 @media (prefers-reduced-motion: reduce) {
