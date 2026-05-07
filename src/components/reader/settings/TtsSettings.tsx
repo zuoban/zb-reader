@@ -104,13 +104,6 @@ export function TtsSettings({
                 />
               );
             })}
-            <input
-              type="color"
-              value={ttsHighlightColor}
-              onChange={(e) => onTtsHighlightColorChange(e.target.value)}
-              className="w-8 h-8 rounded-xl cursor-pointer border-0 p-0 shadow-sm"
-              style={{ background: "transparent" }}
-            />
           </div>
         </SettingRow>
       </SettingCard>
