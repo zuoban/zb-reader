@@ -44,10 +44,9 @@ export const TypographySettings = memo(function TypographySettings({
               onClick={() => fontSize > 12 && onFontSizeChange(fontSize - 1)}
               disabled={fontSize <= 12}
               className={cn(
-                "w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-sm",
-                fontSize <= 12 ? "opacity-30 cursor-not-allowed" : "hover:scale-105 hover:shadow-md active:opacity-80"
+                "reader-liquid-control flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl transition-all active:scale-90 sm:h-10 sm:w-10",
+                fontSize <= 12 ? "cursor-not-allowed opacity-30" : "hover:-translate-y-0.5 active:opacity-80"
               )}
-              style={{ background: "var(--reader-card-bg)", border: "1px solid var(--reader-border)" }}
             >
               <Minus className="size-4 sm:size-[18px]" style={{ color: "var(--reader-text)" }} />
             </button>
@@ -63,10 +62,9 @@ export const TypographySettings = memo(function TypographySettings({
               onClick={() => fontSize < 28 && onFontSizeChange(fontSize + 1)}
               disabled={fontSize >= 28}
               className={cn(
-                "w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-sm",
-                fontSize >= 28 ? "opacity-30 cursor-not-allowed" : "hover:scale-105 hover:shadow-md active:opacity-80"
+                "reader-liquid-control flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl transition-all active:scale-90 sm:h-10 sm:w-10",
+                fontSize >= 28 ? "cursor-not-allowed opacity-30" : "hover:-translate-y-0.5 active:opacity-80"
               )}
-              style={{ background: "var(--reader-card-bg)", border: "1px solid var(--reader-border)" }}
             >
               <Plus className="size-4 sm:size-[18px]" style={{ color: "var(--reader-text)" }} />
             </button>

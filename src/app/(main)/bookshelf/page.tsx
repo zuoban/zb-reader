@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTheme } from "next-themes";
-import { Check, Tags, X } from "lucide-react";
+import { BookOpen, Check, Clock3, LibraryBig, Tags, X } from "lucide-react";
 import { toast } from "sonner";
 import { BackgroundDecoration } from "@/components/bookshelf/BackgroundDecoration";
 import { BookCardSkeleton } from "@/components/bookshelf/BookCardSkeleton";
@@ -46,6 +46,8 @@ export default function BookshelfPage() {
   const [savingCategory, setSavingCategory] = useState(false);
   const { setTheme } = useTheme();
   const activeCategoryName = selectedCategory === ALL_CATEGORY ? "" : selectedCategory;
+  const readingCount = Object.values(progressMap).filter((progress) => progress > 0 && progress < 1).length;
+  const completedCount = Object.values(progressMap).filter((progress) => progress >= 1).length;
 
   // Sync theme with reader settings on mount
   useEffect(() => {
@@ -168,11 +170,55 @@ export default function BookshelfPage() {
   }, [categoryDialogBook, categoryInput, fetchBooks]);
 
   return (
-    <div className="app-noise min-h-screen bg-background">
+    <div className="app-noise liquid-page min-h-screen bg-background">
       <BackgroundDecoration />
       <Navbar onUploadComplete={fetchBooks} />
 
       <main className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-10 pt-4 sm:px-6 sm:pb-14 sm:pt-5">
+        <section className="liquid-panel mb-4 rounded-2xl px-4 py-4 sm:mb-5 sm:px-5 sm:py-5">
+          <div className="liquid-hairline absolute inset-x-5 top-0 h-px" />
+          <div className="relative flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="min-w-0">
+              <div className="liquid-control mb-3 inline-flex items-center gap-2 rounded-xl px-3 py-1 text-xs font-medium text-muted-foreground">
+                <LibraryBig className="h-3.5 w-3.5 text-[color:var(--cta)]" />
+                <span>私人阅读库</span>
+              </div>
+              <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+                我的书架
+              </h1>
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
+                {activeCategoryName
+                  ? `正在浏览「${activeCategoryName}」分类，继续整理和阅读你的 EPUB 收藏。`
+                  : "集中管理 EPUB 收藏、阅读进度和分类，让下一次打开书本更快一点。"}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 sm:min-w-[24rem]">
+              <div className="liquid-stat rounded-xl px-3 py-2.5">
+                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <BookOpen className="h-3.5 w-3.5" />
+                  <span>藏书</span>
+                </div>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-foreground">{totalBooks}</p>
+              </div>
+              <div className="liquid-stat rounded-xl px-3 py-2.5">
+                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <Clock3 className="h-3.5 w-3.5" />
+                  <span>在读</span>
+                </div>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-foreground">{readingCount}</p>
+              </div>
+              <div className="liquid-stat rounded-xl px-3 py-2.5">
+                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <Check className="h-3.5 w-3.5" />
+                  <span>读完</span>
+                </div>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-foreground">{completedCount}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <div className="category-filter-shell mb-4 -mx-1 flex w-fit max-w-[calc(100%+0.5rem)] gap-1 overflow-x-auto rounded-2xl p-1 [scrollbar-width:none] sm:mb-5 [&::-webkit-scrollbar]:hidden">
           <Button
             type="button"
@@ -257,7 +303,7 @@ export default function BookshelfPage() {
           }
         }}
       >
-        <DialogContent className="overflow-hidden rounded-2xl border-[color:var(--glass-border)] bg-card/80 shadow-[0_28px_80px_-48px_color-mix(in_oklab,var(--foreground)_54%,transparent)] sm:max-w-md">
+        <DialogContent className="overflow-hidden rounded-2xl sm:max-w-md">
           <div className="liquid-hairline absolute inset-x-4 top-0 h-px" />
           <DialogHeader>
             <DialogTitle>设置分类</DialogTitle>
@@ -285,7 +331,7 @@ export default function BookshelfPage() {
           {categories.length > 0 ? (
             <div className="grid gap-2">
               <Label>已有分类</Label>
-              <div className="flex max-h-28 flex-wrap gap-2 overflow-y-auto rounded-xl border border-border/60 bg-background/36 p-2 backdrop-blur-xl">
+              <div className="liquid-control flex max-h-28 flex-wrap gap-2 overflow-y-auto rounded-xl p-2">
                 {categories.map((category) => {
                   const isSelected = categoryInput.trim() === category.name;
 

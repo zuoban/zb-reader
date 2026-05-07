@@ -73,7 +73,8 @@ function VoiceSelect({
         type="button"
         ref={buttonRef}
         onClick={() => setOpen(!open)}
-        className="flex h-11 w-full items-center justify-between rounded-2xl border border-white/18 bg-[linear-gradient(180deg,rgba(255,255,255,0.2),rgba(255,255,255,0.08))] px-4 text-left text-sm font-medium text-white/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.24),inset_0_-1px_0_rgba(255,255,255,0.04)] backdrop-blur-2xl cursor-pointer transition-all duration-200 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.24),rgba(255,255,255,0.1))] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.24),0_18px_34px_-24px_rgba(0,0,0,0.55)]"
+        className="reader-liquid-control flex h-11 w-full cursor-pointer items-center justify-between rounded-2xl px-4 text-left text-sm font-medium transition-all duration-200 hover:-translate-y-0.5"
+        style={{ color: "var(--reader-text)" }}
       >
         <span className="truncate">{activeLabel}</span>
         <ChevronDown className={cn("size-4 shrink-0 opacity-70 transition-transform", open && "rotate-180")} />
@@ -82,13 +83,16 @@ function VoiceSelect({
       {open && (
         <div
           className={cn(
-            "absolute left-0 right-0 z-[90] max-h-[40vh] overflow-y-auto rounded-2xl border border-white/18 bg-[linear-gradient(180deg,rgba(37,43,56,0.92),rgba(22,27,38,0.9))] shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_26px_40px_-22px_rgba(0,0,0,0.8)] backdrop-blur-3xl [scrollbar-color:rgba(255,255,255,0.26)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/20",
+            "reader-liquid-surface absolute left-0 right-0 z-[90] max-h-[40vh] overflow-y-auto rounded-2xl p-1 [scrollbar-color:color-mix(in_srgb,var(--reader-text)_22%,transparent)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[color-mix(in_srgb,var(--reader-text)_20%,transparent)]",
             flip ? "bottom-full mb-2" : "top-full mt-2"
           )}
         >
           {groups.map((group) => (
             <div key={group.label} className="px-2 py-1 first:pt-2">
-              <div className="px-2 py-1.5 text-[10px] font-semibold tracking-[0.18em] text-white/34">
+              <div
+                className="px-2 py-1.5 text-[10px] font-semibold tracking-[0.18em]"
+                style={{ color: "var(--reader-muted-text)" }}
+              >
                 {group.label}
               </div>
               {group.voices.map((option) => (
@@ -103,16 +107,20 @@ function VoiceSelect({
                     }
                   }}
                   className={cn(
-                    "flex w-full items-center justify-between rounded-[16px] px-3 py-2.5 text-sm text-white/90 transition-colors",
-                    option.disabled ? "opacity-50 cursor-not-allowed" : "hover:bg-white/10 cursor-pointer",
+                    "flex w-full items-center justify-between rounded-[16px] px-3 py-2.5 text-sm transition-colors",
+                    option.disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:bg-[color-mix(in_srgb,var(--reader-primary)_8%,transparent)]",
                     value === option.value &&
-                      "border border-white/16 bg-[linear-gradient(180deg,rgba(255,255,255,0.16),rgba(255,255,255,0.08))] shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]"
+                      "reader-liquid-control"
                   )}
+                  style={{ color: "var(--reader-text)" }}
                 >
                   <span className="truncate">{option.label}</span>
                   {value === option.value && (
-                    <span className="ml-2 flex size-5 shrink-0 items-center justify-center rounded-full border border-white/16 bg-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.16)]">
-                      <Check className="size-3 text-white" />
+                    <span
+                      className="ml-2 flex size-5 shrink-0 items-center justify-center rounded-full"
+                      style={{ background: "var(--reader-primary)" }}
+                    >
+                      <Check className="size-3" style={{ color: "var(--reader-bg)" }} />
                     </span>
                   )}
                 </button>
@@ -184,33 +192,37 @@ export function TtsSettingsDialog({
   return (
     <>
       <div
-        className="fixed inset-0 z-[80] bg-[radial-gradient(circle_at_top,rgba(214,231,255,0.18),transparent_24%),rgba(5,8,14,0.64)] backdrop-blur-md"
+        className="fixed inset-0 z-[80] bg-black/42 backdrop-blur-md"
         onClick={() => onOpenChange(false)}
       />
       <div
         className={cn(
-          "animate-reader-fade-up fixed left-1/2 top-1/2 z-[80] w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[28px] border border-white/20 bg-[linear-gradient(180deg,rgba(255,255,255,0.2),rgba(255,255,255,0.08))] p-5 backdrop-blur-3xl shadow-[inset_0_1px_0_rgba(255,255,255,0.3),inset_0_-1px_0_rgba(255,255,255,0.04),0_28px_60px_-28px_rgba(0,0,0,0.78)] sm:p-6",
+          "reader-liquid-surface animate-reader-fade-up fixed left-1/2 top-1/2 z-[80] w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[28px] p-5 sm:p-6",
           "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
           "sm:max-w-sm"
         )}
         style={{ transition: "all 150ms cubic-bezier(0.4, 0, 0.2, 1)" }}
       >
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[linear-gradient(180deg,rgba(255,255,255,0.16),transparent)]" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[linear-gradient(180deg,color-mix(in_srgb,white_18%,transparent),transparent)]" />
 
         <div className="relative mb-5 flex items-start justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 text-lg font-semibold text-white/94">
+            <div
+              className="flex items-center gap-2 text-lg font-semibold"
+              style={{ color: "var(--reader-text)" }}
+            >
               <Settings className="size-5" />
               朗读设置
             </div>
-            <p className="mt-1 text-xs text-white/58">
+            <p className="mt-1 text-xs" style={{ color: "var(--reader-muted-text)" }}>
               调整语音与语速，让沉浸朗读更贴近你的节奏
             </p>
           </div>
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="flex size-8 items-center justify-center rounded-full border border-white/18 bg-[linear-gradient(180deg,rgba(255,255,255,0.18),rgba(255,255,255,0.08))] text-white/78 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.22),rgba(255,255,255,0.1))] hover:text-white cursor-pointer transition-colors"
+            className="reader-liquid-control flex size-8 cursor-pointer items-center justify-center rounded-full transition-colors"
+            style={{ color: "var(--reader-muted-text)" }}
             aria-label="关闭"
           >
             <X className="size-4" />
@@ -225,21 +237,32 @@ export function TtsSettingsDialog({
             ].map((item) => (
               <div
                 key={item.label}
-                className="rounded-[20px] border border-white/14 bg-[linear-gradient(180deg,rgba(255,255,255,0.14),rgba(255,255,255,0.06))] px-3.5 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.16)]"
+                className="reader-liquid-control rounded-[20px] px-3.5 py-3"
               >
-                <p className="text-[11px] tracking-[0.14em] text-white/52">
+                <p
+                  className="text-[11px] tracking-[0.14em]"
+                  style={{ color: "var(--reader-muted-text)" }}
+                >
                   {item.label}
                 </p>
-                <p className="mt-1 truncate text-sm font-semibold text-white/92">
+                <p
+                  className="mt-1 truncate text-sm font-semibold"
+                  style={{ color: "var(--reader-text)" }}
+                >
                   {item.value}
                 </p>
               </div>
             ))}
           </div>
 
-          <div className="rounded-[22px] border border-white/14 bg-[linear-gradient(180deg,rgba(255,255,255,0.14),rgba(255,255,255,0.06))] px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.16)]">
+          <div className="reader-liquid-control rounded-[22px] px-4 py-3.5">
             <div className="space-y-2.5">
-              <p className="text-xs font-medium tracking-[0.12em] text-white/62">语音</p>
+              <p
+                className="text-xs font-medium tracking-[0.12em]"
+                style={{ color: "var(--reader-muted-text)" }}
+              >
+                语音
+              </p>
               <VoiceSelect
                 value={selectedVoiceValue}
                 groups={voiceGroups}
@@ -252,15 +275,24 @@ export function TtsSettingsDialog({
             </div>
           </div>
 
-          <div className="rounded-[22px] border border-white/14 bg-[linear-gradient(180deg,rgba(255,255,255,0.14),rgba(255,255,255,0.06))] px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.16)]">
+          <div className="reader-liquid-control rounded-[22px] px-4 py-3.5">
             <div className="space-y-3.5">
-              <div className="flex items-center justify-between gap-3 text-xs text-white/62">
+              <div
+                className="flex items-center justify-between gap-3 text-xs"
+                style={{ color: "var(--reader-muted-text)" }}
+              >
                 <p className="font-medium tracking-[0.12em]">语速</p>
-                <span className="text-[11px] font-semibold text-white/76">
+                <span className="text-[11px] font-semibold" style={{ color: "var(--reader-text)" }}>
                   {formatRateLabel(ttsRate)}
                 </span>
               </div>
-              <div className="grid grid-cols-5 gap-1 rounded-2xl border border-white/14 bg-white/8 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]">
+              <div
+                className="grid grid-cols-5 gap-1 rounded-2xl border p-1"
+                style={{
+                  borderColor: "color-mix(in srgb, var(--reader-border) 72%, transparent)",
+                  background: "color-mix(in srgb, var(--reader-card-bg) 50%, transparent)",
+                }}
+              >
                 {TTS_RATE_OPTIONS.map((rate) => {
                   const isActive = Math.abs(ttsRate - rate) < 0.05;
                   return (
@@ -271,9 +303,13 @@ export function TtsSettingsDialog({
                       className={cn(
                         "inline-flex h-8 min-w-0 cursor-pointer items-center justify-center gap-0.5 rounded-xl px-1 text-[11px] font-semibold transition-all duration-200",
                         isActive
-                          ? "bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(228,238,255,0.82))] text-black shadow-[inset_0_1px_0_rgba(255,255,255,0.78),0_10px_24px_-18px_rgba(184,214,255,0.72)]"
-                          : "text-white/72 hover:bg-white/10 hover:text-white"
+                          ? "shadow-[0_10px_24px_-18px_color-mix(in_srgb,var(--reader-primary)_72%,transparent)]"
+                          : "hover:bg-[color-mix(in_srgb,var(--reader-primary)_8%,transparent)]"
                       )}
+                      style={{
+                        background: isActive ? "var(--reader-primary)" : "transparent",
+                        color: isActive ? "var(--reader-bg)" : "var(--reader-text)",
+                      }}
                     >
                       <span className="tabular-nums">
                         {Number.isInteger(rate) ? rate : rate.toFixed(2).replace(/0$/, "")}
@@ -291,7 +327,8 @@ export function TtsSettingsDialog({
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="rounded-full border border-white/28 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(228,238,255,0.82))] px-6 py-2.5 text-sm font-semibold text-black shadow-[inset_0_1px_0_rgba(255,255,255,0.86),0_14px_28px_-16px_rgba(184,214,255,0.7)] hover:scale-[1.02] cursor-pointer transition-all active:scale-[0.98]"
+            className="reader-liquid-control cursor-pointer rounded-full px-6 py-2.5 text-sm font-semibold transition-all hover:-translate-y-0.5 active:scale-[0.98]"
+            style={{ color: "var(--reader-text)" }}
           >
             确定
           </button>

@@ -115,17 +115,10 @@ const TextSelectionMenuInner = memo(function TextSelectionMenuInner({
       <div className="relative">
         <div
           className={cn(
-            "flex items-center gap-1 rounded-[24px] p-1.5 sm:p-2",
-            "backdrop-blur-2xl",
-            "border",
-            "shadow-xl"
+            "reader-liquid-surface flex items-center gap-1 rounded-[24px] p-1.5 sm:p-2"
           )}
           style={{
-            background:
-              "color-mix(in srgb, var(--reader-card-bg) 90%, white 10%)",
-            borderColor: "color-mix(in srgb, var(--reader-text) 10%, transparent)",
-            boxShadow:
-              "0 18px 36px -28px color-mix(in srgb, var(--reader-text) 35%, transparent)",
+            boxShadow: "0 18px 36px -28px color-mix(in srgb, var(--reader-text) 42%, transparent)",
           }}
         >
           {showColors ? (
@@ -145,7 +138,7 @@ const TextSelectionMenuInner = memo(function TextSelectionMenuInner({
                     "hover:scale-[1.04] hover:border-foreground/20",
                     "cursor-pointer"
                   )}
-                  style={{ background: "color-mix(in srgb, var(--reader-card-bg) 82%, white 18%)" }}
+                  style={{ background: "color-mix(in srgb, var(--reader-card-bg) 72%, transparent)" }}
                   onClick={() =>
                     handleAction(() => {
                       onHighlight(color.value);
@@ -252,7 +245,7 @@ const TextSelectionMenuInner = memo(function TextSelectionMenuInner({
           <div
             className="size-2.5 rotate-45 -translate-y-1 border-b border-r"
             style={{
-              background: "color-mix(in srgb, var(--reader-card-bg) 90%, white 10%)",
+              background: "color-mix(in srgb, var(--reader-card-bg) 72%, transparent)",
               borderColor: "color-mix(in srgb, var(--reader-text) 10%, transparent)",
             }}
           />

@@ -24,8 +24,7 @@ export const fontOptions = [
 export function SettingCard({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <div
-      className={cn("rounded-2xl shadow-sm", className)}
-      style={{ background: "var(--reader-card-bg)", border: "1px solid var(--reader-border)" }}
+      className={cn("reader-liquid-surface overflow-hidden rounded-2xl", className)}
     >
       {children}
     </div>
@@ -86,11 +85,9 @@ export function CompactSelect({
   return (
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger
-        className="h-9 sm:h-10 text-[13px] sm:text-[14px] font-medium border-0 rounded-xl cursor-pointer focus:ring-0 focus:ring-offset-0 gap-2 pr-2.5 sm:pr-3 pl-3 sm:pl-3.5 shadow-sm"
+        className="reader-liquid-control h-9 gap-2 rounded-xl border-0 pl-3 pr-2.5 text-[13px] font-medium shadow-none focus:ring-0 focus:ring-offset-0 sm:h-10 sm:pl-3.5 sm:pr-3 sm:text-[14px]"
         style={{
-          background: "var(--reader-card-bg)",
           color: "var(--reader-text)",
-          border: "1px solid var(--reader-border)",
           minWidth: "130px",
           maxWidth: "220px",
         }}
@@ -98,7 +95,7 @@ export function CompactSelect({
         <SelectValue placeholder={placeholder} />
         <ChevronDown className="size-3.5 sm:size-4 shrink-0 opacity-50" />
       </SelectTrigger>
-      <SelectContent className="rounded-xl border-border/50 shadow-lg">
+      <SelectContent className="rounded-xl">
         {options.map((opt) => (
           <SelectItem
             key={opt.value}
@@ -126,11 +123,13 @@ export function ThemePreviewButton({
   return (
     <button
       onClick={onClick}
-      className="flex-1 flex flex-col items-center gap-2.5 py-4 rounded-2xl transition-all duration-200 cursor-pointer relative"
+      className="relative flex flex-1 cursor-pointer flex-col items-center gap-2.5 rounded-2xl py-4 transition-all duration-200 hover:-translate-y-0.5"
       style={{
         background: option.bg,
         border: isActive ? "2px solid var(--reader-primary)" : `1px solid ${option.borderColor}`,
-        boxShadow: isActive ? "0 4px 12px rgba(0,0,0,0.1)" : "none",
+        boxShadow: isActive
+          ? "0 14px 30px -22px color-mix(in srgb, var(--reader-primary) 68%, transparent)"
+          : "0 1px 0 color-mix(in srgb, white 20%, transparent) inset",
       }}
     >
       {isActive && (

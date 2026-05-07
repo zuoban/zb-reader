@@ -19,9 +19,9 @@ export default function GlobalError({
   return (
     <html lang="zh-CN">
       <body className="antialiased">
-        <div className="app-noise relative flex min-h-screen items-center justify-center overflow-hidden bg-background p-4">
+        <div className="app-noise liquid-page relative flex min-h-screen items-center justify-center overflow-hidden bg-background p-4">
           <BackgroundDecoration />
-          <Card className="book-card-glass relative z-10 max-w-md w-full p-6 text-center space-y-4">
+          <Card className="liquid-panel relative z-10 w-full max-w-md space-y-4 p-6 text-center">
             <div className="flex justify-center">
               <div className="liquid-control rounded-2xl p-3">
                 <AlertTriangle className="h-8 w-8 text-destructive" />

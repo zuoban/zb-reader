@@ -133,15 +133,13 @@ export function UploadDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="overflow-hidden rounded-[1.35rem] border-border/60 bg-card/92 p-0 shadow-[0_36px_100px_-48px_color-mix(in_oklab,var(--foreground)_40%,transparent)] sm:max-w-2xl sm:rounded-[1.75rem]">
+      <DialogContent className="liquid-panel overflow-hidden rounded-2xl p-0 sm:max-w-2xl">
         <div className="relative">
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/45 to-transparent" />
-          <div className="absolute -right-14 top-0 h-32 w-32 rounded-full bg-primary/12 blur-3xl dark:bg-primary/15" />
-          <div className="absolute -left-10 bottom-0 h-28 w-28 rounded-full bg-sky-500/10 blur-3xl dark:bg-sky-400/10" />
+          <div className="liquid-hairline absolute inset-x-6 top-0 h-px" />
 
           <div className="relative space-y-4 p-4 sm:space-y-5 sm:p-7">
             <DialogHeader>
-              <div className="mb-2 inline-flex w-fit items-center rounded-full border border-primary/15 bg-primary/8 px-3 py-1 text-[11px] font-medium text-primary sm:mb-3 sm:text-xs">
+              <div className="liquid-control mb-2 inline-flex w-fit items-center rounded-xl px-3 py-1 text-[11px] font-medium text-muted-foreground sm:mb-3 sm:text-xs">
                 添加新书
               </div>
               <DialogTitle className="text-lg tracking-tight sm:text-2xl">上传电子书</DialogTitle>
@@ -152,14 +150,14 @@ export function UploadDialog({
 
             <div
               {...getRootProps()}
-              className={`cursor-pointer rounded-[1.2rem] border-2 border-dashed p-5 text-center transition-all duration-200 sm:rounded-[1.5rem] sm:p-8 ${
+              className={`cursor-pointer rounded-2xl border-2 border-dashed p-5 text-center transition-all duration-200 sm:p-8 ${
                 isDragActive
-                  ? "border-primary bg-primary/8 shadow-[0_20px_50px_-36px_rgba(99,102,241,0.55)]"
-                  : "border-muted-foreground/20 bg-background/50 hover:border-primary/35 hover:bg-background/65"
+                  ? "border-ring bg-primary/8 shadow-[0_20px_50px_-36px_color-mix(in_oklab,var(--cta)_55%,transparent)]"
+                  : "border-[color:var(--glass-border)] bg-background/38 hover:border-ring/35 hover:bg-background/55"
               }`}
             >
               <input {...getInputProps()} />
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/15 sm:mb-4 sm:h-16 sm:w-16">
+              <div className="liquid-control mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl text-primary sm:mb-4 sm:h-16 sm:w-16">
                 <Upload className="h-7 w-7" />
               </div>
               <p className="text-sm font-medium text-foreground">
@@ -181,7 +179,7 @@ export function UploadDialog({
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium text-foreground">待上传文件</p>
-                  <span className="rounded-full border border-border/50 bg-background/60 px-2.5 py-1 text-xs text-muted-foreground">
+                  <span className="liquid-control rounded-full px-2.5 py-1 text-xs text-muted-foreground">
                     {files.length} 个文件
                   </span>
                 </div>
@@ -189,9 +187,9 @@ export function UploadDialog({
                   {files.map((f, i) => (
                     <div
                       key={i}
-                      className="flex items-center gap-3 rounded-[1.1rem] border border-border/55 bg-background/55 p-3 backdrop-blur-sm sm:rounded-2xl sm:p-3.5"
+                      className="liquid-stat flex items-center gap-3 rounded-2xl p-3 sm:p-3.5"
                     >
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15 sm:h-11 sm:w-11 sm:rounded-2xl">
+                      <div className="liquid-control flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-primary sm:h-11 sm:w-11 sm:rounded-2xl">
                         <FileText className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
                       </div>
                       <div className="min-w-0 flex-1">

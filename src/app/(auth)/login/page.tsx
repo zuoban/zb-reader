@@ -5,6 +5,7 @@ import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { BookOpen, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +17,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { BookOpen, Loader2 } from "lucide-react";
 
 export default function LoginPage() {
   return (
@@ -61,7 +61,7 @@ function LoginForm() {
   };
 
   return (
-    <Card className="book-card-glass overflow-hidden rounded-2xl py-5">
+    <Card className="liquid-panel w-full overflow-hidden rounded-2xl py-5">
       <CardHeader className="relative text-center pb-2">
         <div className="liquid-hairline absolute inset-x-6 top-0 h-px" />
         <div className="flex justify-center mb-4">
@@ -94,7 +94,7 @@ function LoginForm() {
               value={login}
               onChange={(e) => setLogin(e.target.value)}
               required
-              className="h-11 rounded-xl bg-background/42"
+              className="h-11"
             />
           </div>
           <div className="space-y-2">
@@ -106,14 +106,14 @@ function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="h-11 rounded-xl bg-background/42"
+              className="h-11"
             />
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4 pt-2">
           <Button 
             type="submit" 
-            className="top-action-primary w-full h-11 rounded-xl font-semibold" 
+            className="h-11 w-full rounded-xl font-semibold"
             disabled={loading}
           >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

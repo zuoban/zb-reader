@@ -57,18 +57,14 @@ export function NoteEditor({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
-        className="animate-reader-fade-up sm:max-w-md overflow-hidden rounded-[28px] border backdrop-blur-xl"
-        style={{
-          background:
-            "linear-gradient(180deg, color-mix(in srgb, var(--reader-card-bg) 90%, white 10%) 0%, color-mix(in srgb, var(--reader-card-bg) 98%, transparent) 100%)",
-          borderColor: "var(--reader-border)",
-        }}
+        className="reader-liquid-surface animate-reader-fade-up overflow-hidden rounded-[28px] sm:max-w-md"
+        style={{ color: "var(--reader-text)" }}
       >
         <div
           className="pointer-events-none absolute inset-x-0 top-0 h-20"
           style={{
             background:
-              "linear-gradient(180deg, color-mix(in srgb, white 42%, transparent) 0%, transparent 100%)",
+              "linear-gradient(180deg, color-mix(in srgb, white 24%, transparent) 0%, transparent 100%)",
           }}
         />
         <DialogHeader>
@@ -106,7 +102,7 @@ export function NoteEditor({
             className="rounded-[22px] border p-4 pl-4 text-sm"
             style={{
               background:
-                "color-mix(in srgb, var(--reader-card-bg) 84%, white 16%)",
+                "color-mix(in srgb, var(--reader-card-bg) 62%, transparent)",
               borderColor: "var(--reader-border)",
             }}
           >
@@ -162,7 +158,7 @@ export function NoteEditor({
                   )}
                   style={{
                     background:
-                      "color-mix(in srgb, var(--reader-card-bg) 82%, white 18%)",
+                      "color-mix(in srgb, var(--reader-card-bg) 62%, transparent)",
                     borderColor:
                       color === option.value
                         ? "var(--reader-text)"
@@ -193,7 +189,7 @@ export function NoteEditor({
             className="min-h-[120px] rounded-[22px]"
             style={{
               background:
-                "color-mix(in srgb, var(--reader-card-bg) 88%, white 12%)",
+                "color-mix(in srgb, var(--reader-card-bg) 62%, transparent)",
               borderColor: "var(--reader-border)",
               color: "var(--reader-text)",
             }}
@@ -205,9 +201,8 @@ export function NoteEditor({
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="rounded-xl cursor-pointer"
+            className="reader-liquid-control cursor-pointer rounded-xl"
             style={{
-              borderColor: "var(--reader-border)",
               color: "var(--reader-text)",
             }}
           >
@@ -215,10 +210,10 @@ export function NoteEditor({
           </Button>
           <Button
             onClick={handleSave}
-            className="rounded-xl cursor-pointer"
+            className="cursor-pointer rounded-xl"
             style={{
               background: "var(--reader-primary, #0891B2)",
-              color: "#ffffff",
+              color: "var(--reader-bg, #ffffff)",
             }}
           >
             保存

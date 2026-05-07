@@ -38,13 +38,15 @@ export function ThemeSettings({ theme, onThemeChange }: ThemeSettingsProps) {
             <button
               key={option.value}
               onClick={() => onThemeChange(option.value)}
-              className="flex-1 flex flex-col items-center gap-2.5 py-4 rounded-2xl transition-all duration-200 cursor-pointer relative"
+              className="relative flex flex-1 cursor-pointer flex-col items-center gap-2.5 rounded-2xl py-4 transition-all duration-200 hover:-translate-y-0.5"
               style={{
                 background: option.bg,
                 border: isActive
                   ? "2px solid var(--reader-primary)"
                   : `1px solid ${option.borderColor}`,
-                boxShadow: isActive ? "0 4px 12px rgba(0,0,0,0.1)" : "none",
+                boxShadow: isActive
+                  ? "0 14px 30px -22px color-mix(in srgb, var(--reader-primary) 68%, transparent)"
+                  : "0 1px 0 color-mix(in srgb, white 20%, transparent) inset",
               }}
             >
               {isActive && (
