@@ -89,7 +89,7 @@ export function ReaderCanvas({
             className="h-full w-full"
             style={{
               paddingTop: isTtsViewOpen ? 0 : 40,
-              paddingBottom: isTtsViewOpen ? 0 : 88,
+              paddingBottom: isTtsViewOpen ? 0 : 56,
             }}
           >
             {bookFormat === "epub" && (

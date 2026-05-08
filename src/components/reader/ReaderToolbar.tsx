@@ -12,6 +12,8 @@ import {
   Pause,
   ChevronLeft,
   ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   Maximize,
   Minimize,
 } from "lucide-react";
@@ -113,6 +115,10 @@ export const ReaderToolbar = memo(function ReaderToolbar({
   isSpeaking,
   onPrevPage,
   onNextPage,
+  onPrevChapter,
+  onNextChapter,
+  hasPrevChapter,
+  hasNextChapter,
   rightContent,
 }: ReaderToolbarProps) {
   const showChapterMeta = currentChapterTitle && currentChapterTitle !== title;
@@ -222,6 +228,23 @@ export const ReaderToolbar = memo(function ReaderToolbar({
       >
         <div className="mx-auto max-w-3xl px-4 pb-[calc(env(safe-area-inset-bottom)+0.35rem)]">
           <div className="reader-page-turn-dock pointer-events-auto mx-auto flex w-fit items-center justify-center gap-1 rounded-full px-1.5 py-1">
+            {onPrevChapter && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onPrevChapter}
+                disabled={!hasPrevChapter}
+                className={cn(
+                  "reader-page-turn-button h-10 w-10 rounded-full",
+                  !hasPrevChapter && "cursor-not-allowed opacity-30 hover:translate-y-0"
+                )}
+                style={{ color: "var(--reader-text)" }}
+                aria-label="上一章"
+              >
+                <ChevronsLeft className="h-4.5 w-4.5" />
+              </Button>
+            )}
+
             {onPrevPage && (
               <Button
                 variant="ghost"
@@ -235,7 +258,7 @@ export const ReaderToolbar = memo(function ReaderToolbar({
               </Button>
             )}
 
-            {onPrevPage && onNextPage ? (
+            {(onPrevPage || onPrevChapter) && (onNextPage || onNextChapter) ? (
               <div className="h-5 w-px bg-[color-mix(in_srgb,var(--reader-border)_64%,transparent)]" />
             ) : null}
 
@@ -249,6 +272,23 @@ export const ReaderToolbar = memo(function ReaderToolbar({
                 aria-label="下一页"
               >
                 <ChevronRight className="h-4.5 w-4.5" />
+              </Button>
+            )}
+
+            {onNextChapter && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onNextChapter}
+                disabled={!hasNextChapter}
+                className={cn(
+                  "reader-page-turn-button h-10 w-10 rounded-full",
+                  !hasNextChapter && "cursor-not-allowed opacity-30 hover:translate-y-0"
+                )}
+                style={{ color: "var(--reader-text)" }}
+                aria-label="下一章"
+              >
+                <ChevronsRight className="h-4.5 w-4.5" />
               </Button>
             )}
           </div>
