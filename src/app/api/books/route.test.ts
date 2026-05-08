@@ -81,10 +81,12 @@ describe("Books API upload", () => {
   });
 
   it("cleans up the saved EPUB file when database insert fails", async () => {
+    // Create a buffer with ZIP magic bytes (EPUB files are ZIP archives)
+    const magicBuffer = new Uint8Array([0x50, 0x4b, 0x03, 0x04, 0x00, 0x00, 0x00, 0x00]);
     const file = {
       name: "book.epub",
       size: 1024,
-      arrayBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(8)),
+      arrayBuffer: vi.fn().mockResolvedValue(magicBuffer.buffer),
     };
     mockInsertValues.mockRejectedValueOnce(new Error("insert failed"));
 

@@ -25,6 +25,7 @@ export class SyncQueue {
   private onSyncComplete?: () => void;
   private onSyncError?: (error: Error) => void;
   private onQueueChange?: (pendingCount: number) => void;
+  private onlineHandler: () => void;
 
   constructor(options: {
     syncFn: (item: SyncItem) => Promise<void>;
@@ -36,11 +37,20 @@ export class SyncQueue {
     this.onSyncComplete = options.onSyncComplete;
     this.onSyncError = options.onSyncError;
     this.onQueueChange = options.onQueueChange;
+    this.onlineHandler = () => this.sync();
 
     if (typeof window !== 'undefined') {
       this.loadFromStorage();
-      window.addEventListener('online', () => this.sync());
+      window.addEventListener('online', this.onlineHandler);
     }
+  }
+
+  /** Clean up event listeners and timers. Call on component unmount. */
+  destroy(): void {
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('online', this.onlineHandler);
+    }
+    this.queue = [];
   }
 
   async enqueue(item: SyncItem): Promise<void> {

@@ -1,4 +1,5 @@
 const CACHE_NAME = "zb-reader-v1";
+const OFFLINE_PAGE = "/offline.html";
 const ASSETS_TO_CACHE = [
   "/",
   "/bookshelf",
@@ -10,7 +11,10 @@ const ASSETS_TO_CACHE = [
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
+      return cache.addAll(ASSETS_TO_CACHE).catch(() => {
+        // Non-critical: some assets may fail to cache
+        console.warn("[SW] Failed to cache some assets during install");
+      });
     })
   );
   self.skipWaiting();
@@ -20,11 +24,9 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
-        })
+        cacheNames
+          .filter((name) => name !== CACHE_NAME)
+          .map((name) => caches.delete(name))
       );
     })
   );
@@ -35,9 +37,23 @@ self.addEventListener("fetch", (event) => {
   // Skip cross-origin requests
   if (!event.request.url.startsWith(self.location.origin)) return;
 
-  // Skip API requests for now, let the app handle them with logic
+  // Navigation requests: network-first with offline fallback
+  if (event.request.mode === "navigate") {
+    event.respondWith(
+      fetch(event.request)
+        .catch(() => {
+          return caches.match(event.request).then((cached) => {
+            return cached || caches.match(OFFLINE_PAGE);
+          });
+        })
+    );
+    return;
+  }
+
+  // Skip API requests
   if (event.request.url.includes("/api/")) return;
 
+  // Static assets: cache-first
   event.respondWith(
     caches.match(event.request).then((response) => {
       if (response) {

@@ -15,6 +15,21 @@ if (!fs.existsSync(DATA_DIR)) {
 let _sqlite: Database.Database | null = null;
 let _db: ReturnType<typeof drizzle<typeof schema>> | null = null;
 
+// ============================================================================
+// SCHEMA MIGRATION NOTES
+// ============================================================================
+// This file contains inline CREATE TABLE IF NOT EXISTS statements and ALTER
+// TABLE migrations for backward compatibility with existing databases.
+//
+// For NEW schema changes, ALWAYS:
+//   1. Update src/lib/db/schema.ts (Drizzle schema) as the source of truth
+//   2. Run: npx drizzle-kit generate
+//   3. Run: npx drizzle-kit migrate (or add ALTER TABLE here for compatibility)
+//
+// The inline migrations below check column existence via PRAGMA table_info
+// before applying ALTER TABLE, making them safe to run on any database state.
+// ============================================================================
+
 function ensureReaderSettingsTtsEngineConstraint(sqlite: Database.Database) {
   const row = sqlite
     .prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'reader_settings'")

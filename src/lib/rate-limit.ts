@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// 简单的内存速率限制器
-// 注意：在单进程 Next.js 部署下工作正常；多进程/多副本部署时需要改用 Redis
+// ⚠️ 内存速率限制器
+// 仅适用于单进程 Next.js 部署。多进程/多副本部署时，每个实例独立计数，
+// 实际限制 = limit × 实例数。生产环境应改用 Redis 等共享存储。
 
 interface RateLimitEntry {
   count: number;

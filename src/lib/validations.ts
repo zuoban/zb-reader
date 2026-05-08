@@ -57,7 +57,12 @@ export const userUpdateSchema = z.object({
     .max(20, "用户名长度应在 2-20 个字符之间")
     .optional(),
   email: z.string().email("邮箱格式不正确").optional(),
-  password: z.string().min(6, "密码长度至少 6 个字符").optional(),
+  password: z
+    .string()
+    .min(8, "密码长度至少 8 个字符")
+    .regex(/[A-Za-z]/, "密码必须包含字母")
+    .regex(/\d/, "密码必须包含数字")
+    .optional(),
   avatar: z.string().nullable().optional(),
 });
 
@@ -69,7 +74,11 @@ export const registerSchema = z.object({
     .min(2, "用户名长度应在 2-20 个字符之间")
     .max(20, "用户名长度应在 2-20 个字符之间"),
   email: z.string().trim().toLowerCase().email("邮箱格式不正确"),
-  password: z.string().min(6, "密码长度至少 6 个字符"),
+  password: z
+    .string()
+    .min(8, "密码长度至少 8 个字符")
+    .regex(/[A-Za-z]/, "密码必须包含字母")
+    .regex(/\d/, "密码必须包含数字"),
 });
 
 const ttsConfigItemSchema = z.object({

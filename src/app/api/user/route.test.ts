@@ -151,12 +151,12 @@ describe("User API", () => {
       });
 
       const { PATCH } = await import("./route");
-      const req = createRequest("/api/user", { password: "123" });
+      const req = createRequest("/api/user", { password: "1234567" });
       const res = await PATCH(req);
       const data = await res.json();
 
       expect(res.status).toBe(400);
-      expect(data.error).toBe("密码长度至少 6 个字符");
+      expect(data.error).toBe("密码长度至少 8 个字符");
     });
 
     it("should check username uniqueness", async () => {

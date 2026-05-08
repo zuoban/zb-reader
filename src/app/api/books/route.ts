@@ -12,6 +12,8 @@ const MAX_EPUB_FILE_SIZE_BYTES = 100 * 1024 * 1024;
 const DEFAULT_BOOKS_PAGE = 1;
 const DEFAULT_BOOKS_LIMIT = 20;
 const MAX_BOOKS_LIMIT = 100;
+// EPUB files are ZIP files, magic bytes: PK\x03\x04
+const EPUB_MAGIC_BYTES = new Uint8Array([0x50, 0x4b, 0x03, 0x04]);
 
 export function normalizeBooksPagination(pageParam: string | null, limitParam: string | null) {
   const parsedPage = Number.parseInt(pageParam || "", 10);
@@ -271,8 +273,20 @@ export async function POST(req: NextRequest) {
       return badRequest(`文件不能超过 ${formatBytes(MAX_EPUB_FILE_SIZE_BYTES)}`);
     }
 
-    const bookId = uuidv4();
+    // Verify file content via magic bytes to prevent extension spoofing
     const buffer = Buffer.from(await file.arrayBuffer());
+    const hasZipMagicBytes =
+      buffer.length >= 4 &&
+      buffer[0] === EPUB_MAGIC_BYTES[0] &&
+      buffer[1] === EPUB_MAGIC_BYTES[1] &&
+      buffer[2] === EPUB_MAGIC_BYTES[2] &&
+      buffer[3] === EPUB_MAGIC_BYTES[3];
+
+    if (!hasZipMagicBytes) {
+      return badRequest("文件内容无效，不是有效的 EPUB 文件");
+    }
+
+    const bookId = uuidv4();
     savedFileName = saveBookFile(buffer, bookId, ext);
 
     let title = fileName.replace(`.${ext}`, "");

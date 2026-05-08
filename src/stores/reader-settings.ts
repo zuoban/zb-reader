@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { useRef, useEffect, useCallback } from "react";
+import { useShallow } from "zustand/react/shallow";
+import { logger } from "@/lib/logger";
 
 export type FontFamily = "system" | "serif" | "sans" | "kaiti";
 
@@ -124,8 +126,8 @@ export const useReaderSettingsStore = create<
             autoScrollToActive: settings.autoScrollToActive ?? DEFAULT_STATE.autoScrollToActive,
             loaded: true,
           });
-        } catch {
-          // ignore
+        } catch (error) {
+          logger.warn("reader-settings", "Failed to load settings from server", error);
         }
       },
 
@@ -152,8 +154,8 @@ export const useReaderSettingsStore = create<
               autoScrollToActive: state.autoScrollToActive,
             }),
           });
-        } catch {
-          // ignore
+        } catch (error) {
+          logger.warn("reader-settings", "Failed to save settings to server", error);
         }
       },
     }),
@@ -188,25 +190,18 @@ export function useDebouncedSettingsSave() {
 }
 
 export function useReaderSettingsValues() {
-  const fontSize = useReaderSettingsStore((s) => s.fontSize);
-  const fontFamily = useReaderSettingsStore((s) => s.fontFamily);
-  const theme = useReaderSettingsStore((s) => s.theme);
-  const browserVoiceId = useReaderSettingsStore((s) => s.browserVoiceId);
-  const ttsRate = useReaderSettingsStore((s) => s.ttsRate);
-  const microsoftPreloadCount = useReaderSettingsStore((s) => s.microsoftPreloadCount);
-  const ttsAutoNextChapter = useReaderSettingsStore((s) => s.ttsAutoNextChapter);
-  const ttsHighlightColor = useReaderSettingsStore((s) => s.ttsHighlightColor);
-
-  return {
-    fontSize,
-    fontFamily,
-    theme,
-    browserVoiceId,
-    ttsRate,
-    microsoftPreloadCount,
-    ttsAutoNextChapter,
-    ttsHighlightColor,
-  };
+  return useReaderSettingsStore(
+    useShallow((s) => ({
+      fontSize: s.fontSize,
+      fontFamily: s.fontFamily,
+      theme: s.theme,
+      browserVoiceId: s.browserVoiceId,
+      ttsRate: s.ttsRate,
+      microsoftPreloadCount: s.microsoftPreloadCount,
+      ttsAutoNextChapter: s.ttsAutoNextChapter,
+      ttsHighlightColor: s.ttsHighlightColor,
+    }))
+  );
 }
 
 export function useReaderSettingsLifecycleState() {
