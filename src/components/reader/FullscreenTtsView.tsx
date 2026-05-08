@@ -84,10 +84,10 @@ export function FullscreenTtsView({
       )}
       aria-hidden={!open}
     >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-10%,rgba(228,240,255,0.38),transparent_30%),radial-gradient(circle_at_18%_78%,rgba(170,212,255,0.14),transparent_24%),radial-gradient(circle_at_86%_18%,rgba(255,255,255,0.16),transparent_24%),linear-gradient(180deg,#29303c_0%,#171d26_42%,#0b0f15_100%)]" />
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.14),transparent_18%,transparent_78%,rgba(255,255,255,0.07))]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_45%,rgba(0,0,0,0.18)_100%)]" />
-      <div className="animate-reader-breathe absolute left-1/2 top-0 h-[34rem] w-[34rem] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(191,219,254,0.2)_0%,transparent_68%)] blur-3xl" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-14%,rgba(111,150,196,0.24),transparent_31%),radial-gradient(circle_at_16%_76%,rgba(88,124,161,0.13),transparent_25%),radial-gradient(circle_at_86%_20%,rgba(180,199,224,0.1),transparent_24%),linear-gradient(180deg,#242c37_0%,#121923_46%,#070b11_100%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.07),transparent_20%,transparent_74%,rgba(60,84,112,0.12))]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_32%,rgba(0,0,0,0.34)_100%)]" />
+      <div className="animate-reader-breathe absolute left-1/2 top-0 h-[32rem] w-[32rem] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(139,172,211,0.14)_0%,transparent_70%)] blur-3xl" />
 
       <div className="relative flex h-full flex-col gap-4 px-4 pb-[calc(env(safe-area-inset-bottom)+16px)] pt-[calc(env(safe-area-inset-top)+12px)] text-white sm:gap-6 sm:px-6">
         <header className="mx-auto grid w-full max-w-3xl grid-cols-[auto_1fr_auto] items-center gap-3">
@@ -98,7 +98,7 @@ export function FullscreenTtsView({
                 variant="ghost"
                 size="icon"
                 onClick={onToggleFullscreen}
-                className="reader-liquid-surface size-10 cursor-pointer rounded-full text-white/88 hover:-translate-y-0.5"
+                className="tts-immersive-control size-10 cursor-pointer rounded-full text-white/84 hover:-translate-y-0.5"
                 aria-label={isFullscreen ? "退出全屏" : "进入全屏"}
               >
                 {isFullscreen ? <Minimize className="size-4" /> : <Maximize className="size-4" />}
@@ -121,7 +121,7 @@ export function FullscreenTtsView({
               variant="ghost"
               size="icon"
               onClick={() => setSettingsOpen(true)}
-              className="reader-liquid-surface size-10 cursor-pointer rounded-full text-white/88 hover:-translate-y-0.5"
+              className="tts-immersive-control size-10 cursor-pointer rounded-full text-white/84 hover:-translate-y-0.5"
               aria-label="朗读设置"
             >
               <Settings className="size-4" />
@@ -130,18 +130,18 @@ export function FullscreenTtsView({
         </header>
 
         <main className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col justify-start">
-          <section className="reader-liquid-surface animate-reader-fade-up flex h-[min(64vh,620px)] min-h-0 flex-col rounded-[24px] p-5 text-left sm:h-[min(70vh,760px)] sm:rounded-[28px] sm:p-7">
+          <section className="tts-immersive-panel animate-reader-fade-up flex h-[min(64vh,620px)] min-h-0 flex-col rounded-[24px] p-5 text-left sm:h-[min(70vh,760px)] sm:rounded-[28px] sm:p-7">
             <div className="relative flex min-h-0 flex-1 flex-col">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex rounded-full border border-white/14 bg-white/8 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-white/60">
+                <span className="inline-flex rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-white/66">
                   {statusLabel}
                 </span>
-                <span className="text-[11px] uppercase tracking-[0.18em] text-white/50">
+                <span className="text-[11px] uppercase tracking-[0.18em] text-white/42">
                   {currentChapterTitle || "当前章节"}
                 </span>
               </div>
-              <div className="mt-5 min-h-0 flex-1 overflow-y-auto pr-1 [scrollbar-color:rgba(255,255,255,0.28)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border [&::-webkit-scrollbar-thumb]:border-transparent [&::-webkit-scrollbar-thumb]:bg-[linear-gradient(180deg,rgba(255,255,255,0.34),rgba(255,255,255,0.18))] [&::-webkit-scrollbar-thumb]:bg-clip-padding">
-                <p className="text-[16px] font-normal leading-9 tracking-[0.01em] text-white/96 [text-shadow:0_1px_10px_rgba(0,0,0,0.18)] sm:text-[18px] sm:leading-[2.6rem]">
+              <div className="mt-5 min-h-0 flex-1 overflow-y-auto pr-1 [scrollbar-color:rgba(255,255,255,0.22)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border [&::-webkit-scrollbar-thumb]:border-transparent [&::-webkit-scrollbar-thumb]:bg-[linear-gradient(180deg,rgba(255,255,255,0.26),rgba(255,255,255,0.12))] [&::-webkit-scrollbar-thumb]:bg-clip-padding">
+                <p className="text-[16px] font-normal leading-9 tracking-[0.01em] text-white/90 [text-shadow:0_1px_14px_rgba(0,0,0,0.42)] sm:text-[18px] sm:leading-[2.6rem]">
                   {paragraphText || "正在准备朗读内容，马上为你定位到当前段落。"}
                 </p>
               </div>
@@ -149,10 +149,10 @@ export function FullscreenTtsView({
           </section>
         </main>
 
-        <footer className="reader-liquid-surface animate-reader-fade-up mx-auto w-full max-w-3xl rounded-[24px] px-3 py-2.5 sm:px-4 sm:py-3" style={{ animationDelay: "70ms" }}>
+        <footer className="tts-immersive-panel animate-reader-fade-up mx-auto w-full max-w-3xl rounded-[24px] px-3 py-2.5 sm:px-4 sm:py-3" style={{ animationDelay: "70ms" }}>
           <div className="flex items-start justify-between gap-2.5">
             <div className="flex min-w-0 items-center gap-2.5">
-              <div className="reader-liquid-control flex h-12 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[12px]">
+              <div className="tts-immersive-control flex h-12 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[12px]">
                 {book.cover ? (
                   <img
                     src={`/api/books/${book.id}/cover`}
@@ -180,7 +180,7 @@ export function FullscreenTtsView({
               type="button"
               variant="ghost"
               onClick={onBackToReader}
-              className="reader-liquid-control shrink-0 cursor-pointer gap-1 rounded-full px-2.5 py-2 text-[11px] text-white/84 hover:text-white sm:px-3 sm:text-xs"
+              className="tts-immersive-control shrink-0 cursor-pointer gap-1 rounded-full px-2.5 py-2 text-[11px] text-white/82 hover:text-white sm:px-3 sm:text-xs"
             >
               <BookOpen className="size-3.5" />
               <span className="hidden sm:inline">原文</span>
@@ -193,7 +193,7 @@ export function FullscreenTtsView({
               variant="ghost"
               size="icon"
               onClick={onPrev}
-              className="reader-liquid-control size-8 cursor-pointer rounded-full text-white/86 hover:text-white sm:size-9"
+              className="tts-immersive-control size-8 cursor-pointer rounded-full text-white/84 hover:text-white sm:size-9"
               aria-label="上一段"
             >
               <SkipBack className="size-3.5 sm:size-4" />
@@ -201,7 +201,7 @@ export function FullscreenTtsView({
             <Button
               type="button"
               onClick={onToggle}
-              className="size-11 cursor-pointer rounded-full border border-white/30 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(235,242,255,0.78))] text-black shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_14px_32px_-10px_rgba(193,218,255,0.45),0_8px_24px_-12px_rgba(0,0,0,0.5)] transition-all hover:scale-[1.02] active:scale-[0.98] sm:size-13"
+              className="size-11 cursor-pointer rounded-full border border-sky-200/36 bg-[linear-gradient(180deg,rgba(206,226,252,0.94),rgba(124,166,214,0.76))] text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.72),0_16px_36px_-12px_rgba(108,157,214,0.5),0_8px_24px_-12px_rgba(0,0,0,0.72)] transition-all hover:scale-[1.02] active:scale-[0.98] sm:size-13"
               aria-label={isSpeaking && !isPaused ? "暂停朗读" : "开始朗读"}
             >
               {isSpeaking && !isPaused ? <Pause className="size-5 sm:size-6" /> : <Play className="size-5 ml-0.5 sm:size-6" />}
@@ -211,7 +211,7 @@ export function FullscreenTtsView({
               variant="ghost"
               size="icon"
               onClick={onNext}
-              className="reader-liquid-control size-8 cursor-pointer rounded-full text-white/86 hover:text-white sm:size-9"
+              className="tts-immersive-control size-8 cursor-pointer rounded-full text-white/84 hover:text-white sm:size-9"
               aria-label="下一段"
             >
               <SkipForward className="size-3.5 sm:size-4" />

@@ -746,6 +746,56 @@
     0 12px 26px -22px color-mix(in srgb, black 64%, transparent);
 }
 
+.tts-immersive-panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(213, 226, 241, 0.2);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09), transparent 36%),
+    linear-gradient(145deg, rgba(73, 88, 105, 0.42), rgba(21, 28, 37, 0.52));
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.2) inset,
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+    0 30px 70px -46px rgba(0, 0, 0, 0.86);
+  backdrop-filter: blur(26px) saturate(1.2);
+  -webkit-backdrop-filter: blur(26px) saturate(1.2);
+}
+
+.tts-immersive-panel::before {
+  pointer-events: none;
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(115deg, rgba(255, 255, 255, 0.1), transparent 34%),
+    radial-gradient(circle at 50% 0%, rgba(191, 219, 254, 0.12), transparent 34%);
+  opacity: 0.78;
+}
+
+.tts-immersive-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+.tts-immersive-control {
+  border: 1px solid rgba(226, 236, 247, 0.18);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 62%),
+    rgba(42, 51, 63, 0.38);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.18) inset,
+    0 14px 30px -24px rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(18px) saturate(1.16);
+  -webkit-backdrop-filter: blur(18px) saturate(1.16);
+}
+
+.tts-immersive-control:hover {
+  border-color: rgba(226, 236, 247, 0.28);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 62%),
+    rgba(55, 67, 82, 0.46);
+}
+
 [data-reader-theme="dark"] .reader-toolbar-surface {
   border-color: color-mix(in srgb, var(--reader-border, #333) 76%, transparent);
   background:
