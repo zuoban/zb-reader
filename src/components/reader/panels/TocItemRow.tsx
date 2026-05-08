@@ -28,13 +28,13 @@ export const TocItemRow = memo(function TocItemRow({
 
   useEffect(() => {
     if (isActive && itemRef.current) {
-      itemRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      itemRef.current.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
     }
   }, [isActive]);
 
   return (
-    <div>
-      <div className="group flex items-center">
+    <div className="min-w-max">
+      <div className="group flex min-w-max items-center">
         {hasChildren ? (
           <button
             className="reader-liquid-control shrink-0 cursor-pointer rounded-lg p-1.5 transition-all duration-200"
@@ -53,7 +53,7 @@ export const TocItemRow = memo(function TocItemRow({
         <button
           ref={itemRef}
           className={cn(
-            "flex-1 cursor-pointer truncate rounded-lg px-3 py-2 text-left text-sm transition-all duration-200",
+            "min-w-max cursor-pointer whitespace-nowrap rounded-lg px-3 py-2 text-left text-sm transition-all duration-200",
             isActive ? "reader-liquid-control font-semibold" : "hover:bg-[color-mix(in_srgb,var(--reader-text)_6%,transparent)]"
           )}
           style={{

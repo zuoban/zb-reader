@@ -25,8 +25,12 @@ export const TocTab = memo(function TocTab({
   onClose,
 }: TocTabProps) {
   return (
-    <ScrollArea className="h-full">
-      <div className="p-5">
+    <ScrollArea
+      className="h-full"
+      viewportClassName="reader-toc-scroll-viewport"
+      showHorizontalScrollbar
+    >
+      <div className="w-max min-w-full p-5 pr-8">
         {toc.length === 0 ? (
           <div className="text-center py-12">
             <div

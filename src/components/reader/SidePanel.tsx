@@ -71,7 +71,7 @@ export const SidePanel = memo(function SidePanel({
       <SheetContent
         side="left"
         showBackground={false}
-        className="reader-liquid-surface w-[85vw] sm:w-[340px] border-r p-0 rounded-r-2xl"
+        className="reader-liquid-surface !w-[min(94vw,420px)] !max-w-[calc(100vw-0.5rem)] overflow-hidden rounded-r-2xl border-r p-0 sm:!w-[420px] md:!w-[480px] lg:!w-[560px] xl:!w-[640px] 2xl:!w-[680px]"
         style={{ color: "var(--reader-text)" }}
       >
         <SheetHeader className="px-5 py-4 border-b" style={{ borderColor: "color-mix(in srgb, var(--reader-border) 72%, transparent)" }}>
@@ -81,7 +81,7 @@ export const SidePanel = memo(function SidePanel({
         <Tabs
           value={activeTab}
           onValueChange={(v) => onTabChange(v as "toc" | "bookmarks" | "notes")}
-          className="flex flex-col h-full"
+          className="flex h-full min-w-0 flex-col"
         >
           <TabsList
             className="reader-liquid-control mx-5 mt-4 grid h-11 grid-cols-3 rounded-xl p-1 gap-1"

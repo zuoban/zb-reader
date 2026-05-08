@@ -758,6 +758,14 @@
   transform: translateY(-1px);
 }
 
+.reader-toc-scroll-viewport {
+  overscroll-behavior: contain;
+}
+
+[data-slot="scroll-area-scrollbar"][data-orientation="horizontal"] {
+  height: 0.55rem;
+}
+
 .reader-toolbar-tooltip {
   border-color: color-mix(in srgb, var(--reader-border, #ddd) 84%, transparent);
   background:
