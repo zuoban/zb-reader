@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { memo, useEffect, useRef } from "react";
-import { BookOpen, MoreVertical, Tags, Trash2 } from "lucide-react";
+import { BookOpen, Check, MoreVertical, Tags, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -152,7 +152,7 @@ export const BookCard = memo(function BookCard({
         onClick={handleOpenReader}
       >
         <div
-          className="liquid-control relative mx-1.5 mt-1.5 mb-1 aspect-[4/5] overflow-hidden rounded-[1rem] p-0 shadow-sm"
+          className="liquid-control relative mx-1.5 mt-1.5 mb-1 aspect-[4/5] overflow-hidden rounded-[1rem] p-0 shadow-md"
           data-reader-transition-cover
         >
           {/* Cover Image */}
@@ -164,27 +164,38 @@ export const BookCard = memo(function BookCard({
                 fill
                 unoptimized
                 sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
-                className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06]"
+                className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.08]"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/5 to-transparent opacity-60 transition-opacity duration-400 group-hover:opacity-75" />
+              
+              {/* Book spine & page edge effect */}
+              <div className="absolute inset-y-0 left-0 w-[4%] bg-black/24 backdrop-blur-[1px]" />
+              <div className="absolute inset-y-0 left-[4%] w-px bg-white/12" />
+              <div className="absolute inset-0 bg-gradient-to-tr from-black/45 via-transparent to-white/10 opacity-60" />
+              <div className="absolute inset-0 ring-1 ring-inset ring-black/5" />
               
               {/* Visual Progress Bar Overlay */}
               {hasProgress && (
-                <div className="absolute inset-x-2 bottom-2 z-20 h-1 rounded-full bg-white/20 backdrop-blur-md">
+                <div className="absolute inset-x-3 bottom-2.5 z-20 h-1.5 rounded-full bg-black/32 p-0.5 backdrop-blur-md">
                   <div 
-                    className="h-full rounded-full bg-[color:var(--cta)] shadow-[0_0_8px_rgba(var(--cta-rgb),0.6)]" 
+                    className="h-full rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)] transition-all duration-500" 
                     style={{ width: `${progress * 100}%` }}
                   />
+                </div>
+              )}
+              
+              {isCompleted && (
+                <div className="absolute top-2 right-2 z-20 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-[color:var(--chart-3)] shadow-lg backdrop-blur-sm">
+                  <Check className="h-3.5 w-3.5 stroke-[3px]" />
                 </div>
               )}
             </>
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(145deg,color-mix(in_oklab,var(--glass-strong)_72%,white_28%),color-mix(in_oklab,var(--accent)_62%,var(--cta)_12%))]">
               <div className="relative">
-                <div className="liquid-control flex h-[4.35rem] w-[3.25rem] items-center justify-center overflow-hidden rounded-r-lg rounded-l-sm text-foreground transition-transform duration-700 ease-out group-hover:scale-[1.04] sm:h-[4.8rem] sm:w-[3.55rem]">
-                  <div className="absolute inset-y-0 left-0 w-1 bg-black/12" />
+                <div className="liquid-control flex h-[4.35rem] w-[3.25rem] items-center justify-center overflow-hidden rounded-r-lg rounded-l-sm text-foreground transition-transform duration-700 ease-out group-hover:scale-[1.05] sm:h-[4.8rem] sm:w-[3.55rem]">
+                  <div className="absolute inset-y-0 left-0 w-1.5 bg-black/15" />
                   <div className="liquid-hairline absolute inset-x-0 top-0 h-px opacity-40" />
-                  <span className="text-lg font-bold sm:text-xl">
+                  <span className="text-lg font-bold tracking-tighter sm:text-xl">
                     {book.title?.charAt(0) || "书"}
                   </span>
                 </div>
@@ -195,25 +206,25 @@ export const BookCard = memo(function BookCard({
       </Link>
 
       {/* Card Content */}
-      <div className="relative flex min-h-[58px] flex-col px-3.5 pb-3 pt-1 sm:min-h-[64px]">
+      <div className="relative flex min-h-[62px] flex-col px-3.5 pb-3.5 pt-1.5 sm:min-h-[68px]">
         <div className="flex items-start justify-between gap-1.5">
           <h3
-            className="line-clamp-2 min-h-[2.4em] flex-1 text-[13px] font-bold leading-[1.25] tracking-tight text-foreground/90 transition-colors duration-300 group-hover:text-foreground sm:text-[14px]"
+            className="line-clamp-2 min-h-[2.5em] flex-1 text-[13.5px] font-bold leading-[1.3] tracking-tight text-foreground/90 transition-colors duration-300 group-hover:text-foreground sm:text-[14.5px]"
             title={book.title}
           >
             {book.title || "未命名书籍"}
           </h3>
 
-          <div className="relative -mr-1 flex shrink-0 flex-col items-end pt-0.5">
+          <div className="relative -mr-1.5 flex shrink-0 flex-col items-end pt-0.5">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
                   aria-label="菜单"
-                  className="liquid-control h-6.5 w-6.5 shrink-0 rounded-lg text-muted-foreground/50 opacity-100 transition-all duration-300 hover:text-foreground sm:opacity-0 sm:group-hover:opacity-100"
+                  className="liquid-control h-7 w-7 shrink-0 rounded-lg text-muted-foreground/50 opacity-100 transition-all duration-300 hover:text-foreground sm:opacity-0 sm:group-hover:opacity-100"
                 >
-                  <MoreVertical className="h-3.5 w-3.5" />
+                  <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-44 animate-in fade-in-0 zoom-in-95 duration-200">
@@ -245,15 +256,15 @@ export const BookCard = memo(function BookCard({
           </div>
         </div>
 
-        <div className="mt-1.5 flex flex-col gap-2">
+        <div className="mt-2 flex flex-col gap-2.5">
           <div className="flex items-center justify-between gap-2">
-            <span className="min-w-0 truncate text-left text-[10px] font-medium text-muted-foreground/70 transition-colors duration-300 group-hover:text-muted-foreground sm:text-[11px]">
+            <span className="min-w-0 truncate text-left text-[10px] font-semibold text-muted-foreground/75 transition-colors duration-300 group-hover:text-muted-foreground sm:text-[11px]">
               {book.author || "未知作者"}
             </span>
             {book.category ? (
               <Badge
                 variant="secondary"
-                className="max-w-[50%] shrink-0 rounded-md border-transparent bg-foreground/5 px-1.5 py-0.5 text-[9px] font-bold text-muted-foreground/80 transition-all duration-300 group-hover:bg-foreground/10 group-hover:text-foreground sm:text-[10px]"
+                className="max-w-[45%] shrink-0 rounded-md border-transparent bg-foreground/[0.04] px-1.5 py-0.5 text-[9px] font-bold text-muted-foreground/80 transition-all duration-300 group-hover:bg-foreground/[0.08] group-hover:text-foreground sm:text-[10px]"
                 title={book.category}
               >
                 {book.category}
@@ -261,20 +272,22 @@ export const BookCard = memo(function BookCard({
             ) : null}
           </div>
           
-          <div className="flex items-center justify-between gap-2 border-t border-border/25 pt-2">
-            <div className="flex items-center gap-1.5">
-              <span className={cn(
-                "min-w-0 truncate text-left text-[9px] font-bold tracking-tight sm:text-[10px]",
-                isCompleted ? "text-[color:var(--chart-3)]" : "text-foreground/75"
+          <div className="flex items-center justify-between gap-2 border-t border-border/15 pt-2.5">
+            <div className="flex items-center gap-2">
+              <div className={cn(
+                "flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-bold tracking-tight sm:text-[10px]",
+                isCompleted 
+                  ? "bg-[color:var(--chart-3)]/10 text-[color:var(--chart-3)]" 
+                  : hasProgress 
+                    ? "bg-[color:var(--cta)]/10 text-[color:var(--cta)]"
+                    : "bg-foreground/5 text-foreground/60"
               )}>
+                {isCompleted && <Check className="h-2.5 w-2.5 stroke-[3px]" />}
                 {statusText}
-              </span>
-              {isCompleted && (
-                <div className="h-1 w-1 rounded-full bg-[color:var(--chart-3)]" />
-              )}
+              </div>
             </div>
             {lastReadText ? (
-              <span className="shrink-0 text-[9px] font-medium text-muted-foreground/65 sm:text-[10px]">
+              <span className="shrink-0 text-[9px] font-medium text-muted-foreground/60 sm:text-[10px]">
                 {lastReadText}
               </span>
             ) : null}

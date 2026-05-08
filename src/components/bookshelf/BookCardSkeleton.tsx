@@ -11,17 +11,23 @@ export function BookCardSkeleton() {
           <Skeleton className="h-[18px] w-12 rounded-full" />
         </div>
       </div>
-      <div className="flex min-h-[58px] flex-col px-2.5 pb-2 pt-1.5 sm:min-h-[62px]">
+      <div className="flex min-h-[62px] flex-col px-3.5 pb-3.5 pt-1.5 sm:min-h-[68px]">
         <div className="flex items-start justify-between gap-1.5">
-          <div className="min-w-0 flex-1 space-y-0.5">
-            <Skeleton className="h-[13px] w-full sm:h-[14px]" />
-            <Skeleton className="h-[10px] w-2/3 sm:h-[11px]" />
+          <div className="min-w-0 flex-1 space-y-1">
+            <Skeleton className="h-[14px] w-full sm:h-[15px]" />
+            <Skeleton className="h-[14px] w-2/3 sm:h-[15px]" />
           </div>
-          <Skeleton className="h-5.5 w-5.5 shrink-0 rounded-md sm:rounded-lg" />
+          <Skeleton className="h-7 w-7 shrink-0 rounded-lg" />
         </div>
-        <div className="mt-1.5 flex items-center justify-between gap-1.5">
-          <Skeleton className="h-[9px] w-10 sm:h-[10px]" />
-          <Skeleton className="h-[9px] w-8 sm:h-[10px]" />
+        <div className="mt-2.5 space-y-2.5">
+          <div className="flex items-center justify-between gap-2">
+            <Skeleton className="h-[10px] w-20 sm:h-[11px]" />
+            <Skeleton className="h-[16px] w-12 rounded-md" />
+          </div>
+          <div className="flex items-center justify-between gap-2 border-t border-border/10 pt-2.5">
+            <Skeleton className="h-[14px] w-14 rounded-full sm:h-[16px]" />
+            <Skeleton className="h-[10px] w-12 sm:h-[11px]" />
+          </div>
         </div>
       </div>
     </Card>
