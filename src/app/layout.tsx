@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Poppins, Open_Sans } from "next/font/google";
 import { ReaderRouteTransition } from "@/components/layout/ReaderRouteTransition";
+import { PWARegistration } from "@/components/layout/PWARegistration";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -22,10 +23,20 @@ const openSans = Open_Sans({
 export const metadata: Metadata = {
   title: "ZB Reader - 在线电子书阅读器",
   description: "一个简洁的在线电子书阅读器，支持 EPUB 格式",
+  manifest: "/manifest.json",
   icons: {
     icon: [{ url: "/favicon.ico", sizes: "64x64" }],
     apple: "/apple-touch-icon.png",
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "ZB Reader",
+  },
+};
+
+export const viewport = {
+  themeColor: "#6366f1",
 };
 
 export default function RootLayout({
@@ -38,6 +49,7 @@ export default function RootLayout({
       <body
         className={`${poppins.variable} ${openSans.variable} antialiased`}
       >
+        <PWARegistration />
         {children}
         <ReaderRouteTransition />
       </body>

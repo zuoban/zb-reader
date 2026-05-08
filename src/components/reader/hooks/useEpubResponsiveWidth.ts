@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { debounce } from "@/lib/utils";
 
 /**
  * 根据视口宽度计算 EPUB 阅读器的页面宽度百分比
@@ -9,7 +10,7 @@ export function useEpubResponsiveWidth() {
   const [pageWidth, setPageWidth] = useState(100);
 
   useEffect(() => {
-    const updatePageWidth = () => {
+    const updatePageWidth = debounce(() => {
       const width = window.innerWidth;
       let newWidth = 100;
       if (width >= 1920) {
@@ -24,11 +25,13 @@ export function useEpubResponsiveWidth() {
         newWidth = 95;
       }
       setPageWidth(newWidth);
-    };
+    }, 200);
 
     updatePageWidth();
     window.addEventListener("resize", updatePageWidth);
-    return () => window.removeEventListener("resize", updatePageWidth);
+    return () => {
+      window.removeEventListener("resize", updatePageWidth);
+    };
   }, []);
 
   return pageWidth;

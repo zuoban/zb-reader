@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import type { MutableRefObject, RefObject } from "react";
+import { debounce } from "@/lib/utils";
 
 interface UseEpubScrollProgressParams {
   currentLocationRef: MutableRefObject<string | null>;
@@ -27,6 +28,25 @@ export function useEpubScrollProgress({
   scrollRatioRef,
   viewerRef,
 }: UseEpubScrollProgressParams) {
+  const handleScroll = useMemo(() => {
+    return debounce((epubContainer: HTMLElement) => {
+      const scrollRange = epubContainer.scrollHeight - epubContainer.clientHeight;
+      if (scrollRange <= 0) return;
+
+      const ratio = Math.min(1, Math.max(0, epubContainer.scrollTop / scrollRange));
+      scrollRatioRef.current = ratio;
+
+      if (!currentLocationRef.current) return;
+
+      onLocationChange?.({
+        cfi: currentLocationRef.current,
+        progress: progressRef.current,
+        scrollRatio: ratio,
+        href: undefined,
+      });
+    }, 300);
+  }, [currentLocationRef, onLocationChange, progressRef, scrollRatioRef]);
+
   useEffect(() => {
     if (!isRenditionReady) return;
 
@@ -35,46 +55,12 @@ export function useEpubScrollProgress({
     ) as HTMLElement | null;
     if (!epubContainer) return;
 
-    let scrollTimer: ReturnType<typeof setTimeout> | null = null;
+    const scrollListener = () => handleScroll(epubContainer);
 
-    const readScrollRatio = () => {
-      const scrollRange = epubContainer.scrollHeight - epubContainer.clientHeight;
-      if (scrollRange <= 0) return undefined;
-
-      const ratio = Math.min(1, Math.max(0, epubContainer.scrollTop / scrollRange));
-      scrollRatioRef.current = ratio;
-      return ratio;
-    };
-
-    const handleScroll = () => {
-      readScrollRatio();
-
-      if (scrollTimer !== null) clearTimeout(scrollTimer);
-      scrollTimer = setTimeout(() => {
-        scrollTimer = null;
-        if (!currentLocationRef.current) return;
-
-        onLocationChange?.({
-          cfi: currentLocationRef.current,
-          progress: progressRef.current,
-          scrollRatio: readScrollRatio(),
-          href: undefined,
-        });
-      }, 300);
-    };
-
-    epubContainer.addEventListener("scroll", handleScroll, { passive: true });
+    epubContainer.addEventListener("scroll", scrollListener, { passive: true });
 
     return () => {
-      epubContainer.removeEventListener("scroll", handleScroll);
-      if (scrollTimer !== null) clearTimeout(scrollTimer);
+      epubContainer.removeEventListener("scroll", scrollListener);
     };
-  }, [
-    currentLocationRef,
-    isRenditionReady,
-    onLocationChange,
-    progressRef,
-    scrollRatioRef,
-    viewerRef,
-  ]);
+  }, [isRenditionReady, viewerRef, handleScroll]);
 }

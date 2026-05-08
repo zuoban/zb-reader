@@ -5,6 +5,7 @@ import { useTheme } from "next-themes";
 import { Check, Tags, X } from "lucide-react";
 import { toast } from "sonner";
 import { BackgroundDecoration } from "@/components/bookshelf/BackgroundDecoration";
+import { SearchBar } from "@/components/bookshelf/SearchBar";
 import { BookCardSkeleton } from "@/components/bookshelf/BookCardSkeleton";
 import { BookGrid } from "@/components/bookshelf/BookGrid";
 import { Navbar } from "@/components/layout/Navbar";
@@ -37,9 +38,13 @@ export default function BookshelfPage() {
   const [categories, setCategories] = useState<CategorySummary[]>([]);
   const [totalBooks, setTotalBooks] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState(ALL_CATEGORY);
+  const [searchQuery, setSearchQuery] = useState("");
   const [progressMap, setProgressMap] = useState<Record<string, number>>({});
   const [lastReadAtMap, setLastReadAtMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
   const [spotlightBookId, setSpotlightBookId] = useState<string | null>(null);
   const [categoryDialogBook, setCategoryDialogBook] = useState<Book | null>(null);
   const [deleteDialogBook, setDeleteDialogBook] = useState<Book | null>(null);
@@ -49,6 +54,13 @@ export default function BookshelfPage() {
   const deleteCancelButtonRef = useRef<HTMLButtonElement>(null);
   const { setTheme } = useTheme();
   const activeCategoryName = selectedCategory === ALL_CATEGORY ? "" : selectedCategory;
+
+  // Reset page when category or search changes
+  useEffect(() => {
+    setPage(1);
+    setBooks([]);
+    setLoading(true);
+  }, [selectedCategory, searchQuery]);
 
   // Sync theme with reader settings on mount
   useEffect(() => {
@@ -71,50 +83,59 @@ export default function BookshelfPage() {
     syncTheme();
   }, [setTheme]);
 
-  const fetchBooks = useCallback(async () => {
+  const fetchBooks = useCallback(async (isInitial = false) => {
+    const currentPage = isInitial ? 1 : page;
     try {
       const params = new URLSearchParams();
       params.set("withProgress", "true");
+      params.set("page", currentPage.toString());
+      params.set("limit", "20");
       if (activeCategoryName) {
         params.set("category", activeCategoryName);
+      }
+      if (searchQuery) {
+        params.set("search", searchQuery);
       }
 
       const res = await fetch(`/api/books?${params}`);
       const data = await res.json();
 
       if (res.ok) {
-        setBooks(data.books);
+        if (currentPage === 1) {
+          setBooks(data.books);
+          setProgressMap(data.progressMap || {});
+          setLastReadAtMap(data.lastReadAtMap || {});
+        } else {
+          setBooks((prev) => [...prev, ...data.books]);
+          setProgressMap((prev) => ({ ...prev, ...(data.progressMap || {}) }));
+          setLastReadAtMap((prev) => ({ ...prev, ...(data.lastReadAtMap || {}) }));
+        }
+        
         setCategories(data.categories || []);
         setTotalBooks(data.allTotal ?? data.total ?? 0);
-        setProgressMap(data.progressMap || {});
-        setLastReadAtMap(data.lastReadAtMap || {});
+        
+        // Check if there are more books to load
+        const totalFetched = (currentPage - 1) * 20 + data.books.length;
+        setHasMore(totalFetched < (data.total || 0));
       }
     } catch {
       toast.error("获取书籍失败");
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
-  }, [activeCategoryName]);
+  }, [activeCategoryName, page]);
 
   useEffect(() => {
-    fetchBooks();
-  }, [fetchBooks]);
+    fetchBooks(page === 1);
+  }, [fetchBooks, page]);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const returningBookId = window.sessionStorage.getItem(READER_RETURN_SPOTLIGHT_KEY);
-    if (!returningBookId) return;
-
-    setSpotlightBookId(returningBookId);
-    window.sessionStorage.removeItem(READER_RETURN_SPOTLIGHT_KEY);
-
-    const timer = window.setTimeout(() => {
-      setSpotlightBookId(null);
-    }, 1600);
-
-    return () => window.clearTimeout(timer);
-  }, [books.length]);
+  const handleLoadMore = useCallback(() => {
+    if (!loadingMore && hasMore) {
+      setLoadingMore(true);
+      setPage((p) => p + 1);
+    }
+  }, [hasMore, loadingMore]);
 
   const handleRequestDelete = useCallback((bookId: string) => {
     const book = books.find((item) => item.id === bookId);
@@ -197,82 +218,156 @@ export default function BookshelfPage() {
     }
   }, [categoryDialogBook, categoryInput, fetchBooks]);
 
+  const handleUploadComplete = useCallback(() => {
+    if (page === 1) {
+      fetchBooks(true);
+    } else {
+      setPage(1);
+    }
+  }, [fetchBooks, page]);
+
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!hasMore || loading || loadingMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          handleLoadMore();
+        }
+      },
+      { threshold: 0.1, rootMargin: "100px" }
+    );
+
+    const currentRef = loadMoreRef.current;
+    if (currentRef) {
+      observer.observe(currentRef);
+    }
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef);
+      }
+    };
+  }, [hasMore, loading, loadingMore, handleLoadMore]);
+
   return (
     <div className="app-noise liquid-page min-h-screen bg-background">
       <BackgroundDecoration />
-      <Navbar onUploadComplete={fetchBooks} />
+      <Navbar onUploadComplete={handleUploadComplete} />
 
       <main className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-10 pt-6 sm:px-6 sm:pb-14 sm:pt-8">
-        <div className="surface-glass surface-elevated mb-6 -mx-1 flex w-fit max-w-[calc(100%+0.5rem)] gap-1 overflow-x-auto rounded-2xl p-1.5 [scrollbar-width:none] sm:mb-8 [&::-webkit-scrollbar]:hidden">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className={cn(
-              "h-8.5 cursor-pointer rounded-xl px-3.5 text-xs font-semibold transition-all duration-400",
-              selectedCategory === ALL_CATEGORY
-                ? "category-filter-button-active"
-                : "text-muted-foreground/80 hover:bg-background/40 hover:text-foreground"
-            )}
-            onClick={() => setSelectedCategory(ALL_CATEGORY)}
-          >
-            全部
-            <Badge
-              variant="outline"
-              className={cn(
-                "ml-1.5 border-transparent bg-foreground/5 px-1.5 py-0 text-[10px] font-bold text-muted-foreground/80 shadow-none transition-colors",
-                selectedCategory === ALL_CATEGORY && "bg-[color:var(--cta)]/15 text-[color:var(--cta)]"
-              )}
-            >
-              {totalBooks}
-            </Badge>
-          </Button>
-          {categories.map((category) => (
+        <div className="mb-8 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="surface-glass surface-elevated -mx-1 flex w-fit max-w-[calc(100%+0.5rem)] gap-1 overflow-x-auto rounded-2xl p-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <Button
-              key={category.name}
               type="button"
               variant="ghost"
               size="sm"
               className={cn(
                 "h-8.5 cursor-pointer rounded-xl px-3.5 text-xs font-semibold transition-all duration-400",
-                selectedCategory === category.name
+                selectedCategory === ALL_CATEGORY
                   ? "category-filter-button-active"
                   : "text-muted-foreground/80 hover:bg-background/40 hover:text-foreground"
               )}
-              onClick={() => setSelectedCategory(category.name)}
+              onClick={() => setSelectedCategory(ALL_CATEGORY)}
             >
-              <span className="max-w-32 truncate">{category.name}</span>
+              全部
               <Badge
                 variant="outline"
                 className={cn(
                   "ml-1.5 border-transparent bg-foreground/5 px-1.5 py-0 text-[10px] font-bold text-muted-foreground/80 shadow-none transition-colors",
-                  selectedCategory === category.name && "bg-[color:var(--cta)]/15 text-[color:var(--cta)]"
+                  selectedCategory === ALL_CATEGORY && "bg-[color:var(--cta)]/15 text-[color:var(--cta)]"
                 )}
               >
-                {category.count}
+                {totalBooks}
               </Badge>
             </Button>
-          ))}
+            {categories.map((category) => (
+              <Button
+                key={category.name}
+                type="button"
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  "h-8.5 cursor-pointer rounded-xl px-3.5 text-xs font-semibold transition-all duration-400",
+                  selectedCategory === category.name
+                    ? "category-filter-button-active"
+                    : "text-muted-foreground/80 hover:bg-background/40 hover:text-foreground"
+                )}
+                onClick={() => setSelectedCategory(category.name)}
+              >
+                <span className="max-w-32 truncate">{category.name}</span>
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "ml-1.5 border-transparent bg-foreground/5 px-1.5 py-0 text-[10px] font-bold text-muted-foreground/80 shadow-none transition-colors",
+                    selectedCategory === category.name && "bg-[color:var(--cta)]/15 text-[color:var(--cta)]"
+                  )}
+                >
+                  {category.count}
+                </Badge>
+              </Button>
+            ))}
+          </div>
+
+          <SearchBar 
+            onSearch={setSearchQuery} 
+            className="w-full sm:w-72" 
+          />
         </div>
 
         {/* Book Grid */}
-        {loading ? (
+        {loading && page === 1 ? (
           <div className="animate-reader-fade-up grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-3.5 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6" style={{ animationDelay: "120ms" }}>
             {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
               <BookCardSkeleton key={i} />
             ))}
           </div>
         ) : (
-          <BookGrid
-            books={books}
-            progressMap={progressMap}
-            lastReadAtMap={lastReadAtMap}
-            spotlightBookId={spotlightBookId}
-            emptyTitle={activeCategoryName ? "这个分类还没有书" : undefined}
-            emptyDescription={activeCategoryName ? "可以从其他图书的菜单中设置分类，或切回全部书籍继续浏览。" : undefined}
-            onDelete={handleRequestDelete}
-            onChangeCategory={handleOpenCategoryDialog}
-          />
+          <>
+            <BookGrid
+              books={books}
+              progressMap={progressMap}
+              lastReadAtMap={lastReadAtMap}
+              spotlightBookId={spotlightBookId}
+              emptyTitle={activeCategoryName ? "这个分类还没有书" : undefined}
+              emptyDescription={activeCategoryName ? "可以从其他图书的菜单中设置分类，或切回全部书籍继续浏览。" : undefined}
+              onDelete={handleRequestDelete}
+              onChangeCategory={handleOpenCategoryDialog}
+            />
+            
+            {/* Load More Trigger & Indicator */}
+            <div 
+              ref={loadMoreRef} 
+              className="mt-12 flex flex-col items-center justify-center gap-4 py-8"
+            >
+              {hasMore ? (
+                <Button
+                  variant="outline"
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
+                  className="liquid-control h-11 min-w-[140px] rounded-2xl border-white/20 bg-white/40 px-8 text-sm font-bold shadow-sm transition-all duration-400 hover:scale-[1.02] hover:bg-white/60 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
+                >
+                  {loadingMore ? (
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
+                      <span>正在加载...</span>
+                    </div>
+                  ) : (
+                    "加载更多"
+                  )}
+                </Button>
+              ) : books.length > 0 ? (
+                <div className="flex flex-col items-center gap-2 opacity-40">
+                  <div className="h-px w-12 bg-muted-foreground/30" />
+                  <p className="text-[11px] font-bold tracking-widest text-muted-foreground uppercase">
+                    已经到底了
+                  </p>
+                </div>
+              ) : null}
+            </div>
+          </>
         )}
       </main>
 

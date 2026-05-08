@@ -1,0 +1,22 @@
+{
+  "name": "ZB Reader",
+  "short_name": "ZB Reader",
+  "description": "简洁而有温度的个人阅读空间",
+  "start_url": "/bookshelf",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6366f1",
+  "icons": [
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/zb-reader-identity.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
