@@ -189,74 +189,77 @@ export const BookCard = memo(function BookCard({
       <div className="mx-3 h-px bg-gradient-to-r from-transparent via-border/70 to-transparent" />
 
       {/* Card Content */}
-      <div className="relative flex min-h-[48px] flex-col px-3 pb-2 pt-0 sm:min-h-[52px]">
-        <h3
-          className="line-clamp-2 min-h-[2.25em] pr-7 text-[13px] font-semibold leading-[1.18] text-foreground/95 sm:text-[14px]"
-          title={book.title}
-        >
-          {book.title || "未命名书籍"}
-        </h3>
+      <div className="relative flex min-h-[50px] flex-col px-3.5 pb-2.5 pt-0 sm:min-h-[54px]">
+        <div className="flex items-start justify-between gap-2">
+          <h3
+            className="line-clamp-2 min-h-[2.25em] flex-1 text-[13px] font-bold leading-[1.2] text-foreground/95 transition-colors duration-300 group-hover:text-foreground sm:text-[14px]"
+            title={book.title}
+          >
+            {book.title || "未命名书籍"}
+          </h3>
 
-        <div className="absolute top-0 right-2 flex shrink-0 flex-col items-end gap-0.5">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="菜单"
-                className="liquid-control -mr-1 h-5.5 w-5.5 shrink-0 rounded-lg text-muted-foreground/70 opacity-100 transition-all duration-200 hover:text-foreground sm:opacity-0 sm:group-hover:opacity-100"
-              >
-                <MoreVertical className="h-2.5 w-2.5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40">
-              <DropdownMenuItem asChild className="cursor-pointer">
-                <Link href={readerHref} className="flex items-center gap-2">
-                  <BookOpen className="h-4 w-4" />
-                  <span>阅读</span>
-                </Link>
-              </DropdownMenuItem>
-              {onChangeCategory ? (
-                <DropdownMenuItem
-                  className="cursor-pointer"
-                  onClick={() => onChangeCategory(book)}
+          <div className="relative -mr-1 flex shrink-0 flex-col items-end pt-0.5">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="菜单"
+                  className="liquid-control h-6 w-6 shrink-0 rounded-lg text-muted-foreground/60 opacity-100 transition-all duration-300 hover:text-foreground sm:opacity-0 sm:group-hover:opacity-100"
                 >
-                  <Tags className="h-4 w-4" />
-                  <span>设置分类</span>
+                  <MoreVertical className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40 animate-in fade-in-0 zoom-in-95 duration-200">
+                <DropdownMenuItem asChild className="cursor-pointer py-2">
+                  <Link href={readerHref} className="flex items-center gap-2">
+                    <BookOpen className="h-4 w-4 text-[color:var(--cta)]" />
+                    <span className="font-medium">开始阅读</span>
+                  </Link>
                 </DropdownMenuItem>
-              ) : null}
-              <DropdownMenuItem
-                className="cursor-pointer text-destructive focus:text-destructive"
-                onClick={() => onDelete(book.id)}
-              >
-                <Trash2 className="h-4 w-4" />
-                <span>删除</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                {onChangeCategory ? (
+                  <DropdownMenuItem
+                    className="cursor-pointer py-2"
+                    onClick={() => onChangeCategory(book)}
+                  >
+                    <Tags className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">设置分类</span>
+                  </DropdownMenuItem>
+                ) : null}
+                <div className="my-1 h-px bg-border/40" />
+                <DropdownMenuItem
+                  className="cursor-pointer py-2 text-destructive focus:bg-destructive/10 focus:text-destructive"
+                  onClick={() => onDelete(book.id)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span className="font-medium">删除书籍</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
-        <div className="mt-0.5 flex flex-col gap-1">
-          <div className="flex items-center justify-between gap-1">
-            <span className="min-w-0 truncate text-left text-[10px] text-muted-foreground/90 sm:text-[11px]">
+        <div className="mt-1 flex flex-col gap-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <span className="min-w-0 truncate text-left text-[10px] font-medium text-muted-foreground/80 transition-colors duration-300 group-hover:text-muted-foreground sm:text-[11px]">
               {book.author || "未知作者"}
             </span>
             {book.category ? (
               <Badge
                 variant="secondary"
-                className="max-w-[60%] shrink-0 rounded px-1.5 py-0.5 text-[9px] font-medium leading-none text-muted-foreground sm:text-[10px]"
+                className="max-w-[55%] shrink-0 rounded-md border-transparent bg-foreground/5 px-1.5 py-0.5 text-[9px] font-semibold text-muted-foreground/90 transition-all duration-300 group-hover:bg-foreground/8 group-hover:text-foreground sm:text-[10px]"
                 title={book.category}
               >
                 {book.category}
               </Badge>
             ) : null}
           </div>
-          <div className="flex items-center justify-between gap-1">
-            <span className="min-w-0 truncate text-left text-[9px] font-medium text-foreground/80 sm:text-[10px]">
+          <div className="flex items-center justify-between gap-2 border-t border-border/30 pt-1.5">
+            <span className="min-w-0 truncate text-left text-[9px] font-bold tracking-tight text-foreground/70 sm:text-[10px]">
               {statusText}
             </span>
             {lastReadText ? (
-              <span className="shrink-0 text-[9px] text-muted-foreground/85 sm:text-[10px]">
+              <span className="shrink-0 text-[9px] font-medium text-muted-foreground/75 sm:text-[10px]">
                 {lastReadText}
               </span>
             ) : null}

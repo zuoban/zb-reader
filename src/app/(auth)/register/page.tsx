@@ -73,32 +73,38 @@ export default function RegisterPage() {
   };
 
   return (
-    <Card className="liquid-panel w-full overflow-hidden rounded-2xl py-5">
-      <CardHeader className="relative text-center pb-2">
-        <div className="liquid-hairline absolute inset-x-6 top-0 h-px" />
-        <div className="flex justify-center mb-4">
-          <div className="flex h-24 w-24 items-center justify-center">
-            <Image src="/logo.svg" alt="ZB Reader" width={88} height={88} />
+    <Card className="liquid-panel w-full overflow-hidden rounded-[2rem] py-6 shadow-2xl transition-all duration-400 ease-out">
+      <CardHeader className="relative text-center pb-4">
+        <div className="liquid-hairline absolute inset-x-8 top-0 h-px opacity-60" />
+        <div className="flex justify-center mb-6">
+          <div className="relative flex h-20 w-20 items-center justify-center transition-transform duration-500 ease-out hover:scale-105">
+            <Image 
+              src="/logo.svg" 
+              alt="ZB Reader" 
+              width={72} 
+              height={72} 
+              className="drop-shadow-[0_4px_12px_rgba(var(--cta-rgb),0.3)]"
+            />
           </div>
         </div>
-        <CardTitle className="text-2xl font-semibold tracking-tight">ZB Reader</CardTitle>
-        <CardDescription className="text-base mt-2">
+        <CardTitle className="text-3xl font-bold tracking-tight text-foreground">ZB Reader</CardTitle>
+        <CardDescription className="text-[0.95rem] mt-3 font-medium text-muted-foreground/80">
           创建账号，开始你的阅读收藏
         </CardDescription>
-        <div className="liquid-control mx-auto mt-4 inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs text-muted-foreground">
-          <BookOpen className="h-3.5 w-3.5 text-muted-foreground/70" />
-          <span>同步进度与个人书架</span>
+        <div className="liquid-control mx-auto mt-6 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-[11px] font-semibold text-muted-foreground/90">
+          <BookOpen className="h-4 w-4 text-[color:var(--cta)] opacity-80" />
+          <span className="tracking-wide uppercase opacity-80">Join Reading Space</span>
         </div>
       </CardHeader>
       <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4 pt-4">
+        <CardContent className="space-y-5 pt-4">
           {error && (
-            <div className="liquid-control rounded-xl border-destructive/24 bg-destructive/8 p-3 text-sm text-destructive">
+            <div className="liquid-control rounded-xl border-destructive/24 bg-destructive/8 p-3 text-sm font-medium text-destructive animate-fade-in">
               {error}
             </div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="username" className="text-sm font-medium">用户名</Label>
+            <Label htmlFor="username" className="text-xs font-bold tracking-wider text-muted-foreground uppercase ml-1">用户名</Label>
             <Input
               id="username"
               type="text"
@@ -108,11 +114,11 @@ export default function RegisterPage() {
               required
               minLength={2}
               maxLength={20}
-              className="h-11"
+              className="h-11 rounded-xl bg-background/34 border-border/45 focus:border-[color:var(--cta)]/50 focus:ring-[color:var(--cta)]/20 transition-all duration-300"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-sm font-medium">邮箱</Label>
+            <Label htmlFor="email" className="text-xs font-bold tracking-wider text-muted-foreground uppercase ml-1">邮箱</Label>
             <Input
               id="email"
               type="email"
@@ -120,11 +126,11 @@ export default function RegisterPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="h-11"
+              className="h-11 rounded-xl bg-background/34 border-border/45 focus:border-[color:var(--cta)]/50 focus:ring-[color:var(--cta)]/20 transition-all duration-300"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password" className="text-sm font-medium">密码</Label>
+            <Label htmlFor="password" className="text-xs font-bold tracking-wider text-muted-foreground uppercase ml-1">密码</Label>
             <Input
               id="password"
               type="password"
@@ -133,11 +139,11 @@ export default function RegisterPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              className="h-11"
+              className="h-11 rounded-xl bg-background/34 border-border/45 focus:border-[color:var(--cta)]/50 focus:ring-[color:var(--cta)]/20 transition-all duration-300"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword" className="text-sm font-medium">确认密码</Label>
+            <Label htmlFor="confirmPassword" className="text-xs font-bold tracking-wider text-muted-foreground uppercase ml-1">确认密码</Label>
             <Input
               id="confirmPassword"
               type="password"
@@ -146,24 +152,24 @@ export default function RegisterPage() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
               minLength={6}
-              className="h-11"
+              className="h-11 rounded-xl bg-background/34 border-border/45 focus:border-[color:var(--cta)]/50 focus:ring-[color:var(--cta)]/20 transition-all duration-300"
             />
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col gap-4 pt-2">
+        <CardFooter className="flex flex-col gap-5 pt-4">
           <Button 
             type="submit" 
-            className="h-11 w-full rounded-xl font-semibold"
+            className="h-12 w-full rounded-xl font-bold text-sm tracking-wide shadow-lg shadow-[color:var(--cta)]/20 transition-all duration-400 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-[color:var(--cta)]/25"
             disabled={loading}
           >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             注册
           </Button>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm font-medium text-muted-foreground/80">
             已有账户？{" "}
             <Link 
               href="/login" 
-              className="text-primary font-medium hover:underline transition-colors duration-200"
+              className="text-[color:var(--cta)] font-bold hover:underline transition-colors duration-200"
             >
               去登录
             </Link>

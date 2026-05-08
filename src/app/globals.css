@@ -187,23 +187,23 @@
 }
 
 /* Custom animations */
-@keyframes aurora-mesh {
+@keyframes blob-float {
   0% {
-    transform: translate(0, 0) scale(1);
+    transform: translate(0, 0) scale(1) rotate(0deg);
   }
   33% {
-    transform: translate(2%, 1%) scale(1.05);
+    transform: translate(12%, 10%) scale(1.1) rotate(120deg);
   }
   66% {
-    transform: translate(-1%, 2%) scale(0.95);
+    transform: translate(-10%, 15%) scale(0.9) rotate(240deg);
   }
   100% {
-    transform: translate(0, 0) scale(1);
+    transform: translate(0, 0) scale(1) rotate(360deg);
   }
 }
 
-.animate-aurora {
-  animation: aurora-mesh 18s ease-in-out infinite;
+.animate-blob {
+  animation: blob-float 25s ease-in-out infinite;
 }
 
 @keyframes pulse-glow {
@@ -302,27 +302,27 @@
 
   .liquid-mesh-bg {
     position: fixed;
-    inset: -10%;
+    inset: -20%;
     z-index: -1;
-    background: 
-      radial-gradient(at 0% 0%, color-mix(in oklab, var(--cta) 12%, transparent) 0%, transparent 45%),
-      radial-gradient(at 100% 0%, color-mix(in oklab, var(--chart-3) 10%, transparent) 0%, transparent 45%),
-      radial-gradient(at 50% 100%, color-mix(in oklab, var(--cta) 8%, transparent) 0%, transparent 45%),
-      radial-gradient(at 100% 100%, color-mix(in oklab, var(--chart-2) 6%, transparent) 0%, transparent 45%),
-      var(--background);
-    filter: blur(80px) saturate(1.8);
-    opacity: 0.85;
+    overflow: hidden;
+    background: var(--background);
     pointer-events: none;
   }
 
-  .dark .liquid-mesh-bg {
-    opacity: 0.55;
-    background: 
-      radial-gradient(at 0% 0%, color-mix(in oklab, var(--cta) 10%, transparent) 0%, transparent 45%),
-      radial-gradient(at 100% 0%, color-mix(in oklab, var(--chart-3) 8%, transparent) 0%, transparent 45%),
-      radial-gradient(at 50% 100%, color-mix(in oklab, var(--cta) 6%, transparent) 0%, transparent 45%),
-      var(--background);
-    filter: blur(100px) saturate(1.4);
+  .liquid-blob {
+    position: absolute;
+    width: 65%;
+    height: 65%;
+    border-radius: 50%;
+    filter: blur(100px) saturate(1.8);
+    opacity: 0.35;
+    mix-blend-mode: soft-light;
+  }
+
+  .dark .liquid-blob {
+    opacity: 0.22;
+    mix-blend-mode: plus-lighter;
+    filter: blur(120px) saturate(1.4);
   }
 
   .liquid-page {

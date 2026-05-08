@@ -3,13 +3,31 @@
 export function BackgroundDecoration() {
   return (
     <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-      {/* Aurora Mesh Background */}
-      <div className="liquid-mesh-bg animate-aurora" />
+      {/* Background Container */}
+      <div className="liquid-mesh-bg">
+        {/* Animated Blobs */}
+        <div 
+          className="liquid-blob animate-blob left-[-10%] top-[-10%] bg-[color:var(--cta)]" 
+          style={{ animationDelay: "0s", animationDuration: "30s" }} 
+        />
+        <div 
+          className="liquid-blob animate-blob right-[-5%] top-[10%] bg-[color:var(--chart-3)]" 
+          style={{ animationDelay: "-5s", animationDuration: "35s" }} 
+        />
+        <div 
+          className="liquid-blob animate-blob left-[15%] bottom-[-10%] bg-[color:var(--chart-2)]" 
+          style={{ animationDelay: "-12s", animationDuration: "40s" }} 
+        />
+        <div 
+          className="liquid-blob animate-blob right-[10%] bottom-[5%] bg-[color:var(--cta)]" 
+          style={{ animationDelay: "-18s", animationDuration: "32s" }} 
+        />
+      </div>
       
       {/* Noise Texture Overlaid via CSS (app-noise is in globals.css) */}
       
       {/* Grid Pattern */}
-      <div className="absolute inset-0 opacity-[0.1] [background-image:linear-gradient(to_right,color-mix(in_oklab,var(--foreground)_6%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_oklab,var(--foreground)_5%,transparent)_1px,transparent_1px)] [background-size:64px_64px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,black,transparent_70%)] dark:opacity-[0.06]" />
+      <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(to_right,color-mix(in_oklab,var(--foreground)_6%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_oklab,var(--foreground)_5%,transparent)_1px,transparent_1px)] [background-size:64px_64px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,black,transparent_80%)] dark:opacity-[0.05]" />
       <div className="absolute inset-x-0 top-0 h-36 bg-[linear-gradient(180deg,color-mix(in_oklab,white_58%,transparent),transparent)] dark:bg-[linear-gradient(180deg,color-mix(in_oklab,white_7%,transparent),transparent)]" />
 
       <div className="absolute inset-x-[-6rem] top-[7.5rem] h-56 -rotate-3 opacity-90 blur-[0.2px] [background:linear-gradient(90deg,transparent,color-mix(in_oklab,var(--glass-strong)_72%,var(--cta)_8%)_18%,color-mix(in_oklab,var(--glass)_46%,var(--chart-3)_6%)_64%,transparent)] [mask-image:linear-gradient(to_bottom,transparent,black_18%,black_54%,transparent)] dark:opacity-45" />

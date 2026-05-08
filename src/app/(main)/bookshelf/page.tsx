@@ -204,58 +204,14 @@ export default function BookshelfPage() {
       <BackgroundDecoration />
       <Navbar onUploadComplete={fetchBooks} />
 
-      <main className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-10 pt-4 sm:px-6 sm:pb-14 sm:pt-5">
-        <section className="liquid-panel mb-4 rounded-2xl px-4 py-4 sm:mb-5 sm:px-5 sm:py-5">
-          <div className="liquid-hairline absolute inset-x-5 top-0 h-px" />
-          <div className="relative flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div className="min-w-0">
-              <div className="liquid-control mb-3 inline-flex items-center gap-2 rounded-xl px-3 py-1 text-xs font-medium text-muted-foreground">
-                <LibraryBig className="h-3.5 w-3.5 text-[color:var(--cta)]" />
-                <span>私人阅读库</span>
-              </div>
-              <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-                我的书架
-              </h1>
-              <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
-                {activeCategoryName
-                  ? `正在浏览「${activeCategoryName}」分类，继续整理和阅读你的 EPUB 收藏。`
-                  : "集中管理 EPUB 收藏、阅读进度和分类，让下一次打开书本更快一点。"}
-              </p>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2 sm:min-w-[24rem]">
-              <div className="liquid-stat rounded-xl px-3 py-2.5">
-                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                  <BookOpen className="h-3.5 w-3.5" />
-                  <span>藏书</span>
-                </div>
-                <p className="mt-1 text-xl font-semibold tabular-nums text-foreground">{totalBooks}</p>
-              </div>
-              <div className="liquid-stat rounded-xl px-3 py-2.5">
-                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                  <Clock3 className="h-3.5 w-3.5" />
-                  <span>在读</span>
-                </div>
-                <p className="mt-1 text-xl font-semibold tabular-nums text-foreground">{readingCount}</p>
-              </div>
-              <div className="liquid-stat rounded-xl px-3 py-2.5">
-                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                  <Check className="h-3.5 w-3.5" />
-                  <span>读完</span>
-                </div>
-                <p className="mt-1 text-xl font-semibold tabular-nums text-foreground">{completedCount}</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <div className="category-filter-shell mb-4 -mx-1 flex w-fit max-w-[calc(100%+0.5rem)] gap-1 overflow-x-auto rounded-2xl p-1 [scrollbar-width:none] sm:mb-5 [&::-webkit-scrollbar]:hidden">
+      <main className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-10 pt-6 sm:px-6 sm:pb-14 sm:pt-8">
+        <div className="category-filter-shell mb-6 -mx-1 flex w-fit max-w-[calc(100%+0.5rem)] gap-1.5 overflow-x-auto rounded-2xl p-1.5 [scrollbar-width:none] sm:mb-8 [&::-webkit-scrollbar]:hidden">
           <Button
             type="button"
             variant="ghost"
             size="sm"
             className={cn(
-              "category-filter-button h-8 cursor-pointer rounded-xl px-3 text-xs font-medium transition-all duration-200",
+              "category-filter-button h-8.5 cursor-pointer rounded-xl px-3.5 text-xs font-semibold transition-all duration-300",
               selectedCategory === ALL_CATEGORY
                 ? "category-filter-button-active"
                 : "hover:text-foreground"
@@ -266,7 +222,7 @@ export default function BookshelfPage() {
             <Badge
               variant="outline"
               className={cn(
-                "ml-0.5 border-transparent bg-foreground/6 px-1.5 py-0 text-[10px] text-muted-foreground shadow-none",
+                "ml-1 border-transparent bg-foreground/5 px-1.5 py-0 text-[10px] text-muted-foreground shadow-none",
                 selectedCategory === ALL_CATEGORY &&
                   "liquid-control text-foreground shadow-none"
               )}
@@ -281,18 +237,18 @@ export default function BookshelfPage() {
               variant="ghost"
               size="sm"
               className={cn(
-                "category-filter-button h-8 cursor-pointer rounded-xl px-3 text-xs font-medium transition-all duration-200",
+                "category-filter-button h-8.5 cursor-pointer rounded-xl px-3.5 text-xs font-semibold transition-all duration-300",
                 selectedCategory === category.name
                   ? "category-filter-button-active"
                   : "hover:text-foreground"
               )}
               onClick={() => setSelectedCategory(category.name)}
             >
-              <span className="max-w-28 truncate">{category.name}</span>
+              <span className="max-w-32 truncate">{category.name}</span>
               <Badge
                 variant="outline"
                 className={cn(
-                  "ml-0.5 border-transparent bg-foreground/6 px-1.5 py-0 text-[10px] text-muted-foreground shadow-none",
+                  "ml-1 border-transparent bg-foreground/5 px-1.5 py-0 text-[10px] text-muted-foreground shadow-none",
                   selectedCategory === category.name &&
                     "liquid-control text-foreground shadow-none"
                 )}

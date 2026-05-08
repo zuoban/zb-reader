@@ -28,24 +28,24 @@ export const BookGrid = memo(function BookGrid({
 }: BookGridProps) {
   if (books.length === 0) {
     return (
-      <div className="surface-glass surface-elevated animate-reader-fade-up relative overflow-hidden rounded-[2rem] px-6 py-12 text-center sm:px-12 sm:py-16">
-        <div className="liquid-hairline absolute inset-x-8 top-0 h-px opacity-50" />
+      <div className="surface-glass surface-elevated animate-reader-fade-up relative mt-4 overflow-hidden rounded-[2.5rem] px-8 py-16 text-center sm:mt-6 sm:px-16 sm:py-24">
+        <div className="liquid-hairline absolute inset-x-12 top-0 h-px opacity-60" />
 
         <div className="relative flex flex-col items-center justify-center">
-          <div className="liquid-control mb-4 inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[11px] font-semibold text-muted-foreground sm:mb-6 sm:text-xs">
+          <div className="liquid-control mb-5 inline-flex items-center gap-2 rounded-2xl px-4.5 py-2 text-[11px] font-bold text-muted-foreground/90 sm:mb-8 sm:text-xs">
             <Sparkles className="h-4 w-4 text-[color:var(--cta)]" />
-            <span className="tracking-wide">阅读空间待点亮</span>
+            <span className="tracking-widest uppercase opacity-80">阅读空间待开启</span>
           </div>
-          <div className="liquid-control flex h-20 w-20 items-center justify-center rounded-[1.75rem] text-foreground/90 sm:h-22 sm:w-22">
-            <BookOpen className="h-10 w-10 sm:h-12 sm:w-12" />
+          <div className="liquid-control flex h-24 w-24 items-center justify-center rounded-[2rem] text-foreground/90 shadow-xl transition-transform duration-500 hover:scale-105 sm:h-28 sm:w-28">
+            <BookOpen className="h-11 w-11 sm:h-14 sm:w-14" />
           </div>
-          <h3 className="mt-6 text-xl font-bold tracking-tight text-foreground sm:mt-8 sm:text-2xl">{emptyTitle}</h3>
-          <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground/90 sm:max-w-md sm:text-[0.95rem]">
+          <h3 className="mt-8 text-2xl font-extrabold tracking-tight text-foreground sm:mt-10 sm:text-3xl">{emptyTitle}</h3>
+          <p className="mt-4 max-w-sm text-sm font-medium leading-relaxed text-muted-foreground/80 sm:max-w-md sm:text-[1rem]">
             {emptyDescription}
           </p>
-          <div className="liquid-control mt-6 flex items-center gap-2.5 rounded-xl px-4 py-2 text-[11px] font-medium text-muted-foreground sm:mt-8 sm:text-xs">
-            <Upload className="h-4 w-4" />
-            <span className="tracking-wide">支持 EPUB 格式</span>
+          <div className="liquid-control mt-8 flex items-center gap-3 rounded-2xl px-5 py-2.5 text-[11px] font-bold text-muted-foreground/90 transition-all duration-300 hover:bg-foreground/5 sm:mt-12 sm:text-xs">
+            <Upload className="h-4 w-4 text-[color:var(--cta)]" />
+            <span className="tracking-wide uppercase opacity-75">支持 EPUB 书籍格式</span>
           </div>
         </div>
       </div>
