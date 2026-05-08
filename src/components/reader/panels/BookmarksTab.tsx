@@ -45,8 +45,7 @@ export const BookmarksTab = memo(function BookmarksTab({
         {bookmarks.length === 0 ? (
           <div className="text-center py-12">
             <div
-              className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center"
-              style={{ background: "color-mix(in srgb, var(--reader-text) 5%, transparent)" }}
+              className="reader-liquid-control mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl"
             >
               <Bookmark className="size-8" style={{ color: "var(--reader-muted-text)" }} />
             </div>
@@ -61,8 +60,7 @@ export const BookmarksTab = memo(function BookmarksTab({
           bookmarks.map((bookmark) => (
             <div
               key={bookmark.id}
-              className="group rounded-xl border p-4 transition-all duration-200 hover:shadow-sm cursor-pointer"
-              style={{ borderColor: "var(--reader-border)", background: "var(--reader-card-bg)" }}
+              className="reader-liquid-surface group cursor-pointer rounded-xl p-4 transition-all duration-200 hover:-translate-y-0.5"
               onClick={() => {
                 onBookmarkClick(bookmark.location);
                 onClose();
@@ -73,14 +71,14 @@ export const BookmarksTab = memo(function BookmarksTab({
                   <Input
                     value={editingLabel}
                     onChange={(e) => setEditingLabel(e.target.value)}
-                    className="h-9 text-sm rounded-lg flex-1"
-                    style={{ background: "var(--reader-bg)", borderColor: "var(--reader-border)", color: "var(--reader-text)" }}
+                    className="h-9 flex-1 rounded-lg text-sm"
+                    style={{ color: "var(--reader-text)" }}
                     autoFocus
                   />
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 rounded-lg hover:bg-[color-mix(in_srgb,var(--reader-primary)_10%,transparent)]"
+                    className="reader-liquid-control h-9 w-9 rounded-lg"
                     style={{ color: "var(--reader-primary)" }}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -93,7 +91,7 @@ export const BookmarksTab = memo(function BookmarksTab({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 rounded-lg hover:bg-[color-mix(in_srgb,var(--reader-text)_8%,transparent)]"
+                    className="reader-liquid-control h-9 w-9 rounded-lg"
                     style={{ color: "var(--reader-muted-text)" }}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -128,7 +126,7 @@ export const BookmarksTab = memo(function BookmarksTab({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 rounded-lg hover:bg-[color-mix(in_srgb,var(--reader-text)_8%,transparent)]"
+                      className="reader-liquid-control h-8 w-8 rounded-lg"
                       style={{ color: "var(--reader-muted-text)" }}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -141,7 +139,7 @@ export const BookmarksTab = memo(function BookmarksTab({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30"
+                      className="h-8 w-8 rounded-lg border border-red-300/18 bg-[linear-gradient(180deg,rgba(255,120,120,0.18),rgba(255,120,120,0.07))] hover:bg-[linear-gradient(180deg,rgba(255,120,120,0.24),rgba(255,120,120,0.11))]"
                       style={{ color: "var(--reader-destructive, #ef4444)" }}
                       onClick={(e) => {
                         e.stopPropagation();

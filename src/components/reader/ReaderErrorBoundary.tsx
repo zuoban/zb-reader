@@ -54,10 +54,10 @@ function ReaderErrorFallback({
   const router = useRouter();
 
   return (
-    <div className="h-screen w-screen flex items-center justify-center p-4 bg-background">
-      <Card className="max-w-md w-full p-6 text-center space-y-4">
+    <div className="liquid-page flex h-screen w-screen items-center justify-center bg-background p-4">
+      <Card className="liquid-panel w-full max-w-md space-y-4 p-6 text-center">
         <div className="flex justify-center">
-          <div className="rounded-full bg-destructive/10 p-3">
+          <div className="liquid-control rounded-full p-3">
             <AlertTriangle className="h-8 w-8 text-destructive" />
           </div>
         </div>

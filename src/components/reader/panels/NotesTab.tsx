@@ -49,8 +49,7 @@ export const NotesTab = memo(function NotesTab({
         {notes.length === 0 ? (
           <div className="text-center py-12">
             <div
-              className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center"
-              style={{ background: "color-mix(in srgb, var(--reader-text) 5%, transparent)" }}
+              className="reader-liquid-control mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl"
             >
               <StickyNote className="size-8" style={{ color: "var(--reader-muted-text)" }} />
             </div>
@@ -65,8 +64,7 @@ export const NotesTab = memo(function NotesTab({
           notes.map((note) => (
             <div
               key={note.id}
-              className="group rounded-xl border p-4 transition-all duration-200 hover:shadow-sm"
-              style={{ borderColor: "var(--reader-border)", background: "var(--reader-card-bg)" }}
+              className="reader-liquid-surface group rounded-xl p-4 transition-all duration-200 hover:-translate-y-0.5"
             >
               {editingId === note.id ? (
                 <div className="space-y-3">
@@ -80,7 +78,7 @@ export const NotesTab = memo(function NotesTab({
                     {NOTE_COLORS.map((c) => (
                       <button
                         key={c}
-                        className="size-6 rounded-full border-2 transition-all duration-200 hover:scale-110"
+                        className="size-6 cursor-pointer rounded-full border-2 transition-all duration-200 hover:scale-110"
                         style={{
                           backgroundColor: c,
                           borderColor: editingColor === c ? "var(--reader-text)" : "transparent",
@@ -93,14 +91,14 @@ export const NotesTab = memo(function NotesTab({
                     value={editingContent}
                     onChange={(e) => setEditingContent(e.target.value)}
                     className="text-sm min-h-[80px] rounded-lg"
-                    style={{ background: "var(--reader-bg)", borderColor: "var(--reader-border)", color: "var(--reader-text)" }}
+                    style={{ color: "var(--reader-text)" }}
                     autoFocus
                   />
                   <div className="flex items-center gap-2 justify-end">
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="rounded-lg text-xs"
+                      className="reader-liquid-control rounded-lg text-xs"
                       style={{ color: "var(--reader-muted-text)" }}
                       onClick={() => setEditingId(null)}
                     >
@@ -109,7 +107,7 @@ export const NotesTab = memo(function NotesTab({
                     <Button
                       size="sm"
                       className="rounded-lg text-xs"
-                      style={{ background: "var(--reader-primary)", color: "#ffffff" }}
+                      style={{ background: "var(--reader-primary)", color: "var(--reader-bg)" }}
                       onClick={() => {
                         onNoteEdit(note.id, editingContent, editingColor);
                         setEditingId(null);
@@ -128,8 +126,12 @@ export const NotesTab = memo(function NotesTab({
                   }}
                 >
                   <div
-                    className="mb-3 rounded-lg border-l-[3px] pl-3 text-xs line-clamp-2 italic bg-[color-mix(in_srgb,var(--reader-bg)_50%,transparent)] py-2"
-                    style={{ borderColor: note.color, color: "var(--reader-muted-text)" }}
+                    className="mb-3 rounded-lg border-l-[3px] py-2 pl-3 text-xs line-clamp-2 italic"
+                    style={{
+                      borderColor: note.color,
+                      color: "var(--reader-muted-text)",
+                      background: "color-mix(in srgb, var(--reader-card-bg) 46%, transparent)",
+                    }}
                   >
                     {note.selectedText}
                   </div>
@@ -147,7 +149,7 @@ export const NotesTab = memo(function NotesTab({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 rounded-lg hover:bg-[color-mix(in_srgb,var(--reader-text)_8%,transparent)]"
+                        className="reader-liquid-control h-8 w-8 rounded-lg"
                         style={{ color: "var(--reader-muted-text)" }}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -161,7 +163,7 @@ export const NotesTab = memo(function NotesTab({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30"
+                        className="h-8 w-8 rounded-lg border border-red-300/18 bg-[linear-gradient(180deg,rgba(255,120,120,0.18),rgba(255,120,120,0.07))] hover:bg-[linear-gradient(180deg,rgba(255,120,120,0.24),rgba(255,120,120,0.11))]"
                         style={{ color: "var(--reader-destructive, #ef4444)" }}
                         onClick={(e) => {
                           e.stopPropagation();

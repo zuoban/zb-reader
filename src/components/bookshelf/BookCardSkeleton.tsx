@@ -5,10 +5,10 @@ export function BookCardSkeleton() {
   return (
     <Card className="book-card-glass relative gap-3 overflow-hidden rounded-2xl py-0">
       <div className="liquid-hairline absolute inset-x-3 top-0 z-10 h-px opacity-70" />
-      <div className="relative m-1.5 aspect-[4/5] overflow-hidden rounded-xl bg-muted/70 shadow-[inset_0_1px_0_color-mix(in_oklab,white_42%,transparent),inset_0_-1px_0_color-mix(in_oklab,var(--foreground)_8%,transparent)]">
+      <div className="liquid-control relative m-1.5 aspect-[4/5] overflow-hidden rounded-xl">
         <Skeleton className="h-full w-full" />
         <div className="absolute inset-x-0 bottom-0 flex items-end justify-end bg-gradient-to-t from-black/28 via-black/8 to-transparent px-2 py-2 sm:px-2.5 sm:py-2.5">
-          <Skeleton className="h-[18px] w-12 rounded-full bg-white/18" />
+          <Skeleton className="h-[18px] w-12 rounded-full" />
         </div>
       </div>
       <div className="flex min-h-[58px] flex-col px-2.5 pb-2 pt-1.5 sm:min-h-[62px]">

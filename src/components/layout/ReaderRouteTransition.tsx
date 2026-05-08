@@ -218,8 +218,8 @@ export function ReaderRouteTransition() {
               className="h-full w-full object-cover"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(145deg,#4f46e5_0%,#7c3aed_45%,#ec4899_100%)]">
-              <div className="absolute inset-0 opacity-35 [background-image:radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.28)_0%,transparent_28%),radial-gradient(circle_at_82%_78%,rgba(255,255,255,0.18)_0%,transparent_24%)]" />
+            <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(145deg,color-mix(in_oklab,var(--reader-primary,#171717)_72%,#4f8cff_28%)_0%,color-mix(in_oklab,var(--reader-card-bg,#fff)_52%,var(--reader-primary,#171717)_48%)_100%)]">
+              <div className="absolute inset-0 opacity-35 [background-image:radial-gradient(circle_at_20%_20%,color-mix(in_srgb,white_28%,transparent)_0%,transparent_28%),radial-gradient(circle_at_82%_78%,color-mix(in_srgb,white_18%,transparent)_0%,transparent_24%)]" />
               <span className="relative text-6xl font-black tracking-tight text-white/92">
                 {transition.initial}
               </span>
@@ -229,15 +229,9 @@ export function ReaderRouteTransition() {
           <div className="absolute inset-x-0 bottom-0 p-4">
             <div
               className={cn(
-                "rounded-[22px] border px-4 py-3 backdrop-blur-xl transition-all duration-500",
+                "reader-liquid-surface rounded-[22px] px-4 py-3 transition-all duration-500",
                 isExpanded ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
               )}
-              style={{
-                borderColor:
-                  "color-mix(in srgb, white 18%, transparent)",
-                background:
-                  "linear-gradient(180deg, rgba(12,16,24,0.72) 0%, rgba(12,16,24,0.44) 100%)",
-              }}
             >
               <p className="truncate text-[11px] uppercase tracking-[0.18em] text-white/58">
                 {isEnter ? "准备进入阅读" : "准备返回书架"}
@@ -258,7 +252,7 @@ export function ReaderRouteTransition() {
       </div>
 
       <div
-        className="absolute left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full border px-4 py-2 backdrop-blur-xl transition-all duration-500"
+        className="reader-liquid-surface absolute left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full px-4 py-2 transition-all duration-500"
         style={{
           top: transitionMetrics.headerTop,
           opacity: isSettling ? 0 : isExpanded || !isEnter ? 1 : 0,
@@ -266,10 +260,6 @@ export function ReaderRouteTransition() {
             isExpanded || !isEnter
               ? "translate(-50%, 0)"
               : "translate(-50%, 14px)",
-          borderColor:
-            "color-mix(in srgb, var(--reader-text, #171717) 10%, transparent)",
-          background:
-            "linear-gradient(180deg, color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.92)) 82%, white 18%) 0%, color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.92)) 96%, transparent) 100%)",
           color: "var(--reader-text, #171717)",
         }}
       >

@@ -97,11 +97,11 @@ export function ProgressHistoryDialog({
 
         <ScrollArea className="h-[400px] pr-4">
           {loading ? (
-            <div className="flex items-center justify-center py-8 text-muted-foreground">
+            <div className="reader-liquid-control flex items-center justify-center rounded-2xl py-8 text-muted-foreground">
               加载中...
             </div>
           ) : history.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+            <div className="reader-liquid-control flex flex-col items-center justify-center rounded-2xl py-8 text-muted-foreground">
               <History className="h-12 w-12 mb-2 opacity-50" />
               <p>暂无历史记录</p>
             </div>
@@ -111,7 +111,7 @@ export function ProgressHistoryDialog({
                 <div
                   key={item.id}
                   className={cn(
-                    "group rounded-lg border p-3 transition-all hover:border-primary",
+                    "reader-liquid-surface group rounded-xl p-3 transition-all hover:-translate-y-0.5",
                     restoring === item.id && "opacity-50"
                   )}
                 >
@@ -139,7 +139,7 @@ export function ProgressHistoryDialog({
                           variant="ghost"
                           onClick={() => handlePreview(item)}
                           disabled={restoring !== null}
-                          className="h-7 px-2 text-xs"
+                          className="h-7 rounded-lg px-2 text-xs"
                         >
                           预览
                         </Button>
@@ -149,7 +149,7 @@ export function ProgressHistoryDialog({
                         variant="outline"
                         onClick={() => handleRestore(item.id)}
                         disabled={restoring !== null}
-                        className="h-7 px-2 text-xs"
+                        className="h-7 rounded-lg px-2 text-xs"
                       >
                         {restoring === item.id ? (
                           <RotateCcw className="h-3 w-3 animate-spin" />
