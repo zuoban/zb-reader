@@ -42,8 +42,10 @@ export default function BookshelfPage() {
   const [loading, setLoading] = useState(true);
   const [spotlightBookId, setSpotlightBookId] = useState<string | null>(null);
   const [categoryDialogBook, setCategoryDialogBook] = useState<Book | null>(null);
+  const [deleteDialogBook, setDeleteDialogBook] = useState<Book | null>(null);
   const [categoryInput, setCategoryInput] = useState("");
   const [savingCategory, setSavingCategory] = useState(false);
+  const [deletingBook, setDeletingBook] = useState(false);
   const { setTheme } = useTheme();
   const activeCategoryName = selectedCategory === ALL_CATEGORY ? "" : selectedCategory;
   const readingCount = Object.values(progressMap).filter((progress) => progress > 0 && progress < 1).length;
@@ -115,21 +117,32 @@ export default function BookshelfPage() {
     return () => window.clearTimeout(timer);
   }, [books.length]);
 
-  const handleDelete = useCallback(async (bookId: string) => {
-    if (!confirm("确定要删除这本书吗？")) return;
+  const handleRequestDelete = useCallback((bookId: string) => {
+    const book = books.find((item) => item.id === bookId);
+    if (book) {
+      setDeleteDialogBook(book);
+    }
+  }, [books]);
 
+  const handleConfirmDelete = useCallback(async () => {
+    if (!deleteDialogBook) return;
+
+    setDeletingBook(true);
     try {
-      const res = await fetch(`/api/books/${bookId}`, { method: "DELETE" });
+      const res = await fetch(`/api/books/${deleteDialogBook.id}`, { method: "DELETE" });
       if (res.ok) {
-        setBooks((prev) => prev.filter((b) => b.id !== bookId));
+        setBooks((prev) => prev.filter((b) => b.id !== deleteDialogBook.id));
+        setDeleteDialogBook(null);
         toast.success("删除成功");
       } else {
         toast.error("删除失败");
       }
     } catch {
       toast.error("删除失败");
+    } finally {
+      setDeletingBook(false);
     }
-  }, []);
+  }, [deleteDialogBook]);
 
   const handleOpenCategoryDialog = useCallback((book: Book) => {
     setCategoryDialogBook(book);
@@ -238,7 +251,7 @@ export default function BookshelfPage() {
               className={cn(
                 "ml-0.5 border-transparent bg-foreground/6 px-1.5 py-0 text-[10px] text-muted-foreground shadow-none",
                 selectedCategory === ALL_CATEGORY &&
-                  "bg-background/56 text-foreground shadow-[0_1px_0_color-mix(in_oklab,white_42%,transparent)_inset]"
+                  "liquid-control text-foreground shadow-none"
               )}
             >
               {totalBooks}
@@ -264,7 +277,7 @@ export default function BookshelfPage() {
                 className={cn(
                   "ml-0.5 border-transparent bg-foreground/6 px-1.5 py-0 text-[10px] text-muted-foreground shadow-none",
                   selectedCategory === category.name &&
-                    "bg-background/56 text-foreground shadow-[0_1px_0_color-mix(in_oklab,white_42%,transparent)_inset]"
+                    "liquid-control text-foreground shadow-none"
                 )}
               >
                 {category.count}
@@ -288,11 +301,52 @@ export default function BookshelfPage() {
             spotlightBookId={spotlightBookId}
             emptyTitle={activeCategoryName ? "这个分类还没有书" : undefined}
             emptyDescription={activeCategoryName ? "可以从其他图书的菜单中设置分类，或切回全部书籍继续浏览。" : undefined}
-            onDelete={handleDelete}
+            onDelete={handleRequestDelete}
             onChangeCategory={handleOpenCategoryDialog}
           />
         )}
       </main>
+
+      {deleteDialogBook ? (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/42 p-4 backdrop-blur-md">
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="delete-book-title"
+            aria-describedby="delete-book-description"
+            className="liquid-panel w-full max-w-md overflow-hidden rounded-2xl border p-6 outline-none"
+          >
+            <div className="liquid-hairline absolute inset-x-4 top-0 h-px" />
+            <div className="space-y-2 text-center sm:text-left">
+              <h2 id="delete-book-title" className="text-lg font-semibold">
+                删除这本书？
+              </h2>
+              <p id="delete-book-description" className="text-sm leading-6 text-muted-foreground">
+                将从书架中移除《{deleteDialogBook.title || "未命名书籍"}》及其本地文件。此操作无法撤销。
+              </p>
+            </div>
+            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                className="cursor-pointer"
+                disabled={deletingBook}
+                onClick={() => setDeleteDialogBook(null)}
+              >
+                取消
+              </Button>
+              <Button
+                type="button"
+                className="cursor-pointer border border-destructive/30 bg-destructive/90 text-white hover:bg-destructive focus-visible:ring-destructive/20"
+                disabled={deletingBook}
+                onClick={handleConfirmDelete}
+              >
+                删除
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <Dialog
         open={Boolean(categoryDialogBook)}
