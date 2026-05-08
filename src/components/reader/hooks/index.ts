@@ -15,3 +15,14 @@ export { useReaderTtsState } from "./useReaderTtsState";
 export { useBookmarkActions } from "./useBookmarkActions";
 export { useNoteActions } from "./useNoteActions";
 export { useReaderNavigation } from "./useReaderNavigation";
+
+// Epub-specific hooks
+export { useEpubAppearance } from "./useEpubAppearance";
+export { useEpubDisplayedLifecycle } from "./useEpubDisplayedLifecycle";
+export { useEpubHighlights } from "./useEpubHighlights";
+export { useEpubInitializer } from "./useEpubInitializer";
+export { useEpubKeyboardScroll } from "./useEpubKeyboardScroll";
+export { useEpubParagraphs } from "./useEpubParagraphs";
+export { useEpubResponsiveWidth } from "./useEpubResponsiveWidth";
+export { useEpubScrollProgress } from "./useEpubScrollProgress";
+export { useEpubTtsHighlighting } from "./useEpubTtsHighlighting";

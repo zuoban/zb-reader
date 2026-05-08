@@ -132,6 +132,7 @@ export const bookmarks = sqliteTable(
   },
   (table) => ({
     userBookIdx: index("idx_bookmarks_user_book").on(table.userId, table.bookId),
+    bookIdIdx: index("idx_bookmarks_book_id").on(table.bookId),
   })
 );
 
@@ -160,6 +161,7 @@ export const notes = sqliteTable(
   },
   (table) => ({
     userBookIdx: index("idx_notes_user_book").on(table.userId, table.bookId),
+    bookIdIdx: index("idx_notes_book_id").on(table.bookId),
   })
 );
 

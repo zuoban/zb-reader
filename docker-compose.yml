@@ -6,20 +6,11 @@ services:
     volumes:
       - zb-reader-data:/app/data
     environment:
-      - NEXTAUTH_SECRET=your-secret-key-change-this
       - NEXTAUTH_URL=http://localhost:3000
       - AUTH_TRUST_HOST=true
-    restart: unless-stopped
-
-  watchtower:
-    image: containrrr/watchtower
-    container_name: watchtower
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      - WATCHTOWER_CLEANUP=true
-      - WATCHTOWER_SCHEDULE=0 0 4 * * *
-      - WATCHTOWER_INCLUDE_STOPPED=true
+      # Generate a secure secret: openssl rand -base64 32
+      # Or use: node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:?NEXTAUTH_SECRET environment variable is required}
     restart: unless-stopped
 
 volumes:

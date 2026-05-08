@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { SessionProvider, useSession } from "next-auth/react";
+import { SessionProvider } from "next-auth/react";
 import { IdleCountdownWarning } from "@/components/reader/IdleCountdownWarning";
 import { ReaderErrorBoundary } from "@/components/reader/ReaderErrorBoundary";
 import { ReaderCanvas } from "@/components/reader/ReaderCanvas";
@@ -47,7 +47,6 @@ function ReaderContent() {
   const router = useRouter();
   const params = useParams();
   const bookId = params.bookId as string;
-  useSession();
 
   const epubReaderRef = useRef<EpubReaderRef>(null);
 

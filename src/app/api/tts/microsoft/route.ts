@@ -203,18 +203,10 @@ async function synthesizeAndRespond(body: MicrosoftSpeakRequestBody) {
   }
 }
 
-async function ensureAuthenticated() {
+export async function GET(req: NextRequest) {
   const authResult = await getAuthUserId();
   if (authResult.error) {
     return authResult.error;
-  }
-  return null;
-}
-
-export async function GET(req: NextRequest) {
-  const unauthorizedResponse = await ensureAuthenticated();
-  if (unauthorizedResponse) {
-    return unauthorizedResponse;
   }
 
   const searchParams = req.nextUrl.searchParams;
@@ -231,9 +223,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const unauthorizedResponse = await ensureAuthenticated();
-  if (unauthorizedResponse) {
-    return unauthorizedResponse;
+  const authResult = await getAuthUserId();
+  if (authResult.error) {
+    return authResult.error;
   }
 
   const body = (await req.json()) as MicrosoftSpeakRequestBody;
