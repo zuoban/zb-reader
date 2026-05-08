@@ -52,34 +52,34 @@ export function Navbar({ onUploadComplete, className }: NavbarProps) {
           {/* Logo */}
           <Link
             href="/bookshelf"
-            className="group relative flex min-w-0 items-center gap-3 rounded-xl px-1.5 py-1 transition-all duration-200 hover:bg-background/34 focus-visible:ring-2 focus-visible:ring-ring/45 focus-visible:outline-none"
+            className="group relative flex min-w-0 items-center gap-3 rounded-xl px-1.5 py-1 transition-all duration-400 ease-out hover:bg-background/45 focus-visible:ring-2 focus-visible:ring-ring/45 focus-visible:outline-none"
           >
-            <div className="relative flex h-12 w-12 shrink-0 items-center justify-center">
+            <div className="relative flex h-11 w-11 shrink-0 items-center justify-center">
               <Image
                 src="/logo.svg"
                 alt="ZB Reader"
-                width={44}
-                height={44}
-                className="transition-transform duration-300 group-hover:scale-[1.08]"
+                width={40}
+                height={40}
+                className="transition-transform duration-500 ease-out group-hover:scale-[1.12]"
               />
             </div>
             <div className="hidden min-w-0 flex-col sm:flex">
-              <span className="font-heading text-[0.95rem] font-bold tracking-tight text-foreground transition-colors duration-200 group-hover:text-[color:var(--cta)]">
+              <span className="font-heading text-[0.92rem] font-bold tracking-tight text-foreground transition-colors duration-400 group-hover:text-[color:var(--cta)]">
                 ZB Reader
               </span>
-              <span className="text-[10px] font-medium tracking-wide text-muted-foreground">
-                阅读空间
+              <span className="text-[9px] font-medium tracking-widest text-muted-foreground uppercase opacity-80">
+                Reading Space
               </span>
             </div>
           </Link>
 
           {/* Actions */}
-          <div className="top-action-group relative flex items-center gap-1 rounded-2xl p-1">
+          <div className="top-action-group relative flex items-center gap-1 rounded-2xl p-1 transition-all duration-400">
             {onUploadComplete && (
               <UploadButton
                 onUploadComplete={onUploadComplete}
                 variant="ghost"
-                className="top-action-primary h-8.5 gap-1.5 rounded-xl px-2.5 text-xs font-medium transition-all duration-200 sm:h-9 sm:gap-2 sm:px-3"
+                className="top-action-primary h-8.5 gap-1.5 rounded-xl px-3 text-xs font-semibold transition-all duration-400 sm:h-9 sm:gap-2 sm:px-4"
               />
             )}
 
@@ -88,10 +88,10 @@ export function Navbar({ onUploadComplete, className }: NavbarProps) {
               size="icon"
               onClick={handleThemeToggle}
               aria-label="切换主题"
-              className="top-icon-button relative h-8.5 w-8.5 rounded-xl transition-all duration-200 sm:h-9 sm:w-9"
+              className="top-icon-button relative h-8.5 w-8.5 rounded-xl transition-all duration-400 sm:h-9 sm:w-9"
             >
-              <Sun className="h-[17px] w-[17px] rotate-0 scale-100 transition-all duration-300 dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-[17px] w-[17px] rotate-90 scale-0 transition-all duration-300 dark:rotate-0 dark:scale-100" />
+              <Sun className="h-[17px] w-[17px] rotate-0 scale-100 transition-all duration-500 ease-out dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-[17px] w-[17px] rotate-90 scale-0 transition-all duration-500 ease-out dark:rotate-0 dark:scale-100" />
               <span className="sr-only">切换主题</span>
             </Button>
 

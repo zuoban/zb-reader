@@ -7,8 +7,8 @@
 ---
 
 **Project:** ZB Reader
-**Generated:** 2026-03-04 20:53:40
-**Category:** SaaS (General)
+**Generated:** 2026-05-08 11:37:21
+**Category:** E-commerce Luxury
 
 ---
 
@@ -18,24 +18,29 @@
 
 | Role | Hex | CSS Variable |
 |------|-----|--------------|
-| Primary | `#171717` | `--color-primary` |
-| Secondary | `#404040` | `--color-secondary` |
-| CTA/Accent | `#D4AF37` | `--color-cta` |
-| Background | `#FFFFFF` | `--color-background` |
-| Text | `#171717` | `--color-text` |
+| Primary | `#FFFFFF` | `--color-primary` |
+| On Primary | `#0F172A` | `--color-on-primary` |
+| Secondary | `#E5E5E5` | `--color-secondary` |
+| Accent/CTA | `#FFFFFF` | `--color-accent` |
+| Background | `#888888` | `--color-background` |
+| Foreground | `#000000` | `--color-foreground` |
+| Muted | `#777777` | `--color-muted` |
+| Border | `#CCCCCC` | `--color-border` |
+| Destructive | `#FF3B30` | `--color-destructive` |
+| Ring | `#007AFF` | `--color-ring` |
 
-**Color Notes:** Minimal black + accent gold
+**Color Notes:** Glass white + system blue [Accent adjusted from #007AFF for WCAG 3:1]
 
 ### Typography
 
-- **Heading Font:** Noto Sans SC
-- **Body Font:** Noto Sans SC
-- **Mood:** chinese, simplified, modern, professional, multilingual, readable
-- **Google Fonts:** [Noto Sans SC + Noto Sans SC](https://fonts.google.com/share?selection.family=Noto+Sans+SC:wght@300;400;500;700)
+- **Heading Font:** Inter
+- **Body Font:** Inter
+- **Mood:** spatial, legible, glass, system, clean, neutral
+- **Google Fonts:** [Inter + Inter](https://fonts.google.com/share?selection.family=Inter:wght@300;400;500;600)
 
 **CSS Import:**
 ```css
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 ```
 
 ### Spacing Variables
@@ -68,7 +73,7 @@
 ```css
 /* Primary Button */
 .btn-primary {
-  background: #D4AF37;
+  background: #FFFFFF;
   color: white;
   padding: 12px 24px;
   border-radius: 8px;
@@ -85,8 +90,8 @@
 /* Secondary Button */
 .btn-secondary {
   background: transparent;
-  color: #171717;
-  border: 2px solid #171717;
+  color: #FFFFFF;
+  border: 2px solid #FFFFFF;
   padding: 12px 24px;
   border-radius: 8px;
   font-weight: 600;
@@ -99,7 +104,7 @@
 
 ```css
 .card {
-  background: #FFFFFF;
+  background: #888888;
   border-radius: 12px;
   padding: 24px;
   box-shadow: var(--shadow-md);
@@ -125,9 +130,9 @@
 }
 
 .input:focus {
-  border-color: #171717;
+  border-color: #FFFFFF;
   outline: none;
-  box-shadow: 0 0 0 3px #17171720;
+  box-shadow: 0 0 0 3px #FFFFFF20;
 }
 ```
 
@@ -153,28 +158,28 @@
 
 ## Style Guidelines
 
-**Style:** Glassmorphism
+**Style:** Liquid Glass
 
-**Keywords:** Frosted glass, transparent, blurred background, layered, vibrant background, light source, depth, multi-layer
+**Keywords:** Flowing glass, morphing, smooth transitions, fluid effects, translucent, animated blur, iridescent, chromatic aberration
 
-**Best For:** Modern SaaS, financial dashboards, high-end corporate, lifestyle apps, modal overlays, navigation
+**Best For:** Premium SaaS, high-end e-commerce, creative platforms, branding experiences, luxury portfolios
 
-**Key Effects:** Backdrop blur (10-20px), subtle border (1px solid rgba white 0.2), light reflection, Z-depth
+**Key Effects:** Morphing elements (SVG/CSS), fluid animations (400-600ms curves), dynamic blur (backdrop-filter), color transitions
 
 ### Page Pattern
 
-**Pattern Name:** Lead Magnet + Form
+**Pattern Name:** App Store Style Landing
 
-- **Conversion Strategy:** Form fields ≤ 3 for best conversion. Offer valuable lead magnet preview. Show form submission progress.
-- **CTA Placement:** Form CTA: Submit button
-- **Section Order:** 1. Hero (benefit headline), 2. Lead magnet preview (ebook cover, checklist, etc), 3. Form (minimal fields), 4. CTA submit
+- **Conversion Strategy:** Show real screenshots. Include ratings (4.5+ stars). QR code for mobile. Platform-specific CTAs.
+- **CTA Placement:** Download buttons prominent (App Store + Play Store) throughout
+- **Section Order:** 1. Hero with device mockup, 2. Screenshots carousel, 3. Features with icons, 4. Reviews/ratings, 5. Download CTAs
 
 ---
 
 ## Anti-Patterns (Do NOT Use)
 
-- ❌ Excessive animation
-- ❌ Dark mode by default
+- ❌ Vibrant & Block-based
+- ❌ Playful colors
 
 ### Additional Forbidden Patterns
 

@@ -140,12 +140,11 @@ export const BookCard = memo(function BookCard({
     <Card
       ref={cardRef}
       className={cn(
-        "book-card-glass group relative gap-3 overflow-hidden rounded-2xl py-0 transition-all duration-300 ease-out",
-        "hover:-translate-y-0.5 hover:border-ring/35 hover:shadow-[0_26px_58px_-40px_color-mix(in_oklab,var(--foreground)_48%,transparent)]",
+        "book-card-glass group relative gap-3 overflow-hidden rounded-2xl py-0 transition-all duration-400 ease-out",
         spotlight && "ring-2 ring-primary/28"
       )}
     >
-      <div className="liquid-hairline absolute inset-x-3 top-0 z-10 h-px opacity-70 transition-opacity duration-300 group-hover:opacity-100" />
+      <div className="liquid-hairline absolute inset-x-3 top-0 z-10 h-px opacity-60 transition-opacity duration-400 group-hover:opacity-100" />
       <Link
         href={readerHref}
         className={cn("block cursor-pointer", spotlight && "animate-reader-fade-up")}
@@ -165,18 +164,18 @@ export const BookCard = memo(function BookCard({
                 fill
                 unoptimized
                 sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
-                className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.018]"
+                className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/28 via-black/4 to-transparent opacity-65 transition-opacity duration-300 group-hover:opacity-78" />
-              <div className="absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-white/18 to-transparent opacity-75" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/8 to-transparent opacity-65 transition-opacity duration-400 group-hover:opacity-85" />
+              <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-white/20 to-transparent opacity-80" />
             </>
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(145deg,color-mix(in_oklab,var(--glass-strong)_76%,white_24%),color-mix(in_oklab,var(--accent)_68%,var(--cta)_8%))]">
+            <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(145deg,color-mix(in_oklab,var(--glass-strong)_72%,white_28%),color-mix(in_oklab,var(--accent)_62%,var(--cta)_12%))]">
               <div className="relative">
-                <div className="liquid-control flex h-[4.35rem] w-[3.25rem] items-center justify-center overflow-hidden rounded-r-lg rounded-l-sm text-foreground transition-transform duration-500 ease-out group-hover:scale-[1.018] sm:h-[4.8rem] sm:w-[3.55rem]">
-                  <div className="absolute inset-y-0 left-0 w-1 bg-black/16" />
-                  <div className="liquid-hairline absolute inset-x-0 top-0 h-px" />
-                  <span className="text-lg font-semibold sm:text-xl">
+                <div className="liquid-control flex h-[4.35rem] w-[3.25rem] items-center justify-center overflow-hidden rounded-r-lg rounded-l-sm text-foreground transition-transform duration-700 ease-out group-hover:scale-[1.04] sm:h-[4.8rem] sm:w-[3.55rem]">
+                  <div className="absolute inset-y-0 left-0 w-1 bg-black/12" />
+                  <div className="liquid-hairline absolute inset-x-0 top-0 h-px opacity-40" />
+                  <span className="text-lg font-bold sm:text-xl">
                     {book.title?.charAt(0) || "书"}
                   </span>
                 </div>
