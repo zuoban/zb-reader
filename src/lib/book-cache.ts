@@ -1,6 +1,6 @@
 import { logger } from "@/lib/logger";
 const DB_NAME = "zb-reader-books";
-const DB_VERSION = 1;
+const DB_VERSION = 3;
 const STORE_NAME = "books";
 
 interface CachedBook {
@@ -35,6 +35,13 @@ function openDB(): Promise<IDBDatabase> {
         });
         store.createIndex("timestamp", "timestamp");
       }
+    };
+
+    request.onblocked = () => {
+      logger.warn(
+        "book-cache",
+        "Database upgrade blocked. Close other tabs and refresh."
+      );
     };
   });
 }

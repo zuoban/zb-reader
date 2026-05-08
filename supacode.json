@@ -2,8 +2,17 @@
   "archiveScript" : "",
   "copyIgnoredOnWorktreeCreate" : false,
   "copyUntrackedOnWorktreeCreate" : false,
-  "openActionID" : "auto",
+  "deleteScript" : "",
+  "openActionID" : "antigravity",
   "pullRequestMergeStrategy" : "merge",
   "runScript" : "npm run dev",
+  "scripts" : [
+    {
+      "command" : "npm run dev",
+      "id" : "133B7360-548A-4823-82CF-8E7ED8BBB733",
+      "kind" : "run",
+      "name" : "Run"
+    }
+  ],
   "setupScript" : ""
 }
