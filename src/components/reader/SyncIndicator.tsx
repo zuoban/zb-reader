@@ -40,7 +40,7 @@ export function SyncIndicator({
   return (
     <div
       className={cn(
-        "flex items-center gap-1.5 text-xs transition-all",
+        "reader-liquid-control flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs transition-all",
         status === "pending" && "text-muted-foreground",
         status === "syncing" && "text-primary",
         status === "synced" && "text-green-600",
@@ -56,7 +56,7 @@ export function SyncIndicator({
       {status === "error" && onRetry && (
         <button
           onClick={onRetry}
-          className="ml-1 text-xs underline hover:no-underline"
+          className="ml-1 cursor-pointer text-xs underline hover:no-underline"
         >
           重试
         </button>

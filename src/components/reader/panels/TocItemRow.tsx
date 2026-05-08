@@ -37,7 +37,7 @@ export const TocItemRow = memo(function TocItemRow({
       <div className="group flex items-center">
         {hasChildren ? (
           <button
-            className="shrink-0 rounded-lg p-1.5 transition-all duration-200 hover:bg-[color-mix(in_srgb,var(--reader-text)_8%,transparent)] cursor-pointer"
+            className="reader-liquid-control shrink-0 cursor-pointer rounded-lg p-1.5 transition-all duration-200"
             style={{ color: "var(--reader-muted-text)" }}
             onClick={(e) => {
               e.stopPropagation();
@@ -54,14 +54,11 @@ export const TocItemRow = memo(function TocItemRow({
           ref={itemRef}
           className={cn(
             "flex-1 cursor-pointer truncate rounded-lg px-3 py-2 text-left text-sm transition-all duration-200",
-            isActive && "font-semibold"
+            isActive ? "reader-liquid-control font-semibold" : "hover:bg-[color-mix(in_srgb,var(--reader-text)_6%,transparent)]"
           )}
           style={{
             paddingLeft: `${level * 12 + 8}px`,
             color: isActive ? "var(--reader-primary)" : "var(--reader-text)",
-            background: isActive
-              ? "color-mix(in srgb, var(--reader-primary) 10%, transparent)"
-              : "transparent",
           }}
           onClick={() => {
             onTocItemClick(item.href);
