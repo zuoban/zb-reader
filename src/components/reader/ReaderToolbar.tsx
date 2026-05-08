@@ -111,10 +111,8 @@ export const ReaderToolbar = memo(function ReaderToolbar({
   onToggleTts,
   onToggleFullscreen,
   isSpeaking,
-  onPrevChapter,
-  onNextChapter,
-  hasPrevChapter,
-  hasNextChapter,
+  onPrevPage,
+  onNextPage,
   rightContent,
 }: ReaderToolbarProps) {
   const showChapterMeta = currentChapterTitle && currentChapterTitle !== title;
@@ -215,52 +213,42 @@ export const ReaderToolbar = memo(function ReaderToolbar({
         </div>
       </div>
 
-      {/* 底部进度栏 - 仅保留翻页按钮 */}
+      {/* 底部翻页控制 */}
       <div
         className={cn(
           "pointer-events-none fixed bottom-0 left-0 right-0 z-50 transition-all duration-300 ease-out",
           visible ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
         )}
       >
-        <div className="mx-auto max-w-3xl px-4 pb-5">
-          <div className="flex items-center justify-center gap-4">
-            {onPrevChapter && (
+        <div className="mx-auto max-w-3xl px-4 pb-[calc(env(safe-area-inset-bottom)+0.35rem)]">
+          <div className="reader-page-turn-dock pointer-events-auto mx-auto flex w-fit items-center justify-center gap-1 rounded-full px-1.5 py-1">
+            {onPrevPage && (
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={onPrevChapter}
-                disabled={!hasPrevChapter}
-                className={cn(
-                  "reader-liquid-control pointer-events-auto h-11 w-11 rounded-xl transition-all duration-200 hover:-translate-y-0.5",
-                  !hasPrevChapter && "opacity-30 cursor-not-allowed hover:translate-y-0"
-                )}
-                style={{ 
-                  color: "var(--reader-text)",
-                  background: "color-mix(in srgb, var(--reader-card-bg) 88%, transparent)",
-                  borderColor: "var(--reader-border)",
-                }}
+                onClick={onPrevPage}
+                className="reader-page-turn-button h-10 w-10 rounded-full"
+                style={{ color: "var(--reader-text)" }}
+                aria-label="上一页"
               >
-                <ChevronLeft className="h-5 w-5" />
+                <ChevronLeft className="h-4.5 w-4.5" />
               </Button>
             )}
 
-            {onNextChapter && (
+            {onPrevPage && onNextPage ? (
+              <div className="h-5 w-px bg-[color-mix(in_srgb,var(--reader-border)_64%,transparent)]" />
+            ) : null}
+
+            {onNextPage && (
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={onNextChapter}
-                disabled={!hasNextChapter}
-                className={cn(
-                  "reader-liquid-control pointer-events-auto h-11 w-11 rounded-xl transition-all duration-200 hover:-translate-y-0.5",
-                  !hasNextChapter && "opacity-30 cursor-not-allowed hover:translate-y-0"
-                )}
-                style={{ 
-                  color: "var(--reader-text)",
-                  background: "color-mix(in srgb, var(--reader-card-bg) 88%, transparent)",
-                  borderColor: "var(--reader-border)",
-                }}
+                onClick={onNextPage}
+                className="reader-page-turn-button h-10 w-10 rounded-full"
+                style={{ color: "var(--reader-text)" }}
+                aria-label="下一页"
               >
-                <ChevronRight className="h-5 w-5" />
+                <ChevronRight className="h-4.5 w-4.5" />
               </Button>
             )}
           </div>
