@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTheme } from "next-themes";
 import { BookOpen, Check, Clock3, LibraryBig, Tags, X } from "lucide-react";
 import { toast } from "sonner";
@@ -46,6 +46,7 @@ export default function BookshelfPage() {
   const [categoryInput, setCategoryInput] = useState("");
   const [savingCategory, setSavingCategory] = useState(false);
   const [deletingBook, setDeletingBook] = useState(false);
+  const deleteCancelButtonRef = useRef<HTMLButtonElement>(null);
   const { setTheme } = useTheme();
   const activeCategoryName = selectedCategory === ALL_CATEGORY ? "" : selectedCategory;
   const readingCount = Object.values(progressMap).filter((progress) => progress > 0 && progress < 1).length;
@@ -143,6 +144,22 @@ export default function BookshelfPage() {
       setDeletingBook(false);
     }
   }, [deleteDialogBook]);
+
+  useEffect(() => {
+    if (!deleteDialogBook) return;
+
+    deleteCancelButtonRef.current?.focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !deletingBook) {
+        setDeleteDialogBook(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [deleteDialogBook, deletingBook]);
 
   const handleOpenCategoryDialog = useCallback((book: Book) => {
     setCategoryDialogBook(book);
@@ -308,7 +325,14 @@ export default function BookshelfPage() {
       </main>
 
       {deleteDialogBook ? (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/42 p-4 backdrop-blur-md">
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-black/42 p-4 backdrop-blur-md"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !deletingBook) {
+              setDeleteDialogBook(null);
+            }
+          }}
+        >
           <div
             role="alertdialog"
             aria-modal="true"
@@ -327,6 +351,7 @@ export default function BookshelfPage() {
             </div>
             <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <Button
+                ref={deleteCancelButtonRef}
                 type="button"
                 variant="outline"
                 className="cursor-pointer"
