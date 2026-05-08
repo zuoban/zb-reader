@@ -205,16 +205,16 @@ export default function BookshelfPage() {
       <Navbar onUploadComplete={fetchBooks} />
 
       <main className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-10 pt-6 sm:px-6 sm:pb-14 sm:pt-8">
-        <div className="category-filter-shell mb-6 -mx-1 flex w-fit max-w-[calc(100%+0.5rem)] gap-1.5 overflow-x-auto rounded-2xl p-1.5 [scrollbar-width:none] sm:mb-8 [&::-webkit-scrollbar]:hidden">
+        <div className="surface-glass surface-elevated mb-6 -mx-1 flex w-fit max-w-[calc(100%+0.5rem)] gap-1 overflow-x-auto rounded-2xl p-1.5 [scrollbar-width:none] sm:mb-8 [&::-webkit-scrollbar]:hidden">
           <Button
             type="button"
             variant="ghost"
             size="sm"
             className={cn(
-              "category-filter-button h-8.5 cursor-pointer rounded-xl px-3.5 text-xs font-semibold transition-all duration-300",
+              "h-8.5 cursor-pointer rounded-xl px-3.5 text-xs font-semibold transition-all duration-400",
               selectedCategory === ALL_CATEGORY
                 ? "category-filter-button-active"
-                : "hover:text-foreground"
+                : "text-muted-foreground/80 hover:bg-background/40 hover:text-foreground"
             )}
             onClick={() => setSelectedCategory(ALL_CATEGORY)}
           >
@@ -222,9 +222,8 @@ export default function BookshelfPage() {
             <Badge
               variant="outline"
               className={cn(
-                "ml-1 border-transparent bg-foreground/5 px-1.5 py-0 text-[10px] text-muted-foreground shadow-none",
-                selectedCategory === ALL_CATEGORY &&
-                  "liquid-control text-foreground shadow-none"
+                "ml-1.5 border-transparent bg-foreground/5 px-1.5 py-0 text-[10px] font-bold text-muted-foreground/80 shadow-none transition-colors",
+                selectedCategory === ALL_CATEGORY && "bg-[color:var(--cta)]/15 text-[color:var(--cta)]"
               )}
             >
               {totalBooks}
@@ -237,10 +236,10 @@ export default function BookshelfPage() {
               variant="ghost"
               size="sm"
               className={cn(
-                "category-filter-button h-8.5 cursor-pointer rounded-xl px-3.5 text-xs font-semibold transition-all duration-300",
+                "h-8.5 cursor-pointer rounded-xl px-3.5 text-xs font-semibold transition-all duration-400",
                 selectedCategory === category.name
                   ? "category-filter-button-active"
-                  : "hover:text-foreground"
+                  : "text-muted-foreground/80 hover:bg-background/40 hover:text-foreground"
               )}
               onClick={() => setSelectedCategory(category.name)}
             >
@@ -248,9 +247,8 @@ export default function BookshelfPage() {
               <Badge
                 variant="outline"
                 className={cn(
-                  "ml-1 border-transparent bg-foreground/5 px-1.5 py-0 text-[10px] text-muted-foreground shadow-none",
-                  selectedCategory === category.name &&
-                    "liquid-control text-foreground shadow-none"
+                  "ml-1.5 border-transparent bg-foreground/5 px-1.5 py-0 text-[10px] font-bold text-muted-foreground/80 shadow-none transition-colors",
+                  selectedCategory === category.name && "bg-[color:var(--cta)]/15 text-[color:var(--cta)]"
                 )}
               >
                 {category.count}
