@@ -139,17 +139,3 @@ export function checkFailedLoginLimit(
 export function resetFailedLoginCount(identifier: string) {
   failedLoginStore.delete(identifier);
 }
-
-/**
- * 创建速率限制检查函数的工厂函数
- * @param limit 限制次数
- * @param window 时间窗口（秒）
- * @param message 自定义错误消息
- */
-export function createRateLimiter(
-  limit: number,
-  window: number,
-  message = "请求过于频繁，请稍后再试"
-) {
-  return (req: NextRequest) => checkRateLimit(req, { limit, window, message });
-}

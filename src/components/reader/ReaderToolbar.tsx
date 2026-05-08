@@ -72,6 +72,7 @@ const ToolbarButton = memo(function ToolbarButton({
           variant="ghost"
           size="icon"
           onClick={onClick}
+          aria-label={tooltip}
           className={cn(
             "reader-liquid-control h-8 w-8 cursor-pointer rounded-xl transition-all duration-200 sm:h-9 sm:w-9",
             "reader-toolbar-button",

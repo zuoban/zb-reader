@@ -96,7 +96,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     const currentLocationRef = useRef<string | null>(null);
     const progressRef = useRef<number>(0);
     const scrollRatioRef = useRef<number>(0);
-    const [_isReady, setIsReady] = useState(false);
     const [isRenditionReady, setIsRenditionReady] = useState(false);
     const justSelectedRef = useRef(false);
 
@@ -226,7 +225,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       progressRef,
       renditionRef,
       scrollRatioRef,
-      setIsReady,
       setIsRenditionReady,
       theme,
       url,

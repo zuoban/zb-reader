@@ -390,5 +390,3 @@ export class EpubContext {
     }
   }
 }
-
-export const epubContext = new EpubContext();

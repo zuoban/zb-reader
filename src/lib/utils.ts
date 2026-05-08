@@ -53,6 +53,15 @@ export function formatDuration(seconds: number): string {
   return "少于1分钟";
 }
 
+export function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString("zh-CN", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 /**
  * 防抖函数
  */

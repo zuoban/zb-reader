@@ -3,6 +3,8 @@ import { Bookmark, Trash2, Pencil, Check, X } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { formatDate } from "@/lib/utils";
+import { EmptyState } from "@/components/reader/EmptyState";
 
 interface BookmarkItem {
   id: string;
@@ -20,15 +22,6 @@ interface BookmarksTabProps {
   onClose: () => void;
 }
 
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("zh-CN", {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
 export const BookmarksTab = memo(function BookmarksTab({
   bookmarks,
   onBookmarkClick,
@@ -43,19 +36,11 @@ export const BookmarksTab = memo(function BookmarksTab({
     <ScrollArea className="h-full">
       <div className="p-5 space-y-3">
         {bookmarks.length === 0 ? (
-          <div className="text-center py-12">
-            <div
-              className="reader-liquid-control mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl"
-            >
-              <Bookmark className="size-8" style={{ color: "var(--reader-muted-text)" }} />
-            </div>
-            <p className="text-sm font-medium" style={{ color: "var(--reader-text)" }}>
-              暂无书签
-            </p>
-            <p className="mt-1.5 text-xs" style={{ color: "var(--reader-muted-text)" }}>
-              读到关键位置时记一枚书签，会更容易回来看
-            </p>
-          </div>
+          <EmptyState
+            icon={Bookmark}
+            title="暂无书签"
+            description="读到关键位置时记一枚书签，会更容易回来看"
+          />
         ) : (
           bookmarks.map((bookmark) => (
             <div
@@ -93,6 +78,7 @@ export const BookmarksTab = memo(function BookmarksTab({
                     size="icon"
                     className="reader-liquid-control h-9 w-9 rounded-lg"
                     style={{ color: "var(--reader-muted-text)" }}
+                    aria-label="取消编辑"
                     onClick={(e) => {
                       e.stopPropagation();
                       setEditingId(null);
@@ -128,6 +114,7 @@ export const BookmarksTab = memo(function BookmarksTab({
                       size="icon"
                       className="reader-liquid-control h-8 w-8 rounded-lg"
                       style={{ color: "var(--reader-muted-text)" }}
+                      aria-label="编辑书签"
                       onClick={(e) => {
                         e.stopPropagation();
                         setEditingId(bookmark.id);
@@ -141,6 +128,7 @@ export const BookmarksTab = memo(function BookmarksTab({
                       size="icon"
                       className="h-8 w-8 rounded-lg border border-red-300/18 bg-[linear-gradient(180deg,rgba(255,120,120,0.18),rgba(255,120,120,0.07))] hover:bg-[linear-gradient(180deg,rgba(255,120,120,0.24),rgba(255,120,120,0.11))]"
                       style={{ color: "var(--reader-destructive, #ef4444)" }}
+                      aria-label="删除书签"
                       onClick={(e) => {
                         e.stopPropagation();
                         onBookmarkDelete(bookmark.id);

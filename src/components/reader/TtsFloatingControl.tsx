@@ -84,6 +84,7 @@ export function TtsFloatingControl({
             <button
               type="button"
               onClick={onPrev}
+              aria-label="上一段"
               className="group flex size-7 sm:size-8 items-center justify-center rounded-lg border transition-all duration-200 cursor-pointer border-[color-mix(in_srgb,var(--reader-border)_45%,_transparent)]"
               style={{
                 color: "var(--reader-text, #09090b)",
@@ -99,6 +100,7 @@ export function TtsFloatingControl({
           <button
             type="button"
             onClick={onToggle}
+            aria-label={isPaused ? "播放" : "暂停"}
             className="group flex size-8 sm:size-9 items-center justify-center rounded-lg transition-all duration-200 cursor-pointer border border-[color-mix(in_srgb,var(--reader-border)_45%,_transparent)]"
             style={{
               color: "var(--reader-text, #09090b)",
@@ -117,6 +119,7 @@ export function TtsFloatingControl({
           <button
             type="button"
             onClick={onStop}
+            aria-label="停止"
             className="group flex size-7 sm:size-8 items-center justify-center rounded-lg transition-all duration-200 cursor-pointer border border-[color-mix(in_srgb,var(--reader-border)_45%,_transparent)]"
             style={{
               color: "var(--reader-destructive, #dc2626)",
@@ -132,6 +135,7 @@ export function TtsFloatingControl({
             <button
               type="button"
               onClick={onNext}
+              aria-label="下一段"
               className="group flex size-7 sm:size-8 items-center justify-center rounded-lg transition-all duration-200 cursor-pointer border border-[color-mix(in_srgb,var(--reader-border)_45%,_transparent)]"
               style={{
                 color: "var(--reader-text, #09090b)",
@@ -153,6 +157,7 @@ export function TtsFloatingControl({
               <button
                 type="button"
                 onClick={handleOpenImmersiveView}
+                aria-label="沉浸朗读"
                 className="group flex size-7 sm:size-8 items-center justify-center rounded-lg transition-all duration-200 cursor-pointer border border-[color-mix(in_srgb,var(--reader-border)_45%,_transparent)]"
                 style={{
                   color: "var(--reader-text, #09090b)",
@@ -175,6 +180,7 @@ export function TtsFloatingControl({
               <button
                 type="button"
                 onClick={onToggleFullscreen}
+                aria-label={isFullscreen ? "退出全屏" : "全屏"}
                 className="group flex size-7 sm:size-8 items-center justify-center rounded-lg transition-all duration-200 cursor-pointer border border-[color-mix(in_srgb,var(--reader-border)_45%,_transparent)]"
                 style={{
                   color: "var(--reader-text, #09090b)",
@@ -197,6 +203,7 @@ export function TtsFloatingControl({
       <button
         type="button"
         onClick={handleMainClick}
+        aria-label="朗读控制"
         className={cn(
           "reader-liquid-surface group animate-reader-surface relative flex size-10 sm:size-11 items-center justify-center rounded-xl cursor-pointer overflow-hidden",
           "transition-all duration-300 ease-out",

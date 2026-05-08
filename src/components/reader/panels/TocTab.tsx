@@ -3,6 +3,7 @@ import { List } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { TocItem } from "@/types/reader";
 import { TocItemRow } from "./TocItemRow";
+import { EmptyState } from "@/components/reader/EmptyState";
 
 interface TocTabProps {
   toc: TocItem[];
@@ -32,20 +33,11 @@ export const TocTab = memo(function TocTab({
     >
       <div className="w-max min-w-full p-5 pr-8">
         {toc.length === 0 ? (
-          <div className="text-center py-12">
-            <div
-              className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center"
-              style={{ background: "color-mix(in srgb, var(--reader-text) 5%, transparent)" }}
-            >
-              <List className="size-8" style={{ color: "var(--reader-muted-text)" }} />
-            </div>
-            <p className="text-sm font-medium" style={{ color: "var(--reader-text)" }}>
-              暂无目录
-            </p>
-            <p className="mt-1.5 text-xs" style={{ color: "var(--reader-muted-text)" }}>
-              这本书暂时没有可用的章节导航
-            </p>
-          </div>
+          <EmptyState
+            icon={List}
+            title="暂无目录"
+            description="这本书暂时没有可用的章节导航"
+          />
         ) : (
           <>
             <div

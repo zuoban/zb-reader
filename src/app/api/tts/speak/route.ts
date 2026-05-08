@@ -13,6 +13,7 @@ import {
   type TtsConfigApiItem,
 } from "@/lib/tts";
 import { ttsSpeakSchema } from "@/lib/validations";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 interface SafeRequestResult {
   response: Response;
@@ -45,6 +46,9 @@ async function requestWithFallback(
 }
 
 export async function POST(req: NextRequest) {
+  const rateLimitResult = checkRateLimit(req, { limit: 30, window: 60 });
+  if (rateLimitResult) return rateLimitResult;
+
   const authResult = await getAuthUserId();
   if (authResult.error) return authResult.error;
   const { userId } = authResult;

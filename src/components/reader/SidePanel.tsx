@@ -88,6 +88,7 @@ export const SidePanel = memo(function SidePanel({
           >
             <TabsTrigger
               value="toc"
+              aria-label="目录"
               className="gap-2 rounded-lg text-sm font-medium transition-all data-[state=active]:bg-[var(--reader-card-bg)]/70 data-[state=active]:text-[var(--reader-primary)] data-[state=active]:shadow-sm"
             >
               <List className="size-4" />
@@ -95,6 +96,7 @@ export const SidePanel = memo(function SidePanel({
             </TabsTrigger>
             <TabsTrigger
               value="bookmarks"
+              aria-label="书签"
               className="gap-2 rounded-lg text-sm font-medium transition-all data-[state=active]:bg-[var(--reader-card-bg)]/70 data-[state=active]:text-[var(--reader-primary)] data-[state=active]:shadow-sm"
             >
               <Bookmark className="size-4" />
@@ -107,6 +109,7 @@ export const SidePanel = memo(function SidePanel({
             </TabsTrigger>
             <TabsTrigger
               value="notes"
+              aria-label="笔记"
               className="gap-2 rounded-lg text-sm font-medium transition-all data-[state=active]:bg-[var(--reader-card-bg)]/70 data-[state=active]:text-[var(--reader-primary)] data-[state=active]:shadow-sm"
             >
               <StickyNote className="size-4" />

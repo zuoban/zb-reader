@@ -3,6 +3,8 @@ import { StickyNote, Trash2, Pencil } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { formatDate } from "@/lib/utils";
+import { EmptyState } from "@/components/reader/EmptyState";
 
 interface NoteItem {
   id: string;
@@ -23,15 +25,6 @@ interface NotesTabProps {
 
 const NOTE_COLORS = ["#facc15", "#4ade80", "#60a5fa", "#f87171", "#c084fc"];
 
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("zh-CN", {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
 export const NotesTab = memo(function NotesTab({
   notes,
   onNoteClick,
@@ -47,19 +40,11 @@ export const NotesTab = memo(function NotesTab({
     <ScrollArea className="h-full">
       <div className="p-5 space-y-3">
         {notes.length === 0 ? (
-          <div className="text-center py-12">
-            <div
-              className="reader-liquid-control mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl"
-            >
-              <StickyNote className="size-8" style={{ color: "var(--reader-muted-text)" }} />
-            </div>
-            <p className="text-sm font-medium" style={{ color: "var(--reader-text)" }}>
-              暂无笔记
-            </p>
-            <p className="mt-1.5 text-xs" style={{ color: "var(--reader-muted-text)" }}>
-              选中文字后可以快速记录想法和摘录
-            </p>
-          </div>
+          <EmptyState
+            icon={StickyNote}
+            title="暂无笔记"
+            description="选中文字后可以快速记录想法和摘录"
+          />
         ) : (
           notes.map((note) => (
             <div
@@ -83,6 +68,7 @@ export const NotesTab = memo(function NotesTab({
                           backgroundColor: c,
                           borderColor: editingColor === c ? "var(--reader-text)" : "transparent",
                         }}
+                        aria-label={`选择标注颜色 ${c}`}
                         onClick={() => setEditingColor(c)}
                       />
                     ))}

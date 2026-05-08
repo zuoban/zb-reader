@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(
-      { message: "注册成功", user: { id, username, email } },
+      { message: "注册成功" },
       { status: 201 }
     );
   } catch (error) {

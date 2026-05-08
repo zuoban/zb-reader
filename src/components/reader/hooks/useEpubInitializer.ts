@@ -32,7 +32,6 @@ interface UseEpubInitializerParams {
   progressRef: MutableRefObject<number>;
   renditionRef: MutableRefObject<Rendition | null>;
   scrollRatioRef: MutableRefObject<number>;
-  setIsReady: (ready: boolean) => void;
   setIsRenditionReady: (ready: boolean) => void;
   theme: "light" | "dark" | "sepia";
   url: string;
@@ -128,7 +127,6 @@ export function useEpubInitializer({
   progressRef,
   renditionRef,
   scrollRatioRef,
-  setIsReady,
   setIsRenditionReady,
   theme,
   url,
@@ -272,7 +270,6 @@ export function useEpubInitializer({
 
         book.ready.then(() => {
           book!.locations.generate(1024).then(() => {
-            setIsReady(true);
             onReady?.();
           });
         });
@@ -285,7 +282,6 @@ export function useEpubInitializer({
 
     return () => {
       cancelled = true;
-      setIsReady(false);
       setIsRenditionReady(false);
       renditionRef.current = null;
       bookRef.current = null;
