@@ -150,10 +150,10 @@ export function UploadDialog({
 
             <div
               {...getRootProps()}
-              className={`cursor-pointer rounded-2xl border-2 border-dashed p-5 text-center transition-all duration-200 sm:p-8 ${
+              className={`liquid-control cursor-pointer rounded-2xl border-2 border-dashed p-5 text-center transition-all duration-200 sm:p-8 ${
                 isDragActive
-                  ? "border-ring bg-primary/8 shadow-[0_20px_50px_-36px_color-mix(in_oklab,var(--cta)_55%,transparent)]"
-                  : "border-[color:var(--glass-border)] bg-background/38 hover:border-ring/35 hover:bg-background/55"
+                  ? "border-ring shadow-[0_20px_50px_-36px_color-mix(in_oklab,var(--cta)_55%,transparent)]"
+                  : "border-[color:var(--glass-border)] hover:border-ring/35"
               }`}
             >
               <input {...getInputProps()} />
@@ -229,7 +229,7 @@ export function UploadDialog({
             )}
 
             {files.length > 0 && (
-              <div className="flex justify-end gap-2 border-t border-border/40 pt-1">
+              <div className="flex justify-end gap-2 border-t border-[color:var(--glass-border)]/40 pt-1">
                 <Button variant="outline" onClick={handleClose} disabled={uploading} className="rounded-xl">
                   取消
                 </Button>

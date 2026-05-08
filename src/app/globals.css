@@ -333,6 +333,18 @@
     opacity: 0.58;
   }
 
+  .liquid-popover {
+    background:
+      linear-gradient(145deg,
+        color-mix(in oklab, var(--popover) 84%, var(--glass-strong) 16%),
+        color-mix(in oklab, var(--popover) 76%, var(--glass) 24%)
+      ),
+      linear-gradient(180deg, color-mix(in oklab, white 38%, transparent), transparent 45%),
+      linear-gradient(115deg, color-mix(in oklab, var(--cta) 7%, transparent), transparent 62%);
+    backdrop-filter: blur(36px) saturate(1.45) brightness(1.02);
+    -webkit-backdrop-filter: blur(36px) saturate(1.45) brightness(1.02);
+  }
+
   .dark .liquid-panel::before {
     opacity: 0.18;
   }

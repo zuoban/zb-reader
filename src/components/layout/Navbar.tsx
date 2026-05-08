@@ -105,7 +105,7 @@ export function Navbar({ onUploadComplete, className }: NavbarProps) {
                   >
                     <Avatar className="h-7.5 w-7.5 sm:h-8 sm:w-8">
                       <AvatarImage src={session.user.avatar || undefined} alt={session.user.username || "用户头像"} />
-                      <AvatarFallback className="bg-gradient-to-br from-[color:var(--cta)]/30 to-primary/10 text-primary font-semibold text-sm">
+                      <AvatarFallback className="font-semibold text-sm text-primary">
                         {session.user.username?.[0]?.toUpperCase() || "U"}
                       </AvatarFallback>
                     </Avatar>
@@ -114,12 +114,12 @@ export function Navbar({ onUploadComplete, className }: NavbarProps) {
                 <DropdownMenuContent
                   align="end"
                   sideOffset={8}
-                  className="w-56 border-border/70 bg-card/95 shadow-[0_8px_32px_-12px_color-mix(in_oklab,var(--foreground)_30%,transparent)] backdrop-blur-2xl animate-in fade-in-0 zoom-in-95 duration-200"
+                  className="w-56 animate-in fade-in-0 zoom-in-95 duration-200"
                 >
                   <div className="flex items-center gap-3 px-3 py-3.5">
                     <Avatar className="h-11 w-11 border-2 border-[color:var(--cta)]/20 shadow-[0_2px_8px_-2px_color-mix(in_oklab,var(--cta)_25%,transparent)]">
                       <AvatarImage src={session.user.avatar || undefined} alt={session.user.username || "用户头像"} />
-                      <AvatarFallback className="bg-gradient-to-br from-[color:var(--cta)]/30 to-primary/10 text-primary font-semibold">
+                      <AvatarFallback className="font-semibold text-primary">
                         {session.user.username?.[0]?.toUpperCase() || "U"}
                       </AvatarFallback>
                     </Avatar>
@@ -132,13 +132,13 @@ export function Navbar({ onUploadComplete, className }: NavbarProps) {
                   </div>
                   <DropdownMenuSeparator className="bg-border/50" />
                   <div className="py-1.5 px-1.5">
-                    <DropdownMenuItem asChild className="cursor-pointer rounded-lg py-2.5 px-3 transition-colors hover:bg-accent/60 focus:bg-accent/60">
+                    <DropdownMenuItem asChild className="cursor-pointer rounded-lg py-2.5 px-3 transition-colors">
                       <Link href="/bookshelf" className="flex items-center gap-2.5">
                         <Library className="h-4 w-4 text-[color:var(--cta)]" />
                         <span className="text-sm font-medium">我的书架</span>
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild className="cursor-pointer rounded-lg py-2.5 px-3 transition-colors hover:bg-accent/60 focus:bg-accent/60">
+                    <DropdownMenuItem asChild className="cursor-pointer rounded-lg py-2.5 px-3 transition-colors">
                       <Link href="/profile" className="flex items-center gap-2.5">
                         <User className="h-4 w-4 text-muted-foreground" />
                         <span className="text-sm font-medium">个人资料</span>
@@ -149,7 +149,7 @@ export function Navbar({ onUploadComplete, className }: NavbarProps) {
                   <div className="py-1.5 px-1.5 pb-2">
                     <DropdownMenuItem
                       onClick={() => signOut({ callbackUrl: `${window.location.origin}/login` })}
-                      className="cursor-pointer rounded-lg py-2.5 px-3 text-destructive/80 transition-colors hover:bg-destructive/10 hover:text-destructive focus:bg-destructive/10"
+                      className="cursor-pointer rounded-lg py-2.5 px-3 text-destructive/80 transition-colors"
                     >
                       <LogOut className="mr-2.5 h-4 w-4" />
                       <span className="text-sm font-medium">退出登录</span>

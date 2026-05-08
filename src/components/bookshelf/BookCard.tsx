@@ -153,7 +153,7 @@ export const BookCard = memo(function BookCard({
         onClick={handleOpenReader}
       >
         <div
-          className="relative mx-1.5 mt-1.5 mb-[0.1875rem] aspect-[4/5] overflow-hidden rounded-xl bg-muted/70 shadow-[inset_0_1px_0_color-mix(in_oklab,white_42%,transparent),inset_0_-1px_0_color-mix(in_oklab,var(--foreground)_8%,transparent)]"
+          className="liquid-control relative mx-1.5 mt-1.5 mb-[0.1875rem] aspect-[4/5] overflow-hidden rounded-xl p-0"
           data-reader-transition-cover
         >
           {/* Cover Image */}
@@ -171,12 +171,12 @@ export const BookCard = memo(function BookCard({
               <div className="absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-white/18 to-transparent opacity-75" />
             </>
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(145deg,color-mix(in_oklab,var(--muted)_76%,white_24%),color-mix(in_oklab,var(--accent)_68%,var(--cta)_8%))] dark:bg-muted/20">
+            <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(145deg,color-mix(in_oklab,var(--glass-strong)_76%,white_24%),color-mix(in_oklab,var(--accent)_68%,var(--cta)_8%))]">
               <div className="relative">
-                <div className="flex h-[4.35rem] w-[3.25rem] items-center justify-center overflow-hidden rounded-r-lg rounded-l-sm border border-white/18 bg-gradient-to-b from-foreground/90 to-foreground/70 text-white shadow-[0_14px_28px_-20px_color-mix(in_oklab,var(--foreground)_50%,transparent)] transition-transform duration-500 ease-out group-hover:scale-[1.018] sm:h-[4.8rem] sm:w-[3.55rem]">
+                <div className="liquid-control flex h-[4.35rem] w-[3.25rem] items-center justify-center overflow-hidden rounded-r-lg rounded-l-sm text-foreground transition-transform duration-500 ease-out group-hover:scale-[1.018] sm:h-[4.8rem] sm:w-[3.55rem]">
                   <div className="absolute inset-y-0 left-0 w-1 bg-black/16" />
-                  <div className="absolute inset-x-0 top-0 h-px bg-white/48" />
-                  <span className="text-lg font-semibold text-white/92 sm:text-xl">
+                  <div className="liquid-hairline absolute inset-x-0 top-0 h-px" />
+                  <span className="text-lg font-semibold sm:text-xl">
                     {book.title?.charAt(0) || "书"}
                   </span>
                 </div>
