@@ -30,7 +30,7 @@ describe("UploadDialog", () => {
       <UploadDialog open={true} onOpenChange={() => {}} onUploadComplete={() => {}} />
     );
 
-    expect(screen.getByText("点击选择文件")).toBeInTheDocument();
+    expect(screen.getByText("点击浏览文件")).toBeInTheDocument();
   });
 
   it("should format file sizes correctly", () => {

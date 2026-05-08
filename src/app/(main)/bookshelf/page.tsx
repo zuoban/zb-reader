@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTheme } from "next-themes";
-import { BookOpen, Check, Clock3, LibraryBig, Tags, X } from "lucide-react";
+import { Check, Tags, X } from "lucide-react";
 import { toast } from "sonner";
 import { BackgroundDecoration } from "@/components/bookshelf/BackgroundDecoration";
 import { BookCardSkeleton } from "@/components/bookshelf/BookCardSkeleton";
@@ -49,8 +49,6 @@ export default function BookshelfPage() {
   const deleteCancelButtonRef = useRef<HTMLButtonElement>(null);
   const { setTheme } = useTheme();
   const activeCategoryName = selectedCategory === ALL_CATEGORY ? "" : selectedCategory;
-  const readingCount = Object.values(progressMap).filter((progress) => progress > 0 && progress < 1).length;
-  const completedCount = Object.values(progressMap).filter((progress) => progress >= 1).length;
 
   // Sync theme with reader settings on mount
   useEffect(() => {
