@@ -46,7 +46,7 @@ export function Navbar({ onUploadComplete, className }: NavbarProps) {
   return (
     <header className={cn("sticky top-2 z-50 w-full sm:top-4", className)}>
       <nav className="mx-auto w-full max-w-7xl px-4 sm:px-6">
-        <div className="surface-glass relative flex h-14 items-center justify-between overflow-hidden rounded-[1.25rem] border border-white/30 px-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.12)] transition-all duration-500 hover:border-white/40 sm:h-16 sm:rounded-[1.5rem] sm:px-4 dark:border-white/10 dark:hover:border-white/20">
+        <div className="relative flex h-14 items-center justify-between overflow-hidden rounded-[1.25rem] border border-white/30 bg-white/40 px-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.12)] backdrop-blur-xl saturate-150 transition-all duration-500 hover:border-white/40 hover:bg-white/50 sm:h-16 sm:rounded-[1.5rem] sm:px-4 dark:border-white/10 dark:bg-black/20 dark:hover:border-white/20 dark:hover:bg-black/30">
           {/* Dynamic Light Reflection Edge */}
           <div className="liquid-hairline absolute inset-x-4 top-0 h-px opacity-80" />
           

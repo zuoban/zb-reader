@@ -139,7 +139,7 @@ export const BookCard = memo(function BookCard({
     <Card
       ref={cardRef}
       className={cn(
-        "book-card-glass group relative gap-3 overflow-hidden rounded-[1.25rem] border-white/20 py-0 transition-all duration-400 ease-out sm:rounded-[1.5rem]",
+        "book-card-glass group relative gap-3 overflow-hidden rounded-[1.25rem] border-white/20 py-0 transition-all duration-400 ease-out hover:-translate-y-1 hover:shadow-lg sm:rounded-[1.5rem]",
         spotlight && "ring-2 ring-primary/28"
       )}
     >
@@ -169,11 +169,20 @@ export const BookCard = memo(function BookCard({
               <div className="absolute inset-0 bg-gradient-to-tr from-black/45 via-transparent to-white/10 opacity-60" />
               <div className="absolute inset-0 ring-1 ring-inset ring-black/5" />
               
+              {/* Category Badge Overlay */}
+              {book.category && (
+                <div className="absolute left-2 top-2 z-20">
+                  <div className="inline-flex items-center rounded-full border border-white/10 bg-black/60 px-2 py-0.5 text-[10px] font-semibold text-white/95 backdrop-blur-md shadow-sm">
+                    {book.category}
+                  </div>
+                </div>
+              )}
+
               {/* Visual Progress Bar Overlay */}
               {hasProgress && (
-                <div className="absolute inset-x-3 bottom-2.5 z-20 h-1.5 rounded-full bg-black/32 p-0.5 backdrop-blur-md">
+                <div className="absolute inset-x-0 bottom-0 z-20 h-1.5 bg-black/40 backdrop-blur-sm">
                   <div 
-                    className="h-full rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)] transition-all duration-500" 
+                    className="h-full bg-white/90 shadow-[0_0_10px_rgba(255,255,255,0.8)] transition-all duration-500" 
                     style={{ width: `${progress * 100}%` }}
                   />
                 </div>
@@ -202,10 +211,10 @@ export const BookCard = memo(function BookCard({
       </Link>
 
       {/* Card Content */}
-      <div className="relative flex min-h-[62px] flex-col px-3.5 pb-3.5 pt-1.5 sm:min-h-[68px]">
+      <div className="relative flex min-h-[68px] flex-col px-4 pb-4 pt-2 sm:min-h-[74px]">
         <div className="flex items-start justify-between gap-1.5">
           <h3
-            className="line-clamp-2 min-h-[2.5em] flex-1 text-[13.5px] font-bold leading-[1.3] tracking-tight text-foreground/90 transition-colors duration-300 group-hover:text-foreground sm:text-[14.5px]"
+            className="line-clamp-2 min-h-[2.5em] flex-1 text-[14px] font-bold leading-[1.3] tracking-tight text-foreground/95 transition-colors duration-300 group-hover:text-foreground sm:text-[15px]"
             title={book.title}
           >
             {book.title || "未命名书籍"}
@@ -254,36 +263,27 @@ export const BookCard = memo(function BookCard({
 
         <div className="mt-2 flex flex-col gap-2.5">
           <div className="flex items-center justify-between gap-2">
-            <span className="min-w-0 truncate text-left text-[10px] font-semibold text-muted-foreground/75 transition-colors duration-300 group-hover:text-muted-foreground sm:text-[11px]">
+            <span className="min-w-0 truncate text-left text-[11px] font-medium text-muted-foreground/85 transition-colors duration-300 group-hover:text-foreground sm:text-[12px]">
               {book.author || "未知作者"}
             </span>
-            {book.category ? (
-              <Badge
-                variant="secondary"
-                className="max-w-[45%] shrink-0 rounded-md border-transparent bg-foreground/[0.04] px-1.5 py-0.5 text-[9px] font-bold text-muted-foreground/80 transition-all duration-300 group-hover:bg-foreground/[0.08] group-hover:text-foreground sm:text-[10px]"
-                title={book.category}
-              >
-                {book.category}
-              </Badge>
-            ) : null}
           </div>
           
           <div className="flex items-center justify-between gap-2 border-t border-border/15 pt-2.5">
             <div className="flex items-center gap-2">
               <div className={cn(
-                "flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-bold tracking-tight sm:text-[10px]",
+                "flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold tracking-tight sm:text-[11px]",
                 isCompleted 
                   ? "bg-[color:var(--chart-3)]/10 text-[color:var(--chart-3)]" 
                   : hasProgress 
                     ? "bg-[color:var(--cta)]/10 text-[color:var(--cta)]"
-                    : "bg-foreground/5 text-foreground/60"
+                    : "bg-foreground/5 text-foreground/70"
               )}>
-                {isCompleted && <Check className="h-2.5 w-2.5 stroke-[3px]" />}
+                {isCompleted && <Check className="h-3 w-3 stroke-[3px]" />}
                 {statusText}
               </div>
             </div>
             {lastReadText ? (
-              <span className="shrink-0 text-[9px] font-medium text-muted-foreground/60 sm:text-[10px]">
+              <span className="shrink-0 text-[10px] font-medium text-muted-foreground/75 sm:text-[11px]">
                 {lastReadText}
               </span>
             ) : null}

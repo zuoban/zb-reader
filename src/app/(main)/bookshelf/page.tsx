@@ -242,9 +242,9 @@ export default function BookshelfPage() {
       <BackgroundDecoration />
       <Navbar onUploadComplete={handleUploadComplete} />
 
-      <main className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-10 pt-6 sm:px-6 sm:pb-14 sm:pt-8">
-        <div className="mb-8 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="surface-glass surface-elevated -mx-1 flex w-fit max-w-[calc(100%+0.5rem)] gap-1 overflow-x-auto rounded-2xl p-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <main className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-10 pt-8 sm:px-6 sm:pb-14 sm:pt-12">
+        <div className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative -mx-1 flex w-fit max-w-[calc(100%+0.5rem)] gap-1 overflow-x-auto rounded-2xl border border-white/30 bg-white/40 p-1.5 shadow-[0_4px_16px_rgba(0,0,0,0.06)] backdrop-blur-xl saturate-150 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden dark:border-white/10 dark:bg-black/20">
             <Button
               type="button"
               variant="ghost"
