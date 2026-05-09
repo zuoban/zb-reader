@@ -122,7 +122,7 @@ function ReaderContent() {
   const {
     book,
     loading,
-    bookUrl,
+    bookData,
     initialLocation,
     bookmarks,
     setBookmarks,
@@ -407,7 +407,7 @@ function ReaderContent() {
     setToolbarVisible(false);
   }, [setIsTtsViewOpen, setToolbarVisible]);
 
-  if (loading || !book || !bookUrl) {
+  if (loading || !book || !bookData) {
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -438,10 +438,10 @@ function ReaderContent() {
         activeTtsLocation={activeTtsLocation}
         activeTtsParagraph={activeTtsParagraph}
         activeTtsParagraphId={activeTtsParagraphId}
+        bookData={bookData}
         bookFormat={book.format}
         bookId={bookId}
         bookTitle={book.title}
-        bookUrl={bookUrl}
         currentChapterTitle={currentChapterTitle}
         currentPage={currentPage}
         epubReaderRef={epubReaderRef}

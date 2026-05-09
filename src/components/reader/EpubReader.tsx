@@ -22,7 +22,8 @@ import { useEpubScrollProgress } from "./hooks/useEpubScrollProgress";
 import { useEpubTtsHighlighting } from "./hooks/useEpubTtsHighlighting";
 
 interface EpubReaderProps {
-  url: string;
+  bookId: string;
+  bookData: ArrayBuffer;
   initialLocation?: string;
   fontSize?: number;
   fontFamily?: string;
@@ -70,7 +71,8 @@ export { type TocItem };
 const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
   (
     {
-      url,
+      bookId,
+      bookData,
       initialLocation,
       fontSize = 16,
       fontFamily = "system",
@@ -210,6 +212,8 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     });
 
     useEpubInitializer({
+      bookId,
+      bookData,
       bookRef,
       currentLocationRef,
       epubContextRef,
@@ -227,7 +231,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       scrollRatioRef,
       setIsRenditionReady,
       theme,
-      url,
       viewerRef,
     });
 

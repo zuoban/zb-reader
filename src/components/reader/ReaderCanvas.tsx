@@ -19,10 +19,10 @@ interface ReaderCanvasProps {
   activeTtsLocation: string | null;
   activeTtsParagraph: string;
   activeTtsParagraphId: string | null;
+  bookData: ArrayBuffer | null;
   bookFormat: string;
   bookId: string;
   bookTitle: string;
-  bookUrl: string;
   currentChapterTitle?: string;
   currentPage?: number;
   epubReaderRef: React.RefObject<EpubReaderRef | null>;
@@ -53,10 +53,10 @@ export function ReaderCanvas({
   activeTtsLocation,
   activeTtsParagraph,
   activeTtsParagraphId,
+  bookData,
   bookFormat,
   bookId,
   bookTitle,
-  bookUrl,
   currentChapterTitle,
   currentPage,
   epubReaderRef,
@@ -101,11 +101,12 @@ export function ReaderCanvas({
               paddingBottom: isTtsViewOpen ? 0 : 36,
             }}
           >
-            {bookFormat === "epub" && (
+            {bookFormat === "epub" && bookData && (
               <EpubReader
                 key={bookId}
                 ref={epubReaderRef}
-                url={bookUrl}
+                bookId={bookId}
+                bookData={bookData}
                 initialLocation={initialLocation}
                 fontSize={fontSize}
                 fontFamily={fontFamily}

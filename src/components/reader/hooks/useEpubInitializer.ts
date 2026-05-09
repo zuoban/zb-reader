@@ -15,8 +15,11 @@ import {
   type ReaderLocationChange,
 } from "@/components/reader/epub-location";
 import type { TocItem } from "@/types/reader";
+import { cacheBookLocations, getCachedLocations } from "@/lib/book-cache";
 
 interface UseEpubInitializerParams {
+  bookId: string;
+  bookData: ArrayBuffer;
   bookRef: MutableRefObject<Book | null>;
   currentLocationRef: MutableRefObject<string | null>;
   epubContextRef: MutableRefObject<EpubContext>;
@@ -34,7 +37,6 @@ interface UseEpubInitializerParams {
   scrollRatioRef: MutableRefObject<number>;
   setIsRenditionReady: (ready: boolean) => void;
   theme: "light" | "dark" | "sepia";
-  url: string;
   viewerRef: RefObject<HTMLDivElement | null>;
 }
 
@@ -113,6 +115,8 @@ function restoreInitialScroll(viewer: HTMLDivElement | null, ratio: number) {
 }
 
 export function useEpubInitializer({
+  bookId,
+  bookData,
   bookRef,
   currentLocationRef,
   epubContextRef,
@@ -130,7 +134,6 @@ export function useEpubInitializer({
   scrollRatioRef,
   setIsRenditionReady,
   theme,
-  url,
   viewerRef,
 }: UseEpubInitializerParams) {
   const themeRef = useRef(theme);
@@ -148,13 +151,9 @@ export function useEpubInitializer({
 
     async function init() {
       try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error("Failed to fetch EPUB file");
-        const arrayBuffer = await response.arrayBuffer();
-
         if (cancelled || !viewerRef.current) return;
 
-        book = ePub(arrayBuffer);
+        book = ePub(bookData);
         bookRef.current = book;
 
         book.spine.hooks.serialize.register(
@@ -270,10 +269,34 @@ export function useEpubInitializer({
           onTocLoaded?.(parseEpubToc(nav.toc as RawTocItem[]));
         });
 
-        book.ready.then(() => {
-          book!.locations.generate(1024).then(() => {
-            onReady?.();
-          });
+        book.ready.then(async () => {
+          const cachedLocations = await getCachedLocations(bookId);
+          if (cachedLocations && !cancelled) {
+            try {
+              const locationsJson = new TextDecoder().decode(cachedLocations);
+              const locationsArray = JSON.parse(locationsJson);
+              book!.locations.load(locationsArray);
+              onReady?.();
+            } catch {
+              book!.locations.generate(1024).then((locations) => {
+                if (!cancelled) {
+                  const locationsJson = JSON.stringify(locations);
+                  const locationsBuffer = new TextEncoder().encode(locationsJson).buffer;
+                  cacheBookLocations(bookId, locationsBuffer);
+                }
+                onReady?.();
+              });
+            }
+          } else {
+            book!.locations.generate(1024).then((locations) => {
+              if (!cancelled) {
+                const locationsJson = JSON.stringify(locations);
+                const locationsBuffer = new TextEncoder().encode(locationsJson).buffer;
+                cacheBookLocations(bookId, locationsBuffer);
+              }
+              onReady?.();
+            });
+          }
         });
       } catch (error) {
         logger.error("epub-reader", "加载EPUB失败", error);
@@ -290,5 +313,5 @@ export function useEpubInitializer({
       if (book) book.destroy();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [url, initialLocation]);
+  }, [bookData, bookId, initialLocation]);
 }

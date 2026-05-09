@@ -8,6 +8,13 @@ interface CachedBook {
   file: ArrayBuffer;
   timestamp: number;
   size: number;
+  locations?: ArrayBuffer;
+  meta?: {
+    title: string;
+    author: string;
+    format: string;
+    coverUrl?: string;
+  };
 }
 
 let db: IDBDatabase | null = null;
@@ -48,7 +55,8 @@ function openDB(): Promise<IDBDatabase> {
 
 export async function cacheBook(
   bookId: string,
-  fileData: ArrayBuffer
+  fileData: ArrayBuffer,
+  options?: { locations?: ArrayBuffer; meta?: CachedBook["meta"] }
 ): Promise<void> {
   try {
     const database = await openDB();
@@ -60,6 +68,8 @@ export async function cacheBook(
       file: fileData,
       timestamp: Date.now(),
       size: fileData.byteLength,
+      locations: options?.locations,
+      meta: options?.meta,
     };
 
     await new Promise<void>((resolve, reject) => {
@@ -95,12 +105,82 @@ export async function getCachedBook(
   }
 }
 
+export async function cacheBookLocations(
+  bookId: string,
+  locationsData: ArrayBuffer
+): Promise<void> {
+  try {
+    const database = await openDB();
+    const transaction = database.transaction([STORE_NAME], "readwrite");
+    const store = transaction.objectStore(STORE_NAME);
+
+    const existing = await new Promise<CachedBook | undefined>((resolve, reject) => {
+      const request = store.get(bookId);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+
+    if (existing) {
+      existing.locations = locationsData;
+      await new Promise<void>((resolve, reject) => {
+        const request = store.put(existing);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+      });
+    }
+  } catch (error) {
+    logger.error("book-cache", "Failed to cache locations:", error);
+  }
+}
+
+export async function getCachedLocations(
+  bookId: string
+): Promise<ArrayBuffer | null> {
+  try {
+    const database = await openDB();
+    const transaction = database.transaction([STORE_NAME], "readonly");
+    const store = transaction.objectStore(STORE_NAME);
+
+    return new Promise((resolve, reject) => {
+      const request = store.get(bookId);
+      request.onsuccess = () => {
+        const book = request.result as CachedBook | undefined;
+        resolve(book?.locations ?? null);
+      };
+      request.onerror = () => reject(request.error);
+    });
+  } catch {
+    return null;
+  }
+}
+
 export async function hasCachedBook(bookId: string): Promise<boolean> {
   try {
     const cached = await getCachedBook(bookId);
     return cached !== null;
   } catch {
     return false;
+  }
+}
+
+export async function getCachedBookMeta(
+  bookId: string
+): Promise<CachedBook["meta"] | null> {
+  try {
+    const database = await openDB();
+    const transaction = database.transaction([STORE_NAME], "readonly");
+    const store = transaction.objectStore(STORE_NAME);
+
+    return new Promise((resolve, reject) => {
+      const request = store.get(bookId);
+      request.onsuccess = () => {
+        const book = request.result as CachedBook | undefined;
+        resolve(book?.meta ?? null);
+      };
+      request.onerror = () => reject(request.error);
+    });
+  } catch {
+    return null;
   }
 }
 
