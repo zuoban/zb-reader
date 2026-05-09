@@ -182,9 +182,9 @@ export const BookCard = memo(function BookCard({
 
               {/* Visual Progress Bar Overlay */}
               {hasProgress && (
-                <div className="absolute inset-x-0 bottom-0 z-20 h-1.5 bg-black/40 backdrop-blur-sm">
-                  <div 
-                    className="h-full bg-white/90 shadow-[0_0_10px_rgba(255,255,255,0.8)] transition-all duration-500" 
+                <div className="absolute inset-x-0 bottom-0 z-30 h-1.5 bg-black/40 backdrop-blur-sm">
+                  <div
+                    className="h-full bg-white/90 shadow-[0_0_10px_rgba(255,255,255,0.8)] transition-all duration-500"
                     style={{ width: `${progress * 100}%` }}
                   />
                 </div>
