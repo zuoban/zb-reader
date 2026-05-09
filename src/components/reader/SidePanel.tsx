@@ -102,7 +102,7 @@ export const SidePanel = memo(function SidePanel({
               <Bookmark className="size-4" />
               <span className="hidden sm:inline">书签</span>
               {bookmarks.length > 0 && (
-                <span className="ml-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[var(--reader-primary)] text-white">
+                <span className="ml-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[var(--reader-primary)] text-[var(--reader-bg)]">
                   {bookmarks.length}
                 </span>
               )}
@@ -115,7 +115,7 @@ export const SidePanel = memo(function SidePanel({
               <StickyNote className="size-4" />
               <span className="hidden sm:inline">笔记</span>
               {notes.length > 0 && (
-                <span className="ml-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[var(--reader-primary)] text-white">
+                <span className="ml-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[var(--reader-primary)] text-[var(--reader-bg)]">
                   {notes.length}
                 </span>
               )}

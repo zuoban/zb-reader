@@ -868,7 +868,7 @@
   background: color-mix(in srgb, var(--reader-primary, white) 10%, transparent);
 }
 
-.dark .reader-toolbar-tooltip {
+[data-reader-theme="dark"] .reader-toolbar-tooltip {
   border-color: color-mix(in srgb, var(--reader-border, #333) 86%, transparent);
   background:
     linear-gradient(180deg, color-mix(in srgb, white 8%, transparent), transparent 58%),

@@ -54,7 +54,7 @@ export function ThemeSettings({ theme, onThemeChange }: ThemeSettingsProps) {
                   className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center shadow-sm"
                   style={{ background: "var(--reader-primary)" }}
                 >
-                  <Check className="size-3 text-white" strokeWidth={3} />
+                  <Check className="size-3 text-[var(--reader-bg)]" strokeWidth={3} />
                 </div>
               )}
 
