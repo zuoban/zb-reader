@@ -140,7 +140,7 @@ export class EpubContext {
     });
   }
 
-  getParagraphs(selector = "p, li, blockquote, h1, h2, h3, h4, h5, h6"): ParagraphInfo[] {
+  getParagraphs(selector = "p, li, blockquote, h1, h2, h3, h4, h5, h6, pre"): ParagraphInfo[] {
     const elements = this.querySelectorAll(selector);
     const paragraphs: ParagraphInfo[] = [];
     const punctuationOnlyRegex = /^[\s\p{P}\p{S}\p{Z}]*$/u;
@@ -164,7 +164,7 @@ export class EpubContext {
   }
 
   setParagraphIds(paragraphs: Array<{ id: string; text: string }>): void {
-    const elements = this.querySelectorAll("p, li, blockquote, h1, h2, h3, h4, h5, h6");
+    const elements = this.querySelectorAll("p, li, blockquote, h1, h2, h3, h4, h5, h6, pre");
 
     for (const [_index, element] of Array.from(elements).entries()) {
       const el = element as HTMLElement;

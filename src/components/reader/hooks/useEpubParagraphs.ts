@@ -49,7 +49,7 @@ export function useEpubParagraphs({
   const buildParagraphLayoutIndex = useCallback(
     (doc: Document, containerWidth: number) => {
       const nodes = doc.body.querySelectorAll(
-        "p, li, blockquote, h1, h2, h3, h4, h5, h6"
+        "p, li, blockquote, h1, h2, h3, h4, h5, h6, pre"
       );
 
       const paragraphs: ReaderParagraph[] = [];
@@ -135,7 +135,7 @@ export function useEpubParagraphs({
     }
 
     const nodes = doc.body.querySelectorAll(
-      "p, li, blockquote, h1, h2, h3, h4, h5, h6"
+      "p, li, blockquote, h1, h2, h3, h4, h5, h6, pre"
     );
 
     const elementArray = Array.from(nodes) as HTMLElement[];
@@ -249,7 +249,7 @@ export function useEpubParagraphs({
     if (!doc?.body) return true;
 
     const nodes = doc.body.querySelectorAll(
-      "p, li, blockquote, h1, h2, h3, h4, h5, h6"
+      "p, li, blockquote, h1, h2, h3, h4, h5, h6, pre"
     );
 
     const elementArray = Array.from(nodes) as HTMLElement[];

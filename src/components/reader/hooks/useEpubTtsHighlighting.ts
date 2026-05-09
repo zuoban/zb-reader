@@ -94,7 +94,7 @@ export function useEpubTtsHighlighting({
       const doc = epubContextRef.current.getDocument();
       if (!range || !doc?.body) return null;
 
-      const candidateSelector = "p, li, blockquote, h1, h2, h3, h4, h5, h6";
+      const candidateSelector = "p, li, blockquote, h1, h2, h3, h4, h5, h6, pre";
       const startElement =
         range.startContainer.nodeType === Node.ELEMENT_NODE
           ? (range.startContainer as Element)
@@ -128,7 +128,7 @@ export function useEpubTtsHighlighting({
       }
 
       const candidates = ctx.querySelectorAll(
-        "p, li, blockquote, h1, h2, h3, h4, h5, h6"
+        "p, li, blockquote, h1, h2, h3, h4, h5, h6, pre"
       );
 
       candidates.forEach((element) => {
