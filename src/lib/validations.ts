@@ -118,6 +118,7 @@ export const ttsSpeakSchema = z.object({
 
 /** 进度保存校验 */
 export const progressSchema = z.object({
+  syncId: z.string().optional(),
   bookId: z.string().uuid("无效的书籍 ID"),
   clientVersion: z.number().int().positive(),
   progress: z.number().min(0).max(1).optional(),

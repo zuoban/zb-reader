@@ -50,6 +50,7 @@ describe('sync-queue', () => {
 
   function createSyncItem(overrides: Partial<SyncItem> = {}): SyncItem {
     return {
+      syncId: 'sync-1',
       bookId: 'book-1',
       clientVersion: 1,
       progress: 0.5,
@@ -125,7 +126,7 @@ describe('sync-queue', () => {
 
       await syncQueue.sync();
 
-      expect(mockSyncFn).toHaveBeenCalledWith(item);
+      expect(mockSyncFn).toHaveBeenCalledWith(item, undefined);
       expect(mockOnSyncComplete).toHaveBeenCalled();
       expect(syncQueue.getPendingCount()).toBe(0);
     });
@@ -147,9 +148,9 @@ describe('sync-queue', () => {
       await syncQueue.sync();
 
       expect(mockSyncFn).toHaveBeenCalledTimes(3);
-      expect(mockSyncFn).toHaveBeenNthCalledWith(1, item1);
-      expect(mockSyncFn).toHaveBeenNthCalledWith(2, item2);
-      expect(mockSyncFn).toHaveBeenNthCalledWith(3, item3);
+      expect(mockSyncFn).toHaveBeenNthCalledWith(1, item1, undefined);
+      expect(mockSyncFn).toHaveBeenNthCalledWith(2, item2, undefined);
+      expect(mockSyncFn).toHaveBeenNthCalledWith(3, item3, undefined);
     });
 
     it('should stop syncing on error after max retries', async () => {

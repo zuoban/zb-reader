@@ -65,6 +65,7 @@ export const readingProgress = sqliteTable(
     totalPages: integer("total_pages"),
     readingDuration: integer("reading_duration").notNull().default(0),
     deviceId: text("device_id"),
+    lastSyncId: text("last_sync_id"),
     lastReadAt: text("last_read_at")
       .default(sql`(datetime('now'))`)
       .notNull(),

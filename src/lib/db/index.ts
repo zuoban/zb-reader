@@ -408,6 +408,7 @@ function getConnection() {
   const hasScrollRatio = currentProgressInfo.some((col) => col.name === "scroll_ratio");
   const hasReadingDuration = currentProgressInfo.some((col) => col.name === "reading_duration");
   const hasDeviceIdColumn = currentProgressInfo.some((col) => col.name === "device_id");
+  const hasLastSyncId = currentProgressInfo.some((col) => col.name === "last_sync_id");
 
   if (!hasVersion) {
     sqlite.exec(`ALTER TABLE reading_progress ADD COLUMN version INTEGER DEFAULT 1;`);
@@ -420,6 +421,9 @@ function getConnection() {
   }
   if (!hasDeviceIdColumn) {
     sqlite.exec(`ALTER TABLE reading_progress ADD COLUMN device_id TEXT;`);
+  }
+  if (!hasLastSyncId) {
+    sqlite.exec(`ALTER TABLE reading_progress ADD COLUMN last_sync_id TEXT;`);
   }
 
   // Migration: Add font_family and flip_mode to reader_settings (2026-03-31)

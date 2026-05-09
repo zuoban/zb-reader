@@ -1,6 +1,7 @@
 import { logger } from '@/lib/logger';
 
 export interface SyncItem {
+  syncId: string;
   bookId: string;
   clientVersion: number;
   progress: number;
@@ -21,14 +22,14 @@ const INITIAL_RETRY_DELAY = 1000;
 export class SyncQueue {
   private queue: SyncItem[] = [];
   private syncing = false;
-  private syncFn: (item: SyncItem) => Promise<void>;
+  private syncFn: (item: SyncItem, options?: { keepalive?: boolean }) => Promise<void>;
   private onSyncComplete?: () => void;
   private onSyncError?: (error: Error) => void;
   private onQueueChange?: (pendingCount: number) => void;
   private onlineHandler: () => void;
 
   constructor(options: {
-    syncFn: (item: SyncItem) => Promise<void>;
+    syncFn: (item: SyncItem, options?: { keepalive?: boolean }) => Promise<void>;
     onSyncComplete?: () => void;
     onSyncError?: (error: Error) => void;
     onQueueChange?: (pendingCount: number) => void;
@@ -53,7 +54,7 @@ export class SyncQueue {
     this.queue = [];
   }
 
-  async enqueue(item: SyncItem): Promise<void> {
+  async enqueue(item: SyncItem, options?: { immediate?: boolean }): Promise<void> {
     const existingIndex = this.queue.findIndex(i => i.bookId === item.bookId);
     
     if (existingIndex !== -1) {
@@ -69,11 +70,15 @@ export class SyncQueue {
     this.notifyQueueChange();
 
     if (navigator.onLine && !this.syncing) {
-      this.sync();
+      if (options?.immediate) {
+        this.sync({ keepalive: true });
+      } else {
+        this.sync();
+      }
     }
   }
 
-  async sync(): Promise<void> {
+  async sync(options?: { keepalive?: boolean }): Promise<void> {
     if (this.syncing || !navigator.onLine || this.queue.length === 0) {
       return;
     }
@@ -85,9 +90,12 @@ export class SyncQueue {
       let retryCount = 0;
       let success = false;
 
-      while (retryCount < MAX_RETRY_COUNT && !success) {
+      // 如果是 keepalive 模式（页面卸载时），不进行重试，只尝试发送一次
+      const maxAttempts = options?.keepalive ? 1 : MAX_RETRY_COUNT;
+
+      while (retryCount < maxAttempts && !success) {
         try {
-          await this.syncFn(item);
+          await this.syncFn(item, options);
           success = true;
           this.queue.shift();
           await this.persistQueue();
@@ -95,16 +103,27 @@ export class SyncQueue {
           this.onSyncComplete?.();
         } catch (error) {
           retryCount++;
-          logger.warn('sync-queue', `Sync failed (attempt ${retryCount}/${MAX_RETRY_COUNT})`, {
-            bookId: item.bookId,
-            error,
-          });
-
-          if (retryCount >= MAX_RETRY_COUNT) {
-            logger.error('sync-queue', 'Sync failed after max retries', {
+          
+          if (!options?.keepalive) {
+            logger.warn('sync-queue', `Sync failed (attempt ${retryCount}/${MAX_RETRY_COUNT})`, {
               bookId: item.bookId,
+              error,
             });
-            this.onSyncError?.(error instanceof Error ? error : new Error(String(error)));
+          }
+
+          if (retryCount >= maxAttempts) {
+            if (!options?.keepalive) {
+              logger.error('sync-queue', 'Sync failed after max retries', {
+                bookId: item.bookId,
+              });
+              this.onSyncError?.(error instanceof Error ? error : new Error(String(error)));
+            }
+            
+            // 卸载时不移除队列，留给下次加载
+            if (options?.keepalive) {
+              break; 
+            }
+
             this.queue.shift();
             await this.persistQueue();
             this.notifyQueueChange();

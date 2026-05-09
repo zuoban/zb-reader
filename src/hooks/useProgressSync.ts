@@ -102,7 +102,8 @@ export function useProgressSync(bookId: string): UseProgressSyncReturn {
     try {
       const response = await fetch(`/api/progress/history?bookId=${bookId}`);
       if (!response.ok) {
-        throw new Error("Failed to fetch history");
+        if (response.status === 401) return [];
+        throw new Error(`Server returned ${response.status}`);
       }
       const data = await response.json();
       return data.history || [];
@@ -122,7 +123,8 @@ export function useProgressSync(bookId: string): UseProgressSyncReturn {
         });
 
         if (!response.ok) {
-          throw new Error("Failed to restore");
+          if (response.status === 401) throw new Error("请先登录");
+          throw new Error(`Server returned ${response.status}`);
         }
 
         const data = await response.json();

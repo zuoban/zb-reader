@@ -49,11 +49,12 @@ export class LocalProgressManager {
     this.initPromise = this.initDB();
 
     this.syncQueue = new SyncQueue({
-      syncFn: async (item: SyncItem) => {
+      syncFn: async (item: SyncItem, options?: { keepalive?: boolean }) => {
         const response = await fetch("/api/progress/sync", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(item),
+          keepalive: options?.keepalive,
         });
 
         if (!response.ok) {
@@ -73,6 +74,21 @@ export class LocalProgressManager {
         await this.updateLastSyncReadingDuration();
       },
     });
+
+    if (typeof window !== "undefined") {
+      const handleUnload = () => {
+        this.flushPendingDebounced().then(() => {
+          this.syncQueue.sync({ keepalive: true });
+        });
+      };
+
+      window.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "hidden") {
+          handleUnload();
+        }
+      });
+      window.addEventListener("pagehide", handleUnload);
+    }
   }
 
   private async updateLastSyncReadingDuration(): Promise<void> {
@@ -121,7 +137,15 @@ export class LocalProgressManager {
     try {
       const response = await fetch(`/api/progress?bookId=${bookId}`);
       if (!response.ok) {
-        throw new Error("Failed to load from server");
+        if (response.status === 401) {
+          logger.debug("local-progress", "Skip loading progress: User not authenticated");
+          return null;
+        }
+        if (response.status === 404) {
+          logger.debug("local-progress", "No progress found on server for book:", bookId);
+          return null;
+        }
+        throw new Error(`Server returned ${response.status}`);
       }
 
       const data = await response.json();
@@ -214,6 +238,7 @@ export class LocalProgressManager {
       );
 
       const syncItem: SyncItem = {
+        syncId: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2),
         bookId,
         clientVersion: updated.version,
         progress: updated.progress,

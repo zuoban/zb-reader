@@ -23,6 +23,7 @@ export async function POST(req: NextRequest) {
     }
 
     const {
+      syncId,
       bookId,
       clientVersion,
       progress,
@@ -39,7 +40,7 @@ export async function POST(req: NextRequest) {
       userId: userId,
       bookId,
       clientVersion,
-      progress,
+      syncId,
     });
 
     const book = await findOwnedBook(bookId, userId);
@@ -53,6 +54,16 @@ export async function POST(req: NextRequest) {
         eq(readingProgress.bookId, bookId)
       ),
     });
+
+    // 幂等性检查：如果 syncId 已处理，直接返回成功
+    if (currentProgress && syncId && currentProgress.lastSyncId === syncId) {
+      return NextResponse.json({
+        status: "unchanged",
+        serverVersion: currentProgress.version,
+        merged: false,
+        idempotent: true,
+      });
+    }
 
     const now = new Date().toISOString();
 
@@ -71,6 +82,7 @@ export async function POST(req: NextRequest) {
         totalPages: totalPages ?? null,
         readingDuration: readingDuration ?? 0,
         deviceId: deviceId ?? null,
+        lastSyncId: syncId ?? null,
         lastReadAt: now,
         createdAt: now,
         updatedAt: now,
@@ -110,6 +122,7 @@ export async function POST(req: NextRequest) {
           totalPages: totalPages ?? null,
           readingDuration: newReadingDuration,
           deviceId: clientPayload.deviceId,
+          lastSyncId: syncId ?? null,
           lastReadAt: now,
           updatedAt: now,
         })
@@ -132,6 +145,7 @@ export async function POST(req: NextRequest) {
     const newVersion = currentProgress.version + 1;
     const sqlite = getSqlite();
     const transaction = sqlite.transaction(() => {
+      // ... history inserts (omitted for brevity in thinking, will include in tool call)
       sqlite
         .prepare(
           `INSERT INTO progress_history (id, user_id, book_id, version, progress, location, scroll_ratio, reading_duration, device_id, device_name, created_at)
@@ -181,7 +195,7 @@ export async function POST(req: NextRequest) {
 
       sqlite
         .prepare(
-          `UPDATE reading_progress SET version = ?, progress = ?, location = ?, scroll_ratio = ?, current_page = ?, total_pages = ?, reading_duration = ?, device_id = ?, last_read_at = ?, updated_at = ? WHERE user_id = ? AND book_id = ?`
+          `UPDATE reading_progress SET version = ?, progress = ?, location = ?, scroll_ratio = ?, current_page = ?, total_pages = ?, reading_duration = ?, device_id = ?, last_sync_id = ?, last_read_at = ?, updated_at = ? WHERE user_id = ? AND book_id = ?`
         )
         .run(
           newVersion,
@@ -192,6 +206,7 @@ export async function POST(req: NextRequest) {
           totalPages ?? currentProgress.totalPages,
           finalReadingDuration,
           finalDeviceId,
+          syncId ?? null,
           now,
           now,
           userId,
