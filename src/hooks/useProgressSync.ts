@@ -2,9 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { getLocalProgressManager } from "@/lib/local-progress";
-import { logger } from "@/lib/logger";
-import type { ProgressUpdate } from "@/lib/local-progress";
-import type { ProgressHistory } from "@/lib/db/schema";
+import type { ProgressUpdate, ServerProgressSnapshot } from "@/lib/local-progress";
 
 interface ProgressQueueEventDetail {
   pendingCount: number;
@@ -14,13 +12,13 @@ export interface UseProgressSyncReturn {
   pendingSync: boolean;
   progress: number;
   updateProgress: (update: ProgressUpdate, forceSync?: boolean) => void;
-  forceSync: () => Promise<void>;
-  flushPendingDebounced: () => Promise<void>;
-  getHistory: () => Promise<ProgressHistory[]>;
-  restoreTo: (historyId: string) => Promise<void>;
+  forceSync: (options?: { keepalive?: boolean }) => Promise<void>;
 }
 
-export function useProgressSync(bookId: string): UseProgressSyncReturn {
+export function useProgressSync(
+  bookId: string,
+  initialProgress?: ServerProgressSnapshot | null
+): UseProgressSyncReturn {
   const [pendingSync, setPendingSync] = useState(false);
   const [progress, setProgress] = useState(0);
 
@@ -38,16 +36,22 @@ export function useProgressSync(bookId: string): UseProgressSyncReturn {
 
     window.addEventListener("progress-queue-change", handleQueueChange);
 
-    manager.loadFromServer(bookId).then((localProgress) => {
-      if (localProgress) {
+    if (initialProgress === undefined) {
+      manager.loadFromServer(bookId).then((localProgress) => {
+        if (localProgress) {
+          setProgress(localProgress.progress);
+        }
+      });
+    } else if (initialProgress) {
+      manager.cacheServerProgress(bookId, initialProgress).then((localProgress) => {
         setProgress(localProgress.progress);
-      }
-    });
+      });
+    }
 
     return () => {
       window.removeEventListener("progress-queue-change", handleQueueChange);
     };
-  }, [bookId]);
+  }, [bookId, initialProgress]);
 
   const updateProgress = useCallback(
     async (update: ProgressUpdate, forceSync = false) => {
@@ -61,65 +65,15 @@ export function useProgressSync(bookId: string): UseProgressSyncReturn {
     [bookId]
   );
 
-  const forceSync = useCallback(async () => {
+  const forceSync = useCallback(async (options?: { keepalive?: boolean }) => {
     const manager = managerRef.current;
-    await manager.forceSync();
-  }, []);
-
-  const flushPendingDebounced = useCallback(async () => {
-    const manager = managerRef.current;
-    await manager.flushPendingDebounced(bookId);
+    await manager.forceSync(bookId, options);
   }, [bookId]);
-
-  const getHistory = useCallback(async () => {
-    try {
-      const response = await fetch(`/api/progress/history?bookId=${bookId}`);
-      if (!response.ok) {
-        if (response.status === 401) return [];
-        throw new Error(`Server returned ${response.status}`);
-      }
-      const data = await response.json();
-      return data.history || [];
-    } catch (error) {
-      logger.error("reader", "Failed to get progress history", error);
-      return [];
-    }
-  }, [bookId]);
-
-  const restoreTo = useCallback(
-    async (historyId: string) => {
-      try {
-        const response = await fetch("/api/progress/restore", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ historyId }),
-        });
-
-        if (!response.ok) {
-          if (response.status === 401) throw new Error("请先登录");
-          throw new Error(`Server returned ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        setProgress(data.progress.progress);
-
-        await managerRef.current.loadFromServer(bookId);
-      } catch (error) {
-        logger.error("reader", "Failed to restore reading progress", error);
-        throw error;
-      }
-    },
-    [bookId]
-  );
 
   return {
     pendingSync,
     progress,
     updateProgress,
     forceSync,
-    flushPendingDebounced,
-    getHistory,
-    restoreTo,
   };
 }

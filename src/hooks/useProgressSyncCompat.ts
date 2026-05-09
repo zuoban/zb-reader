@@ -3,18 +3,21 @@
 import { useCallback, useRef, useEffect } from "react";
 import { logger } from "@/lib/logger";
 import { useProgressSync } from "./useProgressSync";
+import type { ServerProgressSnapshot } from "@/lib/local-progress";
 
 /**
  * 兼容旧系统的进度保存 Hook
  * 内部使用新的同步系统，但接口保持兼容
  */
-export function useProgressSyncCompat(bookId: string) {
+export function useProgressSyncCompat(
+  bookId: string,
+  initialProgress?: ServerProgressSnapshot | null
+) {
   const {
     updateProgress,
     forceSync,
-    flushPendingDebounced,
     pendingSync,
-  } = useProgressSync(bookId);
+  } = useProgressSync(bookId, initialProgress);
 
   // Refs for compatibility with old code
   const currentLocationRef = useRef<string | null>(null);
@@ -49,30 +52,17 @@ export function useProgressSyncCompat(bookId: string) {
     [updateProgress]
   );
 
-  // Compatible debouncedSaveProgress function
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
+  // Compatible name; sync debouncing is handled by LocalProgressManager.
   const debouncedSaveProgress = useCallback(() => {
-    if (saveTimerRef.current) {
-      clearTimeout(saveTimerRef.current);
-    }
-    saveTimerRef.current = setTimeout(() => {
-      saveTimerRef.current = null;
-      saveProgress();
-    }, 500);
+    void saveProgress();
   }, [saveProgress]);
 
   // Force sync on unmount
   useEffect(() => {
     const syncPending = () => {
       void (async () => {
-        if (saveTimerRef.current) {
-          clearTimeout(saveTimerRef.current);
-          saveTimerRef.current = null;
-          await saveProgress(true);
-        }
-        await flushPendingDebounced();
-        await forceSync();
+        await saveProgress(true);
+        await forceSync({ keepalive: true });
       })();
     };
     const handleVisibilityChange = () => {
@@ -90,16 +80,7 @@ export function useProgressSyncCompat(bookId: string) {
       window.removeEventListener("beforeunload", syncPending);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [flushPendingDebounced, forceSync, saveProgress]);
-
-  // Cleanup timer on unmount
-  useEffect(() => {
-    return () => {
-      if (saveTimerRef.current) {
-        clearTimeout(saveTimerRef.current);
-      }
-    };
-  }, []);
+  }, [forceSync, saveProgress]);
 
   return {
     // Refs (保持兼容)
@@ -115,6 +96,5 @@ export function useProgressSyncCompat(bookId: string) {
     // 新增功能
     pendingSync,
     forceSync,
-    flushPendingDebounced,
   };
 }

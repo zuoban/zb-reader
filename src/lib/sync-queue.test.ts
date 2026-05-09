@@ -69,31 +69,31 @@ describe('sync-queue', () => {
       expect(mockOnQueueChange).toHaveBeenCalledWith(1);
     });
 
-    it('should merge items with same bookId', () => {
+    it('should merge items with same bookId', async () => {
       const item1 = createSyncItem({ progress: 0.3 });
       const item2 = createSyncItem({ progress: 0.5 });
 
-      syncQueue.enqueue(item1);
-      syncQueue.enqueue(item2);
+      await syncQueue.enqueue(item1);
+      await syncQueue.enqueue(item2);
 
       expect(syncQueue.getPendingCount()).toBe(1);
       const pending = syncQueue.getPendingItems();
       expect(pending[0].progress).toBe(0.5);
     });
 
-    it('should not merge items with different bookIds', () => {
+    it('should not merge items with different bookIds', async () => {
       const item1 = createSyncItem({ bookId: 'book-1' });
       const item2 = createSyncItem({ bookId: 'book-2' });
 
-      syncQueue.enqueue(item1);
-      syncQueue.enqueue(item2);
+      await syncQueue.enqueue(item1);
+      await syncQueue.enqueue(item2);
 
       expect(syncQueue.getPendingCount()).toBe(2);
     });
 
-    it('should limit queue size to MAX_QUEUE_SIZE', () => {
+    it('should limit queue size to MAX_QUEUE_SIZE', async () => {
       for (let i = 0; i < 150; i++) {
-        syncQueue.enqueue(createSyncItem({ bookId: `book-${i}` }));
+        await syncQueue.enqueue(createSyncItem({ bookId: `book-${i}` }));
       }
 
       expect(syncQueue.getPendingCount()).toBe(100);
@@ -107,12 +107,25 @@ describe('sync-queue', () => {
       await new Promise(resolve => setTimeout(resolve, 0));
       expect(mockDb.put).toHaveBeenCalledWith('queue', [item], 'items');
     });
+
+    it('should allow enqueue without auto sync', async () => {
+      Object.defineProperty(window.navigator, "onLine", {
+        value: true,
+        configurable: true,
+      });
+
+      const item = createSyncItem();
+      await syncQueue.enqueue(item, { autoSync: false });
+
+      expect(mockSyncFn).not.toHaveBeenCalled();
+      expect(syncQueue.getPendingCount()).toBe(1);
+    });
   });
 
   describe('sync', () => {
     it('should sync items successfully', async () => {
       const item = createSyncItem();
-      syncQueue.enqueue(item);
+      await syncQueue.enqueue(item);
 
       Object.defineProperty(window.navigator, "onLine", {
         value: true,
@@ -176,7 +189,7 @@ describe('sync-queue', () => {
         .mockResolvedValueOnce(undefined);
 
       const item = createSyncItem();
-      syncQueue.enqueue(item);
+      await syncQueue.enqueue(item);
 
       Object.defineProperty(window.navigator, "onLine", {
         value: true,
@@ -227,8 +240,8 @@ describe('sync-queue', () => {
       const item1 = createSyncItem({ bookId: 'book-1' });
       const item2 = createSyncItem({ bookId: 'book-2' });
 
-      syncQueue.enqueue(item1);
-      syncQueue.enqueue(item2);
+      await syncQueue.enqueue(item1);
+      await syncQueue.enqueue(item2);
 
       Object.defineProperty(window.navigator, "onLine", {
         value: true,
@@ -244,9 +257,9 @@ describe('sync-queue', () => {
   });
 
   describe('clear', () => {
-    it('should clear queue', () => {
-      syncQueue.enqueue(createSyncItem());
-      syncQueue.enqueue(createSyncItem({ bookId: 'book-2' }));
+    it('should clear queue', async () => {
+      await syncQueue.enqueue(createSyncItem());
+      await syncQueue.enqueue(createSyncItem({ bookId: 'book-2' }));
 
       syncQueue.clear();
 

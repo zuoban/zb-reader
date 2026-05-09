@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { cacheBook, getCachedBook } from "@/lib/book-cache";
 import { logger } from "@/lib/logger";
+import type { ServerProgressSnapshot } from "@/lib/local-progress";
 import type { Book, Bookmark, Note } from "@/lib/db/schema";
 
 export interface ReaderHighlight {
@@ -27,6 +28,7 @@ export function useReaderBookData({
   const [loading, setLoading] = useState(true);
   const [bookData, setBookData] = useState<ArrayBuffer | null>(null);
   const [initialLocation, setInitialLocation] = useState<string | undefined>();
+  const [initialProgress, setInitialProgress] = useState<ServerProgressSnapshot | null>();
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
 
@@ -76,6 +78,7 @@ export function useReaderBookData({
           setInitialLocation(progressData.progress.location);
           onProgressLoaded(progressData.progress.progress || 0);
         }
+        setInitialProgress(progressData.progress ?? null);
         setBookmarks(Array.isArray(bmData.bookmarks) ? bmData.bookmarks : []);
         setNotes(Array.isArray(notesData.notes) ? notesData.notes.filter(Boolean) : []);
 
@@ -125,6 +128,7 @@ export function useReaderBookData({
     loading,
     bookData,
     initialLocation,
+    initialProgress,
     bookmarks,
     setBookmarks,
     notes,

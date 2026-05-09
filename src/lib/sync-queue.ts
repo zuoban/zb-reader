@@ -55,7 +55,7 @@ export class SyncQueue {
     this.queue = [];
   }
 
-  async enqueue(item: SyncItem, options?: { immediate?: boolean }): Promise<void> {
+  async enqueue(item: SyncItem, options?: { autoSync?: boolean }): Promise<void> {
     const existingIndex = this.queue.findIndex(i => i.bookId === item.bookId);
     
     if (existingIndex !== -1) {
@@ -70,12 +70,8 @@ export class SyncQueue {
     await this.persistQueue();
     this.notifyQueueChange();
 
-    if (navigator.onLine && !this.syncing) {
-      if (options?.immediate) {
-        this.sync({ keepalive: true });
-      } else {
-        this.sync();
-      }
+    if (options?.autoSync !== false && navigator.onLine && !this.syncing) {
+      void this.sync();
     }
   }
 
@@ -204,23 +200,4 @@ export class SyncQueue {
   private sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
-}
-
-let syncQueueInstance: SyncQueue | null = null;
-
-export function getSyncQueue(options?: {
-  syncFn: (items: SyncItem[], options?: { keepalive?: boolean }) => Promise<void>;
-  onSyncComplete?: () => void;
-  onSyncError?: (error: Error) => void;
-  onQueueChange?: (pendingCount: number) => void;
-}): SyncQueue {
-  if (!syncQueueInstance && options) {
-    syncQueueInstance = new SyncQueue(options);
-  }
-  
-  if (!syncQueueInstance) {
-    throw new Error('SyncQueue not initialized. Call getSyncQueue with options first.');
-  }
-  
-  return syncQueueInstance;
 }

@@ -7,10 +7,6 @@ const DB_NAME = "zb-reader-progress";
 const DB_VERSION = 1;
 const PROGRESS_STORE = "progress";
 
-interface ProgressQueueEventDetail {
-  pendingCount: number;
-}
-
 export interface LocalProgress {
   bookId: string;
   progress: number;
@@ -29,6 +25,17 @@ export interface ProgressUpdate {
   scrollRatio?: number | null;
   currentPage?: number | null;
   totalPages?: number | null;
+}
+
+export interface ServerProgressSnapshot {
+  progress?: number | null;
+  furthestProgress?: number | null;
+  location?: string | null;
+  scrollRatio?: number | null;
+  currentPage?: number | null;
+  totalPages?: number | null;
+  deviceId?: string | null;
+  updatedAt?: string | null;
 }
 
 export class LocalProgressManager {
@@ -116,28 +123,35 @@ export class LocalProgressManager {
         return null;
       }
 
-      const serverProgress: LocalProgress = {
-        bookId,
-        progress: data.progress.progress || 0,
-        furthestProgress: data.progress.furthestProgress ?? data.progress.progress ?? 0,
-        location: data.progress.location || "",
-        scrollRatio: data.progress.scrollRatio || null,
-        currentPage: data.progress.currentPage || null,
-        totalPages: data.progress.totalPages || null,
-        deviceId: data.progress.deviceId || "",
-        updatedAt: data.progress.updatedAt || new Date().toISOString(),
-      };
-
-      await this.initPromise;
-      if (this.db) {
-        await this.db.put(PROGRESS_STORE, serverProgress);
-      }
-
-      return serverProgress;
+      return this.cacheServerProgress(bookId, data.progress);
     } catch (error) {
       logger.error("local-progress", "Failed to load from server", error);
       return null;
     }
+  }
+
+  async cacheServerProgress(
+    bookId: string,
+    progress: ServerProgressSnapshot
+  ): Promise<LocalProgress> {
+    const serverProgress: LocalProgress = {
+      bookId,
+      progress: progress.progress || 0,
+      furthestProgress: progress.furthestProgress ?? progress.progress ?? 0,
+      location: progress.location || "",
+      scrollRatio: progress.scrollRatio || null,
+      currentPage: progress.currentPage || null,
+      totalPages: progress.totalPages || null,
+      deviceId: progress.deviceId || "",
+      updatedAt: progress.updatedAt || new Date().toISOString(),
+    };
+
+    await this.initPromise;
+    if (this.db) {
+      await this.db.put(PROGRESS_STORE, serverProgress);
+    }
+
+    return serverProgress;
   }
 
   async updateProgress(
@@ -199,7 +213,7 @@ export class LocalProgressManager {
         (updated.scrollRatio !== null && current.scrollRatio !== null && Math.abs(updated.scrollRatio - current.scrollRatio) >= 0.01);
 
       if (forceSync) {
-        await this.syncQueue.enqueue(syncItem);
+        await this.syncQueue.enqueue(syncItem, { autoSync: false });
       } else if (isSignificant) {
         this.debouncedEnqueue(syncItem);
       }
@@ -251,12 +265,12 @@ export class LocalProgressManager {
     this.debounceTimers.set(item.bookId, timer);
   }
 
-  async forceSync(): Promise<void> {
-    await this.flushPendingDebounced();
-    await this.syncQueue.sync();
+  async forceSync(bookId?: string, options?: { keepalive?: boolean }): Promise<void> {
+    await this.flushPendingDebounced(bookId);
+    await this.syncQueue.sync(options);
   }
 
-  async flushPendingDebounced(bookId?: string): Promise<void> {
+  private async flushPendingDebounced(bookId?: string): Promise<void> {
     const entries = Array.from(this.pendingDebouncedItems.entries()).filter(
       ([pendingBookId]) => !bookId || pendingBookId === bookId
     );
@@ -277,48 +291,6 @@ export class LocalProgressManager {
     }
   }
 
-  getPendingSyncCount(): number {
-    return this.syncQueue.getPendingCount();
-  }
-
-  onQueueChange(callback: (count: number) => void): () => void {
-    const handler = (e: Event) => {
-      if (e instanceof CustomEvent) {
-        const detail = e.detail as ProgressQueueEventDetail;
-        if (detail?.pendingCount !== undefined) {
-          callback(detail.pendingCount);
-        }
-      }
-    };
-
-    window.addEventListener("progress-queue-change", handler);
-    return () => {
-      window.removeEventListener("progress-queue-change", handler);
-    };
-  }
-
-  async clear(bookId: string): Promise<void> {
-    await this.initPromise;
-    if (!this.db) return;
-
-    try {
-      await this.db.delete(PROGRESS_STORE, bookId);
-    } catch (error) {
-      logger.error("local-progress", "Failed to clear progress", error);
-    }
-  }
-
-  async getAllProgress(): Promise<LocalProgress[]> {
-    await this.initPromise;
-    if (!this.db) return [];
-
-    try {
-      return await this.db.getAll(PROGRESS_STORE);
-    } catch (error) {
-      logger.error("local-progress", "Failed to get all progress", error);
-      return [];
-    }
-  }
 }
 
 let managerInstance: LocalProgressManager | null = null;

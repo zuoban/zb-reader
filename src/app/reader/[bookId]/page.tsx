@@ -122,6 +122,7 @@ function ReaderContent() {
     loading,
     bookData,
     initialLocation,
+    initialProgress,
     bookmarks,
     setBookmarks,
     notes,
@@ -143,7 +144,7 @@ function ReaderContent() {
   } = useReaderSelectionState();
 
   // Progress sync using compat hook
-  const progressSync = useProgressSyncCompat(bookId);
+  const progressSync = useProgressSyncCompat(bookId, loading ? null : initialProgress ?? null);
   const currentLocationRef = progressSync.currentLocationRef;
   const progressRef = progressSync.progressRef;
   const currentPageRef = progressSync.currentPageRef;
