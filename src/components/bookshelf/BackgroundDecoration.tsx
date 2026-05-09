@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 
 interface Particle {
   id: number;
@@ -27,7 +27,12 @@ function generateParticles(count: number): Particle[] {
 }
 
 export function BackgroundDecoration() {
+  const [mounted, setMounted] = useState(false);
   const particles = useMemo(() => generateParticles(25), []);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden bg-background transition-colors duration-700">
@@ -53,7 +58,7 @@ export function BackgroundDecoration() {
 
       {/* Floating Dust Particles */}
       <div className="absolute inset-0 z-10">
-        {particles?.map((p) => (
+        {mounted && particles?.map((p) => (
           <div
             key={p.id}
             className="absolute rounded-full bg-amber-600/40 dark:bg-indigo-300/30 transition-colors duration-700"
