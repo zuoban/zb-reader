@@ -3,7 +3,6 @@ import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthUserId } from "@/lib/api-utils";
 import { synthesizeMicrosoftSpeech } from "@/lib/microsoftTts";
-import { checkRateLimit } from "@/lib/rate-limit";
 
 interface MicrosoftSpeakRequestBody {
   text?: string;
@@ -205,9 +204,6 @@ async function synthesizeAndRespond(body: MicrosoftSpeakRequestBody) {
 }
 
 export async function GET(req: NextRequest) {
-  const rateLimitResult = checkRateLimit(req, { limit: 30, window: 60 });
-  if (rateLimitResult) return rateLimitResult;
-
   const authResult = await getAuthUserId();
   if (authResult.error) {
     return authResult.error;
@@ -227,9 +223,6 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const rateLimitResult = checkRateLimit(req, { limit: 30, window: 60 });
-  if (rateLimitResult) return rateLimitResult;
-
   const authResult = await getAuthUserId();
   if (authResult.error) {
     return authResult.error;
