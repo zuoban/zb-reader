@@ -116,11 +116,15 @@ export function useReaderNavigation({
       currentLocationRef.current = locationToSave;
       currentCfiRef.current = location.cfi;
       progressRef.current = location.progress;
-      currentPageRef.current = location.currentPage;
-      totalPagesRef.current = location.totalPages;
+      if (location.currentPage != null) {
+        currentPageRef.current = location.currentPage;
+        setCurrentPage(location.currentPage);
+      }
+      if (location.totalPages != null) {
+        totalPagesRef.current = location.totalPages;
+        setTotalPages(location.totalPages);
+      }
       setProgress(location.progress);
-      setCurrentPage(location.currentPage);
-      setTotalPages(location.totalPages);
       if (location.href) setCurrentHref(location.href);
 
       // Check if current location is bookmarked

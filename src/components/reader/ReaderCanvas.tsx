@@ -23,6 +23,8 @@ interface ReaderCanvasProps {
   bookId: string;
   bookTitle: string;
   bookUrl: string;
+  currentChapterTitle?: string;
+  currentPage?: number;
   epubReaderRef: React.RefObject<EpubReaderRef | null>;
   fontFamily: FontFamily;
   fontSize: number;
@@ -32,6 +34,7 @@ interface ReaderCanvasProps {
   isTtsViewOpen: boolean;
   progress: number;
   readerTheme: "light" | "dark" | "sepia";
+  totalPages?: number;
   ttsHighlightColor: string;
   onClick?: () => void;
   onLocationChange: (location: {
@@ -54,6 +57,8 @@ export function ReaderCanvas({
   bookId,
   bookTitle,
   bookUrl,
+  currentChapterTitle,
+  currentPage,
   epubReaderRef,
   fontFamily,
   fontSize,
@@ -63,6 +68,7 @@ export function ReaderCanvas({
   isTtsViewOpen,
   progress,
   readerTheme,
+  totalPages,
   ttsHighlightColor,
   onClick,
   onLocationChange,
@@ -73,23 +79,26 @@ export function ReaderCanvas({
     <div className="relative h-full w-full">
       <div className="h-full w-full px-1.5 py-4 sm:px-6">
         <div className="relative mx-auto h-full">
-          {!isSpeaking && !isTtsViewOpen ? (
-            <div className="pointer-events-none absolute left-1/2 top-0 z-10 -translate-x-1/2">
-              <div
-                className="reader-liquid-control pointer-events-auto inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs"
-                style={{ color: "var(--reader-muted-text)" }}
-              >
-                <span className="max-w-[120px] truncate">{bookTitle}</span>
-                <span className="text-[10px]">{(progress * 100).toFixed(0)}%</span>
-              </div>
-            </div>
-          ) : null}
+          {/* 底部状态条 */}
+          <div className="pointer-events-none fixed inset-x-0 bottom-0 z-10 flex items-center justify-between px-4 pb-[calc(env(safe-area-inset-bottom)+2px)] pt-1.5 text-[11px] leading-tight border-t" style={{ color: "var(--reader-muted-text)", background: "var(--reader-card-bg)", borderColor: "color-mix(in srgb, var(--reader-border) 40%, transparent)" }}>
+            <span className="tabular-nums min-w-[3ch] text-left">
+              {(progress * 100).toFixed(0)}%
+            </span>
+            <span className="mx-2 truncate text-center">
+              {currentChapterTitle || bookTitle}
+            </span>
+            <span className="tabular-nums min-w-[6ch] text-right">
+              {currentPage != null && totalPages != null
+                ? `${currentPage}/${totalPages}`
+                : ""}
+            </span>
+          </div>
 
           <div
             className="h-full w-full"
             style={{
-              paddingTop: isTtsViewOpen ? 0 : 32,
-              paddingBottom: isTtsViewOpen ? 0 : 40,
+              paddingTop: isTtsViewOpen ? 0 : 16,
+              paddingBottom: isTtsViewOpen ? 0 : 36,
             }}
           >
             {bookFormat === "epub" && (

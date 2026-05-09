@@ -439,6 +439,8 @@ function ReaderContent() {
         bookId={bookId}
         bookTitle={book.title}
         bookUrl={bookUrl}
+        currentChapterTitle={currentChapterTitle}
+        currentPage={currentPage}
         epubReaderRef={epubReaderRef}
         fontFamily={fontFamily}
         fontSize={fontSize}
@@ -448,6 +450,7 @@ function ReaderContent() {
         isTtsViewOpen={isTtsViewOpen}
         progress={progress}
         readerTheme={readerTheme}
+        totalPages={totalPages}
         ttsHighlightColor={ttsHighlightColor}
         onClick={handleToggleToolbar}
         onLocationChange={handleLocationChange}
