@@ -478,7 +478,6 @@ function ReaderContent() {
       <ReaderToolbar
         visible={toolbarVisible && !isSpeaking && !isTtsViewOpen}
         title={book.title}
-        currentChapterTitle={currentChapterTitle}
         currentPage={currentPage}
         totalPages={totalPages}
         progress={progress}

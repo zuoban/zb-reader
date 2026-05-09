@@ -29,7 +29,6 @@ import { cn } from "@/lib/utils";
 interface ReaderToolbarProps {
   visible: boolean;
   title: string;
-  currentChapterTitle?: string;
   currentPage?: number;
   totalPages?: number;
   progress: number;
@@ -100,7 +99,6 @@ const ToolbarButton = memo(function ToolbarButton({
 export const ReaderToolbar = memo(function ReaderToolbar({
   visible,
   title,
-  currentChapterTitle,
   progress: _progress,
   isBookmarked,
   isFullscreen,
@@ -119,8 +117,6 @@ export const ReaderToolbar = memo(function ReaderToolbar({
   hasNextChapter,
   rightContent,
 }: ReaderToolbarProps) {
-  const showChapterMeta = currentChapterTitle && currentChapterTitle !== title;
-
   return (
     <TooltipProvider>
       {/* 顶部工具栏 */}
@@ -149,7 +145,7 @@ export const ReaderToolbar = memo(function ReaderToolbar({
               </ToolbarButton>
             </div>
 
-            {/* 中间：书名和章节 */}
+            {/* 中间：书名 */}
             <div className="min-w-0 flex-1 px-2 text-center sm:px-3">
               <h1
                 className="truncate text-sm font-semibold tracking-tight"
@@ -157,14 +153,6 @@ export const ReaderToolbar = memo(function ReaderToolbar({
               >
                 {title}
               </h1>
-              {showChapterMeta && (
-                <p
-                  className="truncate text-xs mt-0.5 font-medium"
-                  style={{ color: "var(--reader-muted-text)" }}
-                >
-                  {currentChapterTitle}
-                </p>
-              )}
             </div>
 
             {/* 右侧：操作按钮 */}
