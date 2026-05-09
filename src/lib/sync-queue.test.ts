@@ -58,7 +58,6 @@ describe('sync-queue', () => {
       scrollRatio: 0.5,
       readingDuration: 1000,
       deviceId: 'device-1',
-      clientTimestamp: new Date().toISOString(),
       ...overrides,
     };
   }

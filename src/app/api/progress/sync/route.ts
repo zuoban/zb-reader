@@ -53,7 +53,6 @@ export async function POST(req: NextRequest) {
     if (currentProgress && syncId && currentProgress.lastSyncId === syncId) {
       return NextResponse.json({
         status: "unchanged",
-        merged: false,
         idempotent: true,
       });
     }
@@ -83,7 +82,6 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json({
         status: "created",
-        merged: false,
       });
     }
 
@@ -118,7 +116,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       status: "updated",
-      merged: false,
     });
   } catch (error) {
     logger.error("api", "[Progress Sync] Error:", error);

@@ -55,7 +55,6 @@ export async function POST(req: NextRequest) {
         results.push({
           bookId,
           status: "unchanged",
-          merged: false,
           idempotent: true,
         });
         continue;
@@ -87,7 +86,6 @@ export async function POST(req: NextRequest) {
         results.push({
           bookId,
           status: "created",
-          merged: false,
         });
         continue;
       }
@@ -124,7 +122,6 @@ export async function POST(req: NextRequest) {
       results.push({
         bookId,
         status: "updated",
-        merged: false,
       });
     }
 

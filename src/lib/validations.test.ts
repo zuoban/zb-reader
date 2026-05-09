@@ -19,7 +19,6 @@ describe("progressSchema", () => {
       scrollRatio: null,
       readingDuration: 120,
       deviceId: "desktop-device",
-      clientTimestamp: "2026-04-23T08:00:00.000Z",
       currentPage: null,
       totalPages: null,
     });

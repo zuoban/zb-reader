@@ -26,7 +26,6 @@ export interface LocalProgress {
   readingDuration: number;
   deviceId: string;
   updatedAt: string;
-  dirty: boolean;
   lastSyncReadingDuration: number;
 }
 
@@ -170,7 +169,6 @@ export class LocalProgressManager {
         readingDuration: data.progress.readingDuration || 0,
         deviceId: data.progress.deviceId || "",
         updatedAt: data.progress.updatedAt || new Date().toISOString(),
-        dirty: false,
         lastSyncReadingDuration: data.progress.readingDuration || 0,
       };
 
@@ -209,7 +207,6 @@ export class LocalProgressManager {
           readingDuration: 0,
           deviceId: getDeviceId(),
           updatedAt: new Date().toISOString(),
-          dirty: false,
           lastSyncReadingDuration: 0,
         };
       }
@@ -227,7 +224,6 @@ export class LocalProgressManager {
         readingDuration: update.readingDuration ?? current.readingDuration,
         deviceId: getDeviceId(),
         updatedAt: now,
-        dirty: true,
       };
 
       await this.db.put(PROGRESS_STORE, updated);
@@ -246,7 +242,6 @@ export class LocalProgressManager {
         scrollRatio: updated.scrollRatio,
         readingDuration: readingDurationDelta,
         deviceId: updated.deviceId,
-        clientTimestamp: now,
         currentPage: updated.currentPage,
         totalPages: updated.totalPages,
       };

@@ -125,7 +125,6 @@ export const progressSchema = z.object({
   scrollRatio: z.number().min(0).max(1).nullable().optional(),
   readingDuration: z.number().int().nonnegative().optional(),
   deviceId: z.string().optional(),
-  clientTimestamp: z.string().optional(),
   currentPage: z.number().int().positive().nullable().optional(),
   totalPages: z.number().int().positive().nullable().optional(),
 });
