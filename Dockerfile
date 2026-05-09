@@ -1,4 +1,5 @@
 FROM node:24-alpine AS base
+RUN corepack enable && corepack prepare pnpm@11.0.8 --activate
 
 # 1. Install dependencies only when needed
 FROM base AS deps
@@ -6,11 +7,8 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat python3 make g++
 WORKDIR /app
 
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
 # Install dependencies based on the preferred package manager
-COPY package.json pnpm-lock.yaml* ./
+COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 
 # 2. Rebuild the source code only when needed
