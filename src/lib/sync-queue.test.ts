@@ -9,9 +9,6 @@ vi.mock('idb', () => ({
 describe('sync-queue', () => {
   let syncQueue: SyncQueue;
   let mockSyncFn: Mock;
-  let mockOnSyncComplete: Mock;
-  let mockOnSyncError: Mock;
-  let mockOnQueueChange: Mock<(n: number) => void>;
   let mockDb: Record<string, unknown>;
 
   beforeEach(() => {
@@ -31,15 +28,9 @@ describe('sync-queue', () => {
     });
 
     mockSyncFn = vi.fn().mockResolvedValue(undefined);
-    mockOnSyncComplete = vi.fn();
-    mockOnSyncError = vi.fn();
-    mockOnQueueChange = vi.fn();
 
     syncQueue = new SyncQueue({
       syncFn: mockSyncFn,
-      onSyncComplete: mockOnSyncComplete,
-      onSyncError: mockOnSyncError,
-      onQueueChange: mockOnQueueChange,
     });
   });
 
@@ -64,7 +55,6 @@ describe('sync-queue', () => {
       await syncQueue.enqueue(item);
 
       expect(syncQueue.getPendingCount()).toBe(1);
-      expect(mockOnQueueChange).toHaveBeenCalledWith(1);
     });
 
     it('should merge items with same bookId', async () => {
@@ -133,7 +123,6 @@ describe('sync-queue', () => {
       await syncQueue.sync();
 
       expect(mockSyncFn).toHaveBeenCalledWith([item], undefined);
-      expect(mockOnSyncComplete).toHaveBeenCalled();
       expect(syncQueue.getPendingCount()).toBe(0);
     });
 
@@ -176,7 +165,6 @@ describe('sync-queue', () => {
       vi.useRealTimers();
 
       expect(mockSyncFn).toHaveBeenCalledTimes(5);
-      expect(mockOnSyncError).toHaveBeenCalledWith(error);
       expect(syncQueue.getPendingCount()).toBe(0);
     });
 
@@ -234,24 +222,6 @@ describe('sync-queue', () => {
       expect(mockSyncFn).toHaveBeenCalledWith([item1, item2], undefined);
     });
 
-    it('should call onQueueChange after each sync', async () => {
-      const item1 = createSyncItem({ bookId: 'book-1' });
-      const item2 = createSyncItem({ bookId: 'book-2' });
-
-      await syncQueue.enqueue(item1);
-      await syncQueue.enqueue(item2);
-
-      Object.defineProperty(window.navigator, "onLine", {
-        value: true,
-        configurable: true,
-      });
-
-      await syncQueue.sync();
-
-      expect(mockOnQueueChange).toHaveBeenCalled();
-      const lastCall = mockOnQueueChange.mock.calls[mockOnQueueChange.mock.calls.length - 1];
-      expect(lastCall[0]).toBe(0);
-    });
   });
 
   describe('clear', () => {

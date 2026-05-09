@@ -29,10 +29,7 @@ export async function GET(req: NextRequest) {
       progress: progress
         ? {
             progress: progress.progress,
-            furthestProgress: progress.furthestProgress,
             location: progress.location,
-            lastReadAt: progress.lastReadAt,
-            updatedAt: progress.updatedAt,
           }
         : null,
     });

@@ -16,7 +16,6 @@ export function useProgressSyncCompat(
   const {
     updateProgress,
     forceSync,
-    pendingSync,
   } = useProgressSync(bookId, initialProgress);
 
   // Refs for compatibility with old code
@@ -87,8 +86,6 @@ export function useProgressSyncCompat(
     saveProgress,
     debouncedSaveProgress,
 
-    // 新增功能
-    pendingSync,
     forceSync,
   };
 }

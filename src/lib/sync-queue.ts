@@ -20,21 +20,12 @@ export class SyncQueue {
   private queue: SyncItem[] = [];
   private syncing = false;
   private syncFn: (items: SyncItem[], options?: { keepalive?: boolean }) => Promise<void>;
-  private onSyncComplete?: () => void;
-  private onSyncError?: (error: Error) => void;
-  private onQueueChange?: (pendingCount: number) => void;
   private onlineHandler: () => void;
 
   constructor(options: {
     syncFn: (items: SyncItem[], options?: { keepalive?: boolean }) => Promise<void>;
-    onSyncComplete?: () => void;
-    onSyncError?: (error: Error) => void;
-    onQueueChange?: (pendingCount: number) => void;
   }) {
     this.syncFn = options.syncFn;
-    this.onSyncComplete = options.onSyncComplete;
-    this.onSyncError = options.onSyncError;
-    this.onQueueChange = options.onQueueChange;
     this.onlineHandler = () => this.sync();
 
     if (typeof window !== 'undefined') {
@@ -64,7 +55,6 @@ export class SyncQueue {
     }
 
     await this.persistQueue();
-    this.notifyQueueChange();
 
     if (options?.autoSync !== false && navigator.onLine && !this.syncing) {
       void this.sync();
@@ -92,8 +82,6 @@ export class SyncQueue {
           success = true;
           this.queue = this.queue.filter(i => !batch.includes(i));
           await this.persistQueue();
-          this.notifyQueueChange();
-          this.onSyncComplete?.();
         } catch (error) {
           retryCount++;
           
@@ -106,7 +94,6 @@ export class SyncQueue {
           if (retryCount >= maxAttempts) {
             if (!options?.keepalive) {
               logger.error('sync-queue', 'Sync failed after max retries');
-              this.onSyncError?.(error instanceof Error ? error : new Error(String(error)));
             }
             
             // 卸载时不移除队列，留给下次加载
@@ -116,7 +103,6 @@ export class SyncQueue {
 
             this.queue = this.queue.filter(i => !batch.includes(i));
             await this.persistQueue();
-            this.notifyQueueChange();
             break;
           }
 
@@ -144,7 +130,6 @@ export class SyncQueue {
   clear(): void {
     this.queue = [];
     this.persistQueue();
-    this.notifyQueueChange();
   }
 
   private async persistQueue(): Promise<void> {
@@ -178,7 +163,6 @@ export class SyncQueue {
       const stored = await db.get(STORE_NAME, QUEUE_KEY);
       if (stored && Array.isArray(stored)) {
         this.queue = stored;
-        this.notifyQueueChange();
         if (navigator.onLine) {
           this.sync();
         }
@@ -187,10 +171,6 @@ export class SyncQueue {
       logger.error('sync-queue', 'Failed to load queue from IDB', error);
       this.queue = [];
     }
-  }
-
-  private notifyQueueChange(): void {
-    this.onQueueChange?.(this.queue.length);
   }
 
   private sleep(ms: number): Promise<void> {

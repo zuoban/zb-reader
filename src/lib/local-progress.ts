@@ -9,9 +9,7 @@ const PROGRESS_STORE = "progress";
 export interface LocalProgress {
   bookId: string;
   progress: number;
-  furthestProgress: number;
   location: string;
-  updatedAt: string;
 }
 
 export interface ProgressUpdate {
@@ -21,9 +19,7 @@ export interface ProgressUpdate {
 
 export interface ServerProgressSnapshot {
   progress?: number | null;
-  furthestProgress?: number | null;
   location?: string | null;
-  updatedAt?: string | null;
 }
 
 export class LocalProgressManager {
@@ -54,13 +50,6 @@ export class LocalProgressManager {
           throw new Error(error.error || "同步失败");
         }
       },
-      onQueueChange: (pendingCount) => {
-        window.dispatchEvent(
-          new CustomEvent("progress-queue-change", {
-            detail: { pendingCount },
-          })
-        );
-      },
     });
   }
 
@@ -70,14 +59,13 @@ export class LocalProgressManager {
     this.db = await openDB(DB_NAME, DB_VERSION, {
       upgrade(db) {
         if (!db.objectStoreNames.contains(PROGRESS_STORE)) {
-          const store = db.createObjectStore(PROGRESS_STORE, { keyPath: "bookId" });
-          store.createIndex("updatedAt", "updatedAt");
+          db.createObjectStore(PROGRESS_STORE, { keyPath: "bookId" });
         }
       },
     });
   }
 
-  async getProgress(bookId: string): Promise<LocalProgress | null> {
+  private async getProgress(bookId: string): Promise<LocalProgress | null> {
     await this.initPromise;
     if (!this.db) return null;
 
@@ -125,9 +113,7 @@ export class LocalProgressManager {
     const serverProgress: LocalProgress = {
       bookId,
       progress: progress.progress || 0,
-      furthestProgress: progress.furthestProgress ?? progress.progress ?? 0,
       location: progress.location || "",
-      updatedAt: progress.updatedAt || new Date().toISOString(),
     };
 
     await this.initPromise;
@@ -153,20 +139,14 @@ export class LocalProgressManager {
         current = {
           bookId,
           progress: 0,
-          furthestProgress: 0,
           location: "",
-          updatedAt: new Date().toISOString(),
         };
       }
-
-      const now = new Date().toISOString();
 
       const updated: LocalProgress = {
         ...current,
         progress: update.progress ?? current.progress,
-        furthestProgress: Math.max(current.furthestProgress ?? current.progress, update.progress ?? current.progress),
         location: update.location ?? current.location,
-        updatedAt: now,
       };
 
       await this.db.put(PROGRESS_STORE, updated);
