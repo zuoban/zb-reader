@@ -32,7 +32,7 @@ export async function GET(
       return notFound("封面文件读取失败");
     }
 
-    return new NextResponse(coverBuffer, {
+    return new NextResponse(new Uint8Array(coverBuffer), {
       headers: {
         "Content-Type": "image/jpeg",
         "Cache-Control": "private, max-age=31536000, immutable",

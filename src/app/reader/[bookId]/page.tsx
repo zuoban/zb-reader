@@ -130,7 +130,6 @@ function ReaderContent() {
     notes,
     setNotes,
     highlights,
-    setHighlights: _setHighlights,
   } = useReaderBookData({
     bookId,
     onMissingBook: handleMissingBook,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { Camera, Calendar, KeyRound, Loader2, Mail, Save, User as UserIcon } from "lucide-react";
