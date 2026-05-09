@@ -11,6 +11,7 @@ export interface TocItem {
 export interface ReaderParagraph {
   id: string;
   text: string;
+  html?: string;
   location?: string;
   isCodeBlock?: boolean;
 }

@@ -4,6 +4,7 @@ import type { PreparedTextWithSegments } from "@chenglou/pretext";
 export interface ParagraphLayout {
   id: string;
   text: string;
+  html?: string;
   location?: string;
   isCodeBlock?: boolean;
   startIndex: number;
@@ -40,7 +41,7 @@ export interface PrepareParagraphsOptions {
 }
 
 export function prepareParagraphs(
-  paragraphs: Array<{ id: string; text: string; location?: string; isCodeBlock?: boolean }>,
+  paragraphs: Array<{ id: string; text: string; html?: string; location?: string; isCodeBlock?: boolean }>,
   options: PrepareParagraphsOptions
 ): ParagraphLayout[] {
   const { fontSize, fontFamily, containerWidth, lineHeight } = options;
@@ -61,6 +62,7 @@ export function prepareParagraphs(
       layouts.push({
         id: paragraph.id,
         text: trimmedText,
+        html: paragraph.html,
         location: paragraph.location,
         isCodeBlock: paragraph.isCodeBlock,
         startIndex: currentIndex,

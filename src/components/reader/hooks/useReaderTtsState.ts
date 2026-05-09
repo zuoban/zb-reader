@@ -11,6 +11,7 @@ export function useReaderTtsState() {
   const [activeTtsParagraphId, setActiveTtsParagraphId] = useState<string | null>(null);
   const [activeTtsLocation, setActiveTtsLocation] = useState<string | null>(null);
   const [activeTtsIsCodeBlock, setActiveTtsIsCodeBlock] = useState(false);
+  const [activeTtsHtml, setActiveTtsHtml] = useState("");
 
   const ttsSessionRef = useRef(0);
   const currentParagraphIndexRef = useRef(0);
@@ -30,12 +31,14 @@ export function useReaderTtsState() {
     setActiveTtsParagraphId(null);
     setActiveTtsLocation(null);
     setActiveTtsIsCodeBlock(false);
+    setActiveTtsHtml("");
     setIsSpeaking(false);
     setIsPaused(false);
     setIsTtsViewOpen(false);
   }, []);
 
   return {
+    activeTtsHtml,
     activeTtsIsCodeBlock,
     activeTtsLocation,
     activeTtsParagraph,
@@ -47,6 +50,7 @@ export function useReaderTtsState() {
     isTtsViewOpen,
     readSentencesHashRef,
     resetTtsState,
+    setActiveTtsHtml,
     setActiveTtsIsCodeBlock,
     setActiveTtsLocation,
     setActiveTtsParagraph,

@@ -22,6 +22,7 @@ interface FullscreenTtsViewProps {
   open: boolean;
   book: Book;
   currentChapterTitle?: string;
+  activeHtml: string;
   activeParagraph?: string;
   activeIsCodeBlock?: boolean;
   isSpeaking: boolean;
@@ -46,10 +47,24 @@ function clampProgress(value: number) {
   return Math.min(1, Math.max(0, value));
 }
 
+const ALLOWED_HTML_TAGS = new Set([
+  "em", "strong", "b", "i", "u", "sup", "sub", "span", "br", "small", "mark",
+]);
+
+function sanitizeHtml(html: string): string {
+  return html.replace(/<\s*\/?\s*([a-zA-Z]+)[^>]*>/g, (match, tagName) => {
+    if (ALLOWED_HTML_TAGS.has(tagName.toLowerCase())) {
+      return match;
+    }
+    return "";
+  });
+}
+
 export function FullscreenTtsView({
   open,
   book,
   currentChapterTitle,
+  activeHtml,
   activeParagraph,
   activeIsCodeBlock,
   isSpeaking,
@@ -147,6 +162,11 @@ export function FullscreenTtsView({
                   <pre className="rounded-xl bg-white/5 p-4 font-mono text-[13px] leading-relaxed tracking-[0.01em] text-white/90 [text-shadow:0_1px_14px_rgba(0,0,0,0.42)] sm:text-[14px] sm:leading-loose whitespace-pre-wrap break-words">
                     {paragraphText || "正在准备朗读内容，马上为你定位到当前段落。"}
                   </pre>
+                ) : activeHtml ? (
+                  <p
+                    className="text-[16px] font-normal leading-9 tracking-[0.01em] text-white/90 [text-shadow:0_1px_14px_rgba(0,0,0,0.42)] sm:text-[18px] sm:leading-[2.6rem] [&>strong]:font-bold [&>b]:font-bold [&>em]:italic [&>i]:italic [&>sup]:text-xs [&>sub]:text-xs [&>mark]:rounded [&>mark]:bg-white/10 [&>mark]:px-0.5"
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(activeHtml) }}
+                  />
                 ) : (
                   <p className="text-[16px] font-normal leading-9 tracking-[0.01em] text-white/90 [text-shadow:0_1px_14px_rgba(0,0,0,0.42)] sm:text-[18px] sm:leading-[2.6rem]">
                     {paragraphText || "正在准备朗读内容，马上为你定位到当前段落。"}

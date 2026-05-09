@@ -33,6 +33,7 @@ interface UseReaderTtsSessionParams {
   readSentencesHashRef: React.MutableRefObject<Set<string>>;
   requestMicrosoftSpeech: (text: string, options?: { prefetch?: boolean }) => Promise<string>;
   resumePendingPlayback: () => boolean;
+  setActiveTtsHtml: (html: string) => void;
   setActiveTtsIsCodeBlock: (value: boolean) => void;
   setActiveTtsLocation: (location: string | null) => void;
   setActiveTtsParagraph: (paragraph: string) => void;
@@ -79,6 +80,7 @@ export function useReaderTtsSession({
   readSentencesHashRef,
   requestMicrosoftSpeech,
   resumePendingPlayback,
+  setActiveTtsHtml,
   setActiveTtsIsCodeBlock,
   setActiveTtsLocation,
   setActiveTtsParagraph,
@@ -235,6 +237,7 @@ export function useReaderTtsSession({
         setActiveTtsParagraphId(sentence.paragraphId);
         setActiveTtsLocation(sentence.location ?? null);
         setActiveTtsIsCodeBlock(!!sentence.isCodeBlock);
+        setActiveTtsHtml(sentence.html || sentence.text);
 
         const hash = sentence.location || sentence.text.slice(0, 50);
         if (readSentencesHashRef.current.has(hash)) {
@@ -301,6 +304,7 @@ export function useReaderTtsSession({
             setActiveTtsParagraphId(null);
             setActiveTtsLocation(null);
             setActiveTtsIsCodeBlock(false);
+            setActiveTtsHtml("");
             setIsSpeaking(false);
             if (!isRetryableTtsError(lastError)) {
               toast.error("音频播放失败，请检查浏览器自动播放权限");
@@ -323,6 +327,7 @@ export function useReaderTtsSession({
       playAudioSource,
       readSentencesHashRef,
       requestMicrosoftSpeech,
+      setActiveTtsHtml,
       setActiveTtsIsCodeBlock,
       setActiveTtsLocation,
       setActiveTtsParagraph,
@@ -494,6 +499,7 @@ export function useReaderTtsSession({
     setActiveTtsParagraphId(sentences[newIndex].paragraphId);
     setActiveTtsLocation(sentences[newIndex].location ?? null);
     setActiveTtsIsCodeBlock(!!sentences[newIndex].isCodeBlock);
+    setActiveTtsHtml(sentences[newIndex].html || sentences[newIndex].text);
 
     if (!shouldResumePlayback) {
       setIsSpeaking(true);
@@ -514,6 +520,7 @@ export function useReaderTtsSession({
     getReadableParagraphs,
     isPaused,
     isSpeaking,
+    setActiveTtsHtml,
     setActiveTtsLocation,
     setActiveTtsParagraph,
     setActiveTtsParagraphId,
@@ -558,6 +565,7 @@ export function useReaderTtsSession({
     setActiveTtsParagraphId(sentences[newIndex].paragraphId);
     setActiveTtsLocation(sentences[newIndex].location ?? null);
     setActiveTtsIsCodeBlock(!!sentences[newIndex].isCodeBlock);
+    setActiveTtsHtml(sentences[newIndex].html || sentences[newIndex].text);
 
     if (!shouldResumePlayback) {
       setIsSpeaking(true);
@@ -578,6 +586,7 @@ export function useReaderTtsSession({
     getReadableParagraphs,
     isPaused,
     isSpeaking,
+    setActiveTtsHtml,
     setActiveTtsLocation,
     setActiveTtsParagraph,
     setActiveTtsParagraphId,

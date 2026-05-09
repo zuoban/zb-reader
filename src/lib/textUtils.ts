@@ -1,5 +1,6 @@
 export interface Sentence {
   text: string;
+  html?: string;
   paragraphId: string;
   location?: string;
   isCodeBlock?: boolean;
@@ -8,6 +9,7 @@ export interface Sentence {
 export interface ReaderParagraph {
   id: string;
   text: string;
+  html?: string;
   location?: string;
   isCodeBlock?: boolean;
 }
@@ -299,6 +301,7 @@ export function paragraphsToSentences(
     if (paragraph.isCodeBlock) {
       sentences.push({
         text,
+        html: paragraph.html,
         paragraphId: paragraph.id,
         location: paragraph.location,
         isCodeBlock: true,
@@ -313,6 +316,7 @@ export function paragraphsToSentences(
       if (trimmed.length > 0 && !punctuationOnlyRegex.test(trimmed)) {
         sentences.push({
           text: trimmed,
+          html: paragraph.html,
           paragraphId: paragraph.id,
           location: paragraph.location,
         });

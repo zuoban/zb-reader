@@ -68,6 +68,7 @@ export function useEpubParagraphs({
           paragraphs.push({
             id,
             text,
+            html: el.innerHTML,
             location: epubContextRef.current.getCfiFromNode(element) || undefined,
             isCodeBlock: isPre,
           });
@@ -130,6 +131,7 @@ export function useEpubParagraphs({
             visibleParagraphs.push({
               id: layout.id,
               text: layout.text,
+              html: layout.html,
               location: layout.location,
               isCodeBlock: layout.isCodeBlock,
             });
@@ -209,6 +211,7 @@ export function useEpubParagraphs({
           visibleParagraphs.push({
             id,
             text,
+            html: el.innerHTML,
             location: getParagraphLocation(element),
             isCodeBlock: isPre,
           });
@@ -231,7 +234,7 @@ export function useEpubParagraphs({
         const id = buildParagraphId(index, text);
         element.setAttribute("data-reader-paragraph-id", id);
         if (rects.length === 0) {
-          return { distance: Infinity, id, text, location: getParagraphLocation(element), isCodeBlock: isPre };
+          return { distance: Infinity, id, text, html: element.innerHTML, location: getParagraphLocation(element), isCodeBlock: isPre };
         }
         const minDistance = rects.reduce((best, rect) => {
           const rectCenterY = rect.top + rect.height / 2;
@@ -241,6 +244,7 @@ export function useEpubParagraphs({
           distance: minDistance,
           id,
           text,
+          html: element.innerHTML,
           location: getParagraphLocation(element),
           isCodeBlock: isPre,
         };
@@ -256,6 +260,7 @@ export function useEpubParagraphs({
       .map((item) => ({
         id: item.id,
         text: item.text,
+        html: item.html,
         location: item.location,
         isCodeBlock: item.isCodeBlock,
       }));

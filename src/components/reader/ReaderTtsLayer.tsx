@@ -6,6 +6,7 @@ import type { Book } from "@/lib/db/schema";
 import type { BrowserVoiceOption } from "@/lib/tts";
 
 interface ReaderTtsLayerProps {
+  activeHtml: string;
   activeIsCodeBlock: boolean;
   activeParagraph: string;
   book: Book;
@@ -30,6 +31,7 @@ interface ReaderTtsLayerProps {
 }
 
 export function ReaderTtsLayer({
+  activeHtml,
   activeIsCodeBlock,
   activeParagraph,
   book,
@@ -58,6 +60,7 @@ export function ReaderTtsLayer({
         open={isTtsViewOpen}
         book={book}
         currentChapterTitle={currentChapterTitle}
+        activeHtml={activeHtml}
         activeParagraph={activeParagraph}
         activeIsCodeBlock={activeIsCodeBlock}
         isSpeaking={isSpeaking}
