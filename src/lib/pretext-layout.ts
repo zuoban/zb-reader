@@ -20,7 +20,7 @@ export interface VisibleRange {
 
 const DEFAULT_FONT_FAMILY =
   '"Baskerville", "Iowan Old Style", "Palatino Linotype", "Noto Serif SC", "Songti SC", "Source Han Serif SC", serif';
-const DEFAULT_LINE_HEIGHT_MULTIPLIER = 2.08;
+const DEFAULT_LINE_HEIGHT_MULTIPLIER = 1.78;
 
 export function buildFontString(fontSize: number, fontFamily?: string): string {
   const family = fontFamily || DEFAULT_FONT_FAMILY;
