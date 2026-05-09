@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useTheme } from "next-themes";
 import { Check, Tags, X } from "lucide-react";
 import { toast } from "sonner";
 import { BackgroundDecoration } from "@/components/bookshelf/BackgroundDecoration";
@@ -9,6 +8,7 @@ import { SearchBar } from "@/components/bookshelf/SearchBar";
 import { BookCardSkeleton } from "@/components/bookshelf/BookCardSkeleton";
 import { BookGrid } from "@/components/bookshelf/BookGrid";
 import { Navbar } from "@/components/layout/Navbar";
+import { useTheme } from "@/components/layout/ThemeProvider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -73,7 +73,7 @@ export default function BookshelfPage() {
         const settings = data.settings;
         
         if (settings?.theme) {
-          // Map reader theme to next-themes theme
+          // Keep the global theme aligned with reader settings.
           const globalTheme = settings.theme === "dark" ? "dark" : "light";
           setTheme(globalTheme);
         }

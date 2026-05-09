@@ -4,9 +4,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
 import { Library, LogOut, Moon, Sun, User } from "lucide-react";
-import { useTheme } from "next-themes";
 import { UploadButton } from "@/components/bookshelf/UploadButton";
 import { Button } from "@/components/ui/button";
+import { useTheme } from "@/components/layout/ThemeProvider";
 import {
   DropdownMenu,
   DropdownMenuContent,
