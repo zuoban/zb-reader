@@ -220,7 +220,7 @@ export function FullscreenTtsView({
               size="icon"
               onClick={onPrev}
               className="tts-immersive-control size-8 cursor-pointer rounded-full text-white/84 hover:text-white sm:size-9"
-              aria-label="上一段"
+              aria-label="上一章"
             >
               <SkipBack className="size-3.5 sm:size-4" />
             </Button>
@@ -238,7 +238,7 @@ export function FullscreenTtsView({
               size="icon"
               onClick={onNext}
               className="tts-immersive-control size-8 cursor-pointer rounded-full text-white/84 hover:text-white sm:size-9"
-              aria-label="下一段"
+              aria-label="下一章"
             >
               <SkipForward className="size-3.5 sm:size-4" />
             </Button>

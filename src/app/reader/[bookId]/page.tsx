@@ -366,7 +366,7 @@ function ReaderContent() {
     }
   }, [book?.format, resetTtsState, stopTransport]);
 
-  const { handleToggleTts, handleTtsNextParagraph, handleTtsPrevParagraph } =
+  const { handleToggleTts, handleTtsNextChapter, handleTtsPrevChapter } =
     useReaderTtsSession({
       allSentencesRef,
       book,
@@ -408,9 +408,9 @@ function ReaderContent() {
     hasPendingResume,
     isPaused,
     isSpeaking,
-    onNext: handleTtsNextParagraph,
+    onNext: handleTtsNextChapter,
     onPause: handlePauseTts,
-    onPrev: handleTtsPrevParagraph,
+    onPrev: handleTtsPrevChapter,
     onResumePending: resumePendingPlayback,
     onStop: stopSpeaking,
   });
@@ -578,9 +578,9 @@ function ReaderContent() {
         selectedBrowserVoiceId={selectedBrowserVoiceId}
         ttsRate={ttsRate}
         onBackToReader={handleBackToReader}
-        onNext={handleTtsNextParagraph}
+        onNext={handleTtsNextChapter}
         onOpenImmersiveView={handleOpenTtsView}
-        onPrev={handleTtsPrevParagraph}
+        onPrev={handleTtsPrevChapter}
         onSelectedBrowserVoiceIdChange={handleSelectedBrowserVoiceIdChange}
         onStop={stopSpeaking}
         onToggle={handleToggleTts}

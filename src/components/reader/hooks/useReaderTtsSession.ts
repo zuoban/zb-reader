@@ -339,6 +339,95 @@ export function useReaderTtsSession({
     ]
   );
 
+  const startTtsLoop = useCallback(async (sessionId: number, startIndex = 0) => {
+    let sentences = allSentencesRef.current;
+    if (sentences.length === 0) {
+      let paragraphs = getReadableParagraphs();
+      if (paragraphs.length === 0) {
+        await wait(220);
+        paragraphs = getReadableParagraphs();
+      }
+      if (paragraphs.length === 0) {
+        toast.error("当前页面没有可朗读内容");
+        setIsSpeaking(false);
+        return;
+      }
+      sentences = paragraphsToSentences(paragraphs);
+      allSentencesRef.current = sentences;
+      ttsTotalSentencesRef.current = sentences.length;
+    }
+
+    currentParagraphIndexRef.current = startIndex;
+    ttsCurrentIndexRef.current = startIndex;
+
+    while (ttsSessionRef.current === sessionId) {
+      const currentStart = currentParagraphIndexRef.current;
+      const sentencesToRead = sentences.slice(currentStart);
+
+      if (sentencesToRead.length === 0) {
+        const moved = await tryAutoTurnPage(sessionId);
+        if (!moved) break;
+        
+        // Refresh sentences after page turn
+        let paragraphs = getReadableParagraphs();
+        if (paragraphs.length === 0) {
+          await wait(220);
+          paragraphs = getReadableParagraphs();
+        }
+        if (paragraphs.length === 0) break;
+        
+        sentences = paragraphsToSentences(paragraphs);
+        allSentencesRef.current = sentences;
+        ttsTotalSentencesRef.current = sentences.length;
+        currentParagraphIndexRef.current = 0;
+        ttsCurrentIndexRef.current = 0;
+        continue;
+      }
+
+      try {
+        await speakWithBrowserParagraphs(sentencesToRead, sessionId, currentStart);
+        sentencesToRead.forEach((sentence) => {
+          readSentencesHashRef.current.add(
+            sentence.location || sentence.text.slice(0, 50)
+          );
+        });
+      } catch {
+        break;
+      }
+
+      if (ttsSessionRef.current !== sessionId) break;
+
+      const moved = await tryAutoTurnPage(sessionId);
+      if (!moved) break;
+      
+      sentences = [];
+      allSentencesRef.current = [];
+    }
+
+    if (ttsSessionRef.current === sessionId) {
+      setActiveTtsParagraph("");
+      setActiveTtsParagraphId(null);
+      setActiveTtsLocation(null);
+      setIsSpeaking(false);
+      setIsTtsViewOpen(false);
+    }
+  }, [
+    allSentencesRef,
+    currentParagraphIndexRef,
+    getReadableParagraphs,
+    readSentencesHashRef,
+    setActiveTtsLocation,
+    setActiveTtsParagraph,
+    setActiveTtsParagraphId,
+    setIsSpeaking,
+    setIsTtsViewOpen,
+    speakWithBrowserParagraphs,
+    tryAutoTurnPage,
+    ttsCurrentIndexRef,
+    ttsSessionRef,
+    ttsTotalSentencesRef,
+  ]);
+
   const handleToggleTts = useCallback(async () => {
     if (isSpeaking) {
       if (isPaused) {
@@ -359,99 +448,13 @@ export function useReaderTtsSession({
     readSentencesHashRef.current.clear();
     const sessionId = ttsSessionRef.current;
 
-    let paragraphs = getReadableParagraphs();
-    if (paragraphs.length === 0) {
-      await wait(220);
-      paragraphs = getReadableParagraphs();
-    }
-
-    if (paragraphs.length === 0) {
-      toast.error("当前页面没有可朗读内容");
-      return;
-    }
-
-    const sentences = paragraphsToSentences(paragraphs);
-    if (sentences.length === 0) {
-      toast.error("当前页面没有可朗读内容");
-      return;
-    }
-
-    allSentencesRef.current = sentences;
-    ttsTotalSentencesRef.current = sentences.length;
-    currentParagraphIndexRef.current = getInitialParagraphIndex(paragraphs);
-    ttsCurrentIndexRef.current = currentParagraphIndexRef.current;
-
     setIsTtsViewOpen(true);
     setToolbarVisible(false);
     setIsSpeaking(true);
+    setIsPaused(false);
 
-    while (ttsSessionRef.current === sessionId) {
-      if (sentences.length === 0) {
-        paragraphs = getReadableParagraphs();
-        if (paragraphs.length === 0) {
-          await wait(220);
-          paragraphs = getReadableParagraphs();
-        }
-        if (paragraphs.length === 0) {
-          toast.error("没有更多可朗读内容");
-          break;
-        }
-        const newSentences = paragraphsToSentences(paragraphs);
-        if (newSentences.length === 0) {
-          toast.error("没有更多可朗读内容");
-          break;
-        }
-        currentParagraphIndexRef.current = 0;
-        ttsCurrentIndexRef.current = 0;
-        allSentencesRef.current = newSentences;
-        ttsTotalSentencesRef.current = newSentences.length;
-        Object.assign(sentences, newSentences);
-      }
-
-      const startIndex = currentParagraphIndexRef.current;
-      const sentencesToRead = sentences.slice(startIndex);
-
-      if (sentencesToRead.length === 0) {
-        const moved = await tryAutoTurnPage(sessionId);
-        if (!moved) break;
-        sentences.length = 0;
-        continue;
-      }
-
-      try {
-        await speakWithBrowserParagraphs(sentencesToRead, sessionId, startIndex);
-        sentencesToRead.forEach((sentence) => {
-          readSentencesHashRef.current.add(
-            sentence.location || sentence.text.slice(0, 50)
-          );
-        });
-      } catch {
-        break;
-      }
-
-      if (ttsSessionRef.current !== sessionId) {
-        break;
-      }
-
-      const moved = await tryAutoTurnPage(sessionId);
-      if (!moved) {
-        break;
-      }
-      sentences.length = 0;
-    }
-
-    if (ttsSessionRef.current === sessionId) {
-      setActiveTtsParagraph("");
-      setActiveTtsParagraphId(null);
-      setActiveTtsLocation(null);
-      setIsSpeaking(false);
-      setIsTtsViewOpen(false);
-    }
+    await startTtsLoop(sessionId, 0);
   }, [
-    allSentencesRef,
-    currentParagraphIndexRef,
-    getInitialParagraphIndex,
-    getReadableParagraphs,
     handlePauseTts,
     handleResumeTts,
     hasPendingResume,
@@ -459,67 +462,65 @@ export function useReaderTtsSession({
     isSpeaking,
     readSentencesHashRef,
     resumePendingPlayback,
-    setActiveTtsLocation,
-    setActiveTtsParagraph,
-    setActiveTtsParagraphId,
+    setIsPaused,
     setIsSpeaking,
     setIsTtsViewOpen,
     setToolbarVisible,
-    speakWithBrowserParagraphs,
-    tryAutoTurnPage,
-    ttsCurrentIndexRef,
+    startTtsLoop,
     ttsSessionRef,
-    ttsTotalSentencesRef,
   ]);
 
-  const handleTtsPrevParagraph = useCallback(() => {
-    let sentences = allSentencesRef.current;
-    if (sentences.length === 0) {
-      const paragraphs = getReadableParagraphs();
-      sentences = paragraphsToSentences(paragraphs);
-      allSentencesRef.current = sentences;
-    }
-
-    if (sentences.length === 0) return;
-
-    const newIndex = Math.max(0, currentParagraphIndexRef.current - 1);
-    if (newIndex === currentParagraphIndexRef.current && currentParagraphIndexRef.current === 0) {
-      return;
-    }
-
-    const shouldResumePlayback = isSpeaking && !isPaused;
-
+  const handleTtsPrevChapter = useCallback(async () => {
+    const wasPaused = isPaused || !isSpeaking;
+    
     ttsSessionRef.current += 1;
     const sessionId = ttsSessionRef.current;
     stopCurrentAudio();
+    readSentencesHashRef.current.clear();
 
-    currentParagraphIndexRef.current = newIndex;
-    ttsCurrentIndexRef.current = newIndex;
-    setActiveTtsParagraph(sentences[newIndex].text);
-    setActiveTtsParagraphId(sentences[newIndex].paragraphId);
-    setActiveTtsLocation(sentences[newIndex].location ?? null);
-    setActiveTtsIsCodeBlock(!!sentences[newIndex].isCodeBlock);
-    setActiveTtsHtml(sentences[newIndex].html || sentences[newIndex].text);
+    const previousIdentity = getPageIdentity();
+    epubReaderRef.current?.prevPage();
 
-    if (!shouldResumePlayback) {
-      setIsSpeaking(true);
-      setIsPaused(true);
+    const moved = await waitForPageChange(previousIdentity, sessionId);
+    if (!moved || ttsSessionRef.current !== sessionId) {
+      if (ttsSessionRef.current === sessionId) setIsSpeaking(false);
       return;
     }
 
-    const startSentences = sentences.slice(newIndex);
-    setTimeout(() => {
-      if (ttsSessionRef.current !== sessionId) return;
-      setIsSpeaking(true);
+    allSentencesRef.current = [];
+    setIsSpeaking(true);
+    
+    if (wasPaused) {
+      setIsPaused(true);
+      // Update UI with first sentence of new chapter
+      let paragraphs = getReadableParagraphs();
+      if (paragraphs.length === 0) {
+        await wait(220);
+        paragraphs = getReadableParagraphs();
+      }
+      if (paragraphs.length > 0) {
+        const sentences = paragraphsToSentences(paragraphs);
+        allSentencesRef.current = sentences;
+        const first = sentences[0];
+        if (first) {
+          setActiveTtsParagraph(first.text);
+          setActiveTtsParagraphId(first.paragraphId);
+          setActiveTtsLocation(first.location ?? null);
+          setActiveTtsIsCodeBlock(!!first.isCodeBlock);
+          setActiveTtsHtml(first.html || first.text);
+        }
+      }
+    } else {
       setIsPaused(false);
-      void speakWithBrowserParagraphs(startSentences, sessionId, newIndex);
-    }, 10);
+      await startTtsLoop(sessionId, 0);
+    }
   }, [
-    allSentencesRef,
-    currentParagraphIndexRef,
+    epubReaderRef,
+    getPageIdentity,
     getReadableParagraphs,
     isPaused,
     isSpeaking,
+    readSentencesHashRef,
     setActiveTtsHtml,
     setActiveTtsIsCodeBlock,
     setActiveTtsLocation,
@@ -527,66 +528,63 @@ export function useReaderTtsSession({
     setActiveTtsParagraphId,
     setIsPaused,
     setIsSpeaking,
-    speakWithBrowserParagraphs,
+    startTtsLoop,
     stopCurrentAudio,
-    ttsCurrentIndexRef,
     ttsSessionRef,
+    waitForPageChange,
   ]);
 
-  const handleTtsNextParagraph = useCallback(() => {
-    let sentences = allSentencesRef.current;
-    if (sentences.length === 0) {
-      const paragraphs = getReadableParagraphs();
-      sentences = paragraphsToSentences(paragraphs);
-      allSentencesRef.current = sentences;
-    }
-
-    if (sentences.length === 0) return;
-
-    const newIndex = Math.min(
-      sentences.length - 1,
-      currentParagraphIndexRef.current + 1
-    );
-    if (
-      newIndex === currentParagraphIndexRef.current &&
-      currentParagraphIndexRef.current === sentences.length - 1
-    ) {
-      return;
-    }
-
-    const shouldResumePlayback = isSpeaking && !isPaused;
-
+  const handleTtsNextChapter = useCallback(async () => {
+    const wasPaused = isPaused || !isSpeaking;
+    
     ttsSessionRef.current += 1;
     const sessionId = ttsSessionRef.current;
     stopCurrentAudio();
+    readSentencesHashRef.current.clear();
 
-    currentParagraphIndexRef.current = newIndex;
-    ttsCurrentIndexRef.current = newIndex;
-    setActiveTtsParagraph(sentences[newIndex].text);
-    setActiveTtsParagraphId(sentences[newIndex].paragraphId);
-    setActiveTtsLocation(sentences[newIndex].location ?? null);
-    setActiveTtsIsCodeBlock(!!sentences[newIndex].isCodeBlock);
-    setActiveTtsHtml(sentences[newIndex].html || sentences[newIndex].text);
+    const previousIdentity = getPageIdentity();
+    epubReaderRef.current?.nextPage();
 
-    if (!shouldResumePlayback) {
-      setIsSpeaking(true);
-      setIsPaused(true);
+    const moved = await waitForPageChange(previousIdentity, sessionId);
+    if (!moved || ttsSessionRef.current !== sessionId) {
+      if (ttsSessionRef.current === sessionId) setIsSpeaking(false);
       return;
     }
 
-    const startSentences = sentences.slice(newIndex);
-    setTimeout(() => {
-      if (ttsSessionRef.current !== sessionId) return;
-      setIsSpeaking(true);
+    allSentencesRef.current = [];
+    setIsSpeaking(true);
+
+    if (wasPaused) {
+      setIsPaused(true);
+      // Update UI with first sentence of new chapter
+      let paragraphs = getReadableParagraphs();
+      if (paragraphs.length === 0) {
+        await wait(220);
+        paragraphs = getReadableParagraphs();
+      }
+      if (paragraphs.length > 0) {
+        const sentences = paragraphsToSentences(paragraphs);
+        allSentencesRef.current = sentences;
+        const first = sentences[0];
+        if (first) {
+          setActiveTtsParagraph(first.text);
+          setActiveTtsParagraphId(first.paragraphId);
+          setActiveTtsLocation(first.location ?? null);
+          setActiveTtsIsCodeBlock(!!first.isCodeBlock);
+          setActiveTtsHtml(first.html || first.text);
+        }
+      }
+    } else {
       setIsPaused(false);
-      void speakWithBrowserParagraphs(startSentences, sessionId, newIndex);
-    }, 10);
+      await startTtsLoop(sessionId, 0);
+    }
   }, [
-    allSentencesRef,
-    currentParagraphIndexRef,
+    epubReaderRef,
+    getPageIdentity,
     getReadableParagraphs,
     isPaused,
     isSpeaking,
+    readSentencesHashRef,
     setActiveTtsHtml,
     setActiveTtsIsCodeBlock,
     setActiveTtsLocation,
@@ -594,15 +592,15 @@ export function useReaderTtsSession({
     setActiveTtsParagraphId,
     setIsPaused,
     setIsSpeaking,
-    speakWithBrowserParagraphs,
+    startTtsLoop,
     stopCurrentAudio,
-    ttsCurrentIndexRef,
     ttsSessionRef,
+    waitForPageChange,
   ]);
 
   return {
     handleToggleTts,
-    handleTtsNextParagraph,
-    handleTtsPrevParagraph,
+    handleTtsNextChapter,
+    handleTtsPrevChapter,
   };
 }

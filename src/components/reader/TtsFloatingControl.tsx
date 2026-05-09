@@ -84,14 +84,14 @@ export function TtsFloatingControl({
             <button
               type="button"
               onClick={onPrev}
-              aria-label="上一段"
+              aria-label="上一章"
               className="group flex size-7 sm:size-8 items-center justify-center rounded-lg border transition-all duration-200 cursor-pointer border-[color-mix(in_srgb,var(--reader-border)_45%,_transparent)]"
               style={{
                 color: "var(--reader-text, #09090b)",
                 background:
                   "color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.9)) 35%, transparent)",
               }}
-              title="上一段"
+              title="上一章"
             >
               <SkipBack className="size-3.5 transition-transform duration-150 group-hover:-translate-x-0.5" />
             </button>
@@ -135,14 +135,14 @@ export function TtsFloatingControl({
             <button
               type="button"
               onClick={onNext}
-              aria-label="下一段"
+              aria-label="下一章"
               className="group flex size-7 sm:size-8 items-center justify-center rounded-lg transition-all duration-200 cursor-pointer border border-[color-mix(in_srgb,var(--reader-border)_45%,_transparent)]"
               style={{
                 color: "var(--reader-text, #09090b)",
                 background:
                   "color-mix(in srgb, var(--reader-card-bg, rgba(255,255,255,0.9)) 35%, transparent)",
               }}
-              title="下一段"
+              title="下一章"
             >
               <SkipForward className="size-3.5 transition-transform duration-150 group-hover:translate-x-0.5" />
             </button>
