@@ -49,9 +49,12 @@ export async function POST(
         .update(readingProgress)
         .set({
           progress: historyItem.progress,
+          furthestProgress: Math.max(
+            existing[0].furthestProgress ?? existing[0].progress ?? 0,
+            historyItem.progress
+          ),
           location: historyItem.location,
           scrollRatio: historyItem.scrollRatio,
-          version: historyItem.version,
           updatedAt: new Date().toISOString(),
         })
         .where(eq(readingProgress.id, existing[0].id));
@@ -61,9 +64,9 @@ export async function POST(
         userId: userId,
         bookId: historyItem.bookId,
         progress: historyItem.progress,
+        furthestProgress: historyItem.progress,
         location: historyItem.location,
         scrollRatio: historyItem.scrollRatio,
-        version: historyItem.version,
       });
     }
 

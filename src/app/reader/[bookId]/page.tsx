@@ -56,9 +56,6 @@ function ReaderContent() {
   const [progress, setProgress] = useState(0);
   const [currentPage, setCurrentPage] = useState<number | undefined>();
   const [totalPages, setTotalPages] = useState<number | undefined>();
-  // Refs for saveProgress to read without adding state to useCallback deps
-  const currentPageRef = useRef<number | undefined>(undefined);
-  const totalPagesRef = useRef<number | undefined>(undefined);
 
   // Settings from store
   const {
@@ -149,6 +146,8 @@ function ReaderContent() {
   const progressSync = useProgressSyncCompat(bookId);
   const currentLocationRef = progressSync.currentLocationRef;
   const progressRef = progressSync.progressRef;
+  const currentPageRef = progressSync.currentPageRef;
+  const totalPagesRef = progressSync.totalPagesRef;
   const saveProgress = progressSync.saveProgress;
   const debouncedSaveProgress = progressSync.debouncedSaveProgress;
 

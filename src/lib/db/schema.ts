@@ -57,8 +57,8 @@ export const readingProgress = sqliteTable(
     bookId: text("book_id")
       .notNull()
       .references(() => books.id, { onDelete: "cascade" }),
-    version: integer("version").default(1).notNull(),
     progress: real("progress").default(0).notNull(),
+    furthestProgress: real("furthest_progress").default(0).notNull(),
     location: text("location"),
     scrollRatio: real("scroll_ratio"),
     currentPage: integer("current_page"),
@@ -93,7 +93,6 @@ export const progressHistory = sqliteTable(
     bookId: text("book_id")
       .notNull()
       .references(() => books.id, { onDelete: "cascade" }),
-    version: integer("version").notNull(),
     progress: real("progress").notNull(),
     location: text("location"),
     scrollRatio: real("scroll_ratio"),

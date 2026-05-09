@@ -4,7 +4,6 @@ import { openDB } from 'idb';
 export interface SyncItem {
   syncId: string;
   bookId: string;
-  clientVersion: number;
   progress: number;
   location: string;
   scrollRatio: number | null;

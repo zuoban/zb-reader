@@ -28,8 +28,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       progress: progress
         ? {
-            version: progress.version,
             progress: progress.progress,
+            furthestProgress: progress.furthestProgress,
             location: progress.location,
             scrollRatio: progress.scrollRatio,
             currentPage: progress.currentPage,

@@ -17,8 +17,8 @@ interface ProgressSyncStateEventDetail {
 
 export interface LocalProgress {
   bookId: string;
-  version: number;
   progress: number;
+  furthestProgress: number;
   location: string;
   scrollRatio: number | null;
   currentPage: number | null;
@@ -27,7 +27,6 @@ export interface LocalProgress {
   deviceId: string;
   updatedAt: string;
   dirty: boolean;
-  syncVersion: number;
   lastSyncReadingDuration: number;
 }
 
@@ -162,8 +161,8 @@ export class LocalProgressManager {
 
       const serverProgress: LocalProgress = {
         bookId,
-        version: data.progress.version || 1,
         progress: data.progress.progress || 0,
+        furthestProgress: data.progress.furthestProgress ?? data.progress.progress ?? 0,
         location: data.progress.location || "",
         scrollRatio: data.progress.scrollRatio || null,
         currentPage: data.progress.currentPage || null,
@@ -172,7 +171,6 @@ export class LocalProgressManager {
         deviceId: data.progress.deviceId || "",
         updatedAt: data.progress.updatedAt || new Date().toISOString(),
         dirty: false,
-        syncVersion: data.progress.version || 1,
         lastSyncReadingDuration: data.progress.readingDuration || 0,
       };
 
@@ -202,8 +200,8 @@ export class LocalProgressManager {
       if (!current) {
         current = {
           bookId,
-          version: 0,
           progress: 0,
+          furthestProgress: 0,
           location: "",
           scrollRatio: null,
           currentPage: null,
@@ -212,18 +210,16 @@ export class LocalProgressManager {
           deviceId: getDeviceId(),
           updatedAt: new Date().toISOString(),
           dirty: false,
-          syncVersion: 0,
           lastSyncReadingDuration: 0,
         };
       }
 
       const now = new Date().toISOString();
-      const newVersion = current.version + 1;
 
       const updated: LocalProgress = {
         ...current,
-        version: newVersion,
         progress: update.progress ?? current.progress,
+        furthestProgress: Math.max(current.furthestProgress ?? current.progress, update.progress ?? current.progress),
         location: update.location ?? current.location,
         scrollRatio: update.scrollRatio ?? current.scrollRatio,
         currentPage: update.currentPage ?? current.currentPage,
@@ -232,7 +228,6 @@ export class LocalProgressManager {
         deviceId: getDeviceId(),
         updatedAt: now,
         dirty: true,
-        syncVersion: current.syncVersion,
       };
 
       await this.db.put(PROGRESS_STORE, updated);
@@ -246,7 +241,6 @@ export class LocalProgressManager {
       const syncItem: SyncItem = {
         syncId: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2),
         bookId,
-        clientVersion: updated.version,
         progress: updated.progress,
         location: updated.location,
         scrollRatio: updated.scrollRatio,

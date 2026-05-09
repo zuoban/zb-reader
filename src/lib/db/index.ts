@@ -256,7 +256,6 @@ function getConnection() {
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE,
-      version INTEGER NOT NULL,
       progress REAL NOT NULL,
       location TEXT,
       scroll_ratio REAL,
@@ -404,14 +403,15 @@ function getConnection() {
 
   // Migration: Add missing columns to reading_progress (2026-03-09)
   const currentProgressInfo = sqlite.prepare("PRAGMA table_info(reading_progress)").all() as { name: string }[];
-  const hasVersion = currentProgressInfo.some((col) => col.name === "version");
   const hasScrollRatio = currentProgressInfo.some((col) => col.name === "scroll_ratio");
   const hasReadingDuration = currentProgressInfo.some((col) => col.name === "reading_duration");
   const hasDeviceIdColumn = currentProgressInfo.some((col) => col.name === "device_id");
   const hasLastSyncId = currentProgressInfo.some((col) => col.name === "last_sync_id");
+  const hasFurthestProgress = currentProgressInfo.some((col) => col.name === "furthest_progress");
 
-  if (!hasVersion) {
-    sqlite.exec(`ALTER TABLE reading_progress ADD COLUMN version INTEGER DEFAULT 1;`);
+  if (!hasFurthestProgress) {
+    sqlite.exec(`ALTER TABLE reading_progress ADD COLUMN furthest_progress REAL NOT NULL DEFAULT 0;`);
+    sqlite.exec(`UPDATE reading_progress SET furthest_progress = COALESCE(progress, 0) WHERE furthest_progress = 0;`);
   }
   if (!hasScrollRatio) {
     sqlite.exec(`ALTER TABLE reading_progress ADD COLUMN scroll_ratio REAL;`);
@@ -424,6 +424,16 @@ function getConnection() {
   }
   if (!hasLastSyncId) {
     sqlite.exec(`ALTER TABLE reading_progress ADD COLUMN last_sync_id TEXT;`);
+  }
+
+  // Migration: Drop obsolete progress version columns (2026-05-10)
+  const refreshedProgressInfo = sqlite.prepare("PRAGMA table_info(reading_progress)").all() as { name: string }[];
+  if (refreshedProgressInfo.some((col) => col.name === "version")) {
+    sqlite.exec(`ALTER TABLE reading_progress DROP COLUMN version;`);
+  }
+  const progressHistoryInfo = sqlite.prepare("PRAGMA table_info(progress_history)").all() as { name: string }[];
+  if (progressHistoryInfo.some((col) => col.name === "version")) {
+    sqlite.exec(`ALTER TABLE progress_history DROP COLUMN version;`);
   }
 
   // Migration: Add font_family and flip_mode to reader_settings (2026-03-31)

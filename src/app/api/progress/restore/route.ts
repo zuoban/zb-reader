@@ -31,7 +31,6 @@ export async function POST(req: NextRequest) {
 
     const now = new Date().toISOString();
     const sqlite = getSqlite();
-    let newVersion = 0;
 
     const transaction = sqlite.transaction(() => {
       const current = sqlite
@@ -40,8 +39,8 @@ export async function POST(req: NextRequest) {
         | {
             id: string;
             book_id: string;
-            version: number;
             progress: number;
+            furthest_progress: number;
             location: string | null;
             scroll_ratio: number | null;
             reading_duration: number;
@@ -52,14 +51,13 @@ export async function POST(req: NextRequest) {
       if (current) {
         sqlite
           .prepare(
-            `INSERT INTO progress_history (id, user_id, book_id, version, progress, location, scroll_ratio, reading_duration, device_id, device_name, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            `INSERT INTO progress_history (id, user_id, book_id, progress, location, scroll_ratio, reading_duration, device_id, device_name, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
           )
           .run(
             uuidv4(),
             userId,
             current.book_id,
-            current.version,
             current.progress,
             current.location,
             current.scroll_ratio,
@@ -69,15 +67,13 @@ export async function POST(req: NextRequest) {
             now
           );
 
-        newVersion = current.version + 1;
-
         sqlite
           .prepare(
-            `UPDATE reading_progress SET version = ?, progress = ?, location = ?, scroll_ratio = ?, reading_duration = ?, device_id = ?, last_read_at = ?, updated_at = ? WHERE user_id = ? AND book_id = ?`
+            `UPDATE reading_progress SET progress = ?, furthest_progress = ?, location = ?, scroll_ratio = ?, reading_duration = ?, device_id = ?, last_read_at = ?, updated_at = ? WHERE user_id = ? AND book_id = ?`
           )
           .run(
-            newVersion,
             historyRecord.progress,
+            Math.max(current.furthest_progress ?? current.progress ?? 0, historyRecord.progress),
             historyRecord.location,
             historyRecord.scrollRatio,
             historyRecord.readingDuration,
@@ -88,18 +84,16 @@ export async function POST(req: NextRequest) {
             historyRecord.bookId
           );
       } else {
-        newVersion = 1;
-
         sqlite
           .prepare(
-            `INSERT INTO reading_progress (id, user_id, book_id, version, progress, location, scroll_ratio, reading_duration, device_id, last_read_at, created_at, updated_at)
+            `INSERT INTO reading_progress (id, user_id, book_id, progress, furthest_progress, location, scroll_ratio, reading_duration, device_id, last_read_at, created_at, updated_at)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
           )
           .run(
             uuidv4(),
             userId,
             historyRecord.bookId,
-            newVersion,
+            historyRecord.progress,
             historyRecord.progress,
             historyRecord.location,
             historyRecord.scrollRatio,
@@ -118,12 +112,10 @@ export async function POST(req: NextRequest) {
       userId: userId,
       bookId: historyRecord.bookId,
       historyId,
-      newVersion,
     });
 
     return NextResponse.json({
       status: "restored",
-      serverVersion: newVersion,
       progress: {
         progress: historyRecord.progress,
         location: historyRecord.location,

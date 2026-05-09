@@ -53,7 +53,6 @@ describe('sync-queue', () => {
     return {
       syncId: 'sync-1',
       bookId: 'book-1',
-      clientVersion: 1,
       progress: 0.5,
       location: 'location-1',
       scrollRatio: 0.5,

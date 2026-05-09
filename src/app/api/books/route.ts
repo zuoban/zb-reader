@@ -230,7 +230,7 @@ export async function GET(req: NextRequest) {
       db
         .select({
           book: books,
-          progress: readingProgress.progress,
+          progress: readingProgress.furthestProgress,
           lastReadAt: readingProgress.lastReadAt,
         })
         .from(books)

@@ -14,7 +14,6 @@ describe("progressSchema", () => {
   it("accepts sync payloads with nullable page fields", () => {
     const result = progressSchema.safeParse({
       bookId: "0f4f7a72-0b99-4f1d-80f8-63a704eb0b1d",
-      clientVersion: 2,
       progress: 0.42,
       location: "epubcfi(/6/2!/4/2/1:0)",
       scrollRatio: null,
@@ -31,7 +30,6 @@ describe("progressSchema", () => {
   it("rejects out-of-range progress values", () => {
     const result = progressSchema.safeParse({
       bookId: "0f4f7a72-0b99-4f1d-80f8-63a704eb0b1d",
-      clientVersion: 1,
       progress: 1.2,
     });
 

@@ -38,29 +38,6 @@ export function useProgressSyncCompat(bookId: string) {
     };
   }, [startTracking, pauseTracking]);
 
-  // Force sync on unmount
-  useEffect(() => {
-    const syncPending = () => {
-      void flushPendingDebounced();
-      void forceSync();
-    };
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden") {
-        syncPending();
-      }
-    };
-
-    window.addEventListener("pagehide", syncPending);
-    window.addEventListener("beforeunload", syncPending);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      window.removeEventListener("pagehide", syncPending);
-      window.removeEventListener("beforeunload", syncPending);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, [flushPendingDebounced, forceSync]);
-
   // Compatible saveProgress function
   const saveProgress = useCallback(
     async (forceSave = false): Promise<{ conflict: boolean }> => {
@@ -97,9 +74,40 @@ export function useProgressSyncCompat(bookId: string) {
       clearTimeout(saveTimerRef.current);
     }
     saveTimerRef.current = setTimeout(() => {
+      saveTimerRef.current = null;
       saveProgress();
     }, 500);
   }, [saveProgress]);
+
+  // Force sync on unmount
+  useEffect(() => {
+    const syncPending = () => {
+      void (async () => {
+        if (saveTimerRef.current) {
+          clearTimeout(saveTimerRef.current);
+          saveTimerRef.current = null;
+          await saveProgress(true);
+        }
+        await flushPendingDebounced();
+        await forceSync();
+      })();
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        syncPending();
+      }
+    };
+
+    window.addEventListener("pagehide", syncPending);
+    window.addEventListener("beforeunload", syncPending);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("pagehide", syncPending);
+      window.removeEventListener("beforeunload", syncPending);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [flushPendingDebounced, forceSync, saveProgress]);
 
   // Cleanup timer on unmount
   useEffect(() => {

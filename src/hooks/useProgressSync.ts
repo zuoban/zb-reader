@@ -15,8 +15,6 @@ interface ProgressSyncStateEventDetail {
 }
 
 export interface UseProgressSyncReturn {
-  localVersion: number;
-  serverVersion: number;
   pendingSync: boolean;
   isSyncing: boolean;
   progress: number;
@@ -29,8 +27,6 @@ export interface UseProgressSyncReturn {
 }
 
 export function useProgressSync(bookId: string): UseProgressSyncReturn {
-  const [localVersion, setLocalVersion] = useState(0);
-  const [serverVersion, setServerVersion] = useState(0);
   const [pendingSync, setPendingSync] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -60,8 +56,6 @@ export function useProgressSync(bookId: string): UseProgressSyncReturn {
 
     manager.loadFromServer(bookId).then((localProgress) => {
       if (localProgress) {
-        setLocalVersion(localProgress.version);
-        setServerVersion(localProgress.syncVersion);
         setProgress(localProgress.progress);
         setReadingDuration(localProgress.readingDuration);
       }
@@ -129,7 +123,6 @@ export function useProgressSync(bookId: string): UseProgressSyncReturn {
 
         const data = await response.json();
 
-        setServerVersion(data.serverVersion);
         setProgress(data.progress.progress);
         setReadingDuration(data.progress.readingDuration);
 
@@ -143,8 +136,6 @@ export function useProgressSync(bookId: string): UseProgressSyncReturn {
   );
 
   return {
-    localVersion,
-    serverVersion,
     pendingSync,
     isSyncing,
     progress,

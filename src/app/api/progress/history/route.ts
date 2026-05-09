@@ -48,7 +48,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       history: history.map((item) => ({
         id: item.id,
-        version: item.version,
         progress: item.progress,
         location: item.location,
         scrollRatio: item.scrollRatio,
