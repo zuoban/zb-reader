@@ -254,6 +254,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       buildParagraphLayoutIndex,
       currentLocationRef,
       epubContextRef,
+      isRenditionReady,
       lastLayoutCfiRef,
       pageWidth,
       renditionRef,
