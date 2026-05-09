@@ -22,8 +22,6 @@ export function useProgressSyncCompat(
   // Refs for compatibility with old code
   const currentLocationRef = useRef<string | null>(null);
   const progressRef = useRef(0);
-  const currentPageRef = useRef<number | undefined>(undefined);
-  const totalPagesRef = useRef<number | undefined>(undefined);
 
   // Compatible saveProgress function
   const saveProgress = useCallback(
@@ -37,8 +35,6 @@ export function useProgressSyncCompat(
           {
             progress: progressRef.current,
             location: currentLocationRef.current,
-            currentPage: currentPageRef.current,
-            totalPages: totalPagesRef.current,
           },
           forceSave
         );
@@ -86,8 +82,6 @@ export function useProgressSyncCompat(
     // Refs (保持兼容)
     currentLocationRef,
     progressRef,
-    currentPageRef,
-    totalPagesRef,
 
     // 函数 (保持兼容)
     saveProgress,

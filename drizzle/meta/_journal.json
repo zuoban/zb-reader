@@ -64,6 +64,20 @@
       "when": 1778342700000,
       "tag": "0008_drop_progress_scroll_ratio",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1778343000000,
+      "tag": "0009_drop_progress_device_id",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1778343300000,
+      "tag": "0010_drop_progress_page_fields",
+      "breakpoints": true
     }
   ]
 }

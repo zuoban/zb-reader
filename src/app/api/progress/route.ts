@@ -31,9 +31,6 @@ export async function GET(req: NextRequest) {
             progress: progress.progress,
             furthestProgress: progress.furthestProgress,
             location: progress.location,
-            currentPage: progress.currentPage,
-            totalPages: progress.totalPages,
-            deviceId: progress.deviceId,
             lastReadAt: progress.lastReadAt,
             updatedAt: progress.updatedAt,
           }

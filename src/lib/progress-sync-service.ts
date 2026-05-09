@@ -17,9 +17,6 @@ export async function syncReadingProgressItem(
     bookId,
     progress,
     location,
-    deviceId,
-    currentPage,
-    totalPages,
   } = item;
 
   const book = await findOwnedBook(bookId, userId);
@@ -45,9 +42,6 @@ export async function syncReadingProgressItem(
       progress: incomingProgress,
       furthestProgress: incomingProgress,
       location: location ?? null,
-      currentPage: currentPage ?? null,
-      totalPages: totalPages ?? null,
-      deviceId: deviceId ?? null,
       lastReadAt: now,
       createdAt: now,
       updatedAt: now,
@@ -68,9 +62,6 @@ export async function syncReadingProgressItem(
       progress: finalProgress,
       furthestProgress: finalFurthestProgress,
       location: location ?? currentProgress.location,
-      currentPage: currentPage ?? currentProgress.currentPage,
-      totalPages: totalPages ?? currentProgress.totalPages,
-      deviceId: deviceId ?? currentProgress.deviceId,
       lastReadAt: now,
       updatedAt: now,
     })

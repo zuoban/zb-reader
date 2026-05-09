@@ -60,9 +60,6 @@ export const readingProgress = sqliteTable(
     progress: real("progress").default(0).notNull(),
     furthestProgress: real("furthest_progress").default(0).notNull(),
     location: text("location"),
-    currentPage: integer("current_page"),
-    totalPages: integer("total_pages"),
-    deviceId: text("device_id"),
     lastReadAt: text("last_read_at")
       .default(sql`(datetime('now'))`)
       .notNull(),

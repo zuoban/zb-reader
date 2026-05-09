@@ -1,6 +1,5 @@
 import { openDB, IDBPDatabase } from "idb";
 import { SyncQueue, type SyncItem } from "./sync-queue";
-import { getDeviceId } from "./device";
 import { logger } from "./logger";
 
 const DB_NAME = "zb-reader-progress";
@@ -12,26 +11,18 @@ export interface LocalProgress {
   progress: number;
   furthestProgress: number;
   location: string;
-  currentPage: number | null;
-  totalPages: number | null;
-  deviceId: string;
   updatedAt: string;
 }
 
 export interface ProgressUpdate {
   progress?: number;
   location?: string;
-  currentPage?: number | null;
-  totalPages?: number | null;
 }
 
 export interface ServerProgressSnapshot {
   progress?: number | null;
   furthestProgress?: number | null;
   location?: string | null;
-  currentPage?: number | null;
-  totalPages?: number | null;
-  deviceId?: string | null;
   updatedAt?: string | null;
 }
 
@@ -136,9 +127,6 @@ export class LocalProgressManager {
       progress: progress.progress || 0,
       furthestProgress: progress.furthestProgress ?? progress.progress ?? 0,
       location: progress.location || "",
-      currentPage: progress.currentPage || null,
-      totalPages: progress.totalPages || null,
-      deviceId: progress.deviceId || "",
       updatedAt: progress.updatedAt || new Date().toISOString(),
     };
 
@@ -167,9 +155,6 @@ export class LocalProgressManager {
           progress: 0,
           furthestProgress: 0,
           location: "",
-          currentPage: null,
-          totalPages: null,
-          deviceId: getDeviceId(),
           updatedAt: new Date().toISOString(),
         };
       }
@@ -181,9 +166,6 @@ export class LocalProgressManager {
         progress: update.progress ?? current.progress,
         furthestProgress: Math.max(current.furthestProgress ?? current.progress, update.progress ?? current.progress),
         location: update.location ?? current.location,
-        currentPage: update.currentPage ?? current.currentPage,
-        totalPages: update.totalPages ?? current.totalPages,
-        deviceId: getDeviceId(),
         updatedAt: now,
       };
 
@@ -193,16 +175,12 @@ export class LocalProgressManager {
         bookId,
         progress: updated.progress,
         location: updated.location,
-        deviceId: updated.deviceId,
-        currentPage: updated.currentPage,
-        totalPages: updated.totalPages,
       };
 
       const isSignificant =
         forceSync ||
         Math.abs(updated.progress - current.progress) >= 0.1 ||
-        updated.location !== current.location ||
-        updated.currentPage !== current.currentPage;
+        updated.location !== current.location;
 
       if (forceSync) {
         await this.syncQueue.enqueue(syncItem, { autoSync: false });

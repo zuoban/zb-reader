@@ -174,16 +174,13 @@ function getConnection() {
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE,
-      device_id TEXT NOT NULL DEFAULT 'legacy',
-      device_name TEXT,
       progress REAL NOT NULL DEFAULT 0,
+      furthest_progress REAL NOT NULL DEFAULT 0,
       location TEXT,
-      current_page INTEGER,
-      total_pages INTEGER,
       last_read_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
       created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
       updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
-      UNIQUE(user_id, book_id, device_id)
+      UNIQUE(user_id, book_id)
     );
 
     CREATE TABLE IF NOT EXISTS bookmarks (
@@ -281,48 +278,6 @@ function getConnection() {
     // Column already exists, ignore
   }
 
-  // Migration: Add device_id and device_name to reading_progress for multi-device sync (2026-03-04)
-  // SQLite doesn't support modifying constraints, so we need to rebuild the table
-  const progressInfo = sqlite.prepare("PRAGMA table_info(reading_progress)").all() as { name: string }[];
-  const hasDeviceId = progressInfo.some((col) => col.name === "device_id");
-
-  if (!hasDeviceId) {
-    // Step 1: Add new columns
-    sqlite.exec(`ALTER TABLE reading_progress ADD COLUMN device_id TEXT NOT NULL DEFAULT 'legacy';`);
-    sqlite.exec(`ALTER TABLE reading_progress ADD COLUMN device_name TEXT;`);
-
-    // Step 2: Rebuild table with new constraint
-    sqlite.exec(`
-      CREATE TABLE reading_progress_new (
-        id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE,
-        device_id TEXT NOT NULL DEFAULT 'legacy',
-        device_name TEXT,
-        progress REAL NOT NULL DEFAULT 0,
-        location TEXT,
-        current_page INTEGER,
-        total_pages INTEGER,
-        last_read_at TEXT NOT NULL DEFAULT (datetime('now')),
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
-        updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-        UNIQUE(user_id, book_id, device_id)
-      );
-    `);
-
-    // Step 3: Copy data
-    sqlite.exec(`
-      INSERT INTO reading_progress_new 
-      SELECT id, user_id, book_id, device_id, device_name, progress, location, 
-             current_page, total_pages, last_read_at, created_at, updated_at
-      FROM reading_progress;
-    `);
-
-    // Step 4: Replace old table
-    sqlite.exec(`DROP TABLE reading_progress;`);
-    sqlite.exec(`ALTER TABLE reading_progress_new RENAME TO reading_progress;`);
-  }
-
   // Migration: Simplify reading_progress table (remove device fields, single progress record per book) (2026-03-05)
   const progressTableInfo = sqlite.prepare("PRAGMA table_info(reading_progress)").all() as { name: string }[];
   const hasDeviceIdInTable = progressTableInfo.some((col) => col.name === "device_id");
@@ -346,9 +301,8 @@ function getConnection() {
         user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE,
         progress REAL NOT NULL DEFAULT 0,
+        furthest_progress REAL NOT NULL DEFAULT 0,
         location TEXT,
-        current_page INTEGER,
-        total_pages INTEGER,
         last_read_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
         created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
         updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
@@ -358,17 +312,15 @@ function getConnection() {
 
     // Step 3: Merge data: keep only the latest record per user per book
     sqlite.exec(`
-      INSERT INTO reading_progress_new (id, user_id, book_id, progress, location,
-                                        current_page, total_pages, last_read_at,
-                                        created_at, updated_at)
+      INSERT INTO reading_progress_new (id, user_id, book_id, progress, furthest_progress, location,
+                                        last_read_at, created_at, updated_at)
       SELECT
         id,
         user_id,
         book_id,
         progress,
+        progress,
         location,
-        current_page,
-        total_pages,
         last_read_at,
         created_at,
         updated_at
@@ -390,15 +342,11 @@ function getConnection() {
 
   // Migration: Add missing columns to reading_progress (2026-03-09)
   const currentProgressInfo = sqlite.prepare("PRAGMA table_info(reading_progress)").all() as { name: string }[];
-  const hasDeviceIdColumn = currentProgressInfo.some((col) => col.name === "device_id");
   const hasFurthestProgress = currentProgressInfo.some((col) => col.name === "furthest_progress");
 
   if (!hasFurthestProgress) {
     sqlite.exec(`ALTER TABLE reading_progress ADD COLUMN furthest_progress REAL NOT NULL DEFAULT 0;`);
     sqlite.exec(`UPDATE reading_progress SET furthest_progress = COALESCE(progress, 0) WHERE furthest_progress = 0;`);
-  }
-  if (!hasDeviceIdColumn) {
-    sqlite.exec(`ALTER TABLE reading_progress ADD COLUMN device_id TEXT;`);
   }
   // Migration: Drop obsolete progress version columns (2026-05-10)
   const refreshedProgressInfo = sqlite.prepare("PRAGMA table_info(reading_progress)").all() as { name: string }[];
@@ -413,9 +361,23 @@ function getConnection() {
   if (lastSyncProgressInfo.some((col) => col.name === "last_sync_id")) {
     sqlite.exec(`ALTER TABLE reading_progress DROP COLUMN last_sync_id;`);
   }
+  const deviceProgressInfo = sqlite.prepare("PRAGMA table_info(reading_progress)").all() as { name: string }[];
+  if (deviceProgressInfo.some((col) => col.name === "device_id")) {
+    sqlite.exec(`ALTER TABLE reading_progress DROP COLUMN device_id;`);
+  }
+  if (deviceProgressInfo.some((col) => col.name === "device_name")) {
+    sqlite.exec(`ALTER TABLE reading_progress DROP COLUMN device_name;`);
+  }
   const scrollRatioProgressInfo = sqlite.prepare("PRAGMA table_info(reading_progress)").all() as { name: string }[];
   if (scrollRatioProgressInfo.some((col) => col.name === "scroll_ratio")) {
     sqlite.exec(`ALTER TABLE reading_progress DROP COLUMN scroll_ratio;`);
+  }
+  const pageFieldsProgressInfo = sqlite.prepare("PRAGMA table_info(reading_progress)").all() as { name: string }[];
+  if (pageFieldsProgressInfo.some((col) => col.name === "current_page")) {
+    sqlite.exec(`ALTER TABLE reading_progress DROP COLUMN current_page;`);
+  }
+  if (pageFieldsProgressInfo.some((col) => col.name === "total_pages")) {
+    sqlite.exec(`ALTER TABLE reading_progress DROP COLUMN total_pages;`);
   }
   sqlite.exec(`DROP TABLE IF EXISTS progress_history;`);
 

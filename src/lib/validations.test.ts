@@ -16,9 +16,6 @@ describe("progressSchema", () => {
       bookId: "0f4f7a72-0b99-4f1d-80f8-63a704eb0b1d",
       progress: 0.42,
       location: "epubcfi(/6/2!/4/2/1:0)",
-      deviceId: "desktop-device",
-      currentPage: null,
-      totalPages: null,
     });
 
     expect(result.success).toBe(true);

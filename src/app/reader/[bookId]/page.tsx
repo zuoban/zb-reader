@@ -147,8 +147,6 @@ function ReaderContent() {
   const progressSync = useProgressSyncCompat(bookId, loading ? null : initialProgress ?? null);
   const currentLocationRef = progressSync.currentLocationRef;
   const progressRef = progressSync.progressRef;
-  const currentPageRef = progressSync.currentPageRef;
-  const totalPagesRef = progressSync.totalPagesRef;
   const saveProgress = progressSync.saveProgress;
   const debouncedSaveProgress = progressSync.debouncedSaveProgress;
 
@@ -222,8 +220,6 @@ function ReaderContent() {
     setTotalPages,
     currentLocationRef,
     currentCfiRef,
-    currentPageRef,
-    totalPagesRef,
     bookmarks,
     setIsCurrentBookmarked,
     debouncedSaveProgress,

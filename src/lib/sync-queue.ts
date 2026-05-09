@@ -5,9 +5,6 @@ export interface SyncItem {
   bookId: string;
   progress: number;
   location: string;
-  deviceId: string;
-  currentPage?: number | null;
-  totalPages?: number | null;
 }
 
 const DB_NAME = 'zb-reader-sync-queue';

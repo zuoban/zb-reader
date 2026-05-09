@@ -29,8 +29,6 @@ interface UseReaderNavigationParams {
   setTotalPages: (pages: number | undefined) => void;
   currentLocationRef: React.MutableRefObject<string | null>;
   currentCfiRef: React.MutableRefObject<string | null>;
-  currentPageRef: React.MutableRefObject<number | undefined>;
-  totalPagesRef: React.MutableRefObject<number | undefined>;
   bookmarks: Array<{ location: string }>;
   setIsCurrentBookmarked: (value: boolean) => void;
   debouncedSaveProgress: () => void;
@@ -86,8 +84,6 @@ export function useReaderNavigation({
   setTotalPages,
   currentLocationRef,
   currentCfiRef,
-  currentPageRef,
-  totalPagesRef,
   bookmarks,
   setIsCurrentBookmarked,
   debouncedSaveProgress,
@@ -117,11 +113,9 @@ export function useReaderNavigation({
       currentCfiRef.current = location.cfi;
       progressRef.current = location.progress;
       if (location.currentPage != null) {
-        currentPageRef.current = location.currentPage;
         setCurrentPage(location.currentPage);
       }
       if (location.totalPages != null) {
-        totalPagesRef.current = location.totalPages;
         setTotalPages(location.totalPages);
       }
       setProgress(location.progress);
@@ -137,7 +131,6 @@ export function useReaderNavigation({
       bookmarks,
       currentCfiRef,
       currentLocationRef,
-      currentPageRef,
       debouncedSaveProgress,
       progressRef,
       setCurrentHref,
@@ -145,7 +138,6 @@ export function useReaderNavigation({
       setIsCurrentBookmarked,
       setProgress,
       setTotalPages,
-      totalPagesRef,
     ]
   );
 
