@@ -61,7 +61,7 @@ export class ReadingTracker {
 
     this.throttleTimer = setTimeout(() => {
       this.throttleTimer = null;
-    }, 1000);
+    }, 5000);
   }
 
   private checkActivity(): void {

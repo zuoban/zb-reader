@@ -35,6 +35,7 @@ export function useReadingTracker(
     return () => {
       trackerRef.current?.destroy();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookId, options?.accumulateInterval]);
 
   useEffect(() => {

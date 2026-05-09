@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { memo, useEffect, useRef } from "react";
 import { BookOpen, Check, MoreVertical, Tags, Trash2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { READER_ROUTE_TRANSITION_EVENT } from "@/components/layout/ReaderRouteTransition";
@@ -157,9 +157,11 @@ export const BookCard = memo(function BookCard({
           {/* Cover Image */}
           {book.cover ? (
             <>
-              <img
+              <Image
                 src={`/api/books/${book.id}/cover`}
                 alt={book.title || "书籍封面"}
+                fill
+                sizes="(max-width: 768px) 50vw, 25vw"
                 className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.08]"
               />
               
@@ -205,6 +207,15 @@ export const BookCard = memo(function BookCard({
                   </span>
                 </div>
               </div>
+              
+              {/* Category Badge Overlay for Fallback */}
+              {book.category && (
+                <div className="absolute left-2 top-2 z-20">
+                  <div className="inline-flex items-center rounded-full border border-white/10 bg-black/60 px-2 py-0.5 text-[10px] font-semibold text-white/95 backdrop-blur-md shadow-sm">
+                    {book.category}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

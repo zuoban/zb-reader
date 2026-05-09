@@ -61,9 +61,9 @@ export function useIdleTimeout(
     return () => clearInterval(interval);
   }, [idleCountdown]);
 
-  // Start timer when active changes
   useEffect(() => {
     if (isActive) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       resetIdleTimer();
     } else {
       // Clear timers when inactive

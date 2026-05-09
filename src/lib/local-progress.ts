@@ -49,11 +49,17 @@ export class LocalProgressManager {
     this.initPromise = this.initDB();
 
     this.syncQueue = new SyncQueue({
-      syncFn: async (item: SyncItem, options?: { keepalive?: boolean }) => {
-        const response = await fetch("/api/progress/sync", {
+      syncFn: async (items: SyncItem[], options?: { keepalive?: boolean }) => {
+        if (items.length === 0) return;
+        
+        const isBatch = items.length > 1;
+        const route = isBatch ? "/api/progress/batch-sync" : "/api/progress/sync";
+        const body = isBatch ? items : items[0];
+
+        const response = await fetch(route, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(item),
+          body: JSON.stringify(body),
           keepalive: options?.keepalive,
         });
 
@@ -251,9 +257,17 @@ export class LocalProgressManager {
         totalPages: updated.totalPages,
       };
 
+      const isSignificant =
+        forceSync ||
+        Math.abs(updated.progress - current.progress) >= 0.1 ||
+        updated.location !== current.location ||
+        updated.currentPage !== current.currentPage ||
+        (updated.scrollRatio !== null && current.scrollRatio !== null && Math.abs(updated.scrollRatio - current.scrollRatio) >= 0.01) ||
+        readingDurationDelta >= 60;
+
       if (forceSync) {
         await this.syncQueue.enqueue(syncItem);
-      } else {
+      } else if (isSignificant) {
         this.debouncedEnqueue(syncItem);
       }
     } catch (error) {
@@ -262,6 +276,7 @@ export class LocalProgressManager {
   }
 
   private debounceTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  private maxWaitTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private pendingDebouncedItems = new Map<string, SyncItem>();
 
   private debouncedEnqueue(item: SyncItem): void {
@@ -272,8 +287,30 @@ export class LocalProgressManager {
     }
     this.pendingDebouncedItems.set(item.bookId, item);
 
+    if (!this.maxWaitTimers.has(item.bookId)) {
+      const maxTimer = setTimeout(() => {
+        const pendingItem = this.pendingDebouncedItems.get(item.bookId);
+        if (pendingItem) {
+          const timer = this.debounceTimers.get(item.bookId);
+          if (timer) clearTimeout(timer);
+          this.debounceTimers.delete(item.bookId);
+          this.maxWaitTimers.delete(item.bookId);
+          this.pendingDebouncedItems.delete(item.bookId);
+          this.syncQueue.enqueue(pendingItem);
+        }
+      }, 30000);
+      this.maxWaitTimers.set(item.bookId, maxTimer);
+    }
+
     const timer = setTimeout(() => {
       this.debounceTimers.delete(item.bookId);
+      
+      const maxTimer = this.maxWaitTimers.get(item.bookId);
+      if (maxTimer) {
+        clearTimeout(maxTimer);
+        this.maxWaitTimers.delete(item.bookId);
+      }
+      
       this.pendingDebouncedItems.delete(item.bookId);
       this.syncQueue.enqueue(item);
     }, 500);
@@ -296,6 +333,11 @@ export class LocalProgressManager {
       if (timer) {
         clearTimeout(timer);
         this.debounceTimers.delete(pendingBookId);
+      }
+      const maxTimer = this.maxWaitTimers.get(pendingBookId);
+      if (maxTimer) {
+        clearTimeout(maxTimer);
+        this.maxWaitTimers.delete(pendingBookId);
       }
       this.pendingDebouncedItems.delete(pendingBookId);
       await this.syncQueue.enqueue(item);

@@ -72,6 +72,7 @@ export function useReaderSettingsLifecycle(
     };
 
     loadVoices();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.loaded]);
 
   useEffect(() => {

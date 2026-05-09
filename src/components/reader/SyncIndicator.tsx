@@ -25,6 +25,7 @@ export function SyncIndicator({
 
   useEffect(() => {
     if (status === "synced") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowSynced(true);
       const timer = setTimeout(() => {
         setShowSynced(false);

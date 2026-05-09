@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
 import { SyncQueue, type SyncItem } from './sync-queue';
+import { openDB } from 'idb';
+
+vi.mock('idb', () => ({
+  openDB: vi.fn(),
+}));
 
 describe('sync-queue', () => {
   let syncQueue: SyncQueue;
@@ -7,25 +12,22 @@ describe('sync-queue', () => {
   let mockOnSyncComplete: Mock;
   let mockOnSyncError: Mock;
   let mockOnQueueChange: Mock<(n: number) => void>;
+  let mockDb: Record<string, unknown>;
 
   beforeEach(() => {
-    const storage = new Map<string, string>();
-    vi.stubGlobal('localStorage', {
-      getItem: vi.fn((key: string) => storage.get(key) ?? null),
-      setItem: vi.fn((key: string, value: string) => {
-        storage.set(key, String(value));
-      }),
-      removeItem: vi.fn((key: string) => {
-        storage.delete(key);
-      }),
-      clear: vi.fn(() => {
-        storage.clear();
-      }),
-    });
+    mockDb = {
+      objectStoreNames: { contains: vi.fn().mockReturnValue(true) },
+      createObjectStore: vi.fn(),
+      get: vi.fn().mockResolvedValue(null),
+      put: vi.fn().mockResolvedValue(undefined),
+      delete: vi.fn().mockResolvedValue(undefined),
+    };
+    (openDB as unknown as Mock).mockResolvedValue(mockDb);
 
     Object.defineProperty(window.navigator, "onLine", {
       value: false,
       configurable: true,
+      writable: true,
     });
 
     mockSyncFn = vi.fn().mockResolvedValue(undefined);
@@ -39,13 +41,12 @@ describe('sync-queue', () => {
       onSyncError: mockOnSyncError,
       onQueueChange: mockOnQueueChange,
     });
-
-    localStorage.clear();
   });
 
   afterEach(() => {
     vi.clearAllMocks();
     vi.unstubAllGlobals();
+    if (syncQueue) syncQueue.destroy();
   });
 
   function createSyncItem(overrides: Partial<SyncItem> = {}): SyncItem {
@@ -102,15 +103,13 @@ describe('sync-queue', () => {
       expect(syncQueue.getPendingCount()).toBe(100);
     });
 
-    it('should persist queue to localStorage', async () => {
+    it('should persist queue to IDB', async () => {
       const item = createSyncItem();
       await syncQueue.enqueue(item);
 
-      const stored = localStorage.getItem('zb_reader_sync_queue');
-      expect(stored).toBeDefined();
-      const parsed = JSON.parse(stored!);
-      expect(parsed).toHaveLength(1);
-      expect(parsed[0].bookId).toBe('book-1');
+      // wait for next tick for async persist
+      await new Promise(resolve => setTimeout(resolve, 0));
+      expect(mockDb.put).toHaveBeenCalledWith('queue', [item], 'items');
     });
   });
 
@@ -126,19 +125,19 @@ describe('sync-queue', () => {
 
       await syncQueue.sync();
 
-      expect(mockSyncFn).toHaveBeenCalledWith(item, undefined);
+      expect(mockSyncFn).toHaveBeenCalledWith([item], undefined);
       expect(mockOnSyncComplete).toHaveBeenCalled();
       expect(syncQueue.getPendingCount()).toBe(0);
     });
 
-    it('should sync multiple items in order', async () => {
+    it('should sync multiple items as a batch', async () => {
       const item1 = createSyncItem({ bookId: 'book-1' });
       const item2 = createSyncItem({ bookId: 'book-2' });
       const item3 = createSyncItem({ bookId: 'book-3' });
 
-      syncQueue.enqueue(item1);
-      syncQueue.enqueue(item2);
-      syncQueue.enqueue(item3);
+      await syncQueue.enqueue(item1);
+      await syncQueue.enqueue(item2);
+      await syncQueue.enqueue(item3);
 
       Object.defineProperty(window.navigator, "onLine", {
         value: true,
@@ -147,12 +146,10 @@ describe('sync-queue', () => {
 
       await syncQueue.sync();
 
-      expect(mockSyncFn).toHaveBeenCalledTimes(3);
-      expect(mockSyncFn).toHaveBeenNthCalledWith(1, item1, undefined);
-      expect(mockSyncFn).toHaveBeenNthCalledWith(2, item2, undefined);
-      expect(mockSyncFn).toHaveBeenNthCalledWith(3, item3, undefined);
+      expect(mockSyncFn).toHaveBeenCalledTimes(1);
+      expect(mockSyncFn).toHaveBeenCalledWith([item1, item2, item3], undefined);
+      expect(syncQueue.getPendingCount()).toBe(0);
     });
-
     it('should stop syncing on error after max retries', async () => {
       vi.useFakeTimers();
       const error = new Error('Sync failed');
@@ -226,7 +223,8 @@ describe('sync-queue', () => {
 
       await Promise.all([syncPromise1, syncPromise2]);
 
-      expect(mockSyncFn).toHaveBeenCalledTimes(2);
+      expect(mockSyncFn).toHaveBeenCalledTimes(1);
+      expect(mockSyncFn).toHaveBeenCalledWith([item1, item2], undefined);
     });
 
     it('should call onQueueChange after each sync', async () => {
@@ -263,30 +261,27 @@ describe('sync-queue', () => {
       await syncQueue.enqueue(createSyncItem());
       syncQueue.clear();
 
-      const stored = localStorage.getItem('zb_reader_sync_queue');
-      expect(JSON.parse(stored!)).toEqual([]);
+      await new Promise(resolve => setTimeout(resolve, 0));
+      expect(mockDb.put).toHaveBeenCalledWith('queue', [], 'items');
     });
   });
 
   describe('persistence', () => {
-    it('should restore queue from localStorage on construction', () => {
+    it('should restore queue from IDB on construction', async () => {
       const items = [
         createSyncItem({ bookId: 'book-1' }),
         createSyncItem({ bookId: 'book-2' }),
       ];
-      localStorage.setItem('zb_reader_sync_queue', JSON.stringify(items));
 
-      // Setup mock to return the stored value
-      vi.mocked(localStorage.getItem).mockImplementation((key: string) => {
-        if (key === 'zb_reader_sync_queue') {
-          return JSON.stringify(items);
-        }
-        return null;
-      });
+      // Setup mock to return the stored value async
+      (mockDb.get as Mock).mockResolvedValueOnce(items);
 
       const newQueue = new SyncQueue({
         syncFn: mockSyncFn,
       });
+
+      // Allow async loadFromStorage to complete
+      await new Promise(resolve => setTimeout(resolve, 0));
 
       expect(newQueue.getPendingCount()).toBe(2);
     });

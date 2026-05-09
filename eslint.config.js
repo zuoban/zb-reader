@@ -89,4 +89,10 @@ export default [
       "no-console": "off",
     },
   },
+  {
+    files: ["public/sw.js"],
+    rules: {
+      "no-console": "off",
+    },
+  },
 ];

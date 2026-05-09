@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 interface Particle {
   id: number;
@@ -27,11 +27,8 @@ function generateParticles(count: number): Particle[] {
 }
 
 export function BackgroundDecoration() {
-  const [particles, setParticles] = useState<Particle[] | null>(null);
-
-  useEffect(() => {
-    setParticles(generateParticles(25));
-  }, []);
+  // Generate particles once at mount
+  const [particles] = useState<Particle[]>(() => generateParticles(25));
 
   return (
     <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden bg-background transition-colors duration-700">

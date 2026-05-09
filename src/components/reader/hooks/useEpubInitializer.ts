@@ -289,5 +289,6 @@ export function useEpubInitializer({
       bookRef.current = null;
       if (book) book.destroy();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url, initialLocation]);
 }
