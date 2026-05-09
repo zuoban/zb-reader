@@ -24,7 +24,11 @@ export const fontOptions = [
 export function SettingCard({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <div
-      className={cn("reader-liquid-surface overflow-hidden rounded-2xl", className)}
+      className={cn("rounded-2xl border overflow-hidden", className)}
+      style={{
+        borderColor: "color-mix(in srgb, var(--reader-border) 60%, transparent)",
+        background: "color-mix(in srgb, var(--reader-text) 3%, transparent)",
+      }}
     >
       {children}
     </div>
@@ -85,8 +89,9 @@ export function CompactSelect({
   return (
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger
-        className="reader-liquid-control h-9 gap-2 rounded-xl border-0 pl-3 pr-2.5 text-[13px] font-medium shadow-none focus:ring-0 focus:ring-offset-0 sm:h-10 sm:pl-3.5 sm:pr-3 sm:text-[14px]"
+        className="h-9 gap-2 rounded-xl border-0 pl-3 pr-2.5 text-[13px] font-medium shadow-none focus:ring-0 focus:ring-offset-0 hover:bg-[color-mix(in_srgb,var(--reader-text)_8%,transparent)] transition-colors sm:h-10 sm:pl-3.5 sm:pr-3 sm:text-[14px]"
         style={{
+          background: "color-mix(in srgb, var(--reader-text) 4%, transparent)",
           color: "var(--reader-text)",
           minWidth: "130px",
           maxWidth: "220px",

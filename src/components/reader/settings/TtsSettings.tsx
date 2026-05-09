@@ -102,7 +102,7 @@ export function TtsSettings({
             })}
           </div>
         </SettingRow>
-        <SettingRow label="预加载段数" noBorder>
+        <SettingRow label="预加载段数">
           <CompactSelect
             value={String(microsoftPreloadCount)}
             onChange={(v) => onMicrosoftPreloadCountChange(Number(v))}

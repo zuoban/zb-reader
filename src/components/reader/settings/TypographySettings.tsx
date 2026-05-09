@@ -44,9 +44,10 @@ export const TypographySettings = memo(function TypographySettings({
               onClick={() => fontSize > 12 && onFontSizeChange(fontSize - 1)}
               disabled={fontSize <= 12}
               className={cn(
-                "reader-liquid-control flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl transition-all active:scale-90 sm:h-10 sm:w-10",
-                fontSize <= 12 ? "cursor-not-allowed opacity-30" : "hover:-translate-y-0.5 active:opacity-80"
+                "flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl transition-all active:scale-90 sm:h-10 sm:w-10",
+                fontSize <= 12 ? "cursor-not-allowed opacity-30" : "hover:-translate-y-0.5 hover:bg-[color-mix(in_srgb,var(--reader-text)_8%,transparent)] active:opacity-80"
               )}
+              style={{ background: "color-mix(in srgb, var(--reader-text) 4%, transparent)" }}
             >
               <Minus className="size-4 sm:size-[18px]" style={{ color: "var(--reader-text)" }} />
             </button>
@@ -62,9 +63,10 @@ export const TypographySettings = memo(function TypographySettings({
               onClick={() => fontSize < 28 && onFontSizeChange(fontSize + 1)}
               disabled={fontSize >= 28}
               className={cn(
-                "reader-liquid-control flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl transition-all active:scale-90 sm:h-10 sm:w-10",
-                fontSize >= 28 ? "cursor-not-allowed opacity-30" : "hover:-translate-y-0.5 active:opacity-80"
+                "flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl transition-all active:scale-90 sm:h-10 sm:w-10",
+                fontSize >= 28 ? "cursor-not-allowed opacity-30" : "hover:-translate-y-0.5 hover:bg-[color-mix(in_srgb,var(--reader-text)_8%,transparent)] active:opacity-80"
               )}
+              style={{ background: "color-mix(in srgb, var(--reader-text) 4%, transparent)" }}
             >
               <Plus className="size-4 sm:size-[18px]" style={{ color: "var(--reader-text)" }} />
             </button>

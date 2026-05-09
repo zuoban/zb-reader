@@ -85,7 +85,11 @@ export function ReadingSettings({
         <div className="px-5 sm:px-6 pb-10 max-h-[70vh] overflow-y-auto space-y-6 scrollbar-hide">
           {/* Current preset card */}
           <div
-            className="reader-liquid-control rounded-2xl px-5 py-5"
+            className="rounded-2xl border px-5 py-5"
+            style={{
+              borderColor: "color-mix(in srgb, var(--reader-border) 60%, transparent)",
+              background: "color-mix(in srgb, var(--reader-text) 3%, transparent)",
+            }}
           >
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -120,7 +124,10 @@ export function ReadingSettings({
               ].map((item) => (
                 <div
                   key={item.label}
-                  className="reader-liquid-surface rounded-xl px-3 py-3 text-center"
+                  className="rounded-xl px-3 py-3 text-center"
+                  style={{
+                    background: "color-mix(in srgb, var(--reader-text) 4%, transparent)",
+                  }}
                 >
                   <p
                     className="text-[12px]"
