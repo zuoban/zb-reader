@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
 
 interface Particle {
   id: number;
@@ -26,24 +26,8 @@ function generateParticles(count: number): Particle[] {
   }));
 }
 
-// Default particles for SSR (hidden until hydration)
-const DEFAULT_PARTICLES: Particle[] = Array.from({ length: 25 }).map((_, i) => ({
-  id: i,
-  left: "0%",
-  top: "0%",
-  size: "0px",
-  duration: "30s",
-  delay: "0s",
-  opacity: 0,
-  blur: "none",
-}));
-
 export function BackgroundDecoration() {
-  const [particles, setParticles] = useState<Particle[]>(DEFAULT_PARTICLES);
-
-  useEffect(() => {
-    setParticles(generateParticles(25));
-  }, []);
+  const particles = useMemo(() => generateParticles(25), []);
 
   return (
     <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden bg-background transition-colors duration-700">

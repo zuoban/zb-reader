@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { cacheBook, getCachedBook } from "@/lib/book-cache";
 import { logger } from "@/lib/logger";
@@ -29,7 +29,18 @@ export function useReaderBookData({
   const [initialLocation, setInitialLocation] = useState<string | undefined>();
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
-  const [highlights, setHighlights] = useState<ReaderHighlight[]>([]);
+
+  const highlights = useMemo(
+    () =>
+      notes
+        .filter((note) => note?.location && note.color)
+        .map((note) => ({
+          cfiRange: note.location,
+          color: note.color || "#facc15",
+          id: note.id,
+        })),
+    [notes]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -109,17 +120,6 @@ export function useReaderBookData({
     };
   }, [bookId, onMissingBook, onProgressLoaded]);
 
-  useEffect(() => {
-    const nextHighlights = notes
-      .filter((note) => note?.location && note.color)
-      .map((note) => ({
-        cfiRange: note.location,
-        color: note.color || "#facc15",
-        id: note.id,
-      }));
-    setHighlights(nextHighlights);
-  }, [notes]);
-
   return {
     book,
     loading,
@@ -130,6 +130,5 @@ export function useReaderBookData({
     notes,
     setNotes,
     highlights,
-    setHighlights,
   };
 }

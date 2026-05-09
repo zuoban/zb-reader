@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -34,7 +34,7 @@ export function ProgressHistoryDialog({
   const [loading, setLoading] = useState(false);
   const [restoring, setRestoring] = useState<string | null>(null);
 
-  const loadHistory = async () => {
+  const loadHistory = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch(`/api/progress/history?bookId=${bookId}`);
@@ -46,14 +46,14 @@ export function ProgressHistoryDialog({
     } finally {
       setLoading(false);
     }
-  };
+  }, [bookId]);
 
   useEffect(() => {
     if (open && bookId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- load history when dialog opens
       loadHistory();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadHistory is stable, only open/bookId should trigger
-  }, [open, bookId]);
+  }, [open, bookId, loadHistory]);
 
   const handleRestore = async (historyId: string) => {
     setRestoring(historyId);

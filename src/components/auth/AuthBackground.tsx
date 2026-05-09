@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 
 interface Particle {
   id: number;
@@ -27,11 +27,7 @@ function generateParticles(count: number): Particle[] {
 }
 
 export function AuthBackground() {
-  const [particles, setParticles] = useState<Particle[]>([]);
-
-  useEffect(() => {
-    setParticles(generateParticles(20));
-  }, []);
+  const particles = useMemo(() => generateParticles(20), []);
 
   return (
     <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden bg-background transition-colors duration-700">

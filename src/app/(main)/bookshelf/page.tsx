@@ -57,11 +57,15 @@ export default function BookshelfPage() {
   const activeCategoryName = selectedCategory === ALL_CATEGORY ? "" : selectedCategory;
 
   // Reset page when category or search changes
-  useEffect(() => {
+  const resetPagination = useCallback(() => {
     setPage(1);
     setBooks([]);
     setLoading(true);
-  }, [selectedCategory, searchQuery]);
+  }, []);
+
+  useEffect(() => {
+    resetPagination(); // eslint-disable-line react-hooks/set-state-in-effect -- pagination reset on filter change
+  }, [selectedCategory, searchQuery, resetPagination]);
 
   // Sync theme with reader settings on mount
   useEffect(() => {
@@ -128,6 +132,7 @@ export default function BookshelfPage() {
   }, [activeCategoryName, page, searchQuery]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetchBooks internally calls setState via data fetching callbacks
     fetchBooks(page === 1);
   }, [fetchBooks, page]);
 

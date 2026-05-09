@@ -34,6 +34,7 @@ import { Loader2 } from "lucide-react";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
 import type { EpubReaderRef } from "@/components/reader/EpubReader";
+import type { Note } from "@/lib/db/schema";
 import { useProgressSyncCompat } from "@/hooks/useProgressSyncCompat";
 import {
   useDebouncedSettingsSave,
@@ -129,7 +130,7 @@ function ReaderContent() {
     notes,
     setNotes,
     highlights,
-    setHighlights,
+    setHighlights: _setHighlights,
   } = useReaderBookData({
     bookId,
     onMissingBook: handleMissingBook,
@@ -283,16 +284,33 @@ function ReaderContent() {
     progressRef,
     currentPage,
     onHighlightAdded: (highlight) => {
-      setHighlights((prev) => [...prev, highlight]);
+      const tempNote: Note = {
+        id: highlight.id,
+        bookId,
+        userId: "",
+        location: highlight.cfiRange,
+        selectedText: null,
+        content: null,
+        color: highlight.color,
+        progress: null,
+        pageNumber: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      setNotes((prev) => [tempNote, ...prev]);
     },
     onHighlightRemoved: (id) => {
-      setHighlights((prev) => prev.filter((highlight) => highlight.id !== id));
+      setNotes((prev) => prev.filter((note) => note.id !== id));
     },
     onHighlightUpdated: (id, updates) => {
-      setHighlights((prev) =>
-        prev.map((highlight) =>
-          highlight.id === id ? { ...highlight, ...updates } : highlight
-        )
+      setNotes((prev) =>
+        prev.map((note) => {
+          if (note.id !== id) return note;
+          return {
+            ...note,
+            ...(updates.color ? { color: updates.color } : {}),
+          };
+        })
       );
     },
     onNoteAdded: (note) => {

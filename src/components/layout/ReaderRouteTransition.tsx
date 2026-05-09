@@ -214,6 +214,7 @@ export function ReaderRouteTransition() {
 
         <div className="relative h-full w-full overflow-hidden">
           {transition.hasCover && transition.coverUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- transient animation element, not content image
             <img
               src={transition.coverUrl}
               alt={transition.title}

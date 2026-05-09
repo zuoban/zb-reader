@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { Camera, Calendar, KeyRound, Loader2, Mail, Save, User as UserIcon } from "lucide-react";
@@ -41,7 +41,7 @@ export default function ProfilePage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     try {
       const res = await fetch("/api/user");
       const data = await res.json();
@@ -58,11 +58,11 @@ export default function ProfilePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchProfile();
-  }, []);
+    fetchProfile(); // eslint-disable-line react-hooks/set-state-in-effect -- initial data fetch on mount
+  }, [fetchProfile]);
 
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
