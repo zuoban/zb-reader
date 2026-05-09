@@ -12,7 +12,7 @@ overrides:
   eslint-plugin-import: ^2.32.0
   eslint-plugin-jsx-a11y: ^6.10.2
   eslint-plugin-react: ^7.37.5
-  eslint-plugin-react-hooks: ^7.0.1
+  eslint-plugin-react-hooks: ^7.1.1
 
 importers:
 
@@ -94,6 +94,9 @@ importers:
       '@next/bundle-analyzer':
         specifier: ^16.1.6
         version: 16.2.5
+      '@next/eslint-plugin-next':
+        specifier: ^16.2.5
+        version: 16.2.5
       '@tailwindcss/postcss':
         specifier: ^4
         version: 4.2.4
@@ -145,9 +148,9 @@ importers:
       eslint-config-next:
         specifier: ^16.1.6
         version: 16.2.5(@typescript-eslint/parser@8.59.2(eslint@10.3.0(jiti@2.7.0))(typescript@5.9.3))(eslint@10.3.0(jiti@2.7.0))(typescript@5.9.3)
-      eslint-plugin-next:
-        specifier: ^0.0.0
-        version: 0.0.0
+      eslint-plugin-react-hooks:
+        specifier: ^7.1.1
+        version: 7.1.1(eslint@10.3.0(jiti@2.7.0))
       fake-indexeddb:
         specifier: ^6.2.5
         version: 6.2.5
@@ -2977,9 +2980,6 @@ packages:
     engines: {node: '>=4.0'}
     peerDependencies:
       eslint: ^10.0.2
-
-  eslint-plugin-next@0.0.0:
-    resolution: {integrity: sha512-IldNDVb6WNduggwRbYzSGZhaskUwVecJ6fhmqwX01+S1aohwAWNzU4me6y47DDzpD/g0fdayNBGxEdt9vKkUtg==, tarball: https://registry.npmjs.org/eslint-plugin-next/-/eslint-plugin-next-0.0.0.tgz}
 
   eslint-plugin-react-hooks@7.1.1:
     resolution: {integrity: sha512-f2I7Gw6JbvCexzIInuSbZpfdQ44D7iqdWX01FKLvrPgqxoE7oMj8clOfto8U6vYiz4yd5oKu39rRSVOe1zRu0g==, tarball: https://registry.npmjs.org/eslint-plugin-react-hooks/-/eslint-plugin-react-hooks-7.1.1.tgz}
@@ -7854,8 +7854,6 @@ snapshots:
       object.fromentries: 2.0.8
       safe-regex-test: 1.1.0
       string.prototype.includes: 2.0.1
-
-  eslint-plugin-next@0.0.0: {}
 
   eslint-plugin-react-hooks@7.1.1(eslint@10.3.0(jiti@2.7.0)):
     dependencies:
