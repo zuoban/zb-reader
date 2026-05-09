@@ -66,8 +66,8 @@ export function useReaderBookData({
           setInitialLocation(progressData.progress.location);
           onProgressLoaded(progressData.progress.progress || 0);
         }
-        setBookmarks(bmData.bookmarks || []);
-        setNotes(notesData.notes || []);
+        setBookmarks(Array.isArray(bmData.bookmarks) ? bmData.bookmarks : []);
+        setNotes(Array.isArray(notesData.notes) ? notesData.notes.filter(Boolean) : []);
 
         let fileUrl: string;
 
@@ -113,7 +113,7 @@ export function useReaderBookData({
 
   useEffect(() => {
     const nextHighlights = notes
-      .filter((note) => note.location && note.color)
+      .filter((note) => note?.location && note.color)
       .map((note) => ({
         cfiRange: note.location,
         color: note.color || "#facc15",

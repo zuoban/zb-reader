@@ -62,6 +62,7 @@ export function Navbar({ onUploadComplete, className }: NavbarProps) {
                 alt="ZB Reader"
                 width={42}
                 height={42}
+                priority
                 className="relative z-10 transition-transform duration-500 ease-out group-hover:scale-[1.12]"
               />
             </div>

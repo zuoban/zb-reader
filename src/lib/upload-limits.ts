@@ -1,0 +1,1 @@
+export const MAX_EPUB_FILE_SIZE_BYTES = 300 * 1024 * 1024;

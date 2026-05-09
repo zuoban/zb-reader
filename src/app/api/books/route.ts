@@ -7,13 +7,18 @@ import { deleteBookFile, deleteCoverImage, saveBookFile, saveCoverImage } from "
 import { logger } from "@/lib/logger";
 import { badRequest, serverError, getAuthUserId } from "@/lib/api-utils";
 import { formatBytes } from "@/lib/utils";
+import { MAX_EPUB_FILE_SIZE_BYTES } from "@/lib/upload-limits";
 
-const MAX_EPUB_FILE_SIZE_BYTES = 100 * 1024 * 1024;
 const DEFAULT_BOOKS_PAGE = 1;
 const DEFAULT_BOOKS_LIMIT = 20;
 const MAX_BOOKS_LIMIT = 100;
 // EPUB files are ZIP files, magic bytes: PK\x03\x04
 const EPUB_MAGIC_BYTES = new Uint8Array([0x50, 0x4b, 0x03, 0x04]);
+
+interface UploadedEpubInfo {
+  storageFormat: "epub";
+  titleBase: string;
+}
 
 export function normalizeBooksPagination(pageParam: string | null, limitParam: string | null) {
   const parsedPage = Number.parseInt(pageParam || "", 10);
@@ -132,6 +137,62 @@ export function parseEpubOpfMetadata(opfContent: string): {
   }
 
   return { title, author, coverItemHref };
+}
+
+function getUploadedEpubInfo(fileName: string): UploadedEpubInfo | null {
+  const normalizedFileName = fileName.trim();
+  const lowerFileName = normalizedFileName.toLowerCase();
+
+  if (lowerFileName.endsWith(".epub")) {
+    return {
+      storageFormat: "epub",
+      titleBase: normalizedFileName.slice(0, -".epub".length),
+    };
+  }
+
+  if (lowerFileName.endsWith(".epub.zip")) {
+    return {
+      storageFormat: "epub",
+      titleBase: normalizedFileName.slice(0, -".epub.zip".length),
+    };
+  }
+
+  return null;
+}
+
+async function normalizeEpubBuffer(buffer: Buffer): Promise<Buffer> {
+  const JSZip = (await import("jszip")).default;
+  const zip = await JSZip.loadAsync(buffer);
+
+  if (zip.file("META-INF/container.xml")) {
+    return buffer;
+  }
+
+  const nestedContainerPath = Object.keys(zip.files).find((entryPath) =>
+    /(^|\/)META-INF\/container\.xml$/i.test(entryPath)
+  );
+  if (!nestedContainerPath) return buffer;
+
+  const prefix = nestedContainerPath.slice(0, -("META-INF/container.xml".length));
+  if (!prefix) return buffer;
+
+  const normalizedZip = new JSZip();
+  const entries = Object.values(zip.files).filter(
+    (entry) => !entry.dir && entry.name.startsWith(prefix)
+  );
+
+  await Promise.all(
+    entries.map(async (entry) => {
+      const normalizedPath = entry.name.slice(prefix.length);
+      if (!normalizedPath) return;
+      normalizedZip.file(normalizedPath, await entry.async("nodebuffer"));
+    })
+  );
+
+  return normalizedZip.generateAsync({
+    type: "nodebuffer",
+    compression: "DEFLATE",
+  });
 }
 
 export async function GET(req: NextRequest) {
@@ -262,10 +323,9 @@ export async function POST(req: NextRequest) {
     }
 
     const fileName = file.name;
-    const ext = fileName.split(".").pop()?.toLowerCase();
-    const validFormats = ["epub"];
+    const epubInfo = getUploadedEpubInfo(fileName);
 
-    if (!ext || !validFormats.includes(ext)) {
+    if (!epubInfo) {
       return badRequest("不支持的文件格式，仅支持 EPUB");
     }
 
@@ -274,7 +334,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Verify file content via magic bytes to prevent extension spoofing
-    const buffer = Buffer.from(await file.arrayBuffer());
+    const buffer = await normalizeEpubBuffer(Buffer.from(await file.arrayBuffer()));
     const hasZipMagicBytes =
       buffer.length >= 4 &&
       buffer[0] === EPUB_MAGIC_BYTES[0] &&
@@ -287,9 +347,9 @@ export async function POST(req: NextRequest) {
     }
 
     const bookId = uuidv4();
-    savedFileName = saveBookFile(buffer, bookId, ext);
+    savedFileName = saveBookFile(buffer, bookId, epubInfo.storageFormat);
 
-    let title = fileName.replace(`.${ext}`, "");
+    let title = epubInfo.titleBase;
     let author = "未知作者";
 
     try {
@@ -313,7 +373,7 @@ export async function POST(req: NextRequest) {
       cover: coverFileName,
       filePath: savedFileName,
       fileSize: buffer.length,
-      format: ext as "epub",
+      format: epubInfo.storageFormat,
       uploaderId: userId,
     });
 

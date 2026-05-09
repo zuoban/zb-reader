@@ -37,7 +37,7 @@ export function useReaderSidePanelState({
 
   const panelNotes = useMemo(
     () =>
-      notes.map((note) => ({
+      notes.filter(Boolean).map((note) => ({
         id: note.id,
         selectedText: note.selectedText || "",
         content: note.content || "",

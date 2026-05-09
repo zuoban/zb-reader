@@ -46,7 +46,7 @@ export const NotesTab = memo(function NotesTab({
             description="选中文字后可以快速记录想法和摘录"
           />
         ) : (
-          notes.map((note) => (
+          notes.filter(Boolean).map((note) => (
             <div
               key={note.id}
               className="reader-liquid-surface group rounded-xl p-4 transition-all duration-200 hover:-translate-y-0.5"
@@ -122,7 +122,7 @@ export const NotesTab = memo(function NotesTab({
                     {note.selectedText}
                   </div>
                   <p className="text-sm line-clamp-3 font-medium" style={{ color: "var(--reader-text)" }}>
-                    {note.content}
+                    {note.content || ""}
                   </p>
                   <div
                     className="flex items-center justify-between mt-3 pt-3 border-t"
@@ -140,8 +140,8 @@ export const NotesTab = memo(function NotesTab({
                         onClick={(e) => {
                           e.stopPropagation();
                           setEditingId(note.id);
-                          setEditingContent(note.content);
-                          setEditingColor(note.color);
+                          setEditingContent(note.content || "");
+                          setEditingColor(note.color || "#facc15");
                         }}
                       >
                         <Pencil className="size-4" />

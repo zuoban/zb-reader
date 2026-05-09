@@ -63,10 +63,51 @@ describe("Books API upload", () => {
     mockSaveBookFile.mockReturnValue("book-1.epub");
   });
 
+  it("accepts EPUB files exported with an .epub.zip extension", async () => {
+    const JSZip = (await import("jszip")).default;
+    const zip = new JSZip();
+    zip.file("Rust 程序设计第2版.epub/META-INF/container.xml", `
+      <container>
+        <rootfiles>
+          <rootfile full-path="OPS/content.opf" />
+        </rootfiles>
+      </container>
+    `);
+    zip.file("Rust 程序设计第2版.epub/OPS/content.opf", `
+      <package>
+        <metadata>
+          <dc:title>Rust 程序设计第2版</dc:title>
+          <dc:creator>Jim Blandy</dc:creator>
+        </metadata>
+      </package>
+    `);
+    const buffer = await zip.generateAsync({ type: "nodebuffer" });
+    const file = {
+      name: "Rust 程序设计第2版.epub.zip",
+      size: buffer.length,
+      arrayBuffer: vi.fn().mockResolvedValue(buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)),
+    };
+
+    mockInsertValues.mockResolvedValueOnce(undefined);
+
+    const { POST } = await import("./route");
+    const res = await POST(createUploadRequest(file));
+
+    expect(res.status).toBe(201);
+    expect(mockSaveBookFile).toHaveBeenCalledWith(expect.any(Buffer), expect.any(String), "epub");
+    expect(mockInsertValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "Rust 程序设计第2版",
+        author: "Jim Blandy",
+        format: "epub",
+      })
+    );
+  });
+
   it("rejects EPUB files larger than the upload limit", async () => {
     const file = {
       name: "large.epub",
-      size: 101 * 1024 * 1024,
+      size: 301 * 1024 * 1024,
       arrayBuffer: vi.fn(),
     };
 
@@ -75,18 +116,20 @@ describe("Books API upload", () => {
     const data = await res.json();
 
     expect(res.status).toBe(400);
-    expect(data.error).toBe("文件不能超过 100 MB");
+    expect(data.error).toBe("文件不能超过 300 MB");
     expect(file.arrayBuffer).not.toHaveBeenCalled();
     expect(mockSaveBookFile).not.toHaveBeenCalled();
   });
 
   it("cleans up the saved EPUB file when database insert fails", async () => {
-    // Create a buffer with ZIP magic bytes (EPUB files are ZIP archives)
-    const magicBuffer = new Uint8Array([0x50, 0x4b, 0x03, 0x04, 0x00, 0x00, 0x00, 0x00]);
+    const JSZip = (await import("jszip")).default;
+    const zip = new JSZip();
+    zip.file("META-INF/container.xml", "<container />");
+    const buffer = await zip.generateAsync({ type: "nodebuffer" });
     const file = {
       name: "book.epub",
       size: 1024,
-      arrayBuffer: vi.fn().mockResolvedValue(magicBuffer.buffer),
+      arrayBuffer: vi.fn().mockResolvedValue(buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)),
     };
     mockInsertValues.mockRejectedValueOnce(new Error("insert failed"));
 
