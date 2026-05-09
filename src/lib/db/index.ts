@@ -404,7 +404,6 @@ function getConnection() {
   const currentProgressInfo = sqlite.prepare("PRAGMA table_info(reading_progress)").all() as { name: string }[];
   const hasScrollRatio = currentProgressInfo.some((col) => col.name === "scroll_ratio");
   const hasDeviceIdColumn = currentProgressInfo.some((col) => col.name === "device_id");
-  const hasLastSyncId = currentProgressInfo.some((col) => col.name === "last_sync_id");
   const hasFurthestProgress = currentProgressInfo.some((col) => col.name === "furthest_progress");
 
   if (!hasFurthestProgress) {
@@ -417,10 +416,6 @@ function getConnection() {
   if (!hasDeviceIdColumn) {
     sqlite.exec(`ALTER TABLE reading_progress ADD COLUMN device_id TEXT;`);
   }
-  if (!hasLastSyncId) {
-    sqlite.exec(`ALTER TABLE reading_progress ADD COLUMN last_sync_id TEXT;`);
-  }
-
   // Migration: Drop obsolete progress version columns (2026-05-10)
   const refreshedProgressInfo = sqlite.prepare("PRAGMA table_info(reading_progress)").all() as { name: string }[];
   if (refreshedProgressInfo.some((col) => col.name === "version")) {
@@ -437,6 +432,10 @@ function getConnection() {
   const durationHistoryInfo = sqlite.prepare("PRAGMA table_info(progress_history)").all() as { name: string }[];
   if (durationHistoryInfo.some((col) => col.name === "reading_duration")) {
     sqlite.exec(`ALTER TABLE progress_history DROP COLUMN reading_duration;`);
+  }
+  const lastSyncProgressInfo = sqlite.prepare("PRAGMA table_info(reading_progress)").all() as { name: string }[];
+  if (lastSyncProgressInfo.some((col) => col.name === "last_sync_id")) {
+    sqlite.exec(`ALTER TABLE reading_progress DROP COLUMN last_sync_id;`);
   }
 
   // Migration: Add font_family and flip_mode to reader_settings (2026-03-31)

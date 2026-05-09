@@ -2,7 +2,6 @@ import { logger } from '@/lib/logger';
 import { openDB } from 'idb';
 
 export interface SyncItem {
-  syncId: string;
   bookId: string;
   progress: number;
   location: string;
@@ -144,10 +143,6 @@ export class SyncQueue {
 
   getPendingCount(): number {
     return this.queue.length;
-  }
-
-  isSyncing(): boolean {
-    return this.syncing;
   }
 
   getPendingItems(): SyncItem[] {

@@ -11,10 +11,6 @@ interface ProgressQueueEventDetail {
   pendingCount: number;
 }
 
-interface ProgressSyncStateEventDetail {
-  syncing: boolean;
-}
-
 export interface LocalProgress {
   bookId: string;
   progress: number;
@@ -71,21 +67,6 @@ export class LocalProgressManager {
         );
       },
     });
-
-    if (typeof window !== "undefined") {
-      const handleUnload = () => {
-        this.flushPendingDebounced().then(() => {
-          this.syncQueue.sync({ keepalive: true });
-        });
-      };
-
-      window.addEventListener("visibilitychange", () => {
-        if (document.visibilityState === "hidden") {
-          handleUnload();
-        }
-      });
-      window.addEventListener("pagehide", handleUnload);
-    }
   }
 
   private async initDB(): Promise<void> {
@@ -201,7 +182,6 @@ export class LocalProgressManager {
       await this.db.put(PROGRESS_STORE, updated);
 
       const syncItem: SyncItem = {
-        syncId: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2),
         bookId,
         progress: updated.progress,
         location: updated.location,
@@ -301,10 +281,6 @@ export class LocalProgressManager {
     return this.syncQueue.getPendingCount();
   }
 
-  isSyncing(): boolean {
-    return this.syncQueue.isSyncing();
-  }
-
   onQueueChange(callback: (count: number) => void): () => void {
     const handler = (e: Event) => {
       if (e instanceof CustomEvent) {
@@ -318,22 +294,6 @@ export class LocalProgressManager {
     window.addEventListener("progress-queue-change", handler);
     return () => {
       window.removeEventListener("progress-queue-change", handler);
-    };
-  }
-
-  onSyncStateChange(callback: (syncing: boolean) => void): () => void {
-    const handler = (e: Event) => {
-      if (e instanceof CustomEvent) {
-        const detail = e.detail as ProgressSyncStateEventDetail;
-        if (detail?.syncing !== undefined) {
-          callback(detail.syncing);
-        }
-      }
-    };
-
-    window.addEventListener("progress-sync-state", handler);
-    return () => {
-      window.removeEventListener("progress-sync-state", handler);
     };
   }
 

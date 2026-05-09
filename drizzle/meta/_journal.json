@@ -43,6 +43,13 @@
       "when": 1778341800000,
       "tag": "0005_drop_reading_duration",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1778342100000,
+      "tag": "0006_drop_last_sync_id",
+      "breakpoints": true
     }
   ]
 }

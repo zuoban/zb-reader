@@ -10,13 +10,8 @@ interface ProgressQueueEventDetail {
   pendingCount: number;
 }
 
-interface ProgressSyncStateEventDetail {
-  syncing: boolean;
-}
-
 export interface UseProgressSyncReturn {
   pendingSync: boolean;
-  isSyncing: boolean;
   progress: number;
   updateProgress: (update: ProgressUpdate, forceSync?: boolean) => void;
   forceSync: () => Promise<void>;
@@ -27,7 +22,6 @@ export interface UseProgressSyncReturn {
 
 export function useProgressSync(bookId: string): UseProgressSyncReturn {
   const [pendingSync, setPendingSync] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
   const [progress, setProgress] = useState(0);
 
   const managerRef = useRef(getLocalProgressManager());
@@ -42,15 +36,7 @@ export function useProgressSync(bookId: string): UseProgressSyncReturn {
       }
     };
 
-    const handleSyncState = (e: Event) => {
-      if (e instanceof CustomEvent) {
-        const detail = e.detail as ProgressSyncStateEventDetail;
-        setIsSyncing(detail.syncing);
-      }
-    };
-
     window.addEventListener("progress-queue-change", handleQueueChange);
-    window.addEventListener("progress-sync-state", handleSyncState);
 
     manager.loadFromServer(bookId).then((localProgress) => {
       if (localProgress) {
@@ -60,7 +46,6 @@ export function useProgressSync(bookId: string): UseProgressSyncReturn {
 
     return () => {
       window.removeEventListener("progress-queue-change", handleQueueChange);
-      window.removeEventListener("progress-sync-state", handleSyncState);
     };
   }, [bookId]);
 
@@ -130,7 +115,6 @@ export function useProgressSync(bookId: string): UseProgressSyncReturn {
 
   return {
     pendingSync,
-    isSyncing,
     progress,
     updateProgress,
     forceSync,

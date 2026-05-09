@@ -20,7 +20,6 @@ export async function POST(req: NextRequest) {
     }
 
     const {
-      syncId,
       bookId,
       progress,
       location,
@@ -33,7 +32,6 @@ export async function POST(req: NextRequest) {
     logger.debug("api", "[Progress Sync] Request", {
       userId: userId,
       bookId,
-      syncId,
     });
 
     const book = await findOwnedBook(bookId, userId);
@@ -47,14 +45,6 @@ export async function POST(req: NextRequest) {
         eq(readingProgress.bookId, bookId)
       ),
     });
-
-    // 幂等性检查：如果 syncId 已处理，直接返回成功
-    if (currentProgress && syncId && currentProgress.lastSyncId === syncId) {
-      return NextResponse.json({
-        status: "unchanged",
-        idempotent: true,
-      });
-    }
 
     const now = new Date().toISOString();
     const incomingProgress = progress ?? 0;
@@ -71,7 +61,6 @@ export async function POST(req: NextRequest) {
         currentPage: currentPage ?? null,
         totalPages: totalPages ?? null,
         deviceId: deviceId ?? null,
-        lastSyncId: syncId ?? null,
         lastReadAt: now,
         createdAt: now,
         updatedAt: now,
@@ -98,7 +87,6 @@ export async function POST(req: NextRequest) {
         currentPage: currentPage ?? currentProgress.currentPage,
         totalPages: totalPages ?? currentProgress.totalPages,
         deviceId: deviceId ?? currentProgress.deviceId,
-        lastSyncId: syncId ?? null,
         lastReadAt: now,
         updatedAt: now,
       })

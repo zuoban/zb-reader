@@ -51,7 +51,6 @@ describe('sync-queue', () => {
 
   function createSyncItem(overrides: Partial<SyncItem> = {}): SyncItem {
     return {
-      syncId: 'sync-1',
       bookId: 'book-1',
       progress: 0.5,
       location: 'location-1',

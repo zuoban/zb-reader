@@ -14,7 +14,6 @@ export function useProgressSyncCompat(bookId: string) {
     forceSync,
     flushPendingDebounced,
     pendingSync,
-    isSyncing,
   } = useProgressSync(bookId);
 
   // Refs for compatibility with old code
@@ -115,7 +114,6 @@ export function useProgressSyncCompat(bookId: string) {
 
     // 新增功能
     pendingSync,
-    isSyncing,
     forceSync,
     flushPendingDebounced,
   };

@@ -27,7 +27,6 @@ export async function POST(req: NextRequest) {
 
     for (const item of items) {
       const {
-        syncId,
         bookId,
         progress,
         location,
@@ -50,15 +49,6 @@ export async function POST(req: NextRequest) {
         ),
       });
 
-      if (currentProgress && syncId && currentProgress.lastSyncId === syncId) {
-        results.push({
-          bookId,
-          status: "unchanged",
-          idempotent: true,
-        });
-        continue;
-      }
-
       const now = new Date().toISOString();
       const incomingProgress = progress ?? 0;
 
@@ -74,7 +64,6 @@ export async function POST(req: NextRequest) {
           currentPage: currentPage ?? null,
           totalPages: totalPages ?? null,
           deviceId: deviceId ?? null,
-          lastSyncId: syncId ?? null,
           lastReadAt: now,
           createdAt: now,
           updatedAt: now,
@@ -103,7 +92,6 @@ export async function POST(req: NextRequest) {
           currentPage: currentPage ?? currentProgress.currentPage,
           totalPages: totalPages ?? currentProgress.totalPages,
           deviceId: deviceId ?? currentProgress.deviceId,
-          lastSyncId: syncId ?? null,
           lastReadAt: now,
           updatedAt: now,
         })
