@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -215,11 +214,9 @@ export function ReaderRouteTransition() {
 
         <div className="relative h-full w-full overflow-hidden">
           {transition.hasCover && transition.coverUrl ? (
-            <Image
+            <img
               src={transition.coverUrl}
               alt={transition.title}
-              fill
-              sizes="33vw"
               className="h-full w-full object-cover"
             />
           ) : (

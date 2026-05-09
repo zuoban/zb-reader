@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useState, useCallback } from "react";
 import {
   BookOpen,
@@ -155,11 +154,9 @@ export function FullscreenTtsView({
             <div className="flex min-w-0 items-center gap-2.5">
               <div className="tts-immersive-control relative flex h-12 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[12px]">
                 {book.cover ? (
-                  <Image
+                  <img
                     src={`/api/books/${book.id}/cover`}
                     alt={book.title}
-                    fill
-                    sizes="40px"
                     className="h-full w-full object-cover"
                   />
                 ) : (
