@@ -2,12 +2,14 @@ export interface Sentence {
   text: string;
   paragraphId: string;
   location?: string;
+  isCodeBlock?: boolean;
 }
 
 export interface ReaderParagraph {
   id: string;
   text: string;
   location?: string;
+  isCodeBlock?: boolean;
 }
 
 // 常见缩写词列表（小写）
@@ -292,6 +294,17 @@ export function paragraphsToSentences(
   for (const paragraph of paragraphs) {
     const text = paragraph.text.trim();
     if (text.length === 0 || punctuationOnlyRegex.test(text)) continue;
+
+    // 代码块不分段，整块作为一个朗读单元
+    if (paragraph.isCodeBlock) {
+      sentences.push({
+        text,
+        paragraphId: paragraph.id,
+        location: paragraph.location,
+        isCodeBlock: true,
+      });
+      continue;
+    }
 
     const sentenceTexts = splitIntoSentences(text, maxLength);
 

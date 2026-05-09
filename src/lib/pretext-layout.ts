@@ -5,6 +5,7 @@ export interface ParagraphLayout {
   id: string;
   text: string;
   location?: string;
+  isCodeBlock?: boolean;
   startIndex: number;
   height: number;
   lineCount: number;
@@ -39,7 +40,7 @@ export interface PrepareParagraphsOptions {
 }
 
 export function prepareParagraphs(
-  paragraphs: Array<{ id: string; text: string; location?: string }>,
+  paragraphs: Array<{ id: string; text: string; location?: string; isCodeBlock?: boolean }>,
   options: PrepareParagraphsOptions
 ): ParagraphLayout[] {
   const { fontSize, fontFamily, containerWidth, lineHeight } = options;
@@ -61,6 +62,7 @@ export function prepareParagraphs(
         id: paragraph.id,
         text: trimmedText,
         location: paragraph.location,
+        isCodeBlock: paragraph.isCodeBlock,
         startIndex: currentIndex,
         height,
         lineCount,

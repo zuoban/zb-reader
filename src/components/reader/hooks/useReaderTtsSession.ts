@@ -33,6 +33,7 @@ interface UseReaderTtsSessionParams {
   readSentencesHashRef: React.MutableRefObject<Set<string>>;
   requestMicrosoftSpeech: (text: string, options?: { prefetch?: boolean }) => Promise<string>;
   resumePendingPlayback: () => boolean;
+  setActiveTtsIsCodeBlock: (value: boolean) => void;
   setActiveTtsLocation: (location: string | null) => void;
   setActiveTtsParagraph: (paragraph: string) => void;
   setActiveTtsParagraphId: (id: string | null) => void;
@@ -78,6 +79,7 @@ export function useReaderTtsSession({
   readSentencesHashRef,
   requestMicrosoftSpeech,
   resumePendingPlayback,
+  setActiveTtsIsCodeBlock,
   setActiveTtsLocation,
   setActiveTtsParagraph,
   setActiveTtsParagraphId,
@@ -232,6 +234,7 @@ export function useReaderTtsSession({
         setActiveTtsParagraph(sentence.text);
         setActiveTtsParagraphId(sentence.paragraphId);
         setActiveTtsLocation(sentence.location ?? null);
+        setActiveTtsIsCodeBlock(!!sentence.isCodeBlock);
 
         const hash = sentence.location || sentence.text.slice(0, 50);
         if (readSentencesHashRef.current.has(hash)) {
@@ -297,6 +300,7 @@ export function useReaderTtsSession({
             setActiveTtsParagraph("");
             setActiveTtsParagraphId(null);
             setActiveTtsLocation(null);
+            setActiveTtsIsCodeBlock(false);
             setIsSpeaking(false);
             if (!isRetryableTtsError(lastError)) {
               toast.error("音频播放失败，请检查浏览器自动播放权限");
@@ -319,6 +323,7 @@ export function useReaderTtsSession({
       playAudioSource,
       readSentencesHashRef,
       requestMicrosoftSpeech,
+      setActiveTtsIsCodeBlock,
       setActiveTtsLocation,
       setActiveTtsParagraph,
       setActiveTtsParagraphId,
@@ -488,6 +493,7 @@ export function useReaderTtsSession({
     setActiveTtsParagraph(sentences[newIndex].text);
     setActiveTtsParagraphId(sentences[newIndex].paragraphId);
     setActiveTtsLocation(sentences[newIndex].location ?? null);
+    setActiveTtsIsCodeBlock(!!sentences[newIndex].isCodeBlock);
 
     if (!shouldResumePlayback) {
       setIsSpeaking(true);
@@ -551,6 +557,7 @@ export function useReaderTtsSession({
     setActiveTtsParagraph(sentences[newIndex].text);
     setActiveTtsParagraphId(sentences[newIndex].paragraphId);
     setActiveTtsLocation(sentences[newIndex].location ?? null);
+    setActiveTtsIsCodeBlock(!!sentences[newIndex].isCodeBlock);
 
     if (!shouldResumePlayback) {
       setIsSpeaking(true);

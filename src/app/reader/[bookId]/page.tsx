@@ -78,6 +78,7 @@ function ReaderContent() {
   const debouncedSaveSettings = useDebouncedSettingsSave();
 
   const {
+    activeTtsIsCodeBlock,
     activeTtsLocation,
     activeTtsParagraph,
     activeTtsParagraphId,
@@ -88,6 +89,7 @@ function ReaderContent() {
     isTtsViewOpen,
     readSentencesHashRef,
     resetTtsState,
+    setActiveTtsIsCodeBlock,
     setActiveTtsLocation,
     setActiveTtsParagraph,
     setActiveTtsParagraphId,
@@ -365,6 +367,7 @@ function ReaderContent() {
       readSentencesHashRef,
       requestMicrosoftSpeech,
       resumePendingPlayback,
+      setActiveTtsIsCodeBlock,
       setActiveTtsLocation,
       setActiveTtsParagraph,
       setActiveTtsParagraphId,
@@ -542,6 +545,7 @@ function ReaderContent() {
       />
 
       <ReaderTtsLayer
+        activeIsCodeBlock={activeTtsIsCodeBlock}
         activeParagraph={activeTtsParagraph}
         book={book}
         browserVoices={browserVoices}

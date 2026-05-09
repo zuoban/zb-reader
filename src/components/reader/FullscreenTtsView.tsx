@@ -23,6 +23,7 @@ interface FullscreenTtsViewProps {
   book: Book;
   currentChapterTitle?: string;
   activeParagraph?: string;
+  activeIsCodeBlock?: boolean;
   isSpeaking: boolean;
   isPaused: boolean;
   progress: number;
@@ -50,6 +51,7 @@ export function FullscreenTtsView({
   book,
   currentChapterTitle,
   activeParagraph,
+  activeIsCodeBlock,
   isSpeaking,
   isPaused,
   progress,
@@ -141,9 +143,15 @@ export function FullscreenTtsView({
                 </span>
               </div>
               <div className="mt-5 min-h-0 flex-1 overflow-y-auto pr-1 [scrollbar-color:rgba(255,255,255,0.22)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border [&::-webkit-scrollbar-thumb]:border-transparent [&::-webkit-scrollbar-thumb]:bg-[linear-gradient(180deg,rgba(255,255,255,0.26),rgba(255,255,255,0.12))] [&::-webkit-scrollbar-thumb]:bg-clip-padding">
-                <p className="text-[16px] font-normal leading-9 tracking-[0.01em] text-white/90 [text-shadow:0_1px_14px_rgba(0,0,0,0.42)] sm:text-[18px] sm:leading-[2.6rem]">
-                  {paragraphText || "正在准备朗读内容，马上为你定位到当前段落。"}
-                </p>
+                {activeIsCodeBlock ? (
+                  <pre className="rounded-xl bg-white/5 p-4 font-mono text-[13px] leading-relaxed tracking-[0.01em] text-white/90 [text-shadow:0_1px_14px_rgba(0,0,0,0.42)] sm:text-[14px] sm:leading-loose whitespace-pre-wrap break-words">
+                    {paragraphText || "正在准备朗读内容，马上为你定位到当前段落。"}
+                  </pre>
+                ) : (
+                  <p className="text-[16px] font-normal leading-9 tracking-[0.01em] text-white/90 [text-shadow:0_1px_14px_rgba(0,0,0,0.42)] sm:text-[18px] sm:leading-[2.6rem]">
+                    {paragraphText || "正在准备朗读内容，马上为你定位到当前段落。"}
+                  </p>
+                )}
               </div>
             </div>
           </section>

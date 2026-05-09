@@ -12,4 +12,5 @@ export interface ReaderParagraph {
   id: string;
   text: string;
   location?: string;
+  isCodeBlock?: boolean;
 }

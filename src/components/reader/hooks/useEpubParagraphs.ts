@@ -55,14 +55,21 @@ export function useEpubParagraphs({
       const paragraphs: ReaderParagraph[] = [];
 
       for (const [index, element] of Array.from(nodes).entries()) {
-        const text = (element.textContent || "").replace(/\s+/g, " ").trim();
-        if (text.length > 0 && text.length <= 800) {
+        const el = element as HTMLElement;
+        const isPre = el.tagName.toLowerCase() === "pre";
+        // 代码块保留原始换行格式，普通段落合并空白
+        const text = isPre
+          ? (el.textContent || "").trim()
+          : (el.textContent || "").replace(/\s+/g, " ").trim();
+        // 代码块放宽长度限制到 5000 字符
+        if (text.length > 0 && text.length <= (isPre ? 5000 : 800)) {
           const id = buildParagraphId(index, text);
-          element.setAttribute("data-reader-paragraph-id", id);
+          el.setAttribute("data-reader-paragraph-id", id);
           paragraphs.push({
             id,
             text,
             location: epubContextRef.current.getCfiFromNode(element) || undefined,
+            isCodeBlock: isPre,
           });
         }
       }
@@ -124,6 +131,7 @@ export function useEpubParagraphs({
               id: layout.id,
               text: layout.text,
               location: layout.location,
+              isCodeBlock: layout.isCodeBlock,
             });
           }
         }
@@ -151,6 +159,12 @@ export function useEpubParagraphs({
       rect.left < viewportWidth;
 
     const isElementOnCurrentViewport = (element: HTMLElement) => {
+      // 代码块使用简化的可见性检查，避免 elementFromPoint 命中测试失败
+      if (element.tagName.toLowerCase() === "pre") {
+        const rects = Array.from(element.getClientRects());
+        return rects.some((rect) => isRectVisible(rect));
+      }
+
       const rects = Array.from(element.getClientRects());
 
       for (const rect of rects) {
@@ -184,14 +198,19 @@ export function useEpubParagraphs({
 
     for (const [index, element] of elementArray.entries()) {
       if (isElementOnCurrentViewport(element)) {
-        const text = normalizeParagraph(element.textContent || "");
+        const el = element;
+        const isPre = el.tagName.toLowerCase() === "pre";
+        const text = isPre
+          ? (el.textContent || "").trim()
+          : normalizeParagraph(el.textContent || "");
         if (text.length > 0) {
           const id = buildParagraphId(index, text);
-          element.setAttribute("data-reader-paragraph-id", id);
+          el.setAttribute("data-reader-paragraph-id", id);
           visibleParagraphs.push({
             id,
             text,
             location: getParagraphLocation(element),
+            isCodeBlock: isPre,
           });
         }
       }
@@ -205,11 +224,14 @@ export function useEpubParagraphs({
     const nearestParagraphs = elementArray
       .map((element, index) => {
         const rects = Array.from(element.getClientRects());
-        const text = normalizeParagraph(element.textContent || "");
+        const isPre = element.tagName.toLowerCase() === "pre";
+        const text = isPre
+          ? (element.textContent || "").trim()
+          : normalizeParagraph(element.textContent || "");
         const id = buildParagraphId(index, text);
         element.setAttribute("data-reader-paragraph-id", id);
         if (rects.length === 0) {
-          return { distance: Infinity, id, text, location: getParagraphLocation(element) };
+          return { distance: Infinity, id, text, location: getParagraphLocation(element), isCodeBlock: isPre };
         }
         const minDistance = rects.reduce((best, rect) => {
           const rectCenterY = rect.top + rect.height / 2;
@@ -220,12 +242,13 @@ export function useEpubParagraphs({
           id,
           text,
           location: getParagraphLocation(element),
+          isCodeBlock: isPre,
         };
       })
       .filter(
         (item) =>
           item.text.length > 0 &&
-          item.text.length <= 800 &&
+          (item.isCodeBlock ? item.text.length <= 5000 : item.text.length <= 800) &&
           item.distance < viewportHeight
       )
       .sort((a, b) => a.distance - b.distance)
@@ -234,6 +257,7 @@ export function useEpubParagraphs({
         id: item.id,
         text: item.text,
         location: item.location,
+        isCodeBlock: item.isCodeBlock,
       }));
 
     if (nearestParagraphs.length > 0) {
@@ -266,6 +290,12 @@ export function useEpubParagraphs({
       rect.left < viewportWidth;
 
     const isElementOnCurrentViewport = (element: HTMLElement) => {
+      // 代码块使用简化的可见性检查
+      if (element.tagName.toLowerCase() === "pre") {
+        const rects = Array.from(element.getClientRects());
+        return rects.some((rect) => isRectVisible(rect));
+      }
+
       const rects = Array.from(element.getClientRects());
 
       for (const rect of rects) {
