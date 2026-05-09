@@ -259,7 +259,6 @@ function getConnection() {
       progress REAL NOT NULL,
       location TEXT,
       scroll_ratio REAL,
-      reading_duration INTEGER NOT NULL,
       device_id TEXT,
       device_name TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -404,7 +403,6 @@ function getConnection() {
   // Migration: Add missing columns to reading_progress (2026-03-09)
   const currentProgressInfo = sqlite.prepare("PRAGMA table_info(reading_progress)").all() as { name: string }[];
   const hasScrollRatio = currentProgressInfo.some((col) => col.name === "scroll_ratio");
-  const hasReadingDuration = currentProgressInfo.some((col) => col.name === "reading_duration");
   const hasDeviceIdColumn = currentProgressInfo.some((col) => col.name === "device_id");
   const hasLastSyncId = currentProgressInfo.some((col) => col.name === "last_sync_id");
   const hasFurthestProgress = currentProgressInfo.some((col) => col.name === "furthest_progress");
@@ -415,9 +413,6 @@ function getConnection() {
   }
   if (!hasScrollRatio) {
     sqlite.exec(`ALTER TABLE reading_progress ADD COLUMN scroll_ratio REAL;`);
-  }
-  if (!hasReadingDuration) {
-    sqlite.exec(`ALTER TABLE reading_progress ADD COLUMN reading_duration INTEGER DEFAULT 0;`);
   }
   if (!hasDeviceIdColumn) {
     sqlite.exec(`ALTER TABLE reading_progress ADD COLUMN device_id TEXT;`);
@@ -434,6 +429,14 @@ function getConnection() {
   const progressHistoryInfo = sqlite.prepare("PRAGMA table_info(progress_history)").all() as { name: string }[];
   if (progressHistoryInfo.some((col) => col.name === "version")) {
     sqlite.exec(`ALTER TABLE progress_history DROP COLUMN version;`);
+  }
+  const durationProgressInfo = sqlite.prepare("PRAGMA table_info(reading_progress)").all() as { name: string }[];
+  if (durationProgressInfo.some((col) => col.name === "reading_duration")) {
+    sqlite.exec(`ALTER TABLE reading_progress DROP COLUMN reading_duration;`);
+  }
+  const durationHistoryInfo = sqlite.prepare("PRAGMA table_info(progress_history)").all() as { name: string }[];
+  if (durationHistoryInfo.some((col) => col.name === "reading_duration")) {
+    sqlite.exec(`ALTER TABLE progress_history DROP COLUMN reading_duration;`);
   }
 
   // Migration: Add font_family and flip_mode to reader_settings (2026-03-31)

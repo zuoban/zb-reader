@@ -34,7 +34,6 @@ export async function GET(req: NextRequest) {
             scrollRatio: progress.scrollRatio,
             currentPage: progress.currentPage,
             totalPages: progress.totalPages,
-            readingDuration: progress.readingDuration,
             deviceId: progress.deviceId,
             lastReadAt: progress.lastReadAt,
             updatedAt: progress.updatedAt,

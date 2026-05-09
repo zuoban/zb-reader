@@ -43,7 +43,6 @@ export async function POST(req: NextRequest) {
             furthest_progress: number;
             location: string | null;
             scroll_ratio: number | null;
-            reading_duration: number;
             device_id: string | null;
           }
         | undefined;
@@ -51,8 +50,8 @@ export async function POST(req: NextRequest) {
       if (current) {
         sqlite
           .prepare(
-            `INSERT INTO progress_history (id, user_id, book_id, progress, location, scroll_ratio, reading_duration, device_id, device_name, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            `INSERT INTO progress_history (id, user_id, book_id, progress, location, scroll_ratio, device_id, device_name, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
           )
           .run(
             uuidv4(),
@@ -61,7 +60,6 @@ export async function POST(req: NextRequest) {
             current.progress,
             current.location,
             current.scroll_ratio,
-            current.reading_duration,
             current.device_id,
             null,
             now
@@ -69,14 +67,13 @@ export async function POST(req: NextRequest) {
 
         sqlite
           .prepare(
-            `UPDATE reading_progress SET progress = ?, furthest_progress = ?, location = ?, scroll_ratio = ?, reading_duration = ?, device_id = ?, last_read_at = ?, updated_at = ? WHERE user_id = ? AND book_id = ?`
+            `UPDATE reading_progress SET progress = ?, furthest_progress = ?, location = ?, scroll_ratio = ?, device_id = ?, last_read_at = ?, updated_at = ? WHERE user_id = ? AND book_id = ?`
           )
           .run(
             historyRecord.progress,
             Math.max(current.furthest_progress ?? current.progress ?? 0, historyRecord.progress),
             historyRecord.location,
             historyRecord.scrollRatio,
-            historyRecord.readingDuration,
             historyRecord.deviceId,
             now,
             now,
@@ -86,8 +83,8 @@ export async function POST(req: NextRequest) {
       } else {
         sqlite
           .prepare(
-            `INSERT INTO reading_progress (id, user_id, book_id, progress, furthest_progress, location, scroll_ratio, reading_duration, device_id, last_read_at, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            `INSERT INTO reading_progress (id, user_id, book_id, progress, furthest_progress, location, scroll_ratio, device_id, last_read_at, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
           )
           .run(
             uuidv4(),
@@ -97,7 +94,6 @@ export async function POST(req: NextRequest) {
             historyRecord.progress,
             historyRecord.location,
             historyRecord.scrollRatio,
-            historyRecord.readingDuration,
             historyRecord.deviceId,
             now,
             now,
@@ -120,7 +116,6 @@ export async function POST(req: NextRequest) {
         progress: historyRecord.progress,
         location: historyRecord.location,
         scrollRatio: historyRecord.scrollRatio,
-        readingDuration: historyRecord.readingDuration,
       },
     });
   } catch (error) {

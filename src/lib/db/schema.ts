@@ -63,7 +63,6 @@ export const readingProgress = sqliteTable(
     scrollRatio: real("scroll_ratio"),
     currentPage: integer("current_page"),
     totalPages: integer("total_pages"),
-    readingDuration: integer("reading_duration").notNull().default(0),
     deviceId: text("device_id"),
     lastSyncId: text("last_sync_id"),
     lastReadAt: text("last_read_at")
@@ -96,7 +95,6 @@ export const progressHistory = sqliteTable(
     progress: real("progress").notNull(),
     location: text("location"),
     scrollRatio: real("scroll_ratio"),
-    readingDuration: integer("reading_duration").notNull(),
     deviceId: text("device_id"),
     deviceName: text("device_name"),
     createdAt: text("created_at")

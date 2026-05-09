@@ -18,7 +18,6 @@ export interface UseProgressSyncReturn {
   pendingSync: boolean;
   isSyncing: boolean;
   progress: number;
-  readingDuration: number;
   updateProgress: (update: ProgressUpdate, forceSync?: boolean) => void;
   forceSync: () => Promise<void>;
   flushPendingDebounced: () => Promise<void>;
@@ -30,7 +29,6 @@ export function useProgressSync(bookId: string): UseProgressSyncReturn {
   const [pendingSync, setPendingSync] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [readingDuration, setReadingDuration] = useState(0);
 
   const managerRef = useRef(getLocalProgressManager());
 
@@ -57,7 +55,6 @@ export function useProgressSync(bookId: string): UseProgressSyncReturn {
     manager.loadFromServer(bookId).then((localProgress) => {
       if (localProgress) {
         setProgress(localProgress.progress);
-        setReadingDuration(localProgress.readingDuration);
       }
     });
 
@@ -74,9 +71,6 @@ export function useProgressSync(bookId: string): UseProgressSyncReturn {
 
       if (update.progress !== undefined) {
         setProgress(update.progress);
-      }
-      if (update.readingDuration !== undefined) {
-        setReadingDuration(update.readingDuration);
       }
     },
     [bookId]
@@ -124,7 +118,6 @@ export function useProgressSync(bookId: string): UseProgressSyncReturn {
         const data = await response.json();
 
         setProgress(data.progress.progress);
-        setReadingDuration(data.progress.readingDuration);
 
         await managerRef.current.loadFromServer(bookId);
       } catch (error) {
@@ -139,7 +132,6 @@ export function useProgressSync(bookId: string): UseProgressSyncReturn {
     pendingSync,
     isSyncing,
     progress,
-    readingDuration,
     updateProgress,
     forceSync,
     flushPendingDebounced,

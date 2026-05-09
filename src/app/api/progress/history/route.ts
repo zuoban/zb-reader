@@ -51,7 +51,6 @@ export async function GET(req: NextRequest) {
         progress: item.progress,
         location: item.location,
         scrollRatio: item.scrollRatio,
-        readingDuration: item.readingDuration,
         deviceId: item.deviceId,
         deviceName: item.deviceName,
         createdAt: item.createdAt,

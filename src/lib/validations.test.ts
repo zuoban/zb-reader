@@ -17,7 +17,6 @@ describe("progressSchema", () => {
       progress: 0.42,
       location: "epubcfi(/6/2!/4/2/1:0)",
       scrollRatio: null,
-      readingDuration: 120,
       deviceId: "desktop-device",
       currentPage: null,
       totalPages: null,

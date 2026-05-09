@@ -36,6 +36,13 @@
       "when": 1778341500000,
       "tag": "0004_drop_progress_version",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1778341800000,
+      "tag": "0005_drop_reading_duration",
+      "breakpoints": true
     }
   ]
 }

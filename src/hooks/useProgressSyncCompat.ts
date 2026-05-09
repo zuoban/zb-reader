@@ -3,7 +3,6 @@
 import { useCallback, useRef, useEffect } from "react";
 import { logger } from "@/lib/logger";
 import { useProgressSync } from "./useProgressSync";
-import { useReadingTracker } from "./useReadingTracker";
 
 /**
  * 兼容旧系统的进度保存 Hook
@@ -18,25 +17,11 @@ export function useProgressSyncCompat(bookId: string) {
     isSyncing,
   } = useProgressSync(bookId);
 
-  const {
-    accumulatedDuration,
-    startTracking,
-    pauseTracking,
-  } = useReadingTracker(bookId);
-
   // Refs for compatibility with old code
   const currentLocationRef = useRef<string | null>(null);
   const progressRef = useRef(0);
   const currentPageRef = useRef<number | undefined>(undefined);
   const totalPagesRef = useRef<number | undefined>(undefined);
-
-  // Start tracking on mount
-  useEffect(() => {
-    startTracking();
-    return () => {
-      pauseTracking();
-    };
-  }, [startTracking, pauseTracking]);
 
   // Compatible saveProgress function
   const saveProgress = useCallback(
@@ -52,7 +37,6 @@ export function useProgressSyncCompat(bookId: string) {
             location: currentLocationRef.current,
             currentPage: currentPageRef.current,
             totalPages: totalPagesRef.current,
-            readingDuration: accumulatedDuration,
           },
           forceSave
         );
@@ -63,7 +47,7 @@ export function useProgressSyncCompat(bookId: string) {
         return { conflict: false };
       }
     },
-    [updateProgress, accumulatedDuration]
+    [updateProgress]
   );
 
   // Compatible debouncedSaveProgress function
@@ -130,12 +114,9 @@ export function useProgressSyncCompat(bookId: string) {
     debouncedSaveProgress,
 
     // 新增功能
-    startTracking,
-    pauseTracking,
     pendingSync,
     isSyncing,
     forceSync,
     flushPendingDebounced,
-    accumulatedDuration,
   };
 }

@@ -23,10 +23,8 @@ export interface LocalProgress {
   scrollRatio: number | null;
   currentPage: number | null;
   totalPages: number | null;
-  readingDuration: number;
   deviceId: string;
   updatedAt: string;
-  lastSyncReadingDuration: number;
 }
 
 export interface ProgressUpdate {
@@ -35,7 +33,6 @@ export interface ProgressUpdate {
   scrollRatio?: number | null;
   currentPage?: number | null;
   totalPages?: number | null;
-  readingDuration?: number;
 }
 
 export class LocalProgressManager {
@@ -73,10 +70,6 @@ export class LocalProgressManager {
           })
         );
       },
-      onSyncComplete: async () => {
-        // 同步成功后，更新所有书籍的 lastSyncReadingDuration
-        await this.updateLastSyncReadingDuration();
-      },
     });
 
     if (typeof window !== "undefined") {
@@ -92,22 +85,6 @@ export class LocalProgressManager {
         }
       });
       window.addEventListener("pagehide", handleUnload);
-    }
-  }
-
-  private async updateLastSyncReadingDuration(): Promise<void> {
-    if (!this.db) return;
-
-    try {
-      const allProgress = await this.db.getAll(PROGRESS_STORE);
-      for (const progress of allProgress) {
-        await this.db.put(PROGRESS_STORE, {
-          ...progress,
-          lastSyncReadingDuration: progress.readingDuration,
-        });
-      }
-    } catch (error) {
-      logger.error("local-progress", "Failed to update lastSyncReadingDuration", error);
     }
   }
 
@@ -166,10 +143,8 @@ export class LocalProgressManager {
         scrollRatio: data.progress.scrollRatio || null,
         currentPage: data.progress.currentPage || null,
         totalPages: data.progress.totalPages || null,
-        readingDuration: data.progress.readingDuration || 0,
         deviceId: data.progress.deviceId || "",
         updatedAt: data.progress.updatedAt || new Date().toISOString(),
-        lastSyncReadingDuration: data.progress.readingDuration || 0,
       };
 
       await this.initPromise;
@@ -204,10 +179,8 @@ export class LocalProgressManager {
           scrollRatio: null,
           currentPage: null,
           totalPages: null,
-          readingDuration: 0,
           deviceId: getDeviceId(),
           updatedAt: new Date().toISOString(),
-          lastSyncReadingDuration: 0,
         };
       }
 
@@ -221,18 +194,11 @@ export class LocalProgressManager {
         scrollRatio: update.scrollRatio ?? current.scrollRatio,
         currentPage: update.currentPage ?? current.currentPage,
         totalPages: update.totalPages ?? current.totalPages,
-        readingDuration: update.readingDuration ?? current.readingDuration,
         deviceId: getDeviceId(),
         updatedAt: now,
       };
 
       await this.db.put(PROGRESS_STORE, updated);
-
-      // 计算阅读时长增量（本次同步周期内增加的时长）
-      const readingDurationDelta = Math.max(
-        0,
-        (update.readingDuration ?? current.readingDuration) - current.lastSyncReadingDuration
-      );
 
       const syncItem: SyncItem = {
         syncId: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2),
@@ -240,7 +206,6 @@ export class LocalProgressManager {
         progress: updated.progress,
         location: updated.location,
         scrollRatio: updated.scrollRatio,
-        readingDuration: readingDurationDelta,
         deviceId: updated.deviceId,
         currentPage: updated.currentPage,
         totalPages: updated.totalPages,
@@ -251,8 +216,7 @@ export class LocalProgressManager {
         Math.abs(updated.progress - current.progress) >= 0.1 ||
         updated.location !== current.location ||
         updated.currentPage !== current.currentPage ||
-        (updated.scrollRatio !== null && current.scrollRatio !== null && Math.abs(updated.scrollRatio - current.scrollRatio) >= 0.01) ||
-        readingDurationDelta >= 60;
+        (updated.scrollRatio !== null && current.scrollRatio !== null && Math.abs(updated.scrollRatio - current.scrollRatio) >= 0.01);
 
       if (forceSync) {
         await this.syncQueue.enqueue(syncItem);

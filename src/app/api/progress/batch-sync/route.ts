@@ -32,7 +32,6 @@ export async function POST(req: NextRequest) {
         progress,
         location,
         scrollRatio,
-        readingDuration,
         deviceId,
         currentPage,
         totalPages,
@@ -62,7 +61,6 @@ export async function POST(req: NextRequest) {
 
       const now = new Date().toISOString();
       const incomingProgress = progress ?? 0;
-      const incomingReadingDuration = readingDuration ?? 0;
 
       if (!currentProgress) {
         await db.insert(readingProgress).values({
@@ -75,7 +73,6 @@ export async function POST(req: NextRequest) {
           scrollRatio: scrollRatio ?? null,
           currentPage: currentPage ?? null,
           totalPages: totalPages ?? null,
-          readingDuration: incomingReadingDuration,
           deviceId: deviceId ?? null,
           lastSyncId: syncId ?? null,
           lastReadAt: now,
@@ -95,7 +92,6 @@ export async function POST(req: NextRequest) {
         currentProgress.furthestProgress ?? currentProgress.progress ?? 0,
         finalProgress
       );
-      const finalReadingDuration = (currentProgress.readingDuration || 0) + incomingReadingDuration;
 
       await db
         .update(readingProgress)
@@ -106,7 +102,6 @@ export async function POST(req: NextRequest) {
           scrollRatio: scrollRatio ?? currentProgress.scrollRatio,
           currentPage: currentPage ?? currentProgress.currentPage,
           totalPages: totalPages ?? currentProgress.totalPages,
-          readingDuration: finalReadingDuration,
           deviceId: deviceId ?? currentProgress.deviceId,
           lastSyncId: syncId ?? null,
           lastReadAt: now,

@@ -56,7 +56,6 @@ describe('sync-queue', () => {
       progress: 0.5,
       location: 'location-1',
       scrollRatio: 0.5,
-      readingDuration: 1000,
       deviceId: 'device-1',
       ...overrides,
     };
