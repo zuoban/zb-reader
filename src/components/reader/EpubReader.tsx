@@ -90,7 +90,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     },
     ref
   ) => {
-    const pageWidth = useEpubResponsiveWidth();
+    const contentWidth = useEpubResponsiveWidth();
 
     const viewerRef = useRef<HTMLDivElement>(null);
     const bookRef = useRef<Book | null>(null);
@@ -240,7 +240,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       fontFamily,
       fontSize,
       isRenditionReady,
-      pageWidth,
+      pageWidth: contentWidth,
       renditionRef,
       theme,
     });
@@ -259,7 +259,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       epubContextRef,
       isRenditionReady,
       lastLayoutCfiRef,
-      pageWidth,
+      pageWidth: contentWidth,
       renditionRef,
     });
 
@@ -279,12 +279,11 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     });
 
     return (
-      <div className="relative flex h-full w-full justify-center px-2 sm:px-4 lg:px-6 xl:px-8">
+      <div className="relative h-full w-full px-2 sm:px-4 lg:px-6 xl:px-8">
         <div
           ref={viewerRef}
           id="epub-viewer"
-          className="h-full flex-none overflow-x-hidden rounded-[24px]"
-          style={{ width: `${pageWidth}%` }}
+          className="h-full w-full overflow-x-hidden rounded-[24px]"
         />
       </div>
     );

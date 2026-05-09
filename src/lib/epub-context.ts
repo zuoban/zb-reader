@@ -383,10 +383,17 @@ export class EpubContext {
     const body = this.getBody();
     if (!body) return;
 
+    body.style.width = "100%";
+    body.style.maxWidth = "none";
+    body.style.marginLeft = "0";
+    body.style.marginRight = "0";
+
     const children = body.children;
     for (let i = 0; i < children.length; i++) {
       const child = children[i] as HTMLElement;
       child.style.maxWidth = `${maxWidthPercent}%`;
+      child.style.marginLeft = "auto";
+      child.style.marginRight = "auto";
     }
   }
 }
