@@ -47,6 +47,7 @@ function applyTransparentShell(viewer: HTMLDivElement | null) {
   if (epubContainer) {
     epubContainer.style.background = "transparent";
     epubContainer.style.boxShadow = "none";
+    epubContainer.style.overflowX = "hidden";
   }
 
   const iframeEl = viewer.querySelector("iframe") as HTMLIFrameElement | null;

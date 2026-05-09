@@ -280,7 +280,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
         <div
           ref={viewerRef}
           id="epub-viewer"
-          className="h-full flex-none rounded-[24px]"
+          className="h-full flex-none overflow-x-hidden rounded-[24px]"
           style={{ width: `${pageWidth}%` }}
         />
       </div>

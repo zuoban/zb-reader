@@ -5,7 +5,7 @@ export const THEME_STYLES: Record<
   Record<string, Record<string, string>>
 > = {
   light: {
-    html: { background: "#f5f7fb" },
+    html: { background: "#f5f7fb", "overflow-x": "hidden" },
     body: {
       background: "#f5f7fb",
       color: "hsl(240 10% 3.9%)",
@@ -27,6 +27,7 @@ export const THEME_STYLES: Record<
       "flex-direction": "column",
       "align-items": "center",
       "box-sizing": "border-box",
+      "overflow-x": "hidden",
     },
     "body > *": {
       width: "100%",
@@ -34,6 +35,7 @@ export const THEME_STYLES: Record<
       "margin-left": "auto",
       "margin-right": "auto",
       "box-sizing": "border-box",
+      "overflow-x": "hidden",
     },
     p: { margin: "0 0 0.95em", "text-align": "left", "text-indent": "2em" },
     "h1, h2, h3, h4, h5, h6": {
@@ -139,8 +141,9 @@ export const THEME_STYLES: Record<
       "flex-direction": "column",
       "align-items": "center",
       "box-sizing": "border-box",
+      "overflow-x": "hidden",
     },
-    "body > *": { width: "100%", "max-width": "100%", "margin-left": "auto", "margin-right": "auto", "box-sizing": "border-box" },
+    "body > *": { width: "100%", "max-width": "100%", "margin-left": "auto", "margin-right": "auto", "box-sizing": "border-box", "overflow-x": "hidden" },
     p: { margin: "0 0 0.95em", "text-align": "left", "text-indent": "2em" },
     "h1, h2, h3, h4, h5, h6": {
       color: "hsl(0 0% 98%)",
@@ -199,7 +202,7 @@ export const THEME_STYLES: Record<
     td: { padding: "0.68em 1em", "border-bottom": "1px solid rgba(255,255,255,0.1)" },
   },
   sepia: {
-    html: { background: "#F5F1E8" },
+    html: { background: "#F5F1E8", "overflow-x": "hidden" },
     body: {
       background: "#F5F1E8",
       color: "#5B4636",
@@ -221,8 +224,9 @@ export const THEME_STYLES: Record<
       "flex-direction": "column",
       "align-items": "center",
       "box-sizing": "border-box",
+      "overflow-x": "hidden",
     },
-    "body > *": { width: "100%", "max-width": "100%", "margin-left": "auto", "margin-right": "auto", "box-sizing": "border-box" },
+    "body > *": { width: "100%", "max-width": "100%", "margin-left": "auto", "margin-right": "auto", "box-sizing": "border-box", "overflow-x": "hidden" },
     p: { margin: "0 0 1em", "text-align": "left", "text-indent": "2em" },
     "h1, h2, h3, h4, h5, h6": {
       color: "#4C382B",
