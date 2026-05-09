@@ -73,7 +73,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <Card className="liquid-panel w-full overflow-hidden rounded-[2rem] py-6 shadow-2xl transition-all duration-400 ease-out">
+    <Card className="bg-background/60 backdrop-blur-2xl border border-white/20 dark:border-white/10 w-full overflow-hidden rounded-[2rem] py-6 shadow-2xl transition-all duration-400 ease-out">
       <CardHeader className="relative text-center pb-4">
         <div className="liquid-hairline absolute inset-x-8 top-0 h-px opacity-60" />
         <div className="flex justify-center mb-6">
