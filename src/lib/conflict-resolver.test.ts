@@ -15,6 +15,7 @@ function createServerProgress(overrides: Partial<ReadingProgress> = {}): Reading
     totalPages: 200,
     readingDuration: 1800,
     deviceId: 'device-server',
+    lastSyncId: null,
     lastReadAt: '2024-01-15 10:00:00',
     createdAt: '2024-01-01 00:00:00',
     updatedAt: '2024-01-15 10:00:00',
