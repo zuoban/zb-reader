@@ -180,16 +180,6 @@ export const BookCard = memo(function BookCard({
                 </div>
               )}
 
-              {/* Visual Progress Bar Overlay */}
-              {hasProgress && (
-                <div className="absolute inset-x-0 bottom-0 z-30 h-1.5 bg-black/40 backdrop-blur-sm">
-                  <div
-                    className="h-full bg-white/90 shadow-[0_0_10px_rgba(255,255,255,0.8)] transition-all duration-500"
-                    style={{ width: `${progress * 100}%` }}
-                  />
-                </div>
-              )}
-              
               {isCompleted && (
                 <div className="absolute top-2 right-2 z-20 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-[color:var(--chart-3)] shadow-lg backdrop-blur-sm">
                   <Check className="h-3.5 w-3.5 stroke-[3px]" />
@@ -219,6 +209,16 @@ export const BookCard = memo(function BookCard({
             </div>
           )}
         </div>
+
+        {/* Progress Bar - positioned below cover image */}
+        {hasProgress && (
+          <div className="mx-4 mt-1 h-1.5 overflow-hidden rounded-full bg-black/10">
+            <div
+              className="h-full rounded-full bg-[color:var(--cta)] shadow-[0_0_6px_rgba(217,119,6,0.6)] transition-all duration-500"
+              style={{ width: `${progress * 100}%` }}
+            />
+          </div>
+        )}
       </Link>
 
       {/* Card Content */}
