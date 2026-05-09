@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { findOwnedBook } from "@/lib/book-ownership";
-import { getCoverFilePath, coverExists } from "@/lib/storage";
+import { coverExists } from "@/lib/storage";
+import { getCachedCover } from "@/lib/cover-cache";
 import { logger } from "@/lib/logger";
-import fs from "fs";
-import { Readable } from "stream";
 import { notFound, serverError, getAuthUserId } from "@/lib/api-utils";
 
 export async function GET(
@@ -27,10 +26,13 @@ export async function GET(
       return notFound("封面文件不存在");
     }
 
-    const coverPath = getCoverFilePath(book.cover);
-    const coverStream = fs.createReadStream(coverPath);
+    const coverBuffer = await getCachedCover(book.cover);
 
-    return new NextResponse(Readable.toWeb(coverStream) as ReadableStream, {
+    if (!coverBuffer) {
+      return notFound("封面文件读取失败");
+    }
+
+    return new NextResponse(coverBuffer, {
       headers: {
         "Content-Type": "image/jpeg",
         "Cache-Control": "private, max-age=31536000, immutable",

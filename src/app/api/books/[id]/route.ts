@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { books } from "@/lib/db/schema";
 import { deleteBookFile, deleteCoverImage } from "@/lib/storage";
+import { invalidateCoverCache } from "@/lib/cover-cache";
 import { logger } from "@/lib/logger";
 import { notFound, serverError, getAuthUserId, validateJson } from "@/lib/api-utils";
 import { bookCategorySchema } from "@/lib/validations";
@@ -55,6 +56,7 @@ export async function DELETE(
     deleteBookFile(book.filePath);
     if (book.cover) {
       deleteCoverImage(book.cover);
+      invalidateCoverCache(book.cover);
     }
 
     await db.delete(books).where(eq(books.id, id));

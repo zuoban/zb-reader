@@ -13,6 +13,7 @@ import {
   Square,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BookCoverImage } from "@/components/ui/book-cover-image";
 import { TtsSettingsDialog } from "@/components/reader/TtsSettingsDialog";
 import { cn } from "@/lib/utils";
 import type { Book } from "@/lib/db/schema";
@@ -182,8 +183,8 @@ export function FullscreenTtsView({
             <div className="flex min-w-0 items-center gap-2.5">
               <div className="tts-immersive-control relative flex h-12 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[12px]">
                 {book.cover ? (
-                  <img
-                    src={`/api/books/${book.id}/cover`}
+                  <BookCoverImage
+                    bookId={book.id}
                     alt={book.title}
                     className="h-full w-full object-cover"
                   />

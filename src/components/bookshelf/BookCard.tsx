@@ -6,6 +6,7 @@ import { memo, useEffect, useRef, useState } from "react";
 import { BookOpen, Check, MoreVertical, Tags, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { BookCoverImage } from "@/components/ui/book-cover-image";
 import { READER_ROUTE_TRANSITION_EVENT } from "@/components/layout/ReaderRouteTransition";
 import {
   DropdownMenu,
@@ -157,11 +158,10 @@ export const BookCard = memo(function BookCard({
           {/* Cover Image */}
           {book.cover && !coverError ? (
             <>
-              <img
-                src={`/api/books/${book.id}/cover`}
+              <BookCoverImage
+                bookId={book.id}
                 alt={book.title || "书籍封面"}
                 className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.08]"
-                loading="lazy"
                 onError={() => setCoverError(true)}
               />
               

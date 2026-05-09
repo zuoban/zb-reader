@@ -3,13 +3,13 @@
   "copyIgnoredOnWorktreeCreate" : false,
   "copyUntrackedOnWorktreeCreate" : false,
   "deleteScript" : "",
-  "openActionID" : "antigravity",
+  "openActionID" : "warp",
   "pullRequestMergeStrategy" : "merge",
   "runScript" : "npm run dev",
   "scripts" : [
     {
       "command" : "npm run dev",
-      "id" : "133B7360-548A-4823-82CF-8E7ED8BBB733",
+      "id" : "41A26188-B973-4815-82D5-A37C4B2EF6DE",
       "kind" : "run",
       "name" : "Run"
     }
