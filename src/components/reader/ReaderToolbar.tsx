@@ -74,25 +74,22 @@ const ToolbarButton = memo(function ToolbarButton({
           onClick={onClick}
           aria-label={tooltip}
           className={cn(
-            "reader-liquid-control h-8 w-8 cursor-pointer rounded-xl transition-all duration-200 sm:h-9 sm:w-9",
-            "reader-toolbar-button",
-            "hover:-translate-y-0.5",
-            "focus-visible:border-[var(--reader-border)] focus-visible:ring-[color-mix(in_srgb,var(--reader-primary)_18%,transparent)] focus-visible:ring-offset-0",
+            "h-8 w-8 cursor-pointer rounded-full transition-all duration-300 ease-out sm:h-9 sm:w-9",
+            "focus-visible:ring-1 focus-visible:ring-[var(--reader-primary)] focus-visible:ring-offset-0",
             isActive
-              ? "border-[var(--reader-primary)]/35 bg-[var(--reader-primary)]/15 text-[var(--reader-primary)] shadow-inner"
-              : "hover:text-[var(--reader-primary)]",
+              ? "bg-[color-mix(in_srgb,var(--reader-text)_12%,transparent)] text-[var(--reader-primary)]"
+              : "text-[color-mix(in_srgb,var(--reader-text)_80%,transparent)] hover:bg-[color-mix(in_srgb,var(--reader-text)_8%,transparent)] hover:text-[var(--reader-text)]",
             className
           )}
-          style={{ color: isActive ? "var(--reader-primary)" : "var(--reader-text)" }}
         >
           {children}
         </Button>
       </TooltipTrigger>
       <TooltipContent 
         side="bottom" 
-        sideOffset={8}
+        sideOffset={12}
         hideArrow
-        className="reader-liquid-surface reader-toolbar-tooltip text-xs shadow-lg"
+        className="reader-liquid-surface text-xs shadow-lg"
       >
         {tooltip}
       </TooltipContent>
@@ -135,12 +132,12 @@ export const ReaderToolbar = memo(function ReaderToolbar({
       >
         <div className="mx-auto max-w-3xl px-4 pt-4">
           <div
-            className="reader-liquid-surface reader-toolbar-surface pointer-events-auto relative flex items-center justify-between overflow-hidden rounded-2xl px-1.5 py-1.5 transition-shadow duration-300 sm:px-2 sm:py-2"
+            className="reader-liquid-surface reader-toolbar-surface pointer-events-auto relative flex items-center justify-between overflow-hidden rounded-full px-2 py-1.5 transition-shadow duration-300 sm:px-2.5 sm:py-2"
             style={{
               color: "var(--reader-text)",
             }}
           >
-            <div className="reader-toolbar-hairline pointer-events-none absolute inset-x-4 top-0 h-px" />
+            <div className="reader-toolbar-hairline pointer-events-none absolute inset-x-6 top-0 h-px" />
             {/* 左侧：返回和目录 */}
             <div className="flex items-center gap-0.5 sm:gap-1">
               <ToolbarButton onClick={onBack} tooltip="返回书架">

@@ -718,17 +718,7 @@
   );
 }
 
-.reader-toolbar-button {
-  border-color: color-mix(in srgb, var(--reader-border, #ddd) 64%, transparent);
-  background: color-mix(in srgb, var(--reader-bg, white) 74%, white 18%);
-}
 
-.reader-toolbar-button:hover {
-  color: var(--reader-primary) !important;
-  background:
-    linear-gradient(180deg, color-mix(in srgb, white 34%, transparent), transparent 62%),
-    color-mix(in srgb, var(--reader-bg, white) 84%, var(--reader-primary, #111) 6%);
-}
 
 .reader-page-turn-dock {
   border: 1px solid color-mix(in srgb, var(--reader-border, #ddd) 42%, transparent);
