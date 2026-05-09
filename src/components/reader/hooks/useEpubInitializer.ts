@@ -138,6 +138,7 @@ export function useEpubInitializer({
     themeRef.current = theme;
   }, [theme]);
 
+  // EPUB initialization registers event handlers once; callbacks captured via refs
   useEffect(() => {
     if (!viewerRef.current) return;
 

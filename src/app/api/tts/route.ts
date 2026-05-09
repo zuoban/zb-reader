@@ -53,41 +53,27 @@ export async function POST(req: NextRequest) {
     const configsToInsert: (typeof ttsConfigs.$inferInsert)[] = [];
 
     const processItem = (item: ValidTtsImportItem) => {
-      // Check if it's likely a Legado config (has 'header' as string, 'url', 'name')
-      // Legado headers are often JSON strings, we want to store them as objects if possible, 
-      // but our schema defines headers as JSON (which Drizzle handles if we pass an object).
-      // If it's a direct API match, we use it directly.
-      
       let headers = item.headers;
       const method = item.method || "GET";
       const requestBody = item.body;
 
-      // Legado mapping logic
-      if (item.header && typeof item.header === 'string') {
-          try {
-              headers = JSON.parse(item.header);
-          } catch {
-              logger.warn("tts", "Failed to parse Legado header JSON", item.header);
-              // If not valid JSON, maybe store as is or object? 
-              // Our schema expects `json` mode, so `headers` should be an object.
-              // If it's a simple string, we might just put it in a wrapper or ignore.
-              headers = { "User-Agent": item.header }; // Fallback or assume it's just a UA string if parsing fails? 
-              // Actually Legado headers are usually JSON.
-          }
+      // Legado compatibility: convert string header to object
+      if (typeof item.header === "string" && item.header.length > 0) {
+        try {
+          headers = JSON.parse(item.header);
+        } catch {
+          logger.warn("tts", "无法解析 Legado header，使用默认 User-Agent", item.header);
+          headers = { "User-Agent": item.header };
+        }
       }
-
-      // Check for POST method in Legado usually implied by presence of body or specific flags? 
-      // Actually Legado usually puts everything in URL or uses standard HTTP methods if specified. 
-      // Often Legado URLs are just templates. 
-      // For now, default to GET unless specified.
 
       return {
         id: uuidv4(),
         userId,
         name: item.name || "未命名配置",
         url: item.url,
-        method: method,
-        headers: headers,
+        method,
+        headers,
         body: requestBody,
         contentType: item.contentType,
         concurrentRate: item.concurrentRate ? Number(item.concurrentRate) : 0,

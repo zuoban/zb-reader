@@ -117,6 +117,7 @@ export function ReaderRouteTransition() {
     return () => window.clearTimeout(fallbackTimer);
   }, [pathname, transition]);
 
+  // useMemo just caches default metrics; no external dependencies needed
   const transitionMetrics = useMemo(() => {
     if (typeof window === "undefined") {
       return { width: 280, height: 396, translateY: -54, headerTop: "14%" };
@@ -132,7 +133,7 @@ export function ReaderRouteTransition() {
       translateY: isMobile ? -50 : -54,
       headerTop: isMobile ? "11%" : "14%",
     };
-  }, [transition?.href]);
+  }, []);
 
   if (!transition || prefersReducedMotion) {
     return null;

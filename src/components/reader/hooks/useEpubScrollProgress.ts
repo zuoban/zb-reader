@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useRef } from "react";
 import type { MutableRefObject, RefObject } from "react";
 import { debounce } from "@/lib/utils";
+import type { DebouncedFunction } from "@/lib/utils";
 
 interface UseEpubScrollProgressParams {
   currentLocationRef: MutableRefObject<string | null>;
@@ -28,24 +29,25 @@ export function useEpubScrollProgress({
   scrollRatioRef,
   viewerRef,
 }: UseEpubScrollProgressParams) {
-  const handleScroll = useMemo(() => {
-    return debounce((epubContainer: HTMLElement) => {
-      const scrollRange = epubContainer.scrollHeight - epubContainer.clientHeight;
-      if (scrollRange <= 0) return;
+  const handleScrollRef = useRef<DebouncedFunction<[HTMLElement]> | null>(null);
 
-      const ratio = Math.min(1, Math.max(0, epubContainer.scrollTop / scrollRange));
-      scrollRatioRef.current = ratio;
+  // Initialize debounced handler once (refs are stable, so closures always read latest values)
+  handleScrollRef.current ??= debounce((epubContainer: HTMLElement) => {
+    const scrollRange = epubContainer.scrollHeight - epubContainer.clientHeight;
+    if (scrollRange <= 0) return;
 
-      if (!currentLocationRef.current) return;
+    const ratio = Math.min(1, Math.max(0, epubContainer.scrollTop / scrollRange));
+    scrollRatioRef.current = ratio;
 
-      onLocationChange?.({
-        cfi: currentLocationRef.current,
-        progress: progressRef.current,
-        scrollRatio: ratio,
-        href: undefined,
-      });
-    }, 300);
-  }, [currentLocationRef, onLocationChange, progressRef, scrollRatioRef]);
+    if (!currentLocationRef.current) return;
+
+    onLocationChange?.({
+      cfi: currentLocationRef.current,
+      progress: progressRef.current,
+      scrollRatio: ratio,
+      href: undefined,
+    });
+  }, 300);
 
   useEffect(() => {
     if (!isRenditionReady) return;
@@ -55,12 +57,12 @@ export function useEpubScrollProgress({
     ) as HTMLElement | null;
     if (!epubContainer) return;
 
-    const scrollListener = () => handleScroll(epubContainer);
+    const scrollListener = () => handleScrollRef.current?.(epubContainer);
 
     epubContainer.addEventListener("scroll", scrollListener, { passive: true });
 
     return () => {
       epubContainer.removeEventListener("scroll", scrollListener);
     };
-  }, [isRenditionReady, viewerRef, handleScroll]);
+  }, [isRenditionReady, viewerRef]);
 }

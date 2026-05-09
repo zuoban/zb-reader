@@ -9,17 +9,19 @@ import { SearchBar } from "@/components/bookshelf/SearchBar";
 import { BookCardSkeleton } from "@/components/bookshelf/BookCardSkeleton";
 import { BookGrid } from "@/components/bookshelf/BookGrid";
 import { Navbar } from "@/components/layout/Navbar";
-import { READER_RETURN_SPOTLIGHT_KEY } from "@/components/layout/ReaderRouteTransition";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -45,13 +47,12 @@ export default function BookshelfPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
-  const [spotlightBookId, setSpotlightBookId] = useState<string | null>(null);
+  const [spotlightBookId, _setSpotlightBookId] = useState<string | null>(null);
   const [categoryDialogBook, setCategoryDialogBook] = useState<Book | null>(null);
   const [deleteDialogBook, setDeleteDialogBook] = useState<Book | null>(null);
   const [categoryInput, setCategoryInput] = useState("");
   const [savingCategory, setSavingCategory] = useState(false);
   const [deletingBook, setDeletingBook] = useState(false);
-  const deleteCancelButtonRef = useRef<HTMLButtonElement>(null);
   const { setTheme } = useTheme();
   const activeCategoryName = selectedCategory === ALL_CATEGORY ? "" : selectedCategory;
 
@@ -124,7 +125,7 @@ export default function BookshelfPage() {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [activeCategoryName, page]);
+  }, [activeCategoryName, page, searchQuery]);
 
   useEffect(() => {
     fetchBooks(page === 1);
@@ -163,22 +164,6 @@ export default function BookshelfPage() {
       setDeletingBook(false);
     }
   }, [deleteDialogBook]);
-
-  useEffect(() => {
-    if (!deleteDialogBook) return;
-
-    deleteCancelButtonRef.current?.focus();
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !deletingBook) {
-        setDeleteDialogBook(null);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [deleteDialogBook, deletingBook]);
 
   const handleOpenCategoryDialog = useCallback((book: Book) => {
     setCategoryDialogBook(book);
@@ -371,54 +356,30 @@ export default function BookshelfPage() {
         )}
       </main>
 
-      {deleteDialogBook ? (
-        <div
-          className="fixed inset-0 z-50 grid place-items-center bg-black/42 p-4 backdrop-blur-md"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget && !deletingBook) {
-              setDeleteDialogBook(null);
-            }
-          }}
-        >
-          <div
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="delete-book-title"
-            aria-describedby="delete-book-description"
-            className="liquid-panel w-full max-w-md overflow-hidden rounded-2xl border p-6 outline-none"
-          >
-            <div className="liquid-hairline absolute inset-x-4 top-0 h-px" />
-            <div className="space-y-2 text-center sm:text-left">
-              <h2 id="delete-book-title" className="text-lg font-semibold">
-                删除这本书？
-              </h2>
-              <p id="delete-book-description" className="text-sm leading-6 text-muted-foreground">
-                将从书架中移除《{deleteDialogBook.title || "未命名书籍"}》及其本地文件。此操作无法撤销。
-              </p>
-            </div>
-            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <Button
-                ref={deleteCancelButtonRef}
-                type="button"
-                variant="outline"
-                className="cursor-pointer"
-                disabled={deletingBook}
-                onClick={() => setDeleteDialogBook(null)}
-              >
-                取消
-              </Button>
-              <Button
-                type="button"
-                className="cursor-pointer border border-destructive/30 bg-destructive/90 text-white hover:bg-destructive focus-visible:ring-destructive/20"
-                disabled={deletingBook}
-                onClick={handleConfirmDelete}
-              >
-                删除
-              </Button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <AlertDialog open={Boolean(deleteDialogBook)} onOpenChange={(open) => {
+        if (!open && !deletingBook) {
+          setDeleteDialogBook(null);
+        }
+      }}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>删除这本书？</AlertDialogTitle>
+            <AlertDialogDescription>
+              将从书架中移除《{deleteDialogBook?.title || "未命名书籍"}》及其本地文件。此操作无法撤销。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingBook}>取消</AlertDialogCancel>
+            <AlertDialogAction
+              className="border-destructive/30 bg-destructive/90 text-white hover:bg-destructive focus-visible:ring-destructive/20"
+              disabled={deletingBook}
+              onClick={handleConfirmDelete}
+            >
+              删除
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog
         open={Boolean(categoryDialogBook)}

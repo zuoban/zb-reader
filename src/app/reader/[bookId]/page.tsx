@@ -178,7 +178,7 @@ function ReaderContent() {
 
   const handleBackToReader = useCallback(() => {
     setIsTtsViewOpen(false);
-  }, []);
+  }, [setIsTtsViewOpen]);
 
   // Progress saving is now handled by useProgressSyncCompat hook
   // Use saveProgress() and debouncedSaveProgress() from the hook
@@ -229,7 +229,9 @@ function ReaderContent() {
   });
 
   // Wire up handleBack ref for idle timeout
-  handleBackRef.current = handleBack;
+  useEffect(() => {
+    handleBackRef.current = handleBack;
+  }, [handleBack]);
 
   // ---- Idle timeout: 5 minutes no activity -> return to bookshelf ----
   const { idleCountdown, resetIdleTimer: _resetIdleTimer } = useIdleTimeout(() => handleBackRef.current?.(), !isSpeaking);
@@ -397,7 +399,7 @@ function ReaderContent() {
   const handleOpenTtsView = useCallback(() => {
     setIsTtsViewOpen(true);
     setToolbarVisible(false);
-  }, []);
+  }, [setIsTtsViewOpen, setToolbarVisible]);
 
   if (loading || !book || !bookUrl) {
     return (

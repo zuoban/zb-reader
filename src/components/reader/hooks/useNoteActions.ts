@@ -134,7 +134,17 @@ export function useNoteActions({
         toast.error("操作失败");
       }
     },
-    [selectionMenu, bookId, currentPage]
+    [
+      selectionMenu,
+      bookId,
+      currentPage,
+      onHighlightAdded,
+      onHighlightRemoved,
+      onHighlightUpdated,
+      onNoteAdded,
+      progressRef,
+      setSelectionMenu,
+    ]
   );
 
   const handleAddNote = useCallback(() => {
@@ -144,13 +154,13 @@ export function useNoteActions({
       cfiRange: selectionMenu.cfiRange,
     });
     setSelectionMenu((prev) => ({ ...prev, visible: false }));
-  }, [selectionMenu]);
+  }, [selectionMenu, setNoteEditor, setSelectionMenu]);
 
   const handleCopyText = useCallback(() => {
     navigator.clipboard.writeText(selectionMenu.text);
     toast.success("已复制");
     setSelectionMenu((prev) => ({ ...prev, visible: false }));
-  }, [selectionMenu.text]);
+  }, [selectionMenu.text, setSelectionMenu]);
 
   const handleSaveNote = useCallback(
     async (content: string, color: string) => {
@@ -203,18 +213,32 @@ export function useNoteActions({
       }
       setNoteEditor({ open: false, selectedText: "", cfiRange: "" });
     },
-    [noteEditor, bookId, currentPage]
+    [
+      noteEditor,
+      bookId,
+      currentPage,
+      onHighlightAdded,
+      onHighlightRemoved,
+      onHighlightUpdated,
+      onNoteAdded,
+      onNoteUpdated,
+      progressRef,
+      setNoteEditor,
+    ]
   );
 
-  const handleNoteDelete = useCallback(async (id: string) => {
-    try {
-      await fetch(`/api/notes/${id}`, { method: "DELETE" });
-      onNoteRemoved(id);
-      toast.success("已删除笔记");
-    } catch {
-      toast.error("删除失败");
-    }
-  }, []);
+  const handleNoteDelete = useCallback(
+    async (id: string) => {
+      try {
+        await fetch(`/api/notes/${id}`, { method: "DELETE" });
+        onNoteRemoved(id);
+        toast.success("已删除笔记");
+      } catch {
+        toast.error("删除失败");
+      }
+    },
+    [onNoteRemoved]
+  );
 
   const handleNoteEdit = useCallback(
     async (id: string, content: string, color: string) => {
@@ -230,7 +254,7 @@ export function useNoteActions({
         toast.error("更新失败");
       }
     },
-    []
+    [onNoteUpdated]
   );
 
   return {

@@ -292,5 +292,36 @@ describe("Book by ID API", () => {
       expect(res.status).toBe(400);
       expect(data.error).toBe("分类名称不能超过 40 个字符");
     });
+
+    it("should accept empty body and clear category", async () => {
+      mockAuth.mockResolvedValue({
+        user: { id: "user-1", username: "test", email: "test@test.com" },
+        expires: new Date().toISOString(),
+      });
+
+      const existingBook = {
+        id: "book-1",
+        title: "Test Book",
+        author: "Test Author",
+        category: "技术",
+        uploaderId: "user-1",
+      };
+
+      mockFindFirst.mockResolvedValueOnce(existingBook);
+      mockUpdate.mockReturnValue({
+        set: mockSet.mockReturnValue({
+          where: mockWhere.mockResolvedValue(undefined),
+        }),
+      });
+
+      const { PATCH } = await import("./route");
+      const req = createPatchRequest("/api/books/book-1", {});
+      const res = await PATCH(req, { params: Promise.resolve({ id: "book-1" }) });
+
+      expect(res.status).toBe(200);
+      expect(mockSet).toHaveBeenCalledWith(
+        expect.objectContaining({ category: null })
+      );
+    });
   });
 });

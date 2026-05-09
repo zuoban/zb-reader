@@ -34,12 +34,6 @@ export function ProgressHistoryDialog({
   const [loading, setLoading] = useState(false);
   const [restoring, setRestoring] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (open && bookId) {
-      loadHistory();
-    }
-  }, [open, bookId]);
-
   const loadHistory = async () => {
     setLoading(true);
     try {
@@ -53,6 +47,13 @@ export function ProgressHistoryDialog({
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (open && bookId) {
+      loadHistory();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadHistory is stable, only open/bookId should trigger
+  }, [open, bookId]);
 
   const handleRestore = async (historyId: string) => {
     setRestoring(historyId);

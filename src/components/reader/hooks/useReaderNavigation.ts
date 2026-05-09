@@ -129,7 +129,20 @@ export function useReaderNavigation({
 
       debouncedSaveProgress();
     },
-    [bookmarks, debouncedSaveProgress]
+    [
+      bookmarks,
+      currentCfiRef,
+      currentLocationRef,
+      currentPageRef,
+      debouncedSaveProgress,
+      progressRef,
+      setCurrentHref,
+      setCurrentPage,
+      setIsCurrentBookmarked,
+      setProgress,
+      setTotalPages,
+      totalPagesRef,
+    ]
   );
 
   const handleTocLoaded = useCallback(
@@ -155,7 +168,7 @@ export function useReaderNavigation({
     }
     setToolbarVisible((prev: boolean) => !prev);
     setSelectionMenu((prev) => ({ ...prev, visible: false }));
-  }, [isSpeaking]);
+  }, [isSpeaking, setSelectionMenu, setToolbarVisible]);
 
   const handleBack = useCallback(async () => {
     const saveResult = await saveProgress();
@@ -198,31 +211,31 @@ export function useReaderNavigation({
 
   const handleTocItemClick = useCallback((href: string) => {
     epubReaderRef.current?.goToHref(href);
-  }, []);
+  }, [epubReaderRef]);
 
   const handleBookmarkClick = useCallback((location: string) => {
     epubReaderRef.current?.goToLocation(location);
-  }, []);
+  }, [epubReaderRef]);
 
   const handleNoteClick = useCallback((location: string) => {
     epubReaderRef.current?.goToLocation(location);
-  }, []);
+  }, [epubReaderRef]);
 
   const handleProgressChange = useCallback((newProgress: number) => {
     epubReaderRef.current?.goToPercentage(newProgress);
-  }, []);
+  }, [epubReaderRef]);
 
   const handlePrevPage = useCallback(() => {
     if (book?.format === "epub") {
       epubReaderRef.current?.scrollUp();
     }
-  }, [book?.format]);
+  }, [book?.format, epubReaderRef]);
 
   const handleNextPage = useCallback(() => {
     if (book?.format === "epub") {
       epubReaderRef.current?.scrollDown();
     }
-  }, [book?.format]);
+  }, [book?.format, epubReaderRef]);
 
   const handlePrevChapter = useCallback(() => {
     if (book?.format !== "epub") return;
@@ -254,7 +267,7 @@ export function useReaderNavigation({
       const prevChapter = toc[currentIndex - 1];
       epubReaderRef.current?.goToHref(prevChapter.href);
     }
-  }, [book?.format, currentHref, toc]);
+  }, [book?.format, currentHref, toc, epubReaderRef, progressRef]);
 
   const handleNextChapter = useCallback(() => {
     if (book?.format !== "epub") return;
@@ -285,7 +298,7 @@ export function useReaderNavigation({
       const nextChapter = toc[currentIndex + 1];
       epubReaderRef.current?.goToHref(nextChapter.href);
     }
-  }, [book?.format, currentHref, toc]);
+  }, [book?.format, currentHref, toc, epubReaderRef, progressRef]);
 
   const { hasPrevChapter, hasNextChapter } = useMemo(() => {
     let prev = false;

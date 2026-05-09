@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { memo, useEffect, useRef } from "react";
 import { BookOpen, Check, MoreVertical, Tags, Trash2 } from "lucide-react";
@@ -158,13 +157,10 @@ export const BookCard = memo(function BookCard({
           {/* Cover Image */}
           {book.cover ? (
             <>
-              <Image
+              <img
                 src={`/api/books/${book.id}/cover`}
                 alt={book.title || "书籍封面"}
-                fill
-                unoptimized
-                sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
-                className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.08]"
+                className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.08]"
               />
               
               {/* Book spine & page edge effect */}
@@ -221,7 +217,7 @@ export const BookCard = memo(function BookCard({
                 <Button
                   variant="ghost"
                   size="icon"
-                  aria-label="菜单"
+                  aria-label={`${book.title || "未命名书籍"} 的操作菜单`}
                   className="liquid-control h-7 w-7 shrink-0 rounded-lg text-muted-foreground/50 opacity-100 transition-all duration-300 hover:text-foreground sm:opacity-0 sm:group-hover:opacity-100"
                 >
                   <MoreVertical className="h-4 w-4" />

@@ -1,11 +1,5 @@
-import {
-  prepare,
-  prepareWithSegments,
-  layout,
-} from "@chenglou/pretext";
-import type {
-  PreparedTextWithSegments,
-} from "@chenglou/pretext";
+import { prepareWithSegments, layout } from "@chenglou/pretext";
+import type { PreparedTextWithSegments } from "@chenglou/pretext";
 
 export interface ParagraphLayout {
   id: string;

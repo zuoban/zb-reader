@@ -30,11 +30,13 @@ export function useReaderSettingsLifecycle(
 
   useEffect(() => {
     settings.loadFromServer();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadFromServer is stable
   }, []);
 
   useEffect(() => {
     if (!settings.loaded) return;
     debouncedSaveSettings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- debouncedSaveSettings is stable
   }, [
     settings.fontSize,
     settings.theme,

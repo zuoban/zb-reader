@@ -29,7 +29,12 @@ const ENDPOINT_URL =
 const VOICES_URL =
   "https://eastus.api.speech.microsoft.com/cognitiveservices/voices/list";
 const SIGN_SECRET_BASE64 =
-  "oik6PdDdMnOXemTbwvMn9de/h9lFnfBaCWbGMMZqqoSaQaqUOqjVGm5NqsmjcBI1x+sS9ugjB55HEJWRiFXYFw==";
+  process.env.MS_TTS_SIGN_SECRET ??
+  (() => {
+    // eslint-disable-next-line no-console
+    console.warn("[TTS] MS_TTS_SIGN_SECRET not set, using default signing key");
+    return "oik6PdDdMnOXemTbwvMn9de/h9lFnfBaCWbGMMZqqoSaQaqUOqjVGm5NqsmjcBI1x+sS9ugjB55HEJWRiFXYFw==";
+  })();
 const VOICE_CACHE_DURATION = 4 * 60 * 60 * 1000;
 
 let endpointCache: CachedEndpoint | null = null;

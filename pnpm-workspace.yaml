@@ -1,8 +1,10 @@
 allowBuilds:
+  '@ampproject/toolbox-optimizer': set this to true or false
   better-sqlite3: true
   core-js: true
   es5-ext: true
   esbuild: true
+  fsevents: set this to true or false
   msw: true
   sharp: true
   unrs-resolver: true

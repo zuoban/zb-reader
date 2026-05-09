@@ -4,7 +4,8 @@ import { db } from "@/lib/db";
 import { books } from "@/lib/db/schema";
 import { deleteBookFile, deleteCoverImage } from "@/lib/storage";
 import { logger } from "@/lib/logger";
-import { badRequest, notFound, serverError, getAuthUserId } from "@/lib/api-utils";
+import { notFound, serverError, getAuthUserId, validateJson } from "@/lib/api-utils";
+import { bookCategorySchema } from "@/lib/validations";
 
 export async function GET(
   _req: NextRequest,
@@ -76,12 +77,11 @@ export async function PATCH(
   const { id } = await params;
 
   try {
-    const payload = await req.json();
-    const rawCategory = typeof payload.category === "string" ? payload.category.trim() : "";
+    const validation = await validateJson(req, bookCategorySchema);
+    if (validation.error) return validation.error;
+    const { category } = validation.data;
 
-    if (rawCategory.length > 40) {
-      return badRequest("分类名称不能超过 40 个字符");
-    }
+    const rawCategory = typeof category === "string" ? category.trim() : "";
 
     const book = await db.query.books.findFirst({
       where: and(eq(books.id, id), eq(books.uploaderId, userId)),

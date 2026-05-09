@@ -83,7 +83,7 @@ export function useBookmarkActions({
         toast.error("操作失败");
       }
     }
-  }, [bookmarks, bookId, currentPage]);
+  }, [bookId, currentCfiRef, bookmarks, currentPage, progressRef, onBookmarkAdded, onBookmarkRemoved, setIsCurrentBookmarked]);
 
   const handleBookmarkEdit = useCallback(async (id: string, label: string) => {
     try {
@@ -96,7 +96,7 @@ export function useBookmarkActions({
     } catch {
       toast.error("修改失败");
     }
-  }, []);
+  }, [onBookmarkUpdated]);
 
   const handleBookmarkDelete = useCallback(async (id: string) => {
     try {
@@ -106,7 +106,7 @@ export function useBookmarkActions({
     } catch {
       toast.error("删除失败");
     }
-  }, []);
+  }, [onBookmarkRemoved]);
 
   return { handleToggleBookmark, handleBookmarkEdit, handleBookmarkDelete };
 }

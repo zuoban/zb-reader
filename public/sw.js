@@ -1,5 +1,6 @@
 const CACHE_NAME = "zb-reader-v1";
 const OFFLINE_PAGE = "/offline.html";
+const IS_LOCAL_DEV = ["localhost", "127.0.0.1", "::1"].includes(self.location.hostname);
 const ASSETS_TO_CACHE = [
   "/",
   "/bookshelf",
@@ -9,6 +10,11 @@ const ASSETS_TO_CACHE = [
 ];
 
 self.addEventListener("install", (event) => {
+  if (IS_LOCAL_DEV) {
+    self.skipWaiting();
+    return;
+  }
+
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS_TO_CACHE).catch(() => {
@@ -23,17 +29,24 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
-      return Promise.all(
+      if (IS_LOCAL_DEV) {
+        const clearCaches = Promise.all(cacheNames.map((name) => caches.delete(name)));
+        return Promise.all([clearCaches, self.registration.unregister()]);
+      }
+      const clearCaches = Promise.all(
         cacheNames
           .filter((name) => name !== CACHE_NAME)
           .map((name) => caches.delete(name))
       );
+      return clearCaches;
     })
   );
   self.clients.claim();
 });
 
 self.addEventListener("fetch", (event) => {
+  if (IS_LOCAL_DEV) return;
+
   // Skip cross-origin requests
   if (!event.request.url.startsWith(self.location.origin)) return;
 

@@ -31,14 +31,8 @@ export async function POST(req: NextRequest) {
     });
 
     if (existing) {
-      if (existing.username === username) {
-        return NextResponse.json(
-          { error: "用户名已被注册" },
-          { status: 409 }
-        );
-      }
       return NextResponse.json(
-        { error: "邮箱已被注册" },
+        { error: "用户名或邮箱已被注册" },
         { status: 409 }
       );
     }

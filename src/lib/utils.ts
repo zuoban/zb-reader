@@ -65,12 +65,14 @@ export function formatDate(dateStr: string): string {
 /**
  * 防抖函数
  */
-export function debounce<T extends (...args: any[]) => any>(
-  fn: T,
+export type DebouncedFunction<Args extends unknown[]> = (...args: Args) => void;
+
+export function debounce<Args extends unknown[], This, Return>(
+  fn: (this: This, ...args: Args) => Return,
   delay: number
-): (...args: Parameters<T>) => void {
+): (this: This, ...args: Args) => void {
   let timer: ReturnType<typeof setTimeout> | null = null;
-  return function (this: any, ...args: Parameters<T>) {
+  return function (this: This, ...args: Args) {
     if (timer) clearTimeout(timer);
     timer = setTimeout(() => {
       fn.apply(this, args);
@@ -82,12 +84,12 @@ export function debounce<T extends (...args: any[]) => any>(
 /**
  * 节流函数
  */
-export function throttle<T extends (...args: any[]) => any>(
-  fn: T,
+export function throttle<Args extends unknown[], This, Return>(
+  fn: (this: This, ...args: Args) => Return,
   limit: number
-): (...args: Parameters<T>) => void {
+): (this: This, ...args: Args) => void {
   let inThrottle = false;
-  return function (this: any, ...args: Parameters<T>) {
+  return function (this: This, ...args: Args) {
     if (!inThrottle) {
       fn.apply(this, args);
       inThrottle = true;

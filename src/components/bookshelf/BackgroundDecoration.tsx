@@ -1,25 +1,34 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+
+interface Particle {
+  id: number;
+  left: string;
+  top: string;
+  size: string;
+  duration: string;
+  delay: string;
+  opacity: number;
+}
+
+function generateParticles(count: number): Particle[] {
+  return Array.from({ length: count }).map((_, i) => ({
+    id: i,
+    left: `${Math.random() * 100}%`,
+    top: `${100 + Math.random() * 20}%`,
+    size: `${3 + Math.random() * 7}px`,
+    duration: `${20 + Math.random() * 15}s`,
+    delay: `-${Math.random() * 25}s`,
+    opacity: 0.08 + Math.random() * 0.15,
+  }));
+}
 
 export function BackgroundDecoration() {
-  const [mounted, setMounted] = useState(false);
+  const [particles, setParticles] = useState<Particle[] | null>(null);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Generate random particles
-  const particles = useMemo(() => {
-    return Array.from({ length: 20 }).map((_, i) => ({
-      id: i,
-      left: `${Math.random() * 100}%`,
-      top: `${100 + Math.random() * 20}%`,
-      size: `${3 + Math.random() * 7}px`,
-      duration: `${20 + Math.random() * 15}s`,
-      delay: `-${Math.random() * 25}s`,
-      opacity: 0.08 + Math.random() * 0.15,
-    }));
+    setParticles(generateParticles(20));
   }, []);
 
   return (
@@ -46,7 +55,7 @@ export function BackgroundDecoration() {
 
       {/* Floating Particles */}
       <div className="absolute inset-0 z-10">
-        {mounted && particles.map((p) => (
+        {particles?.map((p) => (
           <div
             key={p.id}
             className="absolute rounded-full bg-indigo-400/20 dark:bg-indigo-300/10"

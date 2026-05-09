@@ -226,7 +226,7 @@ export function useReaderTtsAudio({
 
   const hasPendingResume = useCallback(() => {
     return Boolean(ttsResumeRef.current);
-  }, []);
+  }, [ttsResumeRef]);
 
   const resumePendingPlayback = useCallback(() => {
     if (!ttsResumeRef.current) {

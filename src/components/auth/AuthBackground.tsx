@@ -1,25 +1,34 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+
+interface Particle {
+  id: number;
+  left: string;
+  top: string;
+  size: string;
+  duration: string;
+  delay: string;
+  opacity: number;
+}
+
+function generateParticles(count: number): Particle[] {
+  return Array.from({ length: count }).map((_, i) => ({
+    id: i,
+    left: `${Math.random() * 100}%`,
+    top: `${100 + Math.random() * 20}%`,
+    size: `${4 + Math.random() * 8}px`,
+    duration: `${15 + Math.random() * 15}s`,
+    delay: `-${Math.random() * 20}s`,
+    opacity: 0.1 + Math.random() * 0.2,
+  }));
+}
 
 export function AuthBackground() {
-  const [mounted, setMounted] = useState(false);
+  const [particles, setParticles] = useState<Particle[] | null>(null);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Generate random particles
-  const particles = useMemo(() => {
-    return Array.from({ length: 15 }).map((_, i) => ({
-      id: i,
-      left: `${Math.random() * 100}%`,
-      top: `${100 + Math.random() * 20}%`,
-      size: `${4 + Math.random() * 8}px`,
-      duration: `${15 + Math.random() * 15}s`,
-      delay: `-${Math.random() * 20}s`,
-      opacity: 0.1 + Math.random() * 0.2,
-    }));
+    setParticles(generateParticles(15));
   }, []);
 
   return (
@@ -44,9 +53,9 @@ export function AuthBackground() {
         />
       </div>
 
-      {/* Floating Particles - Only render on client to avoid hydration mismatch */}
+      {/* Floating Particles */}
       <div className="absolute inset-0 z-10">
-        {mounted && particles.map((p) => (
+        {particles?.map((p) => (
           <div
             key={p.id}
             className="absolute rounded-full bg-indigo-400/20 dark:bg-indigo-300/10"

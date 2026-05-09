@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useRef, useState } from "react";
 import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { debounce } from "@/lib/utils";
+import type { DebouncedFunction } from "@/lib/utils";
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
@@ -13,18 +13,16 @@ interface SearchBarProps {
 
 export function SearchBar({ onSearch, className }: SearchBarProps) {
   const [query, setQuery] = useState("");
+  const searchRef = useRef<DebouncedFunction<[string]> | null>(null);
 
-  const debouncedSearch = useCallback(
-    debounce((q: string) => {
-      onSearch(q);
-    }, 400),
-    [onSearch]
-  );
+  searchRef.current ??= debounce((q: string) => {
+    onSearch(q);
+  }, 400);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setQuery(value);
-    debouncedSearch(value);
+    searchRef.current?.(value);
   };
 
   const handleClear = () => {

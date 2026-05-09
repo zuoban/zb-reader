@@ -1,6 +1,7 @@
 import tseslint from "@typescript-eslint/eslint-plugin";
 import tsparser from "@typescript-eslint/parser";
 import nextPlugin from "@next/eslint-plugin-next";
+import reactHooksPlugin from "eslint-plugin-react-hooks";
 
 export default [
   {
@@ -57,10 +58,17 @@ export default [
     plugins: {
       "@typescript-eslint": tseslint,
       "@next/next": nextPlugin,
+      "react-hooks": reactHooksPlugin,
     },
     rules: {
       ...tseslint.configs.recommended.rules,
       ...nextPlugin.configs.recommended.rules,
+      ...reactHooksPlugin.configs.recommended.rules,
+      // Downgrade new strict React 19 hooks rules to warnings for gradual migration
+      "react-hooks/set-state-in-effect": "warn",
+      "react-hooks/purity": "warn",
+      "react-hooks/refs": "warn",
+      "react-hooks/exhaustive-deps": "warn",
       "@typescript-eslint/no-unused-vars": ["warn", {
         "argsIgnorePattern": "^_",
         "varsIgnorePattern": "^_"

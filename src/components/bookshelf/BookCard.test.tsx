@@ -1,5 +1,5 @@
 import { beforeEach, describe, it, expect, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { BookCard } from "@/components/bookshelf/BookCard";
 import type { ComponentProps } from "react";
 import type { Book } from "@/lib/db/schema";
@@ -99,11 +99,31 @@ describe("BookCard", () => {
     expect(mockPrefetch).toHaveBeenCalledWith("/reader/book-1");
   });
 
-  it("should call onDelete when delete is clicked", async () => {
+  it("should have accessible menu button with book title", () => {
+    renderBookCard();
+    const menuButton = screen.getByRole("button", { name: "Test Book 的操作菜单" });
+    expect(menuButton).toHaveAttribute("aria-haspopup", "menu");
+  });
+
+  it("should call onDelete when delete menu item is selected", () => {
     const handleDelete = vi.fn();
     renderBookCard({ onDelete: handleDelete });
 
-    const menuButton = screen.getByRole("button");
-    expect(menuButton).toBeInTheDocument();
+    const menuButton = screen.getByRole("button", { name: "Test Book 的操作菜单" });
+    act(() => {
+      fireEvent.keyDown(menuButton, { key: "Enter" });
+    });
+
+    // Dropdown content rendered via portal
+    const dropdownContent = document.querySelector('[data-slot="dropdown-menu-content"]');
+    expect(dropdownContent).toBeTruthy();
+
+    if (dropdownContent) {
+      const deleteItem = within(dropdownContent as HTMLElement).getByText("删除书籍");
+      act(() => {
+        fireEvent.click(deleteItem);
+      });
+      expect(handleDelete).toHaveBeenCalledWith("book-1");
+    }
   });
 });
