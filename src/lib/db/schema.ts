@@ -60,7 +60,6 @@ export const readingProgress = sqliteTable(
     progress: real("progress").default(0).notNull(),
     furthestProgress: real("furthest_progress").default(0).notNull(),
     location: text("location"),
-    scrollRatio: real("scroll_ratio"),
     currentPage: integer("current_page"),
     totalPages: integer("total_pages"),
     deviceId: text("device_id"),
@@ -78,31 +77,6 @@ export const readingProgress = sqliteTable(
     userBookUnique: unique().on(table.userId, table.bookId),
     userIdIdx: index("idx_reading_progress_user_id").on(table.userId),
     lastReadAtIdx: index("idx_reading_progress_last_read_at").on(table.lastReadAt),
-  })
-);
-
-export const progressHistory = sqliteTable(
-  "progress_history",
-  {
-    id: text("id").primaryKey(),
-    userId: text("user_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    bookId: text("book_id")
-      .notNull()
-      .references(() => books.id, { onDelete: "cascade" }),
-    progress: real("progress").notNull(),
-    location: text("location"),
-    scrollRatio: real("scroll_ratio"),
-    deviceId: text("device_id"),
-    deviceName: text("device_name"),
-    createdAt: text("created_at")
-      .default(sql`(datetime('now'))`)
-      .notNull(),
-  },
-  (table) => ({
-    userBookIdx: index("idx_progress_history_user_book").on(table.userId, table.bookId),
-    createdAtIdx: index("idx_progress_history_created_at").on(table.createdAt),
   })
 );
 
@@ -239,8 +213,6 @@ export type Book = typeof books.$inferSelect;
 export type NewBook = typeof books.$inferInsert;
 export type ReadingProgress = typeof readingProgress.$inferSelect;
 export type NewReadingProgress = typeof readingProgress.$inferInsert;
-export type ProgressHistory = typeof progressHistory.$inferSelect;
-export type NewProgressHistory = typeof progressHistory.$inferInsert;
 export type Bookmark = typeof bookmarks.$inferSelect;
 export type NewBookmark = typeof bookmarks.$inferInsert;
 export type Note = typeof notes.$inferSelect;

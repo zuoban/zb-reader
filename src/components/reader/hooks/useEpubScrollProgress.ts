@@ -17,7 +17,6 @@ interface UseEpubScrollProgressParams {
     scrollRatio?: number;
   }) => void;
   progressRef: MutableRefObject<number>;
-  scrollRatioRef: MutableRefObject<number>;
   viewerRef: RefObject<HTMLDivElement | null>;
 }
 
@@ -26,7 +25,6 @@ export function useEpubScrollProgress({
   isRenditionReady,
   onLocationChange,
   progressRef,
-  scrollRatioRef,
   viewerRef,
 }: UseEpubScrollProgressParams) {
   const handleScrollRef = useRef<DebouncedFunction<[HTMLElement]> | null>(null);
@@ -37,7 +35,6 @@ export function useEpubScrollProgress({
     if (scrollRange <= 0) return;
 
     const ratio = Math.min(1, Math.max(0, epubContainer.scrollTop / scrollRange));
-    scrollRatioRef.current = ratio;
 
     if (!currentLocationRef.current) return;
 

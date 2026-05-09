@@ -12,7 +12,6 @@ export interface LocalProgress {
   progress: number;
   furthestProgress: number;
   location: string;
-  scrollRatio: number | null;
   currentPage: number | null;
   totalPages: number | null;
   deviceId: string;
@@ -22,7 +21,6 @@ export interface LocalProgress {
 export interface ProgressUpdate {
   progress?: number;
   location?: string;
-  scrollRatio?: number | null;
   currentPage?: number | null;
   totalPages?: number | null;
 }
@@ -31,7 +29,6 @@ export interface ServerProgressSnapshot {
   progress?: number | null;
   furthestProgress?: number | null;
   location?: string | null;
-  scrollRatio?: number | null;
   currentPage?: number | null;
   totalPages?: number | null;
   deviceId?: string | null;
@@ -139,7 +136,6 @@ export class LocalProgressManager {
       progress: progress.progress || 0,
       furthestProgress: progress.furthestProgress ?? progress.progress ?? 0,
       location: progress.location || "",
-      scrollRatio: progress.scrollRatio || null,
       currentPage: progress.currentPage || null,
       totalPages: progress.totalPages || null,
       deviceId: progress.deviceId || "",
@@ -171,7 +167,6 @@ export class LocalProgressManager {
           progress: 0,
           furthestProgress: 0,
           location: "",
-          scrollRatio: null,
           currentPage: null,
           totalPages: null,
           deviceId: getDeviceId(),
@@ -186,7 +181,6 @@ export class LocalProgressManager {
         progress: update.progress ?? current.progress,
         furthestProgress: Math.max(current.furthestProgress ?? current.progress, update.progress ?? current.progress),
         location: update.location ?? current.location,
-        scrollRatio: update.scrollRatio ?? current.scrollRatio,
         currentPage: update.currentPage ?? current.currentPage,
         totalPages: update.totalPages ?? current.totalPages,
         deviceId: getDeviceId(),
@@ -199,7 +193,6 @@ export class LocalProgressManager {
         bookId,
         progress: updated.progress,
         location: updated.location,
-        scrollRatio: updated.scrollRatio,
         deviceId: updated.deviceId,
         currentPage: updated.currentPage,
         totalPages: updated.totalPages,
@@ -209,8 +202,7 @@ export class LocalProgressManager {
         forceSync ||
         Math.abs(updated.progress - current.progress) >= 0.1 ||
         updated.location !== current.location ||
-        updated.currentPage !== current.currentPage ||
-        (updated.scrollRatio !== null && current.scrollRatio !== null && Math.abs(updated.scrollRatio - current.scrollRatio) >= 0.01);
+        updated.currentPage !== current.currentPage;
 
       if (forceSync) {
         await this.syncQueue.enqueue(syncItem, { autoSync: false });

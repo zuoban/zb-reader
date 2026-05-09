@@ -121,7 +121,6 @@ export const progressSchema = z.object({
   bookId: z.string().uuid("无效的书籍 ID"),
   progress: z.number().min(0).max(1).optional(),
   location: z.string().optional(),
-  scrollRatio: z.number().min(0).max(1).nullable().optional(),
   deviceId: z.string().optional(),
   currentPage: z.number().int().positive().nullable().optional(),
   totalPages: z.number().int().positive().nullable().optional(),

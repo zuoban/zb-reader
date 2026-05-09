@@ -34,7 +34,6 @@ interface UseEpubInitializerParams {
   onTocLoaded?: (toc: TocItem[]) => void;
   progressRef: MutableRefObject<number>;
   renditionRef: MutableRefObject<Rendition | null>;
-  scrollRatioRef: MutableRefObject<number>;
   setIsRenditionReady: (ready: boolean) => void;
   theme: "light" | "dark" | "sepia";
   viewerRef: RefObject<HTMLDivElement | null>;
@@ -131,7 +130,6 @@ export function useEpubInitializer({
   onTocLoaded,
   progressRef,
   renditionRef,
-  scrollRatioRef,
   setIsRenditionReady,
   theme,
   viewerRef,
@@ -222,9 +220,6 @@ export function useEpubInitializer({
           progressRef.current = clampedProgress;
 
           const scrollRatio = readEpubScrollRatio(epubContainer);
-          if (typeof scrollRatio === "number") {
-            scrollRatioRef.current = scrollRatio;
-          }
 
           onLocationChange?.({
             cfi,

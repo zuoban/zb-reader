@@ -31,7 +31,6 @@ export async function GET(req: NextRequest) {
             progress: progress.progress,
             furthestProgress: progress.furthestProgress,
             location: progress.location,
-            scrollRatio: progress.scrollRatio,
             currentPage: progress.currentPage,
             totalPages: progress.totalPages,
             deviceId: progress.deviceId,

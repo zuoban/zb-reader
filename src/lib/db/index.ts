@@ -251,18 +251,6 @@ function getConnection() {
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
-
-    CREATE TABLE IF NOT EXISTS progress_history (
-      id TEXT PRIMARY KEY,
-      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE,
-      progress REAL NOT NULL,
-      location TEXT,
-      scroll_ratio REAL,
-      device_id TEXT,
-      device_name TEXT,
-      created_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
   `);
 
   // Migration: Add missing columns to reader_settings (2026-03-04)
@@ -402,16 +390,12 @@ function getConnection() {
 
   // Migration: Add missing columns to reading_progress (2026-03-09)
   const currentProgressInfo = sqlite.prepare("PRAGMA table_info(reading_progress)").all() as { name: string }[];
-  const hasScrollRatio = currentProgressInfo.some((col) => col.name === "scroll_ratio");
   const hasDeviceIdColumn = currentProgressInfo.some((col) => col.name === "device_id");
   const hasFurthestProgress = currentProgressInfo.some((col) => col.name === "furthest_progress");
 
   if (!hasFurthestProgress) {
     sqlite.exec(`ALTER TABLE reading_progress ADD COLUMN furthest_progress REAL NOT NULL DEFAULT 0;`);
     sqlite.exec(`UPDATE reading_progress SET furthest_progress = COALESCE(progress, 0) WHERE furthest_progress = 0;`);
-  }
-  if (!hasScrollRatio) {
-    sqlite.exec(`ALTER TABLE reading_progress ADD COLUMN scroll_ratio REAL;`);
   }
   if (!hasDeviceIdColumn) {
     sqlite.exec(`ALTER TABLE reading_progress ADD COLUMN device_id TEXT;`);
@@ -421,22 +405,19 @@ function getConnection() {
   if (refreshedProgressInfo.some((col) => col.name === "version")) {
     sqlite.exec(`ALTER TABLE reading_progress DROP COLUMN version;`);
   }
-  const progressHistoryInfo = sqlite.prepare("PRAGMA table_info(progress_history)").all() as { name: string }[];
-  if (progressHistoryInfo.some((col) => col.name === "version")) {
-    sqlite.exec(`ALTER TABLE progress_history DROP COLUMN version;`);
-  }
   const durationProgressInfo = sqlite.prepare("PRAGMA table_info(reading_progress)").all() as { name: string }[];
   if (durationProgressInfo.some((col) => col.name === "reading_duration")) {
     sqlite.exec(`ALTER TABLE reading_progress DROP COLUMN reading_duration;`);
-  }
-  const durationHistoryInfo = sqlite.prepare("PRAGMA table_info(progress_history)").all() as { name: string }[];
-  if (durationHistoryInfo.some((col) => col.name === "reading_duration")) {
-    sqlite.exec(`ALTER TABLE progress_history DROP COLUMN reading_duration;`);
   }
   const lastSyncProgressInfo = sqlite.prepare("PRAGMA table_info(reading_progress)").all() as { name: string }[];
   if (lastSyncProgressInfo.some((col) => col.name === "last_sync_id")) {
     sqlite.exec(`ALTER TABLE reading_progress DROP COLUMN last_sync_id;`);
   }
+  const scrollRatioProgressInfo = sqlite.prepare("PRAGMA table_info(reading_progress)").all() as { name: string }[];
+  if (scrollRatioProgressInfo.some((col) => col.name === "scroll_ratio")) {
+    sqlite.exec(`ALTER TABLE reading_progress DROP COLUMN scroll_ratio;`);
+  }
+  sqlite.exec(`DROP TABLE IF EXISTS progress_history;`);
 
   // Migration: Add font_family and flip_mode to reader_settings (2026-03-31)
   const readerSettingsInfo = sqlite.prepare("PRAGMA table_info(reader_settings)").all() as { name: string }[];
@@ -490,8 +471,6 @@ function getConnection() {
   sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_reading_progress_last_read_at ON reading_progress (last_read_at);`);
   sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_books_category ON books (category);`);
   sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_books_uploader_id ON books (uploader_id);`);
-  sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_progress_history_user_book ON progress_history (user_id, book_id);`);
-  sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_progress_history_created_at ON progress_history (created_at);`);
   sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_bookmarks_user_book ON bookmarks (user_id, book_id);`);
   sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_bookmarks_book_id ON bookmarks (book_id);`);
   sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_notes_user_book ON notes (user_id, book_id);`);

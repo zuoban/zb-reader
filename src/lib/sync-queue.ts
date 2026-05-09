@@ -5,7 +5,6 @@ export interface SyncItem {
   bookId: string;
   progress: number;
   location: string;
-  scrollRatio: number | null;
   deviceId: string;
   currentPage?: number | null;
   totalPages?: number | null;

@@ -50,6 +50,20 @@
       "when": 1778342100000,
       "tag": "0006_drop_last_sync_id",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1778342400000,
+      "tag": "0007_drop_progress_history",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1778342700000,
+      "tag": "0008_drop_progress_scroll_ratio",
+      "breakpoints": true
     }
   ]
 }
