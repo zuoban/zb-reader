@@ -1,9 +1,17 @@
+import { toast as mockToast } from "sonner";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act } from "@testing-library/react";
 import { useReaderSettingsStore } from "@/stores/reader-settings";
 
 vi.mock("zustand/middleware", () => ({
   devtools: (fn: unknown) => fn,
+}));
+
+vi.mock("sonner", () => ({
+  toast: {
+    error: vi.fn(),
+    success: vi.fn(),
+  },
 }));
 
 const mockFetch = vi.fn();
@@ -22,6 +30,7 @@ describe("useReaderSettingsStore", () => {
       loaded: false,
     });
     mockFetch.mockReset();
+    vi.mocked(mockToast.error).mockClear();
   });
 
   describe("setters with validation", () => {
@@ -151,6 +160,39 @@ describe("useReaderSettingsStore", () => {
           headers: { "Content-Type": "application/json" },
         })
       );
+    });
+
+    it("does not show toast on 401 (session expired)", async () => {
+      useReaderSettingsStore.setState({ loaded: true });
+      mockFetch.mockResolvedValueOnce({ ok: false, status: 401 });
+
+      await act(async () => {
+        await useReaderSettingsStore.getState().saveToServer();
+      });
+
+      expect(mockToast.error).not.toHaveBeenCalled();
+    });
+
+    it("shows error toast on server error", async () => {
+      useReaderSettingsStore.setState({ loaded: true });
+      mockFetch.mockResolvedValueOnce({ ok: false, status: 500, text: async () => "Internal Error" });
+
+      await act(async () => {
+        await useReaderSettingsStore.getState().saveToServer();
+      });
+
+      expect(mockToast.error).toHaveBeenCalledWith("设置保存失败，请稍后重试");
+    });
+
+    it("shows error toast on network failure", async () => {
+      useReaderSettingsStore.setState({ loaded: true });
+      mockFetch.mockRejectedValueOnce(new Error("Network error"));
+
+      await act(async () => {
+        await useReaderSettingsStore.getState().saveToServer();
+      });
+
+      expect(mockToast.error).toHaveBeenCalledWith("设置保存失败，请检查网络连接");
     });
   });
 });

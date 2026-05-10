@@ -3,6 +3,7 @@ import { devtools } from "zustand/middleware";
 import { useRef, useEffect, useCallback } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { logger } from "@/lib/logger";
+import { toast } from "sonner";
 
 export type FontFamily = "system" | "serif" | "sans" | "kaiti";
 
@@ -136,7 +137,7 @@ export const useReaderSettingsStore = create<
         if (!state.loaded) return;
 
         try {
-          await fetch("/api/reader-settings", {
+          const res = await fetch("/api/reader-settings", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -154,8 +155,19 @@ export const useReaderSettingsStore = create<
               autoScrollToActive: state.autoScrollToActive,
             }),
           });
+
+          if (!res.ok) {
+            if (res.status === 401) {
+              logger.warn("reader-settings", "Session expired, skipping save");
+              return;
+            }
+            const errorText = await res.text().catch(() => "");
+            logger.warn("reader-settings", `Server error ${res.status}: ${errorText}`);
+            toast.error("设置保存失败，请稍后重试");
+          }
         } catch (error) {
           logger.warn("reader-settings", "Failed to save settings to server", error);
+          toast.error("设置保存失败，请检查网络连接");
         }
       },
     }),
