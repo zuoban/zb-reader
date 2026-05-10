@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { debounce } from "@/lib/utils";
@@ -18,6 +18,12 @@ export function SearchBar({ onSearch, className }: SearchBarProps) {
   searchRef.current ??= debounce((q: string) => {
     onSearch(q);
   }, 400);
+
+  useEffect(() => {
+    return () => {
+      searchRef.current?.cancel();
+    };
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
