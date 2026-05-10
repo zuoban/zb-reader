@@ -270,6 +270,21 @@
   animation: audio-wave 0.6s ease-in-out infinite;
 }
 
+.animate-audio-wave-float {
+  animation: audio-wave-float 1.2s ease-in-out infinite;
+}
+
+@keyframes audio-wave-float {
+  0%, 100% {
+    height: 4px;
+    opacity: 0.5;
+  }
+  50% {
+    height: 12px;
+    opacity: 1;
+  }
+}
+
 @keyframes reader-fade-up {
   from {
     opacity: 0;
@@ -883,53 +898,121 @@
   }
 }
 
-/* TTS floating control - opaque, solid backgrounds with clear icons */
+/* TTS floating control - glassmorphism style */
 .tts-panel {
-  background: var(--reader-bg, #f5f7fb);
-  color: var(--reader-text, #09090b);
-  border: 1px solid color-mix(in srgb, var(--reader-text, #09090b) 16%, var(--reader-bg, #f5f7fb));
+  background: color-mix(in srgb, var(--reader-bg, #f5f7fb) 92%, transparent);
+  border: 1px solid color-mix(in srgb, var(--reader-text, #09090b) 8%, transparent);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.4) inset,
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset,
+    0 8px 32px -8px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
 }
 
 [data-reader-theme="dark"] .tts-panel {
-  background: var(--reader-bg, #101419);
-  color: var(--reader-text, #d8dee7);
-  border-color: color-mix(in srgb, var(--reader-text, #d8dee7) 20%, var(--reader-bg, #101419));
+  background: color-mix(in srgb, var(--reader-bg, #101419) 88%, transparent);
+  border-color: color-mix(in srgb, var(--reader-text, #d8dee7) 10%, transparent);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset,
+    0 8px 32px -8px rgba(0, 0, 0, 0.5);
 }
 
-.tts-btn {
-  background: var(--reader-bg, #f5f7fb);
+.tts-trigger {
+  background: linear-gradient(145deg,
+    color-mix(in srgb, var(--reader-primary, #18181b) 12%, var(--reader-bg, #f5f7fb)),
+    color-mix(in srgb, var(--reader-primary, #18181b) 6%, var(--reader-bg, #f5f7fb))
+  );
   color: var(--reader-text, #09090b);
-  border: 1px solid color-mix(in srgb, var(--reader-text, #09090b) 16%, var(--reader-bg, #f5f7fb));
+  border: 1px solid color-mix(in srgb, var(--reader-text, #09090b) 12%, transparent);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.5) inset,
+    0 4px 20px -4px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(16px) saturate(1.5);
+  -webkit-backdrop-filter: blur(16px) saturate(1.5);
+}
+
+.tts-trigger:hover {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.6) inset,
+    0 6px 28px -6px rgba(0, 0, 0, 0.35);
+}
+
+[data-reader-theme="dark"] .tts-trigger {
+  background: linear-gradient(145deg,
+    color-mix(in srgb, var(--reader-primary, #c9d7e8) 15%, var(--reader-bg, #101419)),
+    color-mix(in srgb, var(--reader-primary, #c9d7e8) 8%, var(--reader-bg, #101419))
+  );
+  color: var(--reader-text, #d8dee7);
+  border-color: color-mix(in srgb, var(--reader-text, #d8dee7) 12%, transparent);
+}
+
+.tts-btn--secondary {
+  background: transparent;
+  color: var(--reader-text, #09090b);
+  border: 1px solid transparent;
+}
+
+.tts-btn--secondary:hover {
+  background: color-mix(in srgb, var(--reader-text, #09090b) 5%, transparent);
+  border-color: color-mix(in srgb, var(--reader-text, #09090b) 8%, transparent);
 }
 
 .tts-btn--primary {
-  background: color-mix(in srgb, var(--reader-primary, #18181b) 10%, var(--reader-bg, #f5f7fb));
+  background: linear-gradient(145deg,
+    color-mix(in srgb, var(--reader-primary, #18181b) 15%, var(--reader-bg, #f5f7fb)),
+    color-mix(in srgb, var(--reader-primary, #18181b) 8%, var(--reader-bg, #f5f7fb))
+  );
   color: var(--reader-text, #09090b);
   border: 1px solid color-mix(in srgb, var(--reader-primary, #18181b) 20%, var(--reader-border, #d4d4d8));
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.4) inset,
+    0 2px 8px -2px rgba(0, 0, 0, 0.15);
 }
 
-.tts-btn--stop {
-  background: var(--reader-bg, #f5f7fb);
+.tts-btn--primary:hover {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.5) inset,
+    0 3px 12px -3px rgba(0, 0, 0, 0.2);
+}
+
+.tts-btn--destructive {
+  background: transparent;
   color: var(--reader-destructive, #ef4444);
-  border: 1px solid color-mix(in srgb, var(--reader-destructive, #ef4444) 20%, var(--reader-bg, #f5f7fb));
+  border: 1px solid transparent;
 }
 
-[data-reader-theme="dark"] .tts-btn {
-  background: var(--reader-bg, #101419);
+.tts-btn--destructive:hover {
+  background: color-mix(in srgb, var(--reader-destructive, #ef4444) 10%, transparent);
+  border-color: color-mix(in srgb, var(--reader-destructive, #ef4444) 25%, transparent);
+}
+
+[data-reader-theme="dark"] .tts-btn--secondary {
   color: var(--reader-text, #d8dee7);
-  border-color: color-mix(in srgb, var(--reader-text, #d8dee7) 18%, var(--reader-bg, #101419));
+}
+
+[data-reader-theme="dark"] .tts-btn--secondary:hover {
+  background: color-mix(in srgb, var(--reader-text, #d8dee7) 6%, transparent);
+  border-color: color-mix(in srgb, var(--reader-text, #d8dee7) 10%, transparent);
 }
 
 [data-reader-theme="dark"] .tts-btn--primary {
-  background: color-mix(in srgb, var(--reader-primary, #c9d7e8) 10%, var(--reader-bg, #101419));
+  background: linear-gradient(145deg,
+    color-mix(in srgb, var(--reader-primary, #c9d7e8) 18%, var(--reader-bg, #101419)),
+    color-mix(in srgb, var(--reader-primary, #c9d7e8) 10%, var(--reader-bg, #101419))
+  );
   color: var(--reader-text, #d8dee7);
-  border: 1px solid color-mix(in srgb, var(--reader-primary, #c9d7e8) 20%, var(--reader-border, #333));
+  border-color: color-mix(in srgb, var(--reader-primary, #c9d7e8) 25%, var(--reader-border, #333));
 }
 
-[data-reader-theme="dark"] .tts-btn--stop {
-  background: var(--reader-bg, #101419);
+[data-reader-theme="dark"] .tts-btn--destructive {
   color: var(--reader-destructive, #f87171);
-  border: 1px solid color-mix(in srgb, var(--reader-destructive, #f87171) 20%, var(--reader-bg, #101419));
+}
+
+[data-reader-theme="dark"] .tts-btn--destructive:hover {
+  background: color-mix(in srgb, var(--reader-destructive, #f87171) 12%, transparent);
+  border-color: color-mix(in srgb, var(--reader-destructive, #f87171) 30%, transparent);
 }
 
 /* Reading content enhancement styles */

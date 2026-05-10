@@ -18,28 +18,26 @@ interface TtsFloatingControlProps {
   onToggleFullscreen?: () => void;
 }
 
-function AudioWaveIndicator({ color }: { color?: string }) {
+function AudioWaveIndicator({ isPaused }: { isPaused?: boolean }) {
   return (
-    <div className="flex items-center justify-center gap-1 h-4">
+    <div className="flex items-center justify-center gap-[3px] h-5">
       {[1, 2, 3].map((i) => (
         <div
           key={i}
-          className="w-0.5 h-2 rounded-full animate-audio-wave"
-          style={{ animationDelay: `${i * 120}ms`, backgroundColor: color || "currentColor" }}
+          className={cn(
+            "w-[3px] rounded-full transition-all duration-300",
+            isPaused ? "h-1.5 bg-current/60" : "h-3 bg-current animate-audio-wave-float"
+          )}
+          style={{ animationDelay: `${i * 150}ms` }}
         />
       ))}
     </div>
   );
 }
 
-function TtsIcon({ color, children }: { color?: string; children: React.ReactNode }) {
+function TtsIcon({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <span style={{
-      color: color || "inherit",
-      display: "inline-flex",
-      alignItems: "center",
-      justifyContent: "center"
-    }}>
+    <span className={cn("inline-flex items-center justify-center", className)}>
       {children}
     </span>
   );
@@ -69,68 +67,63 @@ export function TtsFloatingControl({
     setIsExpanded(false);
   }, [onOpenImmersiveView]);
 
-  const text = "#09090b";
-  const destructive = "#ef4444";
-
   return (
     <div
       className={cn(
-        "fixed bottom-4 right-3 z-50 flex items-center gap-2",
-        "transition-all duration-200",
-        (hidden || !isSpeaking) && "pointer-events-none opacity-0 translate-y-1",
+        "fixed bottom-5 right-4 z-50 flex items-center gap-2",
+        "transition-all duration-300 ease-out",
+        (hidden || !isSpeaking) && "pointer-events-none opacity-0 translate-y-4",
         !hidden && isSpeaking && "opacity-100 translate-y-0"
       )}
     >
       {isExpanded && (
-        <div className="tts-panel flex items-center gap-1 rounded-xl px-1.5 py-1 shadow-md">
+        <div className="tts-panel flex items-center gap-1 rounded-2xl px-2 py-1.5 shadow-lg">
           {onPrev && (
-            <TtsBtn variant="default" onClick={onPrev} ariaLabel="上一章">
-              <TtsIcon color={text}>
-                <SkipBack className="size-3.5" />
+            <TtsBtn variant="secondary" onClick={onPrev} ariaLabel="上一章">
+              <TtsIcon>
+                <SkipBack className="size-4" />
               </TtsIcon>
             </TtsBtn>
           )}
 
           <TtsBtn variant="primary" onClick={onToggle} ariaLabel={isPaused ? "播放" : "暂停"}>
-            <TtsIcon color={text}>
+            <TtsIcon>
               {isPaused ? <Play className="size-4 ml-0.5" /> : <Pause className="size-4" />}
             </TtsIcon>
           </TtsBtn>
 
-          <TtsBtn variant="stop" onClick={onStop} ariaLabel="停止">
-            <TtsIcon color={destructive}>
+          <TtsBtn variant="destructive" onClick={onStop} ariaLabel="停止">
+            <TtsIcon>
               <Square className="size-3.5" />
             </TtsIcon>
           </TtsBtn>
 
           {onNext && (
-            <TtsBtn variant="default" onClick={onNext} ariaLabel="下一章">
-              <TtsIcon color={text}>
-                <SkipForward className="size-3.5" />
+            <TtsBtn variant="secondary" onClick={onNext} ariaLabel="下一章">
+              <TtsIcon>
+                <SkipForward className="size-4" />
               </TtsIcon>
             </TtsBtn>
           )}
 
+          {(onOpenImmersiveView || onToggleFullscreen) && (
+            <div className="w-px h-5 mx-0.5 bg-foreground/10" />
+          )}
+
           {onOpenImmersiveView && (
-            <>
-              <div className="w-px h-4 mx-0.5 hidden sm:block bg-black/10" />
-              <TtsBtn variant="default" onClick={handleOpenImmersiveView} ariaLabel="沉浸朗读">
-                <TtsIcon color={text}>
-                  <BookOpen className="size-4" />
-                </TtsIcon>
-              </TtsBtn>
-            </>
+            <TtsBtn variant="secondary" onClick={handleOpenImmersiveView} ariaLabel="沉浸朗读">
+              <TtsIcon>
+                <BookOpen className="size-4" />
+              </TtsIcon>
+            </TtsBtn>
           )}
 
           {onToggleFullscreen && (
-            <>
-              <div className="w-px h-4 mx-0.5 hidden sm:block bg-black/10" />
-              <TtsBtn variant="default" onClick={onToggleFullscreen} ariaLabel={isFullscreen ? "退出全屏" : "全屏"}>
-                <TtsIcon color={text}>
-                  {isFullscreen ? <Minimize className="size-4" /> : <Maximize className="size-4" />}
-                </TtsIcon>
-              </TtsBtn>
-            </>
+            <TtsBtn variant="secondary" onClick={onToggleFullscreen} ariaLabel={isFullscreen ? "退出全屏" : "全屏"}>
+              <TtsIcon>
+                {isFullscreen ? <Minimize className="size-4" /> : <Maximize className="size-4" />}
+              </TtsIcon>
+            </TtsBtn>
           )}
         </div>
       )}
@@ -140,12 +133,14 @@ export function TtsFloatingControl({
         onClick={handleMainClick}
         aria-label="朗读控制"
         className={cn(
-          "tts-btn flex size-10 items-center justify-center rounded-lg cursor-pointer transition-all duration-200 active:scale-95 shadow-md",
-          isExpanded && "rotate-180"
+          "tts-trigger flex size-11 items-center justify-center rounded-2xl cursor-pointer",
+          "transition-all duration-300 ease-out",
+          "hover:scale-105 active:scale-95 shadow-lg",
+          isExpanded && "rotate-90"
         )}
         title="朗读控制"
       >
-        {!isExpanded && isSpeaking && <AudioWaveIndicator color="currentColor" />}
+        {!isExpanded && isSpeaking && <AudioWaveIndicator isPaused={isPaused} />}
         {!isExpanded && !isSpeaking && (
           <TtsIcon>
             <Play className="size-4 ml-0.5" />
@@ -165,12 +160,12 @@ function TtsBtn({
   children,
   onClick,
   ariaLabel,
-  variant = "default",
+  variant = "secondary",
 }: {
   children: React.ReactNode;
   onClick: () => void;
   ariaLabel: string;
-  variant?: "default" | "primary" | "stop";
+  variant?: "primary" | "secondary" | "destructive";
 }) {
   return (
     <button
@@ -178,9 +173,12 @@ function TtsBtn({
       onClick={onClick}
       aria-label={ariaLabel}
       className={cn(
-        "flex size-7 items-center justify-center rounded-md transition-all duration-150 cursor-pointer hover:scale-105 active:scale-95",
+        "flex size-9 items-center justify-center rounded-xl",
+        "transition-all duration-200 ease-out",
+        "cursor-pointer hover:scale-105 active:scale-95",
         variant === "primary" && "tts-btn--primary",
-        variant === "stop" && "tts-btn--stop",
+        variant === "secondary" && "tts-btn--secondary",
+        variant === "destructive" && "tts-btn--destructive",
       )}
       title={ariaLabel}
     >
