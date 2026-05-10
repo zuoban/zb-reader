@@ -2,6 +2,7 @@ import { act, render, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { toast } from "sonner";
 import { useBookDeleteAction } from "./useBookDeleteAction";
+import { createMockBook } from "@/components/bookshelf/test-utils";
 import type { Book } from "@/lib/db/schema";
 
 vi.mock("sonner", () => ({
@@ -11,27 +12,6 @@ vi.mock("sonner", () => ({
   },
 }));
 
-function createBook(id: string): Book {
-  return {
-    id,
-    title: `书籍 ${id}`,
-    author: "作者",
-    cover: null,
-    filePath: `${id}.epub`,
-    fileSize: 1024,
-    format: "epub",
-    description: null,
-    isbn: null,
-    publisher: null,
-    publishDate: null,
-    language: null,
-    category: null,
-    uploaderId: "user-1",
-    createdAt: "2026-05-10T00:00:00.000Z",
-    updatedAt: "2026-05-10T00:00:00.000Z",
-  };
-}
-
 type HookValue = ReturnType<typeof useBookDeleteAction>;
 
 function renderHookHarness(options?: {
@@ -40,7 +20,7 @@ function renderHookHarness(options?: {
 }) {
   const values: { current: HookValue | null } = { current: null };
   const onDeleted = options?.onDeleted ?? vi.fn();
-  const books = options?.books ?? [createBook("book-1")];
+  const books = options?.books ?? [createMockBook({ id: "book-1" })];
 
   function Harness() {
     values.current = useBookDeleteAction({ books, onDeleted });

@@ -2,7 +2,7 @@ import { act, render } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { toast } from "sonner";
 import { useBookCategoryAction } from "./useBookCategoryAction";
-import type { Book } from "@/lib/db/schema";
+import { createMockBook } from "@/components/bookshelf/test-utils";
 
 vi.mock("sonner", () => ({
   toast: {
@@ -10,28 +10,6 @@ vi.mock("sonner", () => ({
     success: vi.fn(),
   },
 }));
-
-function createBook(overrides: Partial<Book> = {}): Book {
-  return {
-    id: "book-1",
-    title: "测试书籍",
-    author: "作者",
-    cover: null,
-    filePath: "book-1.epub",
-    fileSize: 1024,
-    format: "epub",
-    description: null,
-    isbn: null,
-    publisher: null,
-    publishDate: null,
-    language: null,
-    category: "技术",
-    uploaderId: "user-1",
-    createdAt: "2026-05-10T00:00:00.000Z",
-    updatedAt: "2026-05-10T00:00:00.000Z",
-    ...overrides,
-  };
-}
 
 type HookValue = ReturnType<typeof useBookCategoryAction>;
 
@@ -57,7 +35,7 @@ describe("useBookCategoryAction", () => {
     const { values } = renderHookHarness();
 
     act(() => {
-      values.current?.openCategoryDialog(createBook({ category: "小说" }));
+      values.current?.openCategoryDialog(createMockBook({ category: "小说" }));
     });
 
     expect(values.current?.categoryDialogBook?.id).toBe("book-1");
@@ -68,7 +46,7 @@ describe("useBookCategoryAction", () => {
     const { values } = renderHookHarness();
 
     act(() => {
-      values.current?.openCategoryDialog(createBook());
+      values.current?.openCategoryDialog(createMockBook());
       values.current?.handleCategoryDialogOpenChange(false);
     });
 
@@ -80,7 +58,7 @@ describe("useBookCategoryAction", () => {
     const { values, onSaved } = renderHookHarness();
 
     act(() => {
-      values.current?.openCategoryDialog(createBook());
+      values.current?.openCategoryDialog(createMockBook());
       values.current?.setCategoryInput("a".repeat(41));
     });
     await act(async () => {
@@ -98,7 +76,7 @@ describe("useBookCategoryAction", () => {
     const { values } = renderHookHarness(onSaved);
 
     act(() => {
-      values.current?.openCategoryDialog(createBook());
+      values.current?.openCategoryDialog(createMockBook());
       values.current?.setCategoryInput("   ");
     });
     await act(async () => {
@@ -122,7 +100,7 @@ describe("useBookCategoryAction", () => {
     const { values } = renderHookHarness(onSaved);
 
     act(() => {
-      values.current?.openCategoryDialog(createBook());
+      values.current?.openCategoryDialog(createMockBook());
       values.current?.setCategoryInput(" 技术 ");
     });
     await act(async () => {
@@ -145,7 +123,7 @@ describe("useBookCategoryAction", () => {
     const { values } = renderHookHarness(onSaved);
 
     act(() => {
-      values.current?.openCategoryDialog(createBook());
+      values.current?.openCategoryDialog(createMockBook());
       values.current?.setCategoryInput("历史");
     });
     await act(async () => {

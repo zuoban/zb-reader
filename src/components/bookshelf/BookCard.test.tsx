@@ -1,8 +1,8 @@
 import { beforeEach, describe, it, expect, vi } from "vitest";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { BookCard } from "@/components/bookshelf/BookCard";
+import { createMockBook } from "@/components/bookshelf/test-utils";
 import type { ComponentProps } from "react";
-import type { Book } from "@/lib/db/schema";
 
 const mockPrefetch = vi.fn();
 
@@ -17,24 +17,13 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-const mockBook: Book = {
-  id: "book-1",
+const mockBook = createMockBook({
   title: "Test Book",
   author: "Test Author",
-  cover: null,
-  filePath: "test.epub",
   fileSize: 1024 * 1024 * 2,
-  format: "epub",
-  description: null,
-  isbn: null,
-  publisher: null,
-  publishDate: null,
-  language: null,
-  category: null,
-  uploaderId: "user-1",
   createdAt: "2024-01-01 00:00:00",
   updatedAt: "2024-01-01 00:00:00",
-};
+});
 
 function renderBookCard(props: Partial<ComponentProps<typeof BookCard>> = {}) {
   return render(

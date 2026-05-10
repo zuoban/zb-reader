@@ -1,47 +1,11 @@
 import { act, render, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ALL_CATEGORY, useBookshelfData, type BookshelfInitialData } from "./useBookshelfData";
-import type { Book } from "@/lib/db/schema";
-
-function createBook(id: string, title = `书籍 ${id}`): Book {
-  return {
-    id,
-    title,
-    author: "作者",
-    cover: null,
-    filePath: `${id}.epub`,
-    fileSize: 1024,
-    format: "epub",
-    description: null,
-    isbn: null,
-    publisher: null,
-    publishDate: null,
-    language: null,
-    category: null,
-    uploaderId: "user-1",
-    createdAt: "2026-05-10T00:00:00.000Z",
-    updatedAt: "2026-05-10T00:00:00.000Z",
-  };
-}
-
-function createInitialData(overrides: Partial<BookshelfInitialData> = {}): BookshelfInitialData {
-  const books = [createBook("book-1")];
-  return {
-    books,
-    categories: [{ name: "技术", count: 1 }],
-    progressMap: { "book-1": 0.2 },
-    lastReadAtMap: { "book-1": "2026-05-10T01:00:00.000Z" },
-    total: books.length,
-    allTotal: books.length,
-    page: 1,
-    limit: 20,
-    ...overrides,
-  };
-}
+import { ALL_CATEGORY, useBookshelfData } from "./useBookshelfData";
+import { createBookshelfInitialData, createMockBook } from "@/components/bookshelf/test-utils";
 
 type HookValue = ReturnType<typeof useBookshelfData>;
 
-function renderHookHarness(initialData = createInitialData()) {
+function renderHookHarness(initialData = createBookshelfInitialData()) {
   const values: { current: HookValue | null } = { current: null };
 
   function Harness() {
@@ -92,7 +56,7 @@ describe("useBookshelfData", () => {
   it("refreshes with current category and search params", async () => {
     vi.mocked(fetch).mockResolvedValue(
       mockBooksResponse({
-        books: [createBook("book-2")],
+        books: [createMockBook({ id: "book-2" })],
         categories: [{ name: "技术", count: 1 }],
         progressMap: { "book-2": 0.4 },
         lastReadAtMap: { "book-2": "2026-05-10T02:00:00.000Z" },
@@ -121,13 +85,13 @@ describe("useBookshelfData", () => {
   it("appends books and maps when loading more", async () => {
     vi.mocked(fetch).mockResolvedValue(
       mockBooksResponse({
-        books: [createBook("book-2")],
+        books: [createMockBook({ id: "book-2" })],
         progressMap: { "book-2": 0.8 },
         lastReadAtMap: { "book-2": "2026-05-10T02:00:00.000Z" },
         total: 2,
       }) as never
     );
-    const { values } = renderHookHarness(createInitialData({ total: 2, allTotal: 2 }));
+    const { values } = renderHookHarness(createBookshelfInitialData({ total: 2, allTotal: 2 }));
 
     act(() => {
       values.current?.handleLoadMore();
