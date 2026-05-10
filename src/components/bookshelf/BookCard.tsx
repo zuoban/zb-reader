@@ -160,7 +160,7 @@ export const BookCard = memo(function BookCard({
     <Card
       ref={cardRef}
       className={cn(
-        "card-premium group relative overflow-hidden rounded-2xl border-border bg-card p-0 transition-all duration-300",
+        "book-card-glass group relative overflow-hidden rounded-2xl p-0 transition-all duration-500 ease-out",
         spotlight && "ring-2 ring-primary/30"
       )}
     >

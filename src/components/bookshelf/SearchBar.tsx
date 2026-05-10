@@ -40,7 +40,7 @@ export function SearchBar({ onSearch, className }: SearchBarProps) {
         placeholder="搜索书名或作者..."
         value={query}
         onChange={handleChange}
-        className="h-10 rounded-full border-border bg-background pl-9 pr-9 text-sm shadow-sm transition-all duration-300 focus:border-primary focus:bg-background focus:ring-4 focus:ring-primary/5 dark:focus:bg-muted/50"
+        className="h-10 rounded-full border-border/60 bg-background/50 backdrop-blur-md pl-9 pr-9 text-sm shadow-sm transition-all duration-300 focus:border-primary/50 focus:bg-background/80 focus:ring-4 focus:ring-primary/5 dark:bg-muted/20 dark:focus:bg-muted/40"
       />
       {query && (
         <button

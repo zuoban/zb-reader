@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, Tags, X } from "lucide-react";
 import { toast } from "sonner";
 import { SearchBar } from "@/components/bookshelf/SearchBar";
+import { BackgroundDecoration } from "@/components/bookshelf/BackgroundDecoration";
 import { BookCardSkeleton } from "@/components/bookshelf/BookCardSkeleton";
 import { BookGrid } from "@/components/bookshelf/BookGrid";
 import { Navbar } from "@/components/layout/Navbar";
@@ -242,12 +243,13 @@ export default function BookshelfPage() {
   }, [hasMore, loading, loadingMore, handleLoadMore]);
 
   return (
-    <div className="paper-texture min-h-screen bg-background">
+    <div className="relative min-h-screen bg-background">
+      <BackgroundDecoration />
       <Navbar onUploadComplete={handleUploadComplete} />
 
       <main className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-10 pt-8 sm:px-6 sm:pb-14 sm:pt-12">
         <div className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex w-fit max-w-[calc(100%+0.5rem)] gap-1 overflow-x-auto rounded-full border border-border bg-background p-1 shadow-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="category-filter-shell flex w-fit max-w-[calc(100%+0.5rem)] gap-1 overflow-x-auto rounded-full p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <Button
               type="button"
               variant="ghost"
@@ -255,8 +257,8 @@ export default function BookshelfPage() {
               className={cn(
                 "h-9 cursor-pointer rounded-full px-4 text-xs font-medium transition-all duration-300",
                 selectedCategory === ALL_CATEGORY
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  ? "category-filter-button-active shadow-sm"
+                  : "category-filter-button hover:bg-background/40"
               )}
               onClick={() => setSelectedCategory(ALL_CATEGORY)}
             >
@@ -280,8 +282,8 @@ export default function BookshelfPage() {
                 className={cn(
                   "h-9 cursor-pointer rounded-full px-4 text-xs font-medium transition-all duration-300",
                   selectedCategory === category.name
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    ? "category-filter-button-active shadow-sm"
+                    : "category-filter-button hover:bg-background/40"
                 )}
                 onClick={() => setSelectedCategory(category.name)}
               >
@@ -335,7 +337,7 @@ export default function BookshelfPage() {
                   variant="outline"
                   onClick={handleLoadMore}
                   disabled={loadingMore}
-                  className="h-12 min-w-[160px] rounded-full border-border bg-background px-8 text-sm font-medium shadow-sm transition-all duration-300 hover:bg-muted"
+                  className="liquid-control h-12 min-w-[160px] cursor-pointer rounded-full px-8 text-sm font-medium shadow-sm"
                 >
                   {loadingMore ? (
                     <div className="flex items-center gap-2">
