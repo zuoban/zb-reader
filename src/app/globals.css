@@ -657,15 +657,10 @@
 }
 
 .dark .category-filter-button-active {
-  position: relative;
-  border-color: color-mix(in oklab, white 12%, transparent);
-  background:
-    linear-gradient(180deg, color-mix(in oklab, white 20%, transparent), transparent 45%),
-    color-mix(in oklab, white 6%, transparent);
+  border-color: color-mix(in oklab, white 6%, transparent);
+  background: color-mix(in oklab, white 8%, transparent);
   color: var(--foreground);
-  box-shadow:
-    0 1px 0 color-mix(in oklab, white 10%, transparent) inset,
-    0 4px 10px -6px color-mix(in oklab, black 50%, transparent);
+  box-shadow: none;
 }
 
 .liquid-hairline {
