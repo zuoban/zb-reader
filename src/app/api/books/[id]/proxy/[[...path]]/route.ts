@@ -55,7 +55,11 @@ export function normalizeProxyPath(pathSegments?: string[]): string | null {
   }
 
   const normalizedPath = normalizedSegments.join("/");
-  if (normalizedPath.startsWith("/") || /^[a-z][a-z0-9+.-]*:/i.test(normalizedPath)) {
+
+  // Secondary check: ensure the joined path doesn't contain traversal sequences
+  // (e.g., segments like "foo.." + "..bar" could produce "foo../..bar" which is safe,
+  // but "foo.." + ".." would have been caught above; this catches any remaining edge cases)
+  if (normalizedPath.includes("..") || normalizedPath.startsWith("/")) {
     return null;
   }
 

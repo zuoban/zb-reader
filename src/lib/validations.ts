@@ -146,3 +146,14 @@ export const categoryRenameSchema = z.object({
 export const categoryDeleteSchema = z.object({
   name: z.string().trim().min(1, "分类名称不能为空").max(40, "分类名称不能超过 40 个字符"),
 });
+
+/** TTS 微软朗读请求校验 */
+export const microsoftTtsSpeakSchema = z.object({
+  text: z.string().min(1, "朗读文本不能为空").max(10000, "文本长度不能超过 10000 字符"),
+  voiceName: z.string().max(100).optional(),
+  rate: z.coerce.number().finite().optional(),
+  pitch: z.coerce.number().finite().optional(),
+  volume: z.coerce.number().finite().optional(),
+  outputFormat: z.string().max(50).optional(),
+  prefetch: z.union([z.string(), z.boolean()]).optional(),
+});

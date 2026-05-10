@@ -30,11 +30,11 @@ describe("normalizeMicrosoftSpeakPayload", () => {
       normalizeMicrosoftSpeakPayload({
         text: " 你好 ",
         voiceName: "  zh-CN-XiaoxiaoMultilingualNeural  ",
-        rate: "1.8",
-        pitch: "-120",
-        volume: "120",
+        rate: 1.8,
+        pitch: -120,
+        volume: 120,
         outputFormat: " audio/mpeg ",
-        prefetch: "1",
+        prefetch: true,
       })
     ).toEqual({
       text: "你好",
@@ -54,10 +54,8 @@ describe("normalizeMicrosoftSpeakPayload", () => {
       normalizeMicrosoftSpeakPayload({
         text: "",
         voiceName: "   ",
-        rate: "abc",
         pitch: undefined,
-        volume: Number.NaN,
-        prefetch: "false",
+        prefetch: false,
       })
     ).toEqual({
       text: "",

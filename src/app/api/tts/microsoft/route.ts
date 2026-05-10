@@ -3,16 +3,10 @@ import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthUserId } from "@/lib/api-utils";
 import { synthesizeMicrosoftSpeech } from "@/lib/microsoftTts";
+import { microsoftTtsSpeakSchema } from "@/lib/validations";
+import type { z } from "zod";
 
-interface MicrosoftSpeakRequestBody {
-  text?: string;
-  voiceName?: string;
-  rate?: number | string;
-  pitch?: number | string;
-  volume?: number | string;
-  outputFormat?: string;
-  prefetch?: boolean | string;
-}
+type MicrosoftSpeakBody = z.infer<typeof microsoftTtsSpeakSchema>;
 
 const DEFAULT_VOICE = "zh-CN-XiaoxiaoMultilingualNeural";
 const AUDIO_CACHE_TTL_MS = 30 * 60 * 1000;
@@ -42,7 +36,7 @@ function normalizePrefetchFlag(value: unknown): boolean {
   return value === true || value === "true" || value === "1";
 }
 
-export function normalizeMicrosoftSpeakPayload(body: MicrosoftSpeakRequestBody) {
+export function normalizeMicrosoftSpeakPayload(body: MicrosoftSpeakBody) {
   const text = typeof body.text === "string" ? body.text.trim() : "";
   const voiceName = typeof body.voiceName === "string" && body.voiceName.trim() ? body.voiceName.trim() : DEFAULT_VOICE;
   const rate = clampNumber(body.rate, -100, 100, 0);
@@ -121,7 +115,7 @@ function createAudioResponse(body: Buffer, contentType: string) {
   });
 }
 
-async function synthesizeAndRespond(body: MicrosoftSpeakRequestBody) {
+async function synthesizeAndRespond(body: MicrosoftSpeakBody) {
   const payload = normalizeMicrosoftSpeakPayload(body);
   const prefetchOnly = payload.prefetch;
   if (!payload.text) {
@@ -210,8 +204,7 @@ export async function GET(req: NextRequest) {
   }
 
   const searchParams = req.nextUrl.searchParams;
-
-  return synthesizeAndRespond({
+  const parsed = microsoftTtsSpeakSchema.safeParse({
     text: searchParams.get("text") ?? undefined,
     voiceName: searchParams.get("voiceName") ?? undefined,
     rate: searchParams.get("rate") ?? undefined,
@@ -220,6 +213,12 @@ export async function GET(req: NextRequest) {
     outputFormat: searchParams.get("outputFormat") ?? undefined,
     prefetch: searchParams.get("prefetch") ?? undefined,
   });
+
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "参数校验失败" }, { status: 400 });
+  }
+
+  return synthesizeAndRespond(parsed.data);
 }
 
 export async function POST(req: NextRequest) {
@@ -228,6 +227,17 @@ export async function POST(req: NextRequest) {
     return authResult.error;
   }
 
-  const body = (await req.json()) as MicrosoftSpeakRequestBody;
-  return synthesizeAndRespond(body);
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "无效的请求体" }, { status: 400 });
+  }
+
+  const parsed = microsoftTtsSpeakSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "参数校验失败" }, { status: 400 });
+  }
+
+  return synthesizeAndRespond(parsed.data);
 }
