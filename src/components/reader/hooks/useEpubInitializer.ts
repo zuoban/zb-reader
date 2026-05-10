@@ -211,6 +211,43 @@ export function useEpubInitializer({
               restoreInitialScroll(viewerRef.current, initialScrollRatio);
             }, 120);
           }
+
+          // Step 1: Deferred Location Generation
+          const generateLocations = async () => {
+            if (cancelled || !bookRef.current) return;
+            
+            const cachedLocations = await getCachedLocations(bookId);
+            if (cachedLocations && !cancelled) {
+              try {
+                const locationsJson = new TextDecoder().decode(cachedLocations);
+                const locationsArray = JSON.parse(locationsJson);
+                bookRef.current.locations.load(locationsArray);
+                onReady?.();
+                return;
+              } catch (e) {
+                logger.warn("epub-reader", "加载缓存 locations 失败", e);
+              }
+            }
+
+            // If no cache, generate with a delay to ensure UI is interactive
+            if (!cancelled) {
+              bookRef.current.locations.generate(1024).then((locations) => {
+                if (!cancelled) {
+                  const locationsJson = JSON.stringify(locations);
+                  const locationsBuffer = new TextEncoder().encode(locationsJson).buffer;
+                  cacheBookLocations(bookId, locationsBuffer);
+                }
+                onReady?.();
+              });
+            }
+          };
+
+          if ("requestIdleCallback" in window) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (window as any).requestIdleCallback(() => generateLocations(), { timeout: 2000 });
+          } else {
+            setTimeout(generateLocations, 1000);
+          }
         });
 
         rendition.on("relocated", (location: EpubRelocatedLocation) => {
@@ -270,33 +307,7 @@ export function useEpubInitializer({
         });
 
         book.ready.then(async () => {
-          const cachedLocations = await getCachedLocations(bookId);
-          if (cachedLocations && !cancelled) {
-            try {
-              const locationsJson = new TextDecoder().decode(cachedLocations);
-              const locationsArray = JSON.parse(locationsJson);
-              book!.locations.load(locationsArray);
-              onReady?.();
-            } catch {
-              book!.locations.generate(1024).then((locations) => {
-                if (!cancelled) {
-                  const locationsJson = JSON.stringify(locations);
-                  const locationsBuffer = new TextEncoder().encode(locationsJson).buffer;
-                  cacheBookLocations(bookId, locationsBuffer);
-                }
-                onReady?.();
-              });
-            }
-          } else {
-            book!.locations.generate(1024).then((locations) => {
-              if (!cancelled) {
-                const locationsJson = JSON.stringify(locations);
-                const locationsBuffer = new TextEncoder().encode(locationsJson).buffer;
-                cacheBookLocations(bookId, locationsBuffer);
-              }
-              onReady?.();
-            });
-          }
+          // Locations generation moved to rendition.once("displayed") for performance
         });
       } catch (error) {
         logger.error("epub-reader", "加载EPUB失败", error);

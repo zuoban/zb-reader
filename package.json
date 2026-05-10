@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@chenglou/pretext": "^0.0.6",
+    "@tanstack/react-virtual": "^3.13.24",
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^12.6.2",
     "class-variance-authority": "^0.7.1",

@@ -48,48 +48,63 @@ export function useEpubParagraphs({
 
   const buildParagraphLayoutIndex = useCallback(
     (doc: Document, containerWidth: number) => {
-      const nodes = doc.body.querySelectorAll(
-        "p, li, blockquote, h1, h2, h3, h4, h5, h6, pre"
-      );
+      const nodes = Array.from(
+        doc.body.querySelectorAll("p, li, blockquote, h1, h2, h3, h4, h5, h6, pre")
+      ) as HTMLElement[];
 
       const paragraphs: ReaderParagraph[] = [];
+      const batchSize = 50;
+      let currentIndex = 0;
 
-      for (const [index, element] of Array.from(nodes).entries()) {
-        const el = element as HTMLElement;
-        const isPre = el.tagName.toLowerCase() === "pre";
-        // 代码块保留原始换行格式，普通段落合并空白
-        const text = isPre
-          ? (el.textContent || "").trim()
-          : (el.textContent || "").replace(/\s+/g, " ").trim();
-        // 代码块放宽长度限制到 5000 字符
-        if (text.length > 0 && text.length <= (isPre ? 5000 : 800)) {
-          const id = buildParagraphId(index, text);
-          el.setAttribute("data-reader-paragraph-id", id);
-          paragraphs.push({
-            id,
-            text,
-            html: el.innerHTML,
-            location: epubContextRef.current.getCfiFromNode(element) || undefined,
-            isCodeBlock: isPre,
-          });
+      const processBatch = () => {
+        const end = Math.min(currentIndex + batchSize, nodes.length);
+        
+        for (let i = currentIndex; i < end; i++) {
+          const el = nodes[i];
+          const isPre = el.tagName.toLowerCase() === "pre";
+          const text = isPre
+            ? (el.textContent || "").trim()
+            : (el.textContent || "").replace(/\s+/g, " ").trim();
+          
+          if (text.length > 0 && text.length <= (isPre ? 5000 : 800)) {
+            const id = buildParagraphId(i, text);
+            el.setAttribute("data-reader-paragraph-id", id);
+            paragraphs.push({
+              id,
+              text,
+              html: el.innerHTML,
+              location: epubContextRef.current.getCfiFromNode(el) || undefined,
+              isCodeBlock: isPre,
+            });
+          }
         }
-      }
 
-      if (paragraphs.length === 0) {
-        paragraphLayoutsRef.current = [];
-        positionIndexRef.current = [];
-        return;
-      }
+        currentIndex = end;
 
-      const layouts = prepareParagraphs(paragraphs, {
-        fontSize,
-        containerWidth,
-        lineHeight: calculateLineHeight(fontSize),
-      });
+        if (currentIndex < nodes.length) {
+          // Use requestAnimationFrame to yield to the main thread
+          requestAnimationFrame(processBatch);
+        } else {
+          // Finalize indexing
+          if (paragraphs.length === 0) {
+            paragraphLayoutsRef.current = [];
+            positionIndexRef.current = [];
+            return;
+          }
 
-      paragraphLayoutsRef.current = layouts;
-      positionIndexRef.current = buildPositionIndex(layouts);
-      layoutContainerWidthRef.current = containerWidth;
+          const layouts = prepareParagraphs(paragraphs, {
+            fontSize,
+            containerWidth,
+            lineHeight: calculateLineHeight(fontSize),
+          });
+
+          paragraphLayoutsRef.current = layouts;
+          positionIndexRef.current = buildPositionIndex(layouts);
+          layoutContainerWidthRef.current = containerWidth;
+        }
+      };
+
+      processBatch();
     },
     [buildParagraphId, epubContextRef, fontSize]
   );
