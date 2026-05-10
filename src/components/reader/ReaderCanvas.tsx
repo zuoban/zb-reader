@@ -79,53 +79,47 @@ export function ReaderCanvas({
 }: ReaderCanvasProps) {
   return (
     <div className="relative h-full w-full">
-      <div className="h-full w-full px-1.5 py-4 sm:px-6">
-        <div className="relative mx-auto h-full">
-          {/* 底部状态条 */}
-          <div className="pointer-events-none fixed inset-x-0 bottom-0 z-10 flex items-center justify-between px-4 pb-[calc(env(safe-area-inset-bottom)+2px)] pt-1.5 text-[11px] leading-tight border-t" style={{ color: "var(--reader-muted-text)", background: "var(--reader-card-bg)", borderColor: "color-mix(in srgb, var(--reader-border) 40%, transparent)" }}>
-            <span className="tabular-nums min-w-[3ch] text-left">
+      <div className="relative h-full w-full">
+        {/* Minimalist Footer */}
+        {!isTtsViewOpen && (
+          <div className="pointer-events-none fixed inset-x-0 bottom-3 z-10 flex items-center justify-between px-8 text-[9px] font-bold tracking-[0.2em] uppercase transition-opacity duration-500" style={{ color: "var(--reader-text)", opacity: 0.25 }}>
+            <span className="tabular-nums">
               {(progress * 100).toFixed(0)}%
             </span>
-            <span className="mx-2 truncate text-center">
+            <span className="mx-4 truncate font-heading italic normal-case tracking-normal opacity-80">
               {currentChapterTitle || bookTitle}
             </span>
-            <span className="tabular-nums min-w-[6ch] text-right">
+            <span className="tabular-nums">
               {currentPage != null && totalPages != null
-                ? `${currentPage}/${totalPages}`
+                ? `${currentPage} / ${totalPages}`
                 : ""}
             </span>
           </div>
+        )}
 
-          <div
-            className="h-full w-full"
-            style={{
-              paddingTop: isTtsViewOpen ? 0 : 16,
-              paddingBottom: isTtsViewOpen ? 0 : 36,
-            }}
-          >
-            {bookFormat === "epub" && (bookData || bookUrl) && (
-              <EpubReader
-                key={bookId}
-                ref={epubReaderRef}
-                bookId={bookId}
-                bookData={bookData}
-                bookUrl={bookUrl}
-                initialLocation={initialLocation}
-                fontSize={fontSize}
-                fontFamily={fontFamily}
-                theme={readerTheme}
-                onLocationChange={onLocationChange}
-                onTocLoaded={onTocLoaded}
-                onTextSelected={onTextSelected}
-                onClick={isSpeaking ? undefined : onClick}
-                highlights={highlights}
-                activeTtsParagraph={activeTtsParagraph}
-                activeTtsParagraphId={activeTtsParagraphId}
-                activeTtsLocation={activeTtsLocation}
-                ttsHighlightColor={ttsHighlightColor}
-              />
-            )}
-          </div>
+        <div className="h-full w-full">
+          {bookFormat === "epub" && (bookData || bookUrl) && (
+            <EpubReader
+              key={bookId}
+              ref={epubReaderRef}
+              bookId={bookId}
+              bookData={bookData}
+              bookUrl={bookUrl}
+              initialLocation={initialLocation}
+              fontSize={fontSize}
+              fontFamily={fontFamily}
+              theme={readerTheme}
+              onLocationChange={onLocationChange}
+              onTocLoaded={onTocLoaded}
+              onTextSelected={onTextSelected}
+              onClick={isSpeaking ? undefined : onClick}
+              highlights={highlights}
+              activeTtsParagraph={activeTtsParagraph}
+              activeTtsParagraphId={activeTtsParagraphId}
+              activeTtsLocation={activeTtsLocation}
+              ttsHighlightColor={ttsHighlightColor}
+            />
+          )}
         </div>
       </div>
     </div>

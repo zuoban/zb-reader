@@ -1,19 +1,19 @@
 import type { Metadata } from "next";
-import { Poppins, Open_Sans } from "next/font/google";
+import { Lora, Inter } from "next/font/google";
 import { ReaderRouteTransition } from "@/components/layout/ReaderRouteTransition";
 import { PWARegistration } from "@/components/layout/PWARegistration";
 import "./globals.css";
 
-const poppins = Poppins({
-  variable: "--font-poppins",
+const lora = Lora({
+  variable: "--font-lora",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
   preload: true,
 });
 
-const openSans = Open_Sans({
-  variable: "--font-open-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
   display: "swap",
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport = {
-  themeColor: "#6366f1",
+  themeColor: "#171717",
 };
 
 export default function RootLayout({
@@ -47,7 +47,7 @@ export default function RootLayout({
   return (
     <html lang="zh-CN" suppressHydrationWarning>
       <body
-        className={`${poppins.variable} ${openSans.variable} antialiased`}
+        className={`${lora.variable} ${inter.variable} antialiased font-sans`}
       >
         <PWARegistration />
         {children}

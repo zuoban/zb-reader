@@ -57,114 +57,26 @@ export function ReadingSettings({
       <SheetContent
         side="bottom"
         showBackground={false}
-        className="reader-liquid-surface overflow-hidden rounded-t-[28px] px-0 sm:mx-auto sm:max-w-xl xl:max-w-[850px]"
+        className="overflow-hidden rounded-t-3xl border-t border-border bg-[var(--reader-bg)] px-0 shadow-2xl sm:mx-auto sm:max-w-xl xl:max-w-2xl"
         style={{ color: "var(--reader-text)" }}
       >
-        {/* Handle + Title */}
-        <SheetHeader className="px-5 pb-4 pt-5 sm:px-6">
-          <div className="flex flex-col items-center gap-2.5">
+        <SheetHeader className="px-6 pb-4 pt-8">
+          <div className="flex flex-col items-center gap-3">
             <div
-              className="w-10 h-1.5 rounded-full"
-              style={{ background: "var(--reader-text)", opacity: 0.15 }}
+              className="w-12 h-1 rounded-full bg-[var(--reader-text)]/10"
             />
-            <SheetTitle
-              className="text-[18px] sm:text-[20px] font-bold tracking-tight"
-              style={{ color: "var(--reader-text)" }}
-            >
-              阅读设置
+            <SheetTitle className="font-heading text-2xl font-bold tracking-tight text-[var(--reader-text)]">
+              Preferences
             </SheetTitle>
-            <p
-              className="text-center text-[13px] sm:text-sm"
-              style={{ color: "var(--reader-muted-text)" }}
-            >
-              调整排版与朗读细节，尽量不打断当前阅读节奏
-            </p>
           </div>
         </SheetHeader>
 
-        <div className="px-5 sm:px-6 pb-10 max-h-[70vh] overflow-y-auto space-y-6 scrollbar-hide">
-          {/* Current preset card */}
-          <div
-            className="rounded-2xl border px-5 py-5"
-            style={{
-              borderColor: "color-mix(in srgb, var(--reader-border) 60%, transparent)",
-              background: "color-mix(in srgb, var(--reader-text) 3%, transparent)",
-            }}
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p
-                  className="text-[13px]"
-                  style={{ color: "var(--reader-muted-text)" }}
-                >
-                  当前阅读预设
-                </p>
-                <h3
-                  className="mt-1.5 text-[15px] sm:text-base font-semibold leading-tight"
-                  style={{ color: "var(--reader-text)" }}
-                >
-                  更适合久读的排版与朗读节奏
-                </h3>
-              </div>
-              <span
-                className="rounded-full px-2.5 py-1 text-[12px] font-medium"
-                style={{
-                  background:
-                    "color-mix(in srgb, var(--reader-primary) 12%, transparent)",
-                  color: "var(--reader-primary)",
-                }}
-              >
-                {theme === "light" ? "白色" : theme === "dark" ? "深色" : "护眼"}
-              </span>
-            </div>
-            <div className="mt-5 grid grid-cols-2 gap-3">
-              {[
-                { label: "字号", value: `${fontSize}px` },
-                { label: "语速", value: `${ttsRate.toFixed(1)}x` },
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  className="rounded-xl px-3 py-3 text-center"
-                  style={{
-                    background: "color-mix(in srgb, var(--reader-text) 4%, transparent)",
-                  }}
-                >
-                  <p
-                    className="text-[12px]"
-                    style={{ color: "var(--reader-muted-text)" }}
-                  >
-                    {item.label}
-                  </p>
-                  <p
-                    className="mt-1.5 text-[15px] font-bold"
-                    style={{ color: "var(--reader-text)" }}
-                  >
-                    {item.value}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* 排版 */}
+        <div className="px-8 pb-12 max-h-[70vh] overflow-y-auto space-y-10 scrollbar-hide">
+          {/* Typograhpy */}
           <section>
-            <div className="flex items-center gap-2 sm:gap-2.5 mb-3 sm:mb-3.5 px-1 sm:px-1">
-              <div
-                className="flex items-center justify-center w-6 h-6 rounded-lg"
-                style={{
-                  background: "color-mix(in srgb, var(--reader-primary) 12%, transparent)",
-                }}
-              >
-                <Type
-                  className="size-3.5 sm:size-4"
-                  style={{ color: "var(--reader-primary)" }}
-                />
-              </div>
-              <span
-                className="text-[12px] sm:text-[13px] font-bold tracking-wide"
-                style={{ color: "var(--reader-text)" }}
-              >
-                排版
+            <div className="mb-4 flex items-center gap-2">
+              <span className="text-[10px] font-bold tracking-[0.2em] text-[var(--reader-text)] opacity-40 uppercase">
+                Typography
               </span>
             </div>
             <TypographySettings
@@ -175,21 +87,35 @@ export function ReadingSettings({
             />
           </section>
 
-          {/* 主题 */}
-          <ThemeSettings theme={theme} onThemeChange={onThemeChange} />
+          {/* Theme */}
+          <section>
+            <div className="mb-4 flex items-center gap-2">
+              <span className="text-[10px] font-bold tracking-[0.2em] text-[var(--reader-text)] opacity-40 uppercase">
+                Appearance
+              </span>
+            </div>
+            <ThemeSettings theme={theme} onThemeChange={onThemeChange} />
+          </section>
 
-          {/* 朗读 */}
-          <TtsSettings
-            browserVoices={browserVoices}
-            selectedBrowserVoiceId={selectedBrowserVoiceId}
-            onSelectedBrowserVoiceIdChange={onSelectedBrowserVoiceIdChange}
-            ttsRate={ttsRate}
-            onTtsRateChange={onTtsRateChange}
-            microsoftPreloadCount={microsoftPreloadCount}
-            onMicrosoftPreloadCountChange={onMicrosoftPreloadCountChange}
-            ttsHighlightColor={ttsHighlightColor}
-            onTtsHighlightColorChange={onTtsHighlightColorChange}
-          />
+          {/* TTS */}
+          <section>
+            <div className="mb-4 flex items-center gap-2">
+              <span className="text-[10px] font-bold tracking-[0.2em] text-[var(--reader-text)] opacity-40 uppercase">
+                Voice & Speed
+              </span>
+            </div>
+            <TtsSettings
+              browserVoices={browserVoices}
+              selectedBrowserVoiceId={selectedBrowserVoiceId}
+              onSelectedBrowserVoiceIdChange={onSelectedBrowserVoiceIdChange}
+              ttsRate={ttsRate}
+              onTtsRateChange={onTtsRateChange}
+              microsoftPreloadCount={microsoftPreloadCount}
+              onMicrosoftPreloadCountChange={onMicrosoftPreloadCountChange}
+              ttsHighlightColor={ttsHighlightColor}
+              onTtsHighlightColorChange={onTtsHighlightColorChange}
+            />
+          </section>
         </div>
       </SheetContent>
     </Sheet>

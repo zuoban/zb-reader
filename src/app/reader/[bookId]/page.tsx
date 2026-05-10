@@ -431,7 +431,7 @@ function ReaderContent() {
 
   return (
     <div
-      className={`isolate h-screen w-screen overflow-hidden ${currentTheme.bg}`}
+      className={`isolate h-screen w-screen overflow-hidden paper-texture ${currentTheme.bg}`}
       data-reader-theme={readerTheme}
       style={{
         "--reader-bg": currentTheme.solidBg,
@@ -445,8 +445,9 @@ function ReaderContent() {
         "--reader-destructive": currentTheme.destructive,
       } as React.CSSProperties}
     >
-      <div className="pointer-events-none fixed inset-x-0 top-0 z-0 h-28 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--reader-card-bg)_62%,transparent),transparent)]" />
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-0 h-24 bg-[linear-gradient(0deg,color-mix(in_srgb,var(--reader-card-bg)_42%,transparent),transparent)]" />
+      {/* Subtle Top & Bottom Fade */}
+      <div className="pointer-events-none fixed inset-x-0 top-0 z-10 h-24 bg-gradient-to-b from-[var(--reader-bg)] to-transparent opacity-80" />
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-10 h-24 bg-gradient-to-t from-[var(--reader-bg)] to-transparent opacity-80" />
 
       <ReaderCanvas
         activeTtsLocation={activeTtsLocation}

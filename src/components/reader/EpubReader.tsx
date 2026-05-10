@@ -279,11 +279,11 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     });
 
     return (
-      <div className="relative h-full w-full px-2 sm:px-4 lg:px-6 xl:px-8">
+      <div className="relative h-full w-full">
         <div
           ref={viewerRef}
           id="epub-viewer"
-          className="h-full w-full overflow-x-hidden rounded-[24px]"
+          className="h-full w-full overflow-x-hidden"
         />
       </div>
     );

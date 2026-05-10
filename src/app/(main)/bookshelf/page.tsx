@@ -243,22 +243,21 @@ export default function BookshelfPage() {
   }, [hasMore, loading, loadingMore, handleLoadMore]);
 
   return (
-    <div className="app-noise liquid-page min-h-screen bg-background">
-      <BackgroundDecoration />
+    <div className="paper-texture min-h-screen bg-background">
       <Navbar onUploadComplete={handleUploadComplete} />
 
       <main className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-10 pt-8 sm:px-6 sm:pb-14 sm:pt-12">
         <div className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative -mx-1 flex w-fit max-w-[calc(100%+0.5rem)] gap-1 overflow-x-auto rounded-2xl border border-white/30 bg-white/40 p-1.5 shadow-[0_4px_16px_rgba(0,0,0,0.06)] backdrop-blur-xl saturate-150 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden dark:border-white/5 dark:bg-white/5">
+          <div className="flex w-fit max-w-[calc(100%+0.5rem)] gap-1 overflow-x-auto rounded-full border border-border bg-background p-1 shadow-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <Button
               type="button"
               variant="ghost"
               size="sm"
               className={cn(
-                "h-8.5 cursor-pointer rounded-xl px-3.5 text-xs font-semibold transition-all duration-400",
+                "h-9 cursor-pointer rounded-full px-4 text-xs font-medium transition-all duration-300",
                 selectedCategory === ALL_CATEGORY
-                  ? "category-filter-button-active"
-                  : "text-muted-foreground/80 hover:bg-background/40 hover:text-foreground"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
               onClick={() => setSelectedCategory(ALL_CATEGORY)}
             >
@@ -266,8 +265,8 @@ export default function BookshelfPage() {
               <Badge
                 variant="outline"
                 className={cn(
-                  "ml-1.5 border-transparent bg-foreground/5 px-1.5 py-0 text-[10px] font-bold text-muted-foreground/80 shadow-none transition-colors",
-                  selectedCategory === ALL_CATEGORY && "bg-white/20 text-foreground dark:bg-white/15 dark:text-foreground"
+                  "ml-2 border-transparent bg-foreground/5 px-1.5 py-0 text-[10px] font-bold text-muted-foreground transition-colors",
+                  selectedCategory === ALL_CATEGORY && "bg-primary-foreground/20 text-primary-foreground"
                 )}
               >
                 {totalBooks}
@@ -280,10 +279,10 @@ export default function BookshelfPage() {
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  "h-8.5 cursor-pointer rounded-xl px-3.5 text-xs font-semibold transition-all duration-400",
+                  "h-9 cursor-pointer rounded-full px-4 text-xs font-medium transition-all duration-300",
                   selectedCategory === category.name
-                    ? "category-filter-button-active"
-                    : "text-muted-foreground/80 hover:bg-background/40 hover:text-foreground"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
                 onClick={() => setSelectedCategory(category.name)}
               >
@@ -291,8 +290,8 @@ export default function BookshelfPage() {
                 <Badge
                   variant="outline"
                   className={cn(
-                    "ml-1.5 border-transparent bg-foreground/5 px-1.5 py-0 text-[10px] font-bold text-muted-foreground/80 shadow-none transition-colors",
-                    selectedCategory === category.name && "bg-white/20 text-foreground dark:bg-white/15 dark:text-foreground"
+                    "ml-2 border-transparent bg-foreground/5 px-1.5 py-0 text-[10px] font-bold text-muted-foreground transition-colors",
+                    selectedCategory === category.name && "bg-primary-foreground/20 text-primary-foreground"
                   )}
                 >
                   {category.count}
@@ -303,13 +302,13 @@ export default function BookshelfPage() {
 
           <SearchBar 
             onSearch={setSearchQuery} 
-            className="w-full sm:w-72" 
+            className="w-full sm:w-80" 
           />
         </div>
 
         {/* Book Grid */}
         {loading && page === 1 ? (
-          <div className="animate-reader-fade-up grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-3.5 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6" style={{ animationDelay: "120ms" }}>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
             {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
               <BookCardSkeleton key={i} />
             ))}
@@ -330,18 +329,18 @@ export default function BookshelfPage() {
             {/* Load More Trigger & Indicator */}
             <div 
               ref={loadMoreRef} 
-              className="mt-12 flex flex-col items-center justify-center gap-4 py-8"
+              className="mt-16 flex flex-col items-center justify-center gap-4 py-8"
             >
               {hasMore ? (
                 <Button
                   variant="outline"
                   onClick={handleLoadMore}
                   disabled={loadingMore}
-                  className="liquid-control h-11 min-w-[140px] rounded-2xl border-white/20 bg-white/40 px-8 text-sm font-bold shadow-sm transition-all duration-400 hover:scale-[1.02] hover:bg-white/60 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
+                  className="h-12 min-w-[160px] rounded-full border-border bg-background px-8 text-sm font-medium shadow-sm transition-all duration-300 hover:bg-muted"
                 >
                   {loadingMore ? (
                     <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                       <span>正在加载...</span>
                     </div>
                   ) : (
@@ -349,10 +348,10 @@ export default function BookshelfPage() {
                   )}
                 </Button>
               ) : books.length > 0 ? (
-                <div className="flex flex-col items-center gap-2 opacity-40">
-                  <div className="h-px w-12 bg-muted-foreground/30" />
-                  <p className="text-[11px] font-bold tracking-widest text-muted-foreground uppercase">
-                    已经到底了
+                <div className="flex flex-col items-center gap-2 opacity-30">
+                  <div className="h-px w-16 bg-muted-foreground" />
+                  <p className="text-[10px] font-medium tracking-[0.2em] text-muted-foreground uppercase">
+                    THE END
                   </p>
                 </div>
               ) : null}

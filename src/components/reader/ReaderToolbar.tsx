@@ -73,11 +73,10 @@ const ToolbarButton = memo(function ToolbarButton({
           onClick={onClick}
           aria-label={tooltip}
           className={cn(
-            "h-7 w-7 cursor-pointer rounded-md transition-all duration-200 ease-out sm:h-8 sm:w-8",
-            "focus-visible:ring-1 focus-visible:ring-[var(--reader-primary)] focus-visible:ring-offset-0",
+            "h-8 w-8 cursor-pointer rounded-full transition-all duration-300",
             isActive
-              ? "bg-[var(--reader-primary)]/10 text-[var(--reader-primary)]"
-              : "text-[var(--reader-text)]/70 hover:bg-[var(--reader-text)]/5 hover:text-[var(--reader-text)]",
+              ? "bg-[var(--reader-text)] text-[var(--reader-card-bg)]"
+              : "text-[var(--reader-text)]/60 hover:bg-[var(--reader-text)]/5 hover:text-[var(--reader-text)]",
             className
           )}
         >
@@ -87,8 +86,7 @@ const ToolbarButton = memo(function ToolbarButton({
       <TooltipContent
         side="bottom"
         sideOffset={8}
-        hideArrow
-        className="reader-toolbar-tooltip text-xs border shadow-lg"
+        className="rounded-sm border-border bg-card px-2 py-1 text-[10px] font-bold tracking-widest text-foreground uppercase shadow-md"
       >
         {tooltip}
       </TooltipContent>
@@ -101,6 +99,7 @@ export const ReaderToolbar = memo(function ReaderToolbar({
   title,
   isBookmarked,
   isFullscreen,
+  progress,
   onBack,
   onToggleToc,
   onToggleBookmark,
@@ -108,6 +107,7 @@ export const ReaderToolbar = memo(function ReaderToolbar({
   onToggleTts,
   onToggleFullscreen,
   isSpeaking,
+  onProgressChange,
   onPrevPage,
   onNextPage,
   onPrevChapter,
@@ -118,159 +118,135 @@ export const ReaderToolbar = memo(function ReaderToolbar({
 }: ReaderToolbarProps) {
   return (
     <TooltipProvider>
-      {/* 顶部工具栏 */}
+      {/* 顶部导航栏 */}
       <div
         className={cn(
-          "pointer-events-none fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out",
+          "fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-in-out",
           visible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
         )}
       >
-        <div className="mx-auto max-w-3xl px-4 pt-3">
-          <div
-            className="reader-toolbar-surface pointer-events-auto flex items-center justify-between rounded-xl px-2 py-1.5 shadow-sm transition-shadow duration-300 sm:px-3"
-            style={{
-              color: "var(--reader-text)",
-            }}
-          >
-            {/* 左侧：返回和目录 */}
-            <div className="flex items-center gap-0.5">
-              <ToolbarButton onClick={onBack} tooltip="返回书架">
-                <ArrowLeft className="size-4" />
-              </ToolbarButton>
-              <ToolbarButton onClick={onToggleToc} tooltip="目录">
-                <List className="size-4" />
-              </ToolbarButton>
-            </div>
+        <div className="flex h-16 items-center justify-between border-b border-[color-mix(in_srgb,var(--reader-text)_5%,transparent)] bg-[var(--reader-bg)]/95 px-4 backdrop-blur-md">
+          {/* 左侧：返回 */}
+          <div className="flex items-center gap-1">
+            <ToolbarButton onClick={onBack} tooltip="返回书架">
+              <ArrowLeft className="size-5" />
+            </ToolbarButton>
+            <div className="h-6 w-px bg-[var(--reader-text)]/10 mx-2" />
+            <ToolbarButton onClick={onToggleToc} tooltip="目录">
+              <List className="size-5" />
+            </ToolbarButton>
+            <ToolbarButton
+              onClick={onToggleBookmark}
+              tooltip={isBookmarked ? "取消书签" : "添加书签"}
+              isActive={isBookmarked}
+            >
+              {isBookmarked ? <BookmarkCheck className="size-5" /> : <Bookmark className="size-5" />}
+            </ToolbarButton>
+          </div>
 
-            {/* 中间：书名 */}
-            <div className="min-w-0 flex-1 px-4 text-center">
-              <h1
-                className="truncate text-sm font-medium tracking-tight text-[var(--reader-text)]/90"
-              >
-                {title}
-              </h1>
-            </div>
+          {/* 中间：书名 */}
+          <div className="absolute left-1/2 -translate-x-1/2 max-w-[40%] text-center">
+            <h1 className="truncate font-heading text-sm font-bold tracking-tight text-[var(--reader-text)] uppercase">
+              {title}
+            </h1>
+          </div>
 
-            {/* 右侧：操作按钮 */}
-            <div className="flex items-center gap-0.5">
-              <ToolbarButton
-                onClick={onToggleBookmark}
-                tooltip={isBookmarked ? "取消书签" : "添加书签"}
-                isActive={isBookmarked}
-              >
-                {isBookmarked ? (
-                  <BookmarkCheck className="size-4" />
-                ) : (
-                  <Bookmark className="size-4" />
-                )}
-              </ToolbarButton>
+          {/* 右侧：功能 */}
+          <div className="flex items-center gap-1">
+            <ToolbarButton
+              onClick={onToggleTts}
+              tooltip={isSpeaking ? "停止" : "朗读"}
+              isActive={isSpeaking}
+            >
+              {isSpeaking ? <Pause className="size-5" /> : <Volume2 className="size-5" />}
+            </ToolbarButton>
 
-              <ToolbarButton
-                onClick={onToggleTts}
-                tooltip={isSpeaking ? "暂停朗读" : "开始朗读"}
-                isActive={isSpeaking}
-              >
-                {isSpeaking ? (
-                  <Pause className="size-4" />
-                ) : (
-                  <Volume2 className="size-4" />
-                )}
-              </ToolbarButton>
+            <ToolbarButton
+              onClick={onToggleFullscreen}
+              tooltip={isFullscreen ? "退出全屏" : "全屏"}
+              isActive={isFullscreen}
+            >
+              {isFullscreen ? <Minimize className="size-5" /> : <Maximize className="size-5" />}
+            </ToolbarButton>
 
-              <ToolbarButton
-                onClick={onToggleFullscreen}
-                tooltip={isFullscreen ? "退出全屏" : "全屏阅读"}
-                isActive={isFullscreen}
-              >
-                {isFullscreen ? (
-                  <Minimize className="size-4" />
-                ) : (
-                  <Maximize className="size-4" />
-                )}
-              </ToolbarButton>
+            <div className="h-6 w-px bg-[var(--reader-text)]/10 mx-2" />
 
-              <ToolbarButton onClick={onToggleSettings} tooltip="设置">
-                <Settings className="size-4" />
-              </ToolbarButton>
+            <ToolbarButton onClick={onToggleSettings} tooltip="阅读设置">
+              <Settings className="size-5" />
+            </ToolbarButton>
 
-              {rightContent}
-            </div>
+            {rightContent}
           </div>
         </div>
       </div>
 
-      {/* 底部翻页控制 */}
+      {/* 底部进度与导航控制 */}
       <div
         className={cn(
-          "pointer-events-none fixed bottom-0 left-0 right-0 z-50 transition-all duration-300 ease-out",
+          "fixed bottom-0 left-0 right-0 z-50 transition-all duration-500 ease-in-out",
           visible ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
         )}
       >
-        <div className="mx-auto max-w-3xl px-4 pb-[calc(env(safe-area-inset-bottom)+0.25rem)]">
-          <div className="reader-page-turn-dock pointer-events-auto mx-auto flex w-fit items-center justify-center gap-0.5 rounded-full px-1 py-0.5">
-            {onPrevChapter && (
+        <div className="border-t border-[color-mix(in_srgb,var(--reader-text)_5%,transparent)] bg-[var(--reader-bg)]/95 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 backdrop-blur-md">
+          <div className="mx-auto flex max-w-4xl items-center gap-6">
+            {/* 左侧：章节/页面导航 */}
+            <div className="flex items-center gap-1">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={onPrevChapter}
                 disabled={!hasPrevChapter}
-                className={cn(
-                  "reader-page-turn-button h-9 w-9 rounded-full",
-                  !hasPrevChapter && "cursor-not-allowed opacity-30 hover:translate-y-0"
-                )}
+                className="h-9 w-9 rounded-full hover:bg-[var(--reader-text)]/5"
                 style={{ color: "var(--reader-text)" }}
-                aria-label="上一章"
               >
-                <ChevronsLeft className="h-4 w-4" />
+                <ChevronsLeft className="size-4" />
               </Button>
-            )}
-
-            {onPrevPage && (
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={onPrevPage}
-                className="reader-page-turn-button h-9 w-9 rounded-full"
+                className="h-9 w-9 rounded-full hover:bg-[var(--reader-text)]/5"
                 style={{ color: "var(--reader-text)" }}
-                aria-label="上一页"
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="size-4" />
               </Button>
-            )}
+            </div>
 
-            {(onPrevPage || onPrevChapter) && (onNextPage || onNextChapter) ? (
-              <div className="h-4 w-px bg-[color-mix(in_srgb,var(--reader-border)_64%,transparent)]" />
-            ) : null}
+            {/* 中间：进度展示 (Read-only) */}
+            <div className="flex flex-1 items-center gap-4">
+              <span className="min-w-[2.5rem] text-right text-[10px] font-bold tracking-widest text-[var(--reader-text)] opacity-40">
+                {Math.round(progress * 100)}%
+              </span>
+              <div className="relative h-1 flex-1 overflow-hidden rounded-full bg-[var(--reader-text)]/10">
+                <div 
+                  className="h-full bg-[var(--reader-text)] transition-all duration-500 ease-out"
+                  style={{ width: `${progress * 100}%` }}
+                />
+              </div>
+            </div>
 
-            {onNextPage && (
+            {/* 右侧：章节/页面导航 */}
+            <div className="flex items-center gap-1">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={onNextPage}
-                className="reader-page-turn-button h-9 w-9 rounded-full"
+                className="h-9 w-9 rounded-full hover:bg-[var(--reader-text)]/5"
                 style={{ color: "var(--reader-text)" }}
-                aria-label="下一页"
               >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="size-4" />
               </Button>
-            )}
-
-            {onNextChapter && (
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={onNextChapter}
                 disabled={!hasNextChapter}
-                className={cn(
-                  "reader-page-turn-button h-9 w-9 rounded-full",
-                  !hasNextChapter && "cursor-not-allowed opacity-30 hover:translate-y-0"
-                )}
+                className="h-9 w-9 rounded-full hover:bg-[var(--reader-text)]/5"
                 style={{ color: "var(--reader-text)" }}
-                aria-label="下一章"
               >
-                <ChevronsRight className="h-4 w-4" />
+                <ChevronsRight className="size-4" />
               </Button>
-            )}
+            </div>
           </div>
         </div>
       </div>

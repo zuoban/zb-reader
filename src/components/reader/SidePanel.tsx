@@ -71,11 +71,13 @@ export const SidePanel = memo(function SidePanel({
       <SheetContent
         side="left"
         showBackground={false}
-        className="reader-liquid-surface !w-[min(94vw,420px)] !max-w-[calc(100vw-0.5rem)] overflow-hidden rounded-r-2xl border-r p-0 sm:!w-[420px] md:!w-[480px] lg:!w-[560px] xl:!w-[640px] 2xl:!w-[680px]"
+        className="!w-[min(94vw,420px)] !max-w-[calc(100vw-0.5rem)] overflow-hidden rounded-r-none border-r border-border bg-[var(--reader-bg)] p-0 shadow-2xl sm:!w-[420px] md:!w-[480px]"
         style={{ color: "var(--reader-text)" }}
       >
-        <SheetHeader className="px-5 py-4 border-b" style={{ borderColor: "color-mix(in srgb, var(--reader-border) 72%, transparent)" }}>
-          <SheetTitle className="sr-only">侧边栏</SheetTitle>
+        <SheetHeader className="px-6 py-8 border-b border-border/50">
+          <SheetTitle className="font-heading text-xl font-bold tracking-tight text-[var(--reader-text)]">
+            Library
+          </SheetTitle>
         </SheetHeader>
 
         <Tabs
@@ -84,41 +86,25 @@ export const SidePanel = memo(function SidePanel({
           className="flex h-full min-w-0 flex-col"
         >
           <TabsList
-            className="reader-liquid-control mx-5 mt-4 grid h-11 grid-cols-3 rounded-xl p-1 gap-1"
+            className="mx-6 mt-6 grid h-10 grid-cols-3 rounded-md bg-[var(--reader-text)]/5 p-1 gap-1"
           >
             <TabsTrigger
               value="toc"
-              aria-label="目录"
-              className="gap-2 rounded-lg text-sm font-medium transition-all data-[state=active]:bg-[var(--reader-card-bg)]/70 data-[state=active]:text-[var(--reader-primary)] data-[state=active]:shadow-sm"
+              className="rounded-sm text-[10px] font-bold tracking-widest uppercase transition-all data-[state=active]:bg-[var(--reader-bg)] data-[state=active]:text-[var(--reader-text)] data-[state=active]:shadow-sm"
             >
-              <List className="size-4" />
-              <span className="hidden sm:inline">目录</span>
+              CONTENTS
             </TabsTrigger>
             <TabsTrigger
               value="bookmarks"
-              aria-label="书签"
-              className="gap-2 rounded-lg text-sm font-medium transition-all data-[state=active]:bg-[var(--reader-card-bg)]/70 data-[state=active]:text-[var(--reader-primary)] data-[state=active]:shadow-sm"
+              className="rounded-sm text-[10px] font-bold tracking-widest uppercase transition-all data-[state=active]:bg-[var(--reader-bg)] data-[state=active]:text-[var(--reader-text)] data-[state=active]:shadow-sm"
             >
-              <Bookmark className="size-4" />
-              <span className="hidden sm:inline">书签</span>
-              {bookmarks.length > 0 && (
-                <span className="ml-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[var(--reader-primary)] text-[var(--reader-bg)]">
-                  {bookmarks.length}
-                </span>
-              )}
+              MARKS
             </TabsTrigger>
             <TabsTrigger
               value="notes"
-              aria-label="笔记"
-              className="gap-2 rounded-lg text-sm font-medium transition-all data-[state=active]:bg-[var(--reader-card-bg)]/70 data-[state=active]:text-[var(--reader-primary)] data-[state=active]:shadow-sm"
+              className="rounded-sm text-[10px] font-bold tracking-widest uppercase transition-all data-[state=active]:bg-[var(--reader-bg)] data-[state=active]:text-[var(--reader-text)] data-[state=active]:shadow-sm"
             >
-              <StickyNote className="size-4" />
-              <span className="hidden sm:inline">笔记</span>
-              {notes.length > 0 && (
-                <span className="ml-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[var(--reader-primary)] text-[var(--reader-bg)]">
-                  {notes.length}
-                </span>
-              )}
+              NOTES
             </TabsTrigger>
           </TabsList>
 

@@ -159,19 +159,18 @@ export const BookCard = memo(function BookCard({
     <Card
       ref={cardRef}
       className={cn(
-        "book-card-glass group relative gap-3 overflow-hidden rounded-[1.25rem] border-white/20 py-0 transition-all duration-400 ease-out hover:-translate-y-1 hover:shadow-lg sm:rounded-[1.5rem]",
-        spotlight && "ring-2 ring-primary/28"
+        "card-premium group relative overflow-hidden rounded-2xl border-border bg-card p-0 transition-all duration-300",
+        spotlight && "ring-2 ring-primary/30"
       )}
     >
-      <div className="liquid-hairline absolute inset-x-3 top-0 z-10 h-px opacity-60 transition-opacity duration-400 group-hover:opacity-100" />
       <Link
         href={readerHref}
-        className={cn("block cursor-pointer", spotlight && "animate-reader-fade-up")}
+        className={cn("block cursor-pointer", spotlight && "animate-fade-in")}
         onMouseEnter={handleMouseEnter}
         onClick={handleOpenReader}
       >
         <div
-          className="liquid-control relative mx-1.5 mt-1.5 mb-1 aspect-[4/5] overflow-hidden rounded-[1rem] p-0 shadow-md"
+          className="relative aspect-[3/4] overflow-hidden"
           data-reader-transition-cover
         >
           {/* Cover Image */}
@@ -180,144 +179,126 @@ export const BookCard = memo(function BookCard({
               <BookCoverImage
                 bookId={book.id}
                 alt={book.title || "书籍封面"}
-                className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.08]"
+                className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
                 onError={() => setCoverError(true)}
               />
               
-              {/* Book spine & page edge effect */}
-              <div className="absolute inset-y-0 left-0 w-[4%] bg-black/24 backdrop-blur-[1px]" />
-              <div className="absolute inset-y-0 left-[4%] w-px bg-white/12" />
-              <div className="absolute inset-0 bg-gradient-to-tr from-black/45 via-transparent to-white/10 opacity-60" />
+              {/* Subtle Book spine effect */}
+              <div className="absolute inset-y-0 left-0 w-[4%] bg-black/10" />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-transparent" />
               <div className="absolute inset-0 ring-1 ring-inset ring-black/5" />
               
               {/* Category Badge Overlay */}
               {book.category && (
-                <div className="absolute left-2 top-2 z-20">
-                  <div className="inline-flex items-center rounded-full border border-white/10 bg-black/60 px-2 py-0.5 text-[10px] font-semibold text-white/95 backdrop-blur-md shadow-sm">
+                <div className="absolute left-3 top-3 z-20">
+                  <div className="inline-flex items-center rounded-sm bg-primary/90 px-1.5 py-0.5 text-[9px] font-bold tracking-widest text-primary-foreground uppercase backdrop-blur-sm">
                     {book.category}
                   </div>
                 </div>
               )}
 
               {isCompleted && (
-                <div className="absolute top-2 right-2 z-20 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-[color:var(--chart-3)] shadow-lg backdrop-blur-sm">
+                <div className="absolute top-3 right-3 z-20 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm">
                   <Check className="h-3.5 w-3.5 stroke-[3px]" />
                 </div>
               )}
             </>
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(145deg,color-mix(in_oklab,var(--glass-strong)_72%,white_28%),color-mix(in_oklab,var(--accent)_62%,var(--cta)_12%))]">
-              <div className="relative">
-                <div className="liquid-control flex h-[4.35rem] w-[3.25rem] items-center justify-center overflow-hidden rounded-r-lg rounded-l-sm text-foreground transition-transform duration-700 ease-out group-hover:scale-[1.05] sm:h-[4.8rem] sm:w-[3.55rem]">
-                  <div className="absolute inset-y-0 left-0 w-1.5 bg-black/15" />
-                  <div className="liquid-hairline absolute inset-x-0 top-0 h-px opacity-40" />
-                  <span className="text-lg font-bold tracking-tighter sm:text-xl">
-                    {book.title?.charAt(0) || "书"}
-                  </span>
-                </div>
+            <div className="flex h-full w-full items-center justify-center bg-muted">
+              <div className="relative flex h-32 w-24 items-center justify-center rounded-sm border border-border bg-card shadow-sm transition-transform duration-500 group-hover:scale-105">
+                <div className="absolute inset-y-0 left-0 w-1 bg-primary/5" />
+                <span className="font-heading text-2xl font-bold italic">
+                  {book.title?.charAt(0) || "B"}
+                </span>
               </div>
               
-              {/* Category Badge Overlay for Fallback */}
               {book.category && (
-                <div className="absolute left-2 top-2 z-20">
-                  <div className="inline-flex items-center rounded-full border border-white/10 bg-black/60 px-2 py-0.5 text-[10px] font-semibold text-white/95 backdrop-blur-md shadow-sm">
+                <div className="absolute left-3 top-3 z-20">
+                  <div className="inline-flex items-center rounded-sm bg-primary/90 px-1.5 py-0.5 text-[9px] font-bold tracking-widest text-primary-foreground uppercase">
                     {book.category}
                   </div>
                 </div>
               )}
             </div>
           )}
-        </div>
 
-        {/* Progress Bar - positioned below cover image */}
-        {hasProgress && (
-          <div className="mx-4 mt-1 h-1.5 overflow-hidden rounded-full bg-black/10">
-            <div
-              className="h-full rounded-full bg-[color:var(--cta)] shadow-[0_0_6px_rgba(217,119,6,0.6)] transition-all duration-500"
-              style={{ width: `${progress * 100}%` }}
-            />
-          </div>
-        )}
+        </div>
       </Link>
 
       {/* Card Content */}
-      <div className="relative flex min-h-[68px] flex-col px-4 pb-4 pt-2 sm:min-h-[74px]">
-        <div className="flex items-start justify-between gap-1.5">
-          <h3
-            className="line-clamp-2 min-h-[2.5em] flex-1 text-[14px] font-bold leading-[1.3] tracking-tight text-foreground/95 transition-colors duration-300 group-hover:text-foreground sm:text-[15px]"
-            title={book.title}
-          >
-            {book.title || "未命名书籍"}
-          </h3>
+      <div className="relative flex flex-col p-4">
+        <div className="flex items-start justify-between gap-2">
+          <Link href={readerHref} onClick={handleOpenReader} className="flex-1">
+            <h3
+              className="line-clamp-1 font-heading text-[15px] font-bold leading-tight tracking-tight text-foreground transition-colors group-hover:text-primary sm:text-[16px]"
+              title={book.title}
+            >
+              {book.title || "未命名书籍"}
+            </h3>
+            <p className="mt-1 line-clamp-1 text-[12px] font-medium text-muted-foreground sm:text-[13px]">
+              {book.author || "未知作者"}
+            </p>
+          </Link>
 
-          <div className="relative -mr-1.5 flex shrink-0 flex-col items-end pt-0.5">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label={`${book.title || "未命名书籍"} 的操作菜单`}
-                  className="liquid-control h-7 w-7 shrink-0 rounded-lg text-muted-foreground/50 opacity-100 transition-all duration-300 hover:text-foreground sm:opacity-0 sm:group-hover:opacity-100"
-                >
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-44 animate-in fade-in-0 zoom-in-95 duration-200">
-                <DropdownMenuItem asChild className="cursor-pointer py-2.5">
-                  <Link href={readerHref} className="flex items-center gap-2.5">
-                    <BookOpen className="h-4 w-4 text-[color:var(--cta)]" />
-                    <span className="font-semibold text-sm">开始阅读</span>
-                  </Link>
-                </DropdownMenuItem>
-                {onChangeCategory ? (
-                  <DropdownMenuItem
-                    className="cursor-pointer py-2.5"
-                    onClick={() => onChangeCategory(book)}
-                  >
-                    <Tags className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-semibold text-sm">设置分类</span>
-                  </DropdownMenuItem>
-                ) : null}
-                <div className="my-1.5 h-px bg-border/40" />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-full text-muted-foreground/60 hover:bg-muted hover:text-foreground"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuItem asChild className="cursor-pointer">
+                <Link href={readerHref} className="flex items-center gap-2">
+                  <BookOpen className="h-4 w-4" />
+                  <span>开始阅读</span>
+                </Link>
+              </DropdownMenuItem>
+              {onChangeCategory && (
                 <DropdownMenuItem
-                  className="cursor-pointer py-2.5 text-destructive focus:bg-destructive/10 focus:text-destructive"
-                  onClick={() => onDelete(book.id)}
+                  className="cursor-pointer"
+                  onClick={() => onChangeCategory(book)}
                 >
-                  <Trash2 className="h-4 w-4" />
-                  <span className="font-semibold text-sm">删除书籍</span>
+                  <Tags className="h-4 w-4" />
+                  <span>分类管理</span>
                 </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+              )}
+              <div className="my-1 h-px bg-border" />
+              <DropdownMenuItem
+                className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive"
+                onClick={() => onDelete(book.id)}
+              >
+                <Trash2 className="h-4 w-4" />
+                <span>移除书籍</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
-        <div className="mt-2 flex flex-col gap-2.5">
-          <div className="flex items-center justify-between gap-2">
-            <span className="min-w-0 truncate text-left text-[11px] font-medium text-muted-foreground/85 transition-colors duration-300 group-hover:text-foreground sm:text-[12px]">
-              {book.author || "未知作者"}
-            </span>
-          </div>
-          
-          <div className="flex items-center justify-between gap-2 border-t border-border/15 pt-2.5">
-            <div className="flex items-center gap-2">
-              <div className={cn(
-                "flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold tracking-tight sm:text-[11px]",
-                isCompleted 
-                  ? "bg-[color:var(--chart-3)]/10 text-[color:var(--chart-3)]" 
-                  : hasProgress 
-                    ? "bg-[color:var(--cta)]/10 text-[color:var(--cta)]"
-                    : "bg-foreground/5 text-foreground/70"
-              )}>
-                {isCompleted && <Check className="h-3 w-3 stroke-[3px]" />}
-                {statusText}
-              </div>
-            </div>
-            {lastReadText ? (
-              <span className="shrink-0 text-[10px] font-medium text-muted-foreground/75 sm:text-[11px]">
-                {lastReadText}
+        <div className="mt-4 flex items-center justify-between border-t border-border/50 pt-3">
+          <div className="flex items-center gap-1.5">
+            {isCompleted ? (
+              <span className="text-[10px] font-bold tracking-widest text-primary uppercase">
+                COMPLETED
               </span>
-            ) : null}
+            ) : hasProgress ? (
+              <span className="text-[10px] font-bold tracking-widest text-primary uppercase">
+                {Math.round(progress * 100)}% READ
+              </span>
+            ) : (
+              <span className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
+                NEW
+              </span>
+            )}
           </div>
+          {lastReadText && (
+            <span className="text-[10px] font-medium text-muted-foreground italic">
+              {lastReadText}
+            </span>
+          )}
         </div>
       </div>
     </Card>
