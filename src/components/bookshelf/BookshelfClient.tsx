@@ -7,6 +7,7 @@ import { SearchBar } from "@/components/bookshelf/SearchBar";
 import { BackgroundDecoration } from "@/components/bookshelf/BackgroundDecoration";
 import { BookCardSkeleton } from "@/components/bookshelf/BookCardSkeleton";
 import { BookGrid } from "@/components/bookshelf/BookGrid";
+import { ALL_CATEGORY, useBookshelfData } from "@/components/bookshelf/hooks/useBookshelfData";
 import { Navbar } from "@/components/layout/Navbar";
 import { useTheme } from "@/components/layout/ThemeProvider";
 import { Badge } from "@/components/ui/badge";
@@ -26,42 +27,35 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import type { Book } from "@/lib/db/schema";
+import type { BookshelfInitialData } from "@/components/bookshelf/hooks/useBookshelfData";
 
 const SKELETON_COUNT = 8;
-const ALL_CATEGORY = "__all__";
 
-interface CategorySummary {
-  name: string;
-  count: number;
-}
-
-export interface BookshelfInitialData {
-  books: Book[];
-  categories: CategorySummary[];
-  progressMap: Record<string, number>;
-  lastReadAtMap: Record<string, string>;
-  total: number;
-  allTotal: number;
-  page: number;
-  limit: number;
-}
+export type { BookshelfInitialData };
 
 interface BookshelfClientProps {
   initialData: BookshelfInitialData;
 }
 
 export function BookshelfClient({ initialData }: BookshelfClientProps) {
-  const [books, setBooks] = useState<Book[]>(initialData.books);
-  const [categories, setCategories] = useState<CategorySummary[]>(initialData.categories);
-  const [totalBooks, setTotalBooks] = useState(initialData.allTotal);
-  const [selectedCategory, setSelectedCategory] = useState(ALL_CATEGORY);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [progressMap, setProgressMap] = useState<Record<string, number>>(initialData.progressMap);
-  const [lastReadAtMap, setLastReadAtMap] = useState<Record<string, string>>(initialData.lastReadAtMap);
-  const [loading, setLoading] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [page, setPage] = useState(initialData.page);
-  const [hasMore, setHasMore] = useState(initialData.books.length < initialData.total);
+  const {
+    activeCategoryName,
+    books,
+    categories,
+    handleLoadMore,
+    hasMore,
+    lastReadAtMap,
+    loading,
+    loadingMore,
+    page,
+    progressMap,
+    refreshBooks,
+    removeBook,
+    selectedCategory,
+    setSearchQuery,
+    setSelectedCategory,
+    totalBooks,
+  } = useBookshelfData(initialData);
   const [spotlightBookId, _setSpotlightBookId] = useState<string | null>(null);
   const [categoryDialogBook, setCategoryDialogBook] = useState<Book | null>(null);
   const [deleteDialogBook, setDeleteDialogBook] = useState<Book | null>(null);
@@ -69,8 +63,6 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
   const [savingCategory, setSavingCategory] = useState(false);
   const [deletingBook, setDeletingBook] = useState(false);
   const { setTheme } = useTheme();
-  const activeCategoryName = selectedCategory === ALL_CATEGORY ? "" : selectedCategory;
-  const fetchAbortRef = useRef<AbortController | null>(null);
 
   // Sync theme with reader settings on mount
   useEffect(() => {
@@ -93,114 +85,6 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
     syncTheme();
   }, [setTheme]);
 
-  const fetchBooks = useCallback(async (currentPage = 1) => {
-    if (currentPage === 1) {
-      fetchAbortRef.current?.abort();
-      fetchAbortRef.current = new AbortController();
-    }
-    const signal = currentPage === 1 ? fetchAbortRef.current?.signal : undefined;
-
-    try {
-      const params = new URLSearchParams();
-      params.set("withProgress", "true");
-      params.set("page", currentPage.toString());
-      params.set("limit", "20");
-      params.set("includeFacets", currentPage === 1 ? "true" : "false");
-      if (activeCategoryName) {
-        params.set("category", activeCategoryName);
-      }
-      if (searchQuery) {
-        params.set("search", searchQuery);
-      }
-
-      const res = await fetch(`/api/books?${params}`, { signal });
-      const data = await res.json();
-
-      if (res.ok) {
-        if (currentPage === 1) {
-          setBooks(data.books);
-          setProgressMap(data.progressMap || {});
-          setLastReadAtMap(data.lastReadAtMap || {});
-        } else {
-          setBooks((prev) => [...prev, ...data.books]);
-          setProgressMap((prev) => ({ ...prev, ...(data.progressMap || {}) }));
-          setLastReadAtMap((prev) => ({ ...prev, ...(data.lastReadAtMap || {}) }));
-        }
-        
-        if (currentPage === 1) {
-          setCategories(data.categories || []);
-          setTotalBooks(data.allTotal ?? data.total ?? 0);
-        }
-        
-        // Check if there are more books to load
-        const totalFetched = (currentPage - 1) * 20 + data.books.length;
-        setHasMore(totalFetched < (data.total || 0));
-      }
-    } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") {
-        return;
-      }
-      toast.error("获取书籍失败");
-    } finally {
-      if (fetchAbortRef.current?.signal === signal) {
-        fetchAbortRef.current = null;
-      }
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  }, [activeCategoryName, searchQuery]);
-
-  useEffect(() => {
-    return () => {
-      fetchAbortRef.current?.abort();
-    };
-  }, []);
-
-  const didMountRef = useRef(false);
-  const queryResetRef = useRef(false);
-
-  useEffect(() => {
-    if (!didMountRef.current) {
-      didMountRef.current = true;
-      return;
-    }
-
-    queryResetRef.current = true;
-    setPage(1);
-    setBooks([]);
-    setProgressMap({});
-    setLastReadAtMap({});
-    setLoading(true);
-    void fetchBooks(1).finally(() => {
-      queryResetRef.current = false;
-    });
-  }, [activeCategoryName, fetchBooks, searchQuery]);
-
-  useEffect(() => {
-    if (page === 1) return;
-    if (queryResetRef.current) return;
-    void fetchBooks(page);
-  }, [fetchBooks, page]);
-
-  useEffect(() => {
-    const handleCategoriesChanged = () => {
-      setPage(1);
-      fetchBooks(1);
-    };
-
-    window.addEventListener("categories-changed", handleCategoriesChanged);
-    return () => {
-      window.removeEventListener("categories-changed", handleCategoriesChanged);
-    };
-  }, [fetchBooks]);
-
-  const handleLoadMore = useCallback(() => {
-    if (!loadingMore && hasMore) {
-      setLoadingMore(true);
-      setPage((p) => p + 1);
-    }
-  }, [hasMore, loadingMore]);
-
   const handleRequestDelete = useCallback((bookId: string) => {
     const book = books.find((item) => item.id === bookId);
     if (book) {
@@ -215,7 +99,7 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
     try {
       const res = await fetch(`/api/books/${deleteDialogBook.id}`, { method: "DELETE" });
       if (res.ok) {
-        setBooks((prev) => prev.filter((b) => b.id !== deleteDialogBook.id));
+        removeBook(deleteDialogBook.id);
         setDeleteDialogBook(null);
         toast.success("删除成功");
       } else {
@@ -226,7 +110,7 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
     } finally {
       setDeletingBook(false);
     }
-  }, [deleteDialogBook]);
+  }, [deleteDialogBook, removeBook]);
 
   const handleOpenCategoryDialog = useCallback((book: Book) => {
     setCategoryDialogBook(book);
@@ -257,20 +141,18 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
 
       setCategoryDialogBook(null);
       setCategoryInput("");
-      setPage(1);
-      await fetchBooks(1);
+      await refreshBooks();
       toast.success(nextCategory ? "分类已更新" : "分类已清除");
     } catch {
       toast.error("分类保存失败");
     } finally {
       setSavingCategory(false);
     }
-  }, [categoryDialogBook, categoryInput, fetchBooks]);
+  }, [categoryDialogBook, categoryInput, refreshBooks]);
 
   const handleUploadComplete = useCallback(() => {
-    setPage(1);
-    fetchBooks(1);
-  }, [fetchBooks]);
+    void refreshBooks();
+  }, [refreshBooks]);
 
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
