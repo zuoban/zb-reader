@@ -4,6 +4,7 @@ import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { getBookFilePath, bookFileExists } from "@/lib/storage";
 import { getAuthUserId } from "@/lib/api-utils";
+import { clearEpubZipCache } from "@/lib/server-epub-cache";
 import JSZip from "jszip";
 import fs from "fs";
 
@@ -33,12 +34,15 @@ vi.mock("@/lib/api-utils", () => ({
 vi.mock("fs", () => ({
   default: {
     readFileSync: vi.fn(),
+    statSync: vi.fn(),
   },
 }));
 
 describe("EPUB Proxy API", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearEpubZipCache();
+    (fs.statSync as MockFn).mockReturnValue({ mtimeMs: 1000, size: 1024 });
   });
 
   it("returns unauthorized if user is not logged in", async () => {
@@ -75,6 +79,30 @@ describe("EPUB Proxy API", () => {
     expect(res.headers.get("Content-Type")).toBe("text/html");
     const text = await res.text();
     expect(text).toBe("<html><body>Test</body></html>");
+  });
+
+  it("reuses the cached zip for repeated requests to the same book file", async () => {
+    (getAuthUserId as MockFn).mockResolvedValue({ userId: "user1" });
+    (db.query.books.findFirst as MockFn).mockResolvedValue({ id: "1", uploaderId: "user1", filePath: "book.epub" });
+    (bookFileExists as MockFn).mockReturnValue(true);
+    (getBookFilePath as MockFn).mockReturnValue("/path/to/book.epub");
+
+    const zip = new JSZip();
+    zip.file("chapter-1.html", "<h1>一</h1>");
+    zip.file("chapter-2.html", "<h1>二</h1>");
+    const zipBuffer = await zip.generateAsync({ type: "nodebuffer" });
+    (fs.readFileSync as MockFn).mockReturnValue(zipBuffer);
+
+    const firstReq = new NextRequest("http://localhost/api/books/1/proxy/chapter-1.html");
+    const firstRes = await GET(firstReq, { params: Promise.resolve({ id: "1", path: ["chapter-1.html"] }) });
+    const secondReq = new NextRequest("http://localhost/api/books/1/proxy/chapter-2.html");
+    const secondRes = await GET(secondReq, { params: Promise.resolve({ id: "1", path: ["chapter-2.html"] }) });
+
+    expect(firstRes.status).toBe(200);
+    expect(secondRes.status).toBe(200);
+    expect(await firstRes.text()).toBe("<h1>一</h1>");
+    expect(await secondRes.text()).toBe("<h1>二</h1>");
+    expect(fs.readFileSync).toHaveBeenCalledTimes(1);
   });
 
   it("returns 404 if file is not in zip", async () => {

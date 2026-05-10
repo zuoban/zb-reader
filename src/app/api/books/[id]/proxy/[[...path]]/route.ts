@@ -4,7 +4,7 @@ import { books } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getBookFilePath, bookFileExists } from "@/lib/storage";
 import { logger } from "@/lib/logger";
-import fs from "fs";
+import { getCachedEpubZip } from "@/lib/server-epub-cache";
 import { getAuthUserId, notFound, serverError } from "@/lib/api-utils";
 
 const MIME_TYPES: Record<string, string> = {
@@ -62,10 +62,7 @@ export async function GET(
     }
 
     const fullPath = getBookFilePath(book.filePath);
-    const fileBuffer = fs.readFileSync(fullPath);
-    
-    const JSZip = (await import("jszip")).default;
-    const zip = await JSZip.loadAsync(fileBuffer);
+    const zip = await getCachedEpubZip(fullPath);
     
     const file = zip.file(filePathInsideZip);
     if (!file) {

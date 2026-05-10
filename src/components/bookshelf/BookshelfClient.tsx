@@ -70,6 +70,7 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
   const [deletingBook, setDeletingBook] = useState(false);
   const { setTheme } = useTheme();
   const activeCategoryName = selectedCategory === ALL_CATEGORY ? "" : selectedCategory;
+  const fetchAbortRef = useRef<AbortController | null>(null);
 
   // Sync theme with reader settings on mount
   useEffect(() => {
@@ -93,6 +94,12 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
   }, [setTheme]);
 
   const fetchBooks = useCallback(async (currentPage = 1) => {
+    if (currentPage === 1) {
+      fetchAbortRef.current?.abort();
+      fetchAbortRef.current = new AbortController();
+    }
+    const signal = currentPage === 1 ? fetchAbortRef.current?.signal : undefined;
+
     try {
       const params = new URLSearchParams();
       params.set("withProgress", "true");
@@ -106,7 +113,7 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
         params.set("search", searchQuery);
       }
 
-      const res = await fetch(`/api/books?${params}`);
+      const res = await fetch(`/api/books?${params}`, { signal });
       const data = await res.json();
 
       if (res.ok) {
@@ -129,13 +136,25 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
         const totalFetched = (currentPage - 1) * 20 + data.books.length;
         setHasMore(totalFetched < (data.total || 0));
       }
-    } catch {
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return;
+      }
       toast.error("获取书籍失败");
     } finally {
+      if (fetchAbortRef.current?.signal === signal) {
+        fetchAbortRef.current = null;
+      }
       setLoading(false);
       setLoadingMore(false);
     }
   }, [activeCategoryName, searchQuery]);
+
+  useEffect(() => {
+    return () => {
+      fetchAbortRef.current?.abort();
+    };
+  }, []);
 
   const didMountRef = useRef(false);
   const queryResetRef = useRef(false);
