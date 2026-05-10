@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
+import { toast } from "sonner";
+import { RefreshCw } from "lucide-react";
 
 export function PWARegistration() {
   useEffect(() => {
@@ -21,27 +23,60 @@ export function PWARegistration() {
       return;
     }
 
-      window.addEventListener("load", () => {
-        navigator.serviceWorker
-          .register("/sw.js")
-          .then((registration) => {
-            // SW lifecycle logs are useful for debugging PWA behavior
-            if (registration.installing) {
-              // eslint-disable-next-line no-console
-              console.log("SW installing");
-            } else if (registration.waiting) {
-              // eslint-disable-next-line no-console
-              console.log("SW installed, waiting to activate");
-            } else if (registration.active) {
-              // eslint-disable-next-line no-console
-              console.log("SW active and controlling");
+    const onUpdate = (registration: ServiceWorkerRegistration) => {
+      if (!registration.waiting) return;
+
+      toast("发现新版本", {
+        description: "应用已有更新，点击立即刷新体验最新功能。",
+        duration: Infinity,
+        action: {
+          label: "立即更新",
+          onClick: () => {
+            if (registration.waiting) {
+              registration.waiting.postMessage({ type: "SKIP_WAITING" });
             }
-          })
-          .catch((error) => {
-            // eslint-disable-next-line no-console
-            console.error("SW registration failed:", error);
-          });
+            window.location.reload();
+          },
+        },
+        icon: <RefreshCw className="h-4 w-4 animate-spin-slow" />,
       });
+    };
+
+    window.addEventListener("load", () => {
+      navigator.serviceWorker
+        .register("/sw.js")
+        .then((registration) => {
+          // 检查是否有正在等待的更新
+          if (registration.waiting) {
+            onUpdate(registration);
+          }
+
+          // 监听新 Service Worker 的发现
+          registration.addEventListener("updatefound", () => {
+            const newWorker = registration.installing;
+            if (newWorker) {
+              newWorker.addEventListener("statechange", () => {
+                if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+                  onUpdate(registration);
+                }
+              });
+            }
+          });
+        })
+        .catch((error) => {
+          // eslint-disable-next-line no-console
+          console.error("SW registration failed:", error);
+        });
+    });
+
+    // 监听控制器更改，确保在 skipWaiting 后刷新
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (!refreshing) {
+        refreshing = true;
+        window.location.reload();
+      }
+    });
   }, []);
 
   return null;

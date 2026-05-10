@@ -147,7 +147,7 @@ export const ReaderToolbar = memo(function ReaderToolbar({
 
           {/* 中间：书名 */}
           <div className="absolute left-1/2 -translate-x-1/2 max-w-[30%] sm:max-w-[50%] text-center">
-            <h1 className="truncate font-heading text-[10px] sm:text-sm font-bold tracking-tight text-[var(--reader-text)] uppercase">
+            <h1 className="truncate font-heading text-xs sm:text-sm font-bold tracking-tight text-[var(--reader-text)] uppercase">
               {title}
             </h1>
           </div>

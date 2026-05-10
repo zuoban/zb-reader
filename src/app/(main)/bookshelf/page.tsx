@@ -136,6 +136,17 @@ export default function BookshelfPage() {
     fetchBooks(page === 1);
   }, [fetchBooks, page]);
 
+  useEffect(() => {
+    const handleCategoriesChanged = () => {
+      fetchBooks(true);
+    };
+
+    window.addEventListener("categories-changed", handleCategoriesChanged);
+    return () => {
+      window.removeEventListener("categories-changed", handleCategoriesChanged);
+    };
+  }, [fetchBooks]);
+
   const handleLoadMore = useCallback(() => {
     if (!loadingMore && hasMore) {
       setLoadingMore(true);

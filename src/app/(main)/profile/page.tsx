@@ -3,10 +3,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
-import { Camera, Calendar, KeyRound, Loader2, Mail, Save, User as UserIcon } from "lucide-react";
+import { Camera, Calendar, Download, KeyRound, Loader2, Mail, MonitorSmartphone, Save, User as UserIcon } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { BackgroundDecoration } from "@/components/bookshelf/BackgroundDecoration";
 import { Button } from "@/components/ui/button";
+import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -40,6 +41,8 @@ export default function ProfilePage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  const { isInstallAvailable, installApp } = usePWAInstall();
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -304,6 +307,26 @@ export default function ProfilePage() {
                 </div>
               </CardContent>
             </Card>
+
+            {isInstallAvailable && (
+              <Card className="liquid-panel overflow-hidden rounded-2xl">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <MonitorSmartphone className="h-5 w-5" />
+                    应用安装
+                  </CardTitle>
+                  <CardDescription>
+                    将 ZB Reader 安装到您的设备上，获得更流畅的沉浸式阅读体验。
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button onClick={installApp} className="h-11 w-full rounded-xl sm:w-auto">
+                    <Download className="mr-2 h-4 w-4" />
+                    安装 ZB Reader
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
 
             <Card className="liquid-panel overflow-hidden rounded-2xl">
               <CardContent className="pt-6">

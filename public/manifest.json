@@ -1,11 +1,15 @@
 {
-  "name": "ZB Reader",
+  "name": "ZB Reader - 极简阅读器",
   "short_name": "ZB Reader",
-  "description": "简洁而有温度的个人阅读空间",
+  "id": "/?source=pwa",
+  "description": "简洁而有温度的个人阅读空间，支持 EPUB 格式与离线阅读。",
   "start_url": "/bookshelf",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "background_color": "#ffffff",
-  "theme_color": "#6366f1",
+  "theme_color": "#171717",
+  "categories": ["books", "education", "entertainment"],
+  "orientation": "any",
   "icons": [
     {
       "src": "/apple-touch-icon.png",
@@ -17,6 +21,20 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "我的书架",
+      "short_name": "书架",
+      "url": "/bookshelf",
+      "icons": [{ "src": "/favicon.ico", "sizes": "64x64" }]
+    },
+    {
+      "name": "个人中心",
+      "short_name": "个人",
+      "url": "/profile",
+      "icons": [{ "src": "/favicon.ico", "sizes": "64x64" }]
     }
   ]
 }

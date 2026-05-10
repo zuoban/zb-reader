@@ -127,3 +127,14 @@ export const progressSchema = z.object({
 export const bookCategorySchema = z.object({
   category: z.string().max(40, "分类名称不能超过 40 个字符").optional(),
 });
+
+/** 书籍分类重命名校验 */
+export const categoryRenameSchema = z.object({
+  oldName: z.string().min(1, "原分类名称不能为空"),
+  newName: z.string().min(1, "新分类名称不能为空").max(40, "分类名称不能超过 40 个字符"),
+});
+
+/** 书籍分类删除校验 */
+export const categoryDeleteSchema = z.object({
+  name: z.string().min(1, "分类名称不能为空"),
+});

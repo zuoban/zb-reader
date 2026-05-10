@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { Library, LogOut, Moon, Sun, User } from "lucide-react";
+import { Library, LogOut, Moon, Sun, Tags, User } from "lucide-react";
 import { UploadButton } from "@/components/bookshelf/UploadButton";
+import { CategoryManagerDialog } from "@/components/bookshelf/CategoryManagerDialog";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/layout/ThemeProvider";
 import {
@@ -24,6 +26,7 @@ interface NavbarProps {
 export function Navbar({ onUploadComplete, className }: NavbarProps) {
   const { data: session } = useSession();
   const { theme, setTheme } = useTheme();
+  const [showCategoryManager, setShowCategoryManager] = useState(false);
 
   const handleThemeToggle = async () => {
     const newTheme = theme === "dark" ? "light" : "dark";
@@ -130,14 +133,21 @@ export function Navbar({ onUploadComplete, className }: NavbarProps) {
                         <span className="text-sm font-medium">个人资料</span>
                       </Link>
                     </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="cursor-pointer flex items-center gap-3"
+                      onClick={() => setShowCategoryManager(true)}
+                    >
+                      <Tags className="h-4 w-4" />
+                      <span className="text-sm font-medium">分类管理</span>
+                    </DropdownMenuItem>
                   </div>
                   <DropdownMenuSeparator />
                   <div className="p-1">
                     <DropdownMenuItem
                       onClick={() => signOut({ callbackUrl: `${window.location.origin}/login` })}
-                      className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive"
+                      className="cursor-pointer flex items-center gap-3 text-destructive focus:bg-destructive/10 focus:text-destructive"
                     >
-                      <LogOut className="mr-3 h-4 w-4" />
+                      <LogOut className="h-4 w-4" />
                       <span className="text-sm font-medium">退出登录</span>
                     </DropdownMenuItem>
                   </div>
@@ -147,6 +157,11 @@ export function Navbar({ onUploadComplete, className }: NavbarProps) {
           </div>
         </div>
       </nav>
+
+      <CategoryManagerDialog
+        open={showCategoryManager}
+        onOpenChange={setShowCategoryManager}
+      />
     </header>
   );
 }

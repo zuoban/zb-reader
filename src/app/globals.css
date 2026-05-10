@@ -257,6 +257,15 @@
   }
 }
 
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}
+
 .animate-audio-wave {
   animation: audio-wave 0.6s ease-in-out infinite;
 }
@@ -463,7 +472,9 @@
     0 1px 0 color-mix(in oklab, white 82%, transparent) inset,
     0 0 0 1px color-mix(in oklab, white 34%, transparent) inset,
     0 -1px 0 color-mix(in oklab, var(--foreground) 10%, transparent) inset,
-    0 28px 72px -44px color-mix(in oklab, #0b1220 54%, transparent);
+    0 28px 72px -44px color-mix(in oklab, #0b1220 54%, transparent),
+    -1.5px 0 3px rgba(0, 255, 255, 0.1),
+    1.5px 0 3px rgba(255, 0, 128, 0.1);
   transform: translate3d(0, -3px, 0);
 }
 
@@ -486,7 +497,9 @@
     0 1px 0 color-mix(in oklab, white 10%, transparent) inset,
     0 0 0 1px color-mix(in oklab, white 5%, transparent) inset,
     0 -1px 0 color-mix(in oklab, black 18%, transparent) inset,
-    0 24px 56px -32px color-mix(in oklab, black 70%, transparent);
+    0 24px 56px -32px color-mix(in oklab, black 70%, transparent),
+    -1.5px 0 3px rgba(0, 255, 255, 0.12),
+    1.5px 0 3px rgba(255, 0, 128, 0.12);
 }
 
 .section-shell {
@@ -516,7 +529,9 @@
   background: color-mix(in oklab, var(--glass-strong) 74%, transparent);
   box-shadow:
     0 1px 0 var(--glass-highlight) inset,
-    0 8px 24px -10px color-mix(in oklab, var(--foreground) 24%, transparent);
+    0 8px 24px -10px color-mix(in oklab, var(--foreground) 24%, transparent),
+    -1px 0 2px rgba(0, 255, 255, 0.08),
+    1px 0 2px rgba(255, 0, 128, 0.08);
   transform: translate3d(0, -1px, 0);
 }
 

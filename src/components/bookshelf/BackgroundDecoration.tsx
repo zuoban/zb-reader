@@ -1,7 +1,6 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { cn } from "@/lib/utils";
 
 const alwaysTrue = () => true;
 const subscribe = () => () => {};
@@ -16,16 +15,25 @@ export function BackgroundDecoration() {
       {/* Aurora Ambient Light */}
       <div className="absolute inset-0 z-0 overflow-hidden opacity-[0.15] dark:opacity-[0.1]">
         <div 
-          className="absolute -left-[10%] -top-[10%] h-[70%] w-[70%] rounded-full bg-primary/10 blur-[120px] dark:bg-primary/5" 
-          style={{ animation: "aurora-1 20s ease-in-out infinite" }}
+          className="absolute -left-[10%] -top-[10%] h-[70%] w-[70%] bg-primary/10 blur-[120px] dark:bg-primary/5" 
+          style={{ 
+            animation: "aurora-1 20s ease-in-out infinite",
+            borderRadius: "40% 60% 70% 30% / 40% 40% 60% 60%"
+          }}
         />
         <div 
-          className="absolute -right-[10%] -bottom-[10%] h-[70%] w-[70%] rounded-full bg-cta/10 blur-[120px] dark:bg-cta/5" 
-          style={{ animation: "aurora-2 25s ease-in-out infinite" }}
+          className="absolute -right-[10%] -bottom-[10%] h-[70%] w-[70%] bg-cta/10 blur-[120px] dark:bg-cta/5" 
+          style={{ 
+            animation: "aurora-2 25s ease-in-out infinite",
+            borderRadius: "70% 30% 30% 70% / 60% 40% 60% 40%"
+          }}
         />
         <div 
-          className="absolute left-[20%] top-[20%] h-[60%] w-[60%] rounded-full bg-primary/5 blur-[100px] dark:bg-primary/2" 
-          style={{ animation: "aurora-3 30s ease-in-out infinite" }}
+          className="absolute left-[20%] top-[20%] h-[60%] w-[60%] bg-primary/5 blur-[100px] dark:bg-primary/2" 
+          style={{ 
+            animation: "aurora-3 30s ease-in-out infinite",
+            borderRadius: "50% 50% 20% 80% / 25% 80% 20% 75%"
+          }}
         />
       </div>
 
