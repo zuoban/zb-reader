@@ -876,6 +876,55 @@
   }
 }
 
+/* TTS floating control - opaque, solid backgrounds with clear icons */
+.tts-panel {
+  background: var(--reader-bg, #f5f7fb);
+  color: var(--reader-text, #09090b);
+  border: 1px solid color-mix(in srgb, var(--reader-text, #09090b) 16%, var(--reader-bg, #f5f7fb));
+}
+
+[data-reader-theme="dark"] .tts-panel {
+  background: var(--reader-bg, #101419);
+  color: var(--reader-text, #d8dee7);
+  border-color: color-mix(in srgb, var(--reader-text, #d8dee7) 20%, var(--reader-bg, #101419));
+}
+
+.tts-btn {
+  background: var(--reader-bg, #f5f7fb);
+  color: var(--reader-text, #09090b);
+  border: 1px solid color-mix(in srgb, var(--reader-text, #09090b) 16%, var(--reader-bg, #f5f7fb));
+}
+
+.tts-btn--primary {
+  background: color-mix(in srgb, var(--reader-primary, #18181b) 10%, var(--reader-bg, #f5f7fb));
+  color: var(--reader-text, #09090b);
+  border: 1px solid color-mix(in srgb, var(--reader-primary, #18181b) 20%, var(--reader-border, #d4d4d8));
+}
+
+.tts-btn--stop {
+  background: var(--reader-bg, #f5f7fb);
+  color: var(--reader-destructive, #ef4444);
+  border: 1px solid color-mix(in srgb, var(--reader-destructive, #ef4444) 20%, var(--reader-bg, #f5f7fb));
+}
+
+[data-reader-theme="dark"] .tts-btn {
+  background: var(--reader-bg, #101419);
+  color: var(--reader-text, #d8dee7);
+  border-color: color-mix(in srgb, var(--reader-text, #d8dee7) 18%, var(--reader-bg, #101419));
+}
+
+[data-reader-theme="dark"] .tts-btn--primary {
+  background: color-mix(in srgb, var(--reader-primary, #c9d7e8) 10%, var(--reader-bg, #101419));
+  color: var(--reader-text, #d8dee7);
+  border: 1px solid color-mix(in srgb, var(--reader-primary, #c9d7e8) 20%, var(--reader-border, #333));
+}
+
+[data-reader-theme="dark"] .tts-btn--stop {
+  background: var(--reader-bg, #101419);
+  color: var(--reader-destructive, #f87171);
+  border: 1px solid color-mix(in srgb, var(--reader-destructive, #f87171) 20%, var(--reader-bg, #101419));
+}
+
 /* Reading content enhancement styles */
 .reading-content-enhance {
   --reading-line-length: 38em;

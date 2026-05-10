@@ -91,7 +91,6 @@ export function ReaderTtsLayer({
         onOpenImmersiveView={onOpenImmersiveView}
         isFullscreen={isFullscreen}
         onToggleFullscreen={onToggleFullscreen}
-        progress={progress}
       />
     </>
   );
