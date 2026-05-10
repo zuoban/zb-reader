@@ -15,20 +15,10 @@ if (!fs.existsSync(DATA_DIR)) {
 let _sqlite: Database.Database | null = null;
 let _db: ReturnType<typeof drizzle<typeof schema>> | null = null;
 
-// ============================================================================
-// SCHEMA MIGRATION NOTES
-// ============================================================================
-// This file contains inline CREATE TABLE IF NOT EXISTS statements and ALTER
-// TABLE migrations for backward compatibility with existing databases.
-//
-// For NEW schema changes, ALWAYS:
-//   1. Update src/lib/db/schema.ts (Drizzle schema) as the source of truth
-//   2. Run: npx drizzle-kit generate
-//   3. Run: npx drizzle-kit migrate (or add ALTER TABLE here for compatibility)
-//
-// The inline migrations below check column existence via PRAGMA table_info
-// before applying ALTER TABLE, making them safe to run on any database state.
-// ============================================================================
+// Migration strategy:
+// - CREATE TABLE IF NOT EXISTS handles fresh database initialization
+// - drizzle-kit migrate handles future schema changes (run manually or in CI)
+// - ensureReaderSettingsTtsEngineConstraint fixes legacy CHECK constraint
 
 function ensureReaderSettingsTtsEngineConstraint(sqlite: Database.Database) {
   const row = sqlite
@@ -250,51 +240,17 @@ function getConnection() {
     );
   `);
 
-  // Migration: Add missing columns to reader_settings (2026-03-04)
-  // These migrations are idempotent - they only run if columns don't exist
-  try {
-    sqlite.exec(`ALTER TABLE reader_settings ADD COLUMN tts_auto_next_chapter INTEGER NOT NULL DEFAULT 0;`);
-  } catch {
-    // Column already exists, ignore
-  }
-  try {
-    sqlite.exec(`ALTER TABLE reader_settings ADD COLUMN tts_highlight_style TEXT NOT NULL DEFAULT 'indicator' CHECK(tts_highlight_style IN ('background', 'indicator'));`);
-  } catch {
-    // Column already exists, ignore
-  }
-  try {
-    sqlite.exec(`ALTER TABLE reader_settings ADD COLUMN tts_highlight_color TEXT NOT NULL DEFAULT '#3b82f6';`);
-  } catch {
-    // Column already exists, ignore
-  }
-  try {
-    sqlite.exec(`ALTER TABLE reader_settings ADD COLUMN auto_scroll_to_active INTEGER NOT NULL DEFAULT 1;`);
-  } catch {
-    // Column already exists, ignore
-  }
-  try {
-    sqlite.exec(`ALTER TABLE reader_settings ADD COLUMN page_width INTEGER NOT NULL DEFAULT 800;`);
-  } catch {
-    // Column already exists, ignore
-  }
+  // Legacy migration: Fix tts_engine CHECK constraint on reader_settings
+  // (Needed for databases created before 'microsoft' was added as a valid engine)
+  ensureReaderSettingsTtsEngineConstraint(sqlite);
 
-  // Migration: Simplify reading_progress table (remove device fields, single progress record per book) (2026-03-05)
+  // Legacy migration: Rebuild reading_progress table if it still has device_id/device_name columns
   const progressTableInfo = sqlite.prepare("PRAGMA table_info(reading_progress)").all() as { name: string }[];
-  const hasDeviceIdInTable = progressTableInfo.some((col) => col.name === "device_id");
+  const hasLegacyDeviceColumns = progressTableInfo.some(
+    (col) => col.name === "device_id" || col.name === "device_name"
+  );
 
-  // Check if the new constraint exists
-  const indexInfo = sqlite.prepare("PRAGMA index_list(reading_progress)").all() as { name: string }[];
-  const hasNewConstraint = indexInfo.some((idx) => idx.name === "reading_progress_user_book_unique");
-
-  if (hasDeviceIdInTable && !hasNewConstraint) {
-    // Step 1: Cleanup old backup and create new backup
-    sqlite.exec(`DROP TABLE IF EXISTS reading_progress_backup;`);
-    sqlite.exec(`
-      CREATE TABLE reading_progress_backup AS
-      SELECT * FROM reading_progress;
-    `);
-
-    // Step 2: Create new table (no device_id/device_name, new unique constraint)
+  if (hasLegacyDeviceColumns) {
     sqlite.exec(`
       CREATE TABLE reading_progress_new (
         id TEXT PRIMARY KEY,
@@ -308,136 +264,30 @@ function getConnection() {
         updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
         UNIQUE(user_id, book_id)
       );
-    `);
 
-    // Step 3: Merge data: keep only the latest record per user per book
-    sqlite.exec(`
       INSERT INTO reading_progress_new (id, user_id, book_id, progress, furthest_progress, location,
                                         last_read_at, created_at, updated_at)
-      SELECT
-        id,
-        user_id,
-        book_id,
-        progress,
-        progress,
-        location,
-        last_read_at,
-        created_at,
-        updated_at
-      FROM reading_progress_backup
-      WHERE id IN (
-        SELECT id FROM reading_progress_backup
-        GROUP BY user_id, book_id
-        HAVING updated_at = MAX(updated_at)
-      );
+      SELECT id, user_id, book_id, progress, COALESCE(progress, 0), location,
+             last_read_at, created_at, updated_at
+      FROM reading_progress;
+
+      DROP TABLE reading_progress;
+      ALTER TABLE reading_progress_new RENAME TO reading_progress;
     `);
-
-    // Step 4: Replace table
-    sqlite.exec(`DROP TABLE reading_progress;`);
-    sqlite.exec(`ALTER TABLE reading_progress_new RENAME TO reading_progress;`);
-
-    // Step 5: Cleanup
-    sqlite.exec(`DROP TABLE IF EXISTS reading_progress_backup;`);
   }
 
-  // Migration: Add missing columns to reading_progress (2026-03-09)
-  const currentProgressInfo = sqlite.prepare("PRAGMA table_info(reading_progress)").all() as { name: string }[];
-  const hasFurthestProgress = currentProgressInfo.some((col) => col.name === "furthest_progress");
-
-  if (!hasFurthestProgress) {
-    sqlite.exec(`ALTER TABLE reading_progress ADD COLUMN furthest_progress REAL NOT NULL DEFAULT 0;`);
-    sqlite.exec(`UPDATE reading_progress SET furthest_progress = COALESCE(progress, 0) WHERE furthest_progress = 0;`);
-  }
-  // Migration: Drop obsolete progress version columns (2026-05-10)
-  const refreshedProgressInfo = sqlite.prepare("PRAGMA table_info(reading_progress)").all() as { name: string }[];
-  if (refreshedProgressInfo.some((col) => col.name === "version")) {
-    sqlite.exec(`ALTER TABLE reading_progress DROP COLUMN version;`);
-  }
-  const durationProgressInfo = sqlite.prepare("PRAGMA table_info(reading_progress)").all() as { name: string }[];
-  if (durationProgressInfo.some((col) => col.name === "reading_duration")) {
-    sqlite.exec(`ALTER TABLE reading_progress DROP COLUMN reading_duration;`);
-  }
-  const lastSyncProgressInfo = sqlite.prepare("PRAGMA table_info(reading_progress)").all() as { name: string }[];
-  if (lastSyncProgressInfo.some((col) => col.name === "last_sync_id")) {
-    sqlite.exec(`ALTER TABLE reading_progress DROP COLUMN last_sync_id;`);
-  }
-  const deviceProgressInfo = sqlite.prepare("PRAGMA table_info(reading_progress)").all() as { name: string }[];
-  if (deviceProgressInfo.some((col) => col.name === "device_id")) {
-    sqlite.exec(`ALTER TABLE reading_progress DROP COLUMN device_id;`);
-  }
-  if (deviceProgressInfo.some((col) => col.name === "device_name")) {
-    sqlite.exec(`ALTER TABLE reading_progress DROP COLUMN device_name;`);
-  }
-  const scrollRatioProgressInfo = sqlite.prepare("PRAGMA table_info(reading_progress)").all() as { name: string }[];
-  if (scrollRatioProgressInfo.some((col) => col.name === "scroll_ratio")) {
-    sqlite.exec(`ALTER TABLE reading_progress DROP COLUMN scroll_ratio;`);
-  }
-  const pageFieldsProgressInfo = sqlite.prepare("PRAGMA table_info(reading_progress)").all() as { name: string }[];
-  if (pageFieldsProgressInfo.some((col) => col.name === "current_page")) {
-    sqlite.exec(`ALTER TABLE reading_progress DROP COLUMN current_page;`);
-  }
-  if (pageFieldsProgressInfo.some((col) => col.name === "total_pages")) {
-    sqlite.exec(`ALTER TABLE reading_progress DROP COLUMN total_pages;`);
-  }
-  sqlite.exec(`DROP TABLE IF EXISTS progress_history;`);
-
-  // Migration: Add font_family and flip_mode to reader_settings (2026-03-31)
-  const readerSettingsInfo = sqlite.prepare("PRAGMA table_info(reader_settings)").all() as { name: string }[];
-  const hasFontFamily = readerSettingsInfo.some((col) => col.name === "font_family");
-  const hasFlipMode = readerSettingsInfo.some((col) => col.name === "flip_mode");
-
-  if (!hasFontFamily) {
-    sqlite.exec(`ALTER TABLE reader_settings ADD COLUMN font_family TEXT NOT NULL DEFAULT 'system';`);
-  }
-  if (!hasFlipMode) {
-    sqlite.exec(`ALTER TABLE reader_settings ADD COLUMN flip_mode TEXT NOT NULL DEFAULT 'scroll';`);
-  }
-
-  // Migration: Add missing TTS and reader_settings columns (2026-04-23)
-  const rsInfo = sqlite.prepare("PRAGMA table_info(reader_settings)").all() as { name: string }[];
-  const missingColumns: Record<string, string> = {
-    tts_engine: `TEXT NOT NULL DEFAULT 'browser'`,
-    tts_pitch: `REAL NOT NULL DEFAULT 1`,
-    tts_volume: `REAL NOT NULL DEFAULT 1`,
-    legado_rate: `INTEGER NOT NULL DEFAULT 50`,
-    legado_config_id: `TEXT`,
-    legado_preload_count: `INTEGER NOT NULL DEFAULT 3`,
-    tts_immersive_mode: `INTEGER NOT NULL DEFAULT 0`,
-    tts_highlight_style: `TEXT NOT NULL DEFAULT 'indicator'`,
-  };
-  for (const [col, def] of Object.entries(missingColumns)) {
-    if (!rsInfo.some((c) => c.name === col)) {
-      sqlite.exec(`ALTER TABLE reader_settings ADD COLUMN ${col} ${def};`);
-    }
-  }
-  ensureReaderSettingsTtsEngineConstraint(sqlite);
-
-  // Migration: Add category support to books (2026-04-23)
-  const booksInfo = sqlite.prepare("PRAGMA table_info(books)").all() as { name: string }[];
-  const hasCategory = booksInfo.some((col) => col.name === "category");
-
-  if (!hasCategory) {
-    sqlite.exec(`ALTER TABLE books ADD COLUMN category TEXT;`);
-  }
-
-  // Migration: Scope custom TTS configs to users while preserving legacy global configs (2026-04-23)
-  const ttsConfigsInfo = sqlite.prepare("PRAGMA table_info(tts_configs)").all() as { name: string }[];
-  const hasTtsUserId = ttsConfigsInfo.some((col) => col.name === "user_id");
-
-  if (!hasTtsUserId) {
-    sqlite.exec(`ALTER TABLE tts_configs ADD COLUMN user_id TEXT REFERENCES users(id) ON DELETE CASCADE;`);
-  }
-
-  // Migration: Add missing indexes for reading_progress (2026-03-31)
-  sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_reading_progress_user_id ON reading_progress (user_id);`);
-  sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_reading_progress_last_read_at ON reading_progress (last_read_at);`);
-  sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_books_category ON books (category);`);
-  sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_books_uploader_id ON books (uploader_id);`);
-  sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_bookmarks_user_book ON bookmarks (user_id, book_id);`);
-  sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_bookmarks_book_id ON bookmarks (book_id);`);
-  sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_notes_user_book ON notes (user_id, book_id);`);
-  sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_notes_book_id ON notes (book_id);`);
-  sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_tts_configs_user_id ON tts_configs (user_id);`);
+  // Indexes (idempotent via IF NOT EXISTS)
+  sqlite.exec(`
+    CREATE INDEX IF NOT EXISTS idx_reading_progress_user_id ON reading_progress (user_id);
+    CREATE INDEX IF NOT EXISTS idx_reading_progress_last_read_at ON reading_progress (last_read_at);
+    CREATE INDEX IF NOT EXISTS idx_books_category ON books (category);
+    CREATE INDEX IF NOT EXISTS idx_books_uploader_id ON books (uploader_id);
+    CREATE INDEX IF NOT EXISTS idx_bookmarks_user_book ON bookmarks (user_id, book_id);
+    CREATE INDEX IF NOT EXISTS idx_bookmarks_book_id ON bookmarks (book_id);
+    CREATE INDEX IF NOT EXISTS idx_notes_user_book ON notes (user_id, book_id);
+    CREATE INDEX IF NOT EXISTS idx_notes_book_id ON notes (book_id);
+    CREATE INDEX IF NOT EXISTS idx_tts_configs_user_id ON tts_configs (user_id);
+  `);
 
   _sqlite = sqlite;
   _db = drizzle(sqlite, { schema });
