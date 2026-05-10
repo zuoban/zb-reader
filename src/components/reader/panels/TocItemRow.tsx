@@ -124,7 +124,7 @@ export const TocItemRow = memo(function TocItemRow({
                 currentHref={currentHref}
                 onTocItemClick={onTocItemClick}
                 onClose={onClose}
-                parentActive={parentActive || isMatched}
+                parentActive={parentActive || !!isMatched}
               />
             ))}
           </div>

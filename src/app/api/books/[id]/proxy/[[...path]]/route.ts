@@ -75,7 +75,7 @@ export async function GET(
     const content = await file.async("nodebuffer");
     const mimeType = getMimeType(filePathInsideZip);
 
-    return new NextResponse(content, {
+    return new NextResponse(new Uint8Array(content), {
       headers: {
         "Content-Type": mimeType,
         "Cache-Control": "private, max-age=3600",
