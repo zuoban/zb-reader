@@ -7,6 +7,7 @@ import { SearchBar } from "@/components/bookshelf/SearchBar";
 import { BackgroundDecoration } from "@/components/bookshelf/BackgroundDecoration";
 import { BookCardSkeleton } from "@/components/bookshelf/BookCardSkeleton";
 import { BookGrid } from "@/components/bookshelf/BookGrid";
+import { useBookDeleteAction } from "@/components/bookshelf/hooks/useBookDeleteAction";
 import { ALL_CATEGORY, useBookshelfData } from "@/components/bookshelf/hooks/useBookshelfData";
 import { Navbar } from "@/components/layout/Navbar";
 import { useTheme } from "@/components/layout/ThemeProvider";
@@ -58,11 +59,19 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
   } = useBookshelfData(initialData);
   const [spotlightBookId, _setSpotlightBookId] = useState<string | null>(null);
   const [categoryDialogBook, setCategoryDialogBook] = useState<Book | null>(null);
-  const [deleteDialogBook, setDeleteDialogBook] = useState<Book | null>(null);
   const [categoryInput, setCategoryInput] = useState("");
   const [savingCategory, setSavingCategory] = useState(false);
-  const [deletingBook, setDeletingBook] = useState(false);
   const { setTheme } = useTheme();
+  const {
+    confirmDelete: handleConfirmDelete,
+    deleteDialogBook,
+    deletingBook,
+    handleDeleteDialogOpenChange,
+    requestDelete: handleRequestDelete,
+  } = useBookDeleteAction({
+    books,
+    onDeleted: removeBook,
+  });
 
   // Sync theme with reader settings on mount
   useEffect(() => {
@@ -84,33 +93,6 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
     }
     syncTheme();
   }, [setTheme]);
-
-  const handleRequestDelete = useCallback((bookId: string) => {
-    const book = books.find((item) => item.id === bookId);
-    if (book) {
-      setDeleteDialogBook(book);
-    }
-  }, [books]);
-
-  const handleConfirmDelete = useCallback(async () => {
-    if (!deleteDialogBook) return;
-
-    setDeletingBook(true);
-    try {
-      const res = await fetch(`/api/books/${deleteDialogBook.id}`, { method: "DELETE" });
-      if (res.ok) {
-        removeBook(deleteDialogBook.id);
-        setDeleteDialogBook(null);
-        toast.success("删除成功");
-      } else {
-        toast.error("删除失败");
-      }
-    } catch {
-      toast.error("删除失败");
-    } finally {
-      setDeletingBook(false);
-    }
-  }, [deleteDialogBook, removeBook]);
 
   const handleOpenCategoryDialog = useCallback((book: Book) => {
     setCategoryDialogBook(book);
@@ -299,11 +281,7 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
         )}
       </main>
 
-      <AlertDialog open={Boolean(deleteDialogBook)} onOpenChange={(open) => {
-        if (!open && !deletingBook) {
-          setDeleteDialogBook(null);
-        }
-      }}>
+      <AlertDialog open={Boolean(deleteDialogBook)} onOpenChange={handleDeleteDialogOpenChange}>
         <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>删除这本书？</AlertDialogTitle>
