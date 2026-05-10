@@ -1,4 +1,3 @@
-import { Volume2 } from "lucide-react";
 import type { BrowserVoiceOption } from "@/lib/tts";
 import { cn } from "@/lib/utils";
 import { SettingCard, SettingRow, CompactSelect } from "../ReadingSettings-shared";
@@ -31,23 +30,12 @@ export function TtsSettings({
 }: TtsSettingsProps) {
   return (
     <section>
-      <div className="flex items-center gap-2 sm:gap-2.5 mb-3 sm:mb-3.5 px-1 sm:px-1">
-        <div
-          className="flex items-center justify-center w-6 h-6 rounded-lg"
-          style={{
-            background: "color-mix(in srgb, var(--reader-primary) 12%, transparent)",
-          }}
-        >
-          <Volume2
-            className="size-3.5 sm:size-4"
-            style={{ color: "var(--reader-primary)" }}
-          />
-        </div>
+      <div className="flex items-center gap-2 mb-4 px-1">
         <span
-          className="text-[12px] sm:text-[13px] font-bold tracking-wide"
+          className="text-[10px] font-bold tracking-[0.2em] uppercase opacity-30"
           style={{ color: "var(--reader-text)" }}
         >
-          朗读
+          语音朗读 · Voice & Speed
         </span>
       </div>
       <SettingCard>
@@ -66,11 +54,11 @@ export function TtsSettings({
 
         <SettingRow label="语速">
           <div
-            className="grid grid-cols-5 gap-1 rounded-2xl border p-1 shadow-sm"
+            className="grid grid-cols-5 gap-1 rounded-2xl border p-1"
             style={{
               background:
-                "color-mix(in srgb, var(--reader-card-bg) 72%, transparent)",
-              borderColor: "var(--reader-border)",
+                "color-mix(in srgb, var(--reader-card-bg) 50%, transparent)",
+              borderColor: "color-mix(in srgb, var(--reader-border) 72%, transparent)",
             }}
           >
             {TTS_RATE_OPTIONS.map((rate) => {
@@ -81,10 +69,10 @@ export function TtsSettings({
                   type="button"
                   onClick={() => onTtsRateChange(rate)}
                   className={cn(
-                    "inline-flex h-8 min-w-0 cursor-pointer items-center justify-center gap-0.5 rounded-xl px-2 text-[12px] font-semibold transition-all duration-200 sm:h-9 sm:px-3 sm:text-[13px]",
+                    "inline-flex h-8 min-w-0 cursor-pointer items-center justify-center gap-0.5 rounded-xl px-2 text-[11px] font-bold transition-all duration-200 sm:h-9 sm:px-3 sm:text-[12px]",
                     isActive
-                      ? "shadow-[0_8px_20px_-14px_color-mix(in_srgb,var(--reader-text)_56%,transparent)]"
-                      : "hover:bg-[color-mix(in_srgb,var(--reader-primary)_7%,transparent)]"
+                      ? "shadow-[0_10px_24px_-18px_color-mix(in_srgb,var(--reader-primary)_72%,transparent)]"
+                      : "hover:bg-[color-mix(in_srgb,var(--reader-primary)_8%,transparent)]"
                   )}
                   style={{
                     background: isActive
@@ -117,7 +105,7 @@ export function TtsSettings({
         </SettingRow>
 
         <SettingRow label="高亮颜色" noBorder>
-          <div className="flex gap-2.5">
+          <div className="flex gap-2.5 sm:gap-3 py-1">
             {HIGHLIGHT_COLORS.map((color) => {
               const isActive = ttsHighlightColor === color;
               return (
@@ -125,11 +113,14 @@ export function TtsSettings({
                   key={color}
                   onClick={() => onTtsHighlightColorChange(color)}
                   className={cn(
-                    "w-8 h-8 rounded-xl transition-all duration-200 cursor-pointer shadow-sm",
-                    isActive ? "ring-2 ring-offset-2 ring-[var(--reader-text)] scale-110" : "hover:scale-110 hover:shadow-md"
+                    "w-6 h-6 sm:w-7 sm:h-7 rounded-full transition-all duration-300 cursor-pointer",
+                    isActive 
+                      ? "scale-125 shadow-[0_0_12px_rgba(0,0,0,0.2)] ring-2 ring-offset-2 ring-[var(--reader-text)]" 
+                      : "hover:scale-110 opacity-70 hover:opacity-100"
                   )}
                   style={{
                     backgroundColor: color,
+                    boxShadow: isActive ? `0 0 15px ${color}66` : "none",
                   }}
                 />
               );

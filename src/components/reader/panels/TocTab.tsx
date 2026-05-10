@@ -25,13 +25,36 @@ export const TocTab = memo(function TocTab({
   onTocItemClick,
   onClose,
 }: TocTabProps) {
+  const totalItems = countTocItems(toc);
+
   return (
     <ScrollArea
-      className="h-full"
+      className="h-full scrollbar-hide"
       viewportClassName="reader-toc-scroll-viewport"
       showHorizontalScrollbar
     >
-      <div className="w-max min-w-full p-5 pr-8">
+      <div className="p-6 pb-12 space-y-8 min-w-full w-max">
+        {/* Header Section */}
+        <div className="flex items-center justify-between gap-4 px-1">
+          <span
+            className="text-[10px] font-bold tracking-[0.2em] uppercase opacity-30"
+            style={{ color: "var(--reader-text)" }}
+          >
+            书籍目录 · Contents
+          </span>
+          <div
+            className="px-2.5 py-1 rounded-full shadow-sm"
+            style={{ 
+              background: "color-mix(in srgb, var(--reader-primary) 12%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--reader-primary) 20%, transparent)"
+            }}
+          >
+            <p className="text-[10px] font-bold tracking-tight" style={{ color: "var(--reader-primary)" }}>
+              {totalItems} 个章节
+            </p>
+          </div>
+        </div>
+
         {toc.length === 0 ? (
           <EmptyState
             icon={List}
@@ -39,15 +62,7 @@ export const TocTab = memo(function TocTab({
             description="这本书暂时没有可用的章节导航"
           />
         ) : (
-          <>
-            <div
-              className="mb-4 px-3 py-2 rounded-xl"
-              style={{ background: "color-mix(in srgb, var(--reader-primary) 8%, transparent)" }}
-            >
-              <p className="text-xs font-medium" style={{ color: "var(--reader-primary)" }}>
-                共 {countTocItems(toc)} 章
-              </p>
-            </div>
+          <div className="space-y-1">
             {toc.map((item, index) => (
               <TocItemRow
                 key={item.id || `${item.href}-${index}`}
@@ -57,7 +72,7 @@ export const TocTab = memo(function TocTab({
                 onClose={onClose}
               />
             ))}
-          </>
+          </div>
         )}
       </div>
     </ScrollArea>

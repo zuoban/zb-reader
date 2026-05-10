@@ -50,7 +50,7 @@ function TooltipContent({
       >
         {children}
         {!hideArrow && (
-          <TooltipPrimitive.Arrow className="fill-[color-mix(in_oklab,var(--glass-strong)_90%,transparent)] z-50 size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[2px]" />
+          <TooltipPrimitive.Arrow className="fill-[color-mix(in_oklab,var(--reader-bg,var(--glass-strong))_95%,var(--reader-text,black))] z-50 size-2.5" />
         )}
       </TooltipPrimitive.Content>
     </TooltipPrimitive.Portal>

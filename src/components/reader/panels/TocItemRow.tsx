@@ -19,7 +19,7 @@ export const TocItemRow = memo(function TocItemRow({
   onClose,
 }: TocItemRowProps) {
   const [expanded, setExpanded] = useState(true);
-  const itemRef = useRef<HTMLButtonElement>(null);
+  const itemRef = useRef<HTMLDivElement>(null);
   const hasChildren = item.subitems && item.subitems.length > 0;
 
   const isActive =
@@ -33,12 +33,29 @@ export const TocItemRow = memo(function TocItemRow({
   }, [isActive]);
 
   return (
-    <div className="min-w-max">
-      <div className="group flex min-w-max items-center">
+    <div className="flex flex-col">
+      <div 
+        ref={itemRef}
+        className={cn(
+          "group relative flex min-w-max items-center rounded-xl transition-all duration-300",
+          isActive 
+            ? "bg-[color-mix(in_srgb,var(--reader-primary)_8%,transparent)] shadow-[0_4px_12px_-8px_color-mix(in_srgb,var(--reader-primary)_40%,transparent)]" 
+            : "hover:bg-[color-mix(in_srgb,var(--reader-text)_4%,transparent)]"
+        )}
+        style={{ marginLeft: `${level * 16}px` }}
+      >
+        {/* Active Indicator Bar */}
+        {isActive && (
+          <div 
+            className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full"
+            style={{ background: "var(--reader-primary)" }}
+          />
+        )}
+
         {hasChildren ? (
           <button
-            className="reader-liquid-control shrink-0 cursor-pointer rounded-lg p-1.5 transition-all duration-200"
-            style={{ color: "var(--reader-muted-text)" }}
+            className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-xl transition-all hover:scale-110 active:scale-90"
+            style={{ color: isActive ? "var(--reader-primary)" : "var(--reader-text)", opacity: isActive ? 1 : 0.4 }}
             onClick={(e) => {
               e.stopPropagation();
               setExpanded(!expanded);
@@ -47,18 +64,19 @@ export const TocItemRow = memo(function TocItemRow({
             {expanded ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
           </button>
         ) : (
-          <span className="shrink-0 w-8" />
+          <div className="size-9 shrink-0 flex items-center justify-center opacity-20">
+            <div className="size-1 rounded-full bg-[var(--reader-text)]" />
+          </div>
         )}
 
         <button
-          ref={itemRef}
           className={cn(
-            "min-w-max cursor-pointer whitespace-nowrap rounded-lg px-3 py-2 text-left text-sm transition-all duration-200",
-            isActive ? "reader-liquid-control font-semibold" : "hover:bg-[color-mix(in_srgb,var(--reader-text)_6%,transparent)]"
+            "flex-1 min-w-max cursor-pointer whitespace-nowrap px-2 py-3 text-left transition-all duration-300",
+            isActive ? "font-bold text-[15px]" : "text-[14px] font-medium"
           )}
           style={{
-            paddingLeft: `${level * 12 + 8}px`,
             color: isActive ? "var(--reader-primary)" : "var(--reader-text)",
+            opacity: isActive ? 1 : 0.8,
           }}
           onClick={() => {
             onTocItemClick(item.href);
@@ -68,23 +86,36 @@ export const TocItemRow = memo(function TocItemRow({
         >
           {item.label}
         </button>
+
+        {isActive && (
+          <div className="px-4 text-[10px] font-bold tracking-widest opacity-40 italic" style={{ color: "var(--reader-primary)" }}>
+            Reading
+          </div>
+        )}
       </div>
 
       {hasChildren && expanded && (
         <div
-          className="border-l-2 ml-4 pl-2"
-          style={{ borderColor: "var(--reader-border)" }}
+          className="relative ml-[17px] mt-1 space-y-1"
         >
-          {item.subitems!.map((child, index) => (
-            <TocItemRow
-              key={child.id || `${child.href}-${index}`}
-              item={child}
-              level={level + 1}
-              currentHref={currentHref}
-              onTocItemClick={onTocItemClick}
-              onClose={onClose}
-            />
-          ))}
+          {/* Vertical Nesting Line */}
+          <div 
+            className="absolute left-0 top-0 bottom-0 w-px opacity-10"
+            style={{ background: "var(--reader-text)" }}
+          />
+          
+          <div className="pl-1">
+            {item.subitems!.map((child, index) => (
+              <TocItemRow
+                key={child.id || `${child.href}-${index}`}
+                item={child}
+                level={0} // Level is handled by the parent's container padding/margin now for better visual line alignment
+                currentHref={currentHref}
+                onTocItemClick={onTocItemClick}
+                onClose={onClose}
+              />
+            ))}
+          </div>
         </div>
       )}
     </div>

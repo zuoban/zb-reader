@@ -19,6 +19,14 @@ export const TypographySettings = memo(function TypographySettings({
 }: TypographySettingsProps) {
   return (
     <section>
+      <div className="flex items-center gap-2 mb-4 px-1">
+        <span
+          className="text-[10px] font-bold tracking-[0.2em] uppercase opacity-30"
+          style={{ color: "var(--reader-text)" }}
+        >
+          排版文字 · Typography
+        </span>
+      </div>
       <SettingCard>
         <SettingRow label="字体" noBorder={false}>
           <CompactSelect

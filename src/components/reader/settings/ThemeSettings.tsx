@@ -1,4 +1,3 @@
-import { Palette } from "lucide-react";
 import { Check } from "lucide-react";
 import { themeOptions } from "../ReadingSettings-shared";
 
@@ -12,23 +11,12 @@ interface ThemeSettingsProps {
 export function ThemeSettings({ theme, onThemeChange }: ThemeSettingsProps) {
   return (
     <section>
-      <div className="flex items-center gap-2 sm:gap-2.5 mb-3 sm:mb-3.5 px-1 sm:px-1">
-        <div
-          className="flex items-center justify-center w-6 h-6 rounded-lg"
-          style={{
-            background: "color-mix(in srgb, var(--reader-primary) 12%, transparent)",
-          }}
-        >
-          <Palette
-            className="size-3.5 sm:size-4"
-            style={{ color: "var(--reader-primary)" }}
-          />
-        </div>
+      <div className="flex items-center gap-2 mb-4 px-1">
         <span
-          className="text-[12px] sm:text-[13px] font-bold tracking-wide"
+          className="text-[10px] font-bold tracking-[0.2em] uppercase opacity-30"
           style={{ color: "var(--reader-text)" }}
         >
-          主题
+          外观主题 · Appearance
         </span>
       </div>
       <div className="flex gap-3 sm:gap-4">

@@ -85,8 +85,9 @@ const ToolbarButton = memo(function ToolbarButton({
       </TooltipTrigger>
       <TooltipContent
         side="bottom"
-        sideOffset={8}
-        className="rounded-sm border-border bg-card px-2 py-1 text-[10px] font-bold tracking-widest text-foreground uppercase shadow-md"
+        sideOffset={4}
+        hideArrow={true}
+        className="rounded-full border-[color-mix(in_srgb,var(--reader-text)_15%,transparent)] bg-[var(--reader-bg)]/95 px-3 py-1 text-[10px] font-bold tracking-tight text-[var(--reader-text)] shadow-lg backdrop-blur-md"
       >
         {tooltip}
       </TooltipContent>
@@ -127,11 +128,11 @@ export const ReaderToolbar = memo(function ReaderToolbar({
       >
         <div className="flex h-16 items-center justify-between border-b border-[color-mix(in_srgb,var(--reader-text)_5%,transparent)] bg-[var(--reader-bg)]/95 px-4 backdrop-blur-md">
           {/* 左侧：返回 */}
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
             <ToolbarButton onClick={onBack} tooltip="返回书架">
               <ArrowLeft className="size-5" />
             </ToolbarButton>
-            <div className="h-6 w-px bg-[var(--reader-text)]/10 mx-1 sm:mx-2" />
+            <div className="h-6 w-px bg-[var(--reader-text)]/10 mx-0.5 sm:mx-2" />
             <ToolbarButton onClick={onToggleToc} tooltip="目录">
               <List className="size-5" />
             </ToolbarButton>
@@ -139,21 +140,20 @@ export const ReaderToolbar = memo(function ReaderToolbar({
               onClick={onToggleBookmark}
               tooltip={isBookmarked ? "取消书签" : "添加书签"}
               isActive={isBookmarked}
-              className="hidden xs:flex"
             >
               {isBookmarked ? <BookmarkCheck className="size-5" /> : <Bookmark className="size-5" />}
             </ToolbarButton>
           </div>
 
           {/* 中间：书名 */}
-          <div className="absolute left-1/2 -translate-x-1/2 max-w-[30%] xs:max-w-[40%] sm:max-w-[50%] text-center">
-            <h1 className="truncate font-heading text-[10px] xs:text-xs sm:text-sm font-bold tracking-tight text-[var(--reader-text)] uppercase">
+          <div className="absolute left-1/2 -translate-x-1/2 max-w-[30%] sm:max-w-[50%] text-center">
+            <h1 className="truncate font-heading text-[10px] sm:text-sm font-bold tracking-tight text-[var(--reader-text)] uppercase">
               {title}
             </h1>
           </div>
 
           {/* 右侧：功能 */}
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
             <ToolbarButton
               onClick={onToggleTts}
               tooltip={isSpeaking ? "停止" : "朗读"}
@@ -166,12 +166,12 @@ export const ReaderToolbar = memo(function ReaderToolbar({
               onClick={onToggleFullscreen}
               tooltip={isFullscreen ? "退出全屏" : "全屏"}
               isActive={isFullscreen}
-              className="hidden xs:flex"
             >
               {isFullscreen ? <Minimize className="size-5" /> : <Maximize className="size-5" />}
             </ToolbarButton>
 
-            <div className="h-6 w-px bg-[var(--reader-text)]/10 mx-1 sm:mx-2" />
+            <div className="h-6 w-px bg-[var(--reader-text)]/10 mx-0.5 sm:mx-2" />
+
 
             <ToolbarButton onClick={onToggleSettings} tooltip="阅读设置">
               <Settings className="size-5" />

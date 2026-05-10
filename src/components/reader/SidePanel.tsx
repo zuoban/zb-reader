@@ -2,11 +2,6 @@
 
 import { memo } from "react";
 import {
-  List,
-  Bookmark,
-  StickyNote,
-} from "lucide-react";
-import {
   Sheet,
   SheetContent,
   SheetHeader,
@@ -69,42 +64,52 @@ export const SidePanel = memo(function SidePanel({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
-        side="left"
+        side="bottom"
         showBackground={false}
-        className="!w-[min(94vw,420px)] !max-w-[calc(100vw-0.5rem)] overflow-hidden rounded-r-none border-r border-border bg-[var(--reader-bg)] p-0 shadow-2xl sm:!w-[420px] md:!w-[480px]"
+        className="max-h-[85vh] overflow-hidden rounded-t-[32px] border-t border-[color-mix(in_srgb,var(--reader-text)_8%,transparent)] bg-[var(--reader-bg)]/98 p-0 shadow-2xl backdrop-blur-xl sm:mx-auto sm:max-w-xl xl:max-w-2xl"
         style={{ color: "var(--reader-text)" }}
       >
-        <SheetHeader className="px-6 py-8 border-b border-border/50">
-          <SheetTitle className="font-heading text-xl font-bold tracking-tight text-[var(--reader-text)]">
-            Library
-          </SheetTitle>
+        <SheetHeader className="px-6 pb-2 pt-6">
+          <div className="flex flex-col items-center gap-2">
+            <div
+              className="w-12 h-1.5 rounded-full bg-[var(--reader-text)]/10"
+            />
+            <div className="flex flex-col items-center gap-0.5">
+              <SheetTitle className="font-heading text-xl font-bold tracking-tight text-[var(--reader-text)]">
+                我的资源库
+              </SheetTitle>
+              <p className="text-[10px] font-bold tracking-[0.2em] text-[var(--reader-text)] opacity-30 uppercase">
+                Personal Library
+              </p>
+            </div>
+          </div>
         </SheetHeader>
 
         <Tabs
           value={activeTab}
           onValueChange={(v) => onTabChange(v as "toc" | "bookmarks" | "notes")}
-          className="flex h-full min-w-0 flex-col"
+          className="flex min-h-[40vh] max-h-[75vh] min-w-0 flex-col scrollbar-hide"
         >
           <TabsList
-            className="mx-6 mt-6 grid h-10 grid-cols-3 rounded-md bg-[var(--reader-text)]/5 p-1 gap-1"
+            className="mx-6 mt-4 grid h-11 grid-cols-3 rounded-[16px] bg-[var(--reader-text)]/5 p-1 gap-1"
           >
             <TabsTrigger
               value="toc"
-              className="rounded-sm text-[10px] font-bold tracking-widest uppercase transition-all data-[state=active]:bg-[var(--reader-bg)] data-[state=active]:text-[var(--reader-text)] data-[state=active]:shadow-sm"
+              className="rounded-[14px] text-[12px] font-bold tracking-tight transition-all data-[state=active]:bg-[var(--reader-bg)] data-[state=active]:text-[var(--reader-primary)] data-[state=active]:shadow-lg"
             >
-              CONTENTS
+              目录
             </TabsTrigger>
             <TabsTrigger
               value="bookmarks"
-              className="rounded-sm text-[10px] font-bold tracking-widest uppercase transition-all data-[state=active]:bg-[var(--reader-bg)] data-[state=active]:text-[var(--reader-text)] data-[state=active]:shadow-sm"
+              className="rounded-[14px] text-[12px] font-bold tracking-tight transition-all data-[state=active]:bg-[var(--reader-bg)] data-[state=active]:text-[var(--reader-primary)] data-[state=active]:shadow-lg"
             >
-              MARKS
+              书签
             </TabsTrigger>
             <TabsTrigger
               value="notes"
-              className="rounded-sm text-[10px] font-bold tracking-widest uppercase transition-all data-[state=active]:bg-[var(--reader-bg)] data-[state=active]:text-[var(--reader-text)] data-[state=active]:shadow-sm"
+              className="rounded-[14px] text-[12px] font-bold tracking-tight transition-all data-[state=active]:bg-[var(--reader-bg)] data-[state=active]:text-[var(--reader-primary)] data-[state=active]:shadow-lg"
             >
-              NOTES
+              笔记
             </TabsTrigger>
           </TabsList>
 
