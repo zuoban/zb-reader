@@ -41,7 +41,7 @@ export const readerSettingsSchema = z.object({
   fontSize: optionalNumber,
   pageWidth: optionalNumber,
   theme: z.enum(["light", "dark", "sepia"]).optional(),
-  fontFamily: z.string().optional(),
+  fontFamily: z.enum(["system", "serif", "sans", "kaiti"]).optional(),
   browserVoiceId: z.string().optional(),
   ttsRate: optionalNumber,
   ttsPitch: optionalNumber,
