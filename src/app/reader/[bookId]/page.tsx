@@ -467,6 +467,7 @@ function ReaderContent() {
         initialLocation={initialLocation}
         isSpeaking={isSpeaking}
         isTtsViewOpen={isTtsViewOpen}
+        toolbarVisible={toolbarVisible}
         progress={progress}
         readerTheme={readerTheme}
         totalPages={totalPages}

@@ -107,7 +107,7 @@ export const ReaderToolbar = memo(function ReaderToolbar({
   onToggleTts,
   onToggleFullscreen,
   isSpeaking,
-  onProgressChange,
+  onProgressChange: _onProgressChange,
   onPrevPage,
   onNextPage,
   onPrevChapter,
@@ -127,11 +127,11 @@ export const ReaderToolbar = memo(function ReaderToolbar({
       >
         <div className="flex h-16 items-center justify-between border-b border-[color-mix(in_srgb,var(--reader-text)_5%,transparent)] bg-[var(--reader-bg)]/95 px-4 backdrop-blur-md">
           {/* 左侧：返回 */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 shrink-0">
             <ToolbarButton onClick={onBack} tooltip="返回书架">
               <ArrowLeft className="size-5" />
             </ToolbarButton>
-            <div className="h-6 w-px bg-[var(--reader-text)]/10 mx-2" />
+            <div className="h-6 w-px bg-[var(--reader-text)]/10 mx-1 sm:mx-2" />
             <ToolbarButton onClick={onToggleToc} tooltip="目录">
               <List className="size-5" />
             </ToolbarButton>
@@ -139,20 +139,21 @@ export const ReaderToolbar = memo(function ReaderToolbar({
               onClick={onToggleBookmark}
               tooltip={isBookmarked ? "取消书签" : "添加书签"}
               isActive={isBookmarked}
+              className="hidden xs:flex"
             >
               {isBookmarked ? <BookmarkCheck className="size-5" /> : <Bookmark className="size-5" />}
             </ToolbarButton>
           </div>
 
           {/* 中间：书名 */}
-          <div className="absolute left-1/2 -translate-x-1/2 max-w-[40%] text-center">
-            <h1 className="truncate font-heading text-sm font-bold tracking-tight text-[var(--reader-text)] uppercase">
+          <div className="absolute left-1/2 -translate-x-1/2 max-w-[30%] xs:max-w-[40%] sm:max-w-[50%] text-center">
+            <h1 className="truncate font-heading text-[10px] xs:text-xs sm:text-sm font-bold tracking-tight text-[var(--reader-text)] uppercase">
               {title}
             </h1>
           </div>
 
           {/* 右侧：功能 */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 shrink-0">
             <ToolbarButton
               onClick={onToggleTts}
               tooltip={isSpeaking ? "停止" : "朗读"}
@@ -165,11 +166,12 @@ export const ReaderToolbar = memo(function ReaderToolbar({
               onClick={onToggleFullscreen}
               tooltip={isFullscreen ? "退出全屏" : "全屏"}
               isActive={isFullscreen}
+              className="hidden xs:flex"
             >
               {isFullscreen ? <Minimize className="size-5" /> : <Maximize className="size-5" />}
             </ToolbarButton>
 
-            <div className="h-6 w-px bg-[var(--reader-text)]/10 mx-2" />
+            <div className="h-6 w-px bg-[var(--reader-text)]/10 mx-1 sm:mx-2" />
 
             <ToolbarButton onClick={onToggleSettings} tooltip="阅读设置">
               <Settings className="size-5" />
@@ -188,15 +190,15 @@ export const ReaderToolbar = memo(function ReaderToolbar({
         )}
       >
         <div className="border-t border-[color-mix(in_srgb,var(--reader-text)_5%,transparent)] bg-[var(--reader-bg)]/95 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 backdrop-blur-md">
-          <div className="mx-auto flex max-w-4xl items-center gap-6">
+          <div className="mx-auto flex max-w-4xl items-center gap-3 sm:gap-6">
             {/* 左侧：章节/页面导航 */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5 sm:gap-1">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={onPrevChapter}
                 disabled={!hasPrevChapter}
-                className="h-9 w-9 rounded-full hover:bg-[var(--reader-text)]/5"
+                className="h-8 w-8 sm:h-9 sm:w-9 rounded-full hover:bg-[var(--reader-text)]/5"
                 style={{ color: "var(--reader-text)" }}
               >
                 <ChevronsLeft className="size-4" />
@@ -205,7 +207,7 @@ export const ReaderToolbar = memo(function ReaderToolbar({
                 variant="ghost"
                 size="icon"
                 onClick={onPrevPage}
-                className="h-9 w-9 rounded-full hover:bg-[var(--reader-text)]/5"
+                className="h-8 w-8 sm:h-9 sm:w-9 rounded-full hover:bg-[var(--reader-text)]/5"
                 style={{ color: "var(--reader-text)" }}
               >
                 <ChevronLeft className="size-4" />
@@ -213,8 +215,8 @@ export const ReaderToolbar = memo(function ReaderToolbar({
             </div>
 
             {/* 中间：进度展示 (Read-only) */}
-            <div className="flex flex-1 items-center gap-4">
-              <span className="min-w-[2.5rem] text-right text-[10px] font-bold tracking-widest text-[var(--reader-text)] opacity-40">
+            <div className="flex flex-1 items-center gap-2 sm:gap-4">
+              <span className="min-w-[2rem] sm:min-w-[2.5rem] text-right text-[9px] sm:text-[10px] font-bold tracking-widest text-[var(--reader-text)] opacity-40">
                 {Math.round(progress * 100)}%
               </span>
               <div className="relative h-1 flex-1 overflow-hidden rounded-full bg-[var(--reader-text)]/10">
@@ -226,12 +228,12 @@ export const ReaderToolbar = memo(function ReaderToolbar({
             </div>
 
             {/* 右侧：章节/页面导航 */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5 sm:gap-1">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={onNextPage}
-                className="h-9 w-9 rounded-full hover:bg-[var(--reader-text)]/5"
+                className="h-8 w-8 sm:h-9 sm:w-9 rounded-full hover:bg-[var(--reader-text)]/5"
                 style={{ color: "var(--reader-text)" }}
               >
                 <ChevronRight className="size-4" />
@@ -241,12 +243,13 @@ export const ReaderToolbar = memo(function ReaderToolbar({
                 size="icon"
                 onClick={onNextChapter}
                 disabled={!hasNextChapter}
-                className="h-9 w-9 rounded-full hover:bg-[var(--reader-text)]/5"
+                className="h-8 w-8 sm:h-9 sm:w-9 rounded-full hover:bg-[var(--reader-text)]/5"
                 style={{ color: "var(--reader-text)" }}
               >
                 <ChevronsRight className="size-4" />
               </Button>
             </div>
+
           </div>
         </div>
       </div>

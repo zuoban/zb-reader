@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { EpubReaderRef } from "@/components/reader/EpubReader";
 import type { FontFamily } from "@/stores/reader-settings";
 import type { TocItem } from "@/types/reader";
@@ -33,6 +34,7 @@ interface ReaderCanvasProps {
   initialLocation?: string;
   isSpeaking: boolean;
   isTtsViewOpen: boolean;
+  toolbarVisible?: boolean;
   progress: number;
   readerTheme: "light" | "dark" | "sepia";
   totalPages?: number;
@@ -68,6 +70,7 @@ export function ReaderCanvas({
   initialLocation,
   isSpeaking,
   isTtsViewOpen,
+  toolbarVisible = false,
   progress,
   readerTheme,
   totalPages,
@@ -82,7 +85,13 @@ export function ReaderCanvas({
       <div className="relative h-full w-full">
         {/* Minimalist Footer */}
         {!isTtsViewOpen && (
-          <div className="pointer-events-none fixed inset-x-0 bottom-3 z-10 flex items-center justify-between px-8 text-[9px] font-bold tracking-[0.2em] uppercase transition-opacity duration-500" style={{ color: "var(--reader-text)", opacity: 0.25 }}>
+          <div 
+            className={cn(
+              "pointer-events-none fixed inset-x-0 bottom-3 z-10 flex items-center justify-between px-8 text-[9px] font-bold tracking-[0.2em] uppercase transition-all duration-500",
+              toolbarVisible ? "opacity-0 -translate-y-2" : "opacity-25 translate-y-0"
+            )}
+            style={{ color: "var(--reader-text)" }}
+          >
             <span className="tabular-nums">
               {(progress * 100).toFixed(0)}%
             </span>
