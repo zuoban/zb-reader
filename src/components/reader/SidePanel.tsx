@@ -4,7 +4,6 @@ import { memo } from "react";
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -66,82 +65,78 @@ export const SidePanel = memo(function SidePanel({
       <SheetContent
         side="bottom"
         showBackground={false}
-        className="max-h-[85vh] overflow-hidden rounded-t-[32px] border-t border-[color-mix(in_srgb,var(--reader-text)_8%,transparent)] bg-[var(--reader-bg)]/98 p-0 shadow-2xl backdrop-blur-xl sm:mx-auto sm:max-w-xl xl:max-w-2xl"
+        className="max-h-[85vh] h-[75vh] overflow-hidden rounded-t-[32px] border-t border-[color-mix(in_srgb,var(--reader-text)_8%,transparent)] bg-[var(--reader-bg)]/98 p-0 shadow-2xl backdrop-blur-xl sm:mx-auto sm:max-w-xl xl:max-w-2xl"
         style={{ color: "var(--reader-text)" }}
       >
-        <SheetHeader className="px-6 pb-2 pt-6">
-          <div className="flex flex-col items-center gap-2">
-            <div
-              className="w-12 h-1.5 rounded-full bg-[var(--reader-text)]/10"
-            />
-            <div className="flex flex-col items-center gap-0.5">
-              <SheetTitle className="font-heading text-xl font-bold tracking-tight text-[var(--reader-text)]">
-                我的资源库
-              </SheetTitle>
-              <p className="text-[10px] font-bold tracking-[0.2em] text-[var(--reader-text)] opacity-30 uppercase">
-                Personal Library
-              </p>
-            </div>
+        <div className="sr-only">
+          <SheetTitle>资源库</SheetTitle>
+        </div>
+
+        <div className="flex flex-col h-full">
+          <div className="flex flex-col items-center pt-6 shrink-0">
+            <div className="w-12 h-1.5 rounded-full bg-[var(--reader-text)]/10" />
           </div>
-        </SheetHeader>
 
-        <Tabs
-          value={activeTab}
-          onValueChange={(v) => onTabChange(v as "toc" | "bookmarks" | "notes")}
-          className="flex min-h-[40vh] max-h-[75vh] min-w-0 flex-col scrollbar-hide"
-        >
-          <TabsList
-            className="mx-6 mt-4 grid h-11 grid-cols-3 rounded-[16px] bg-[var(--reader-text)]/5 p-1 gap-1"
+          <Tabs
+            value={activeTab}
+            onValueChange={(v) => onTabChange(v as "toc" | "bookmarks" | "notes")}
+            className="flex flex-1 min-h-0 flex-col"
           >
-            <TabsTrigger
-              value="toc"
-              className="rounded-[14px] text-[12px] font-bold tracking-tight transition-all data-[state=active]:bg-[var(--reader-bg)] data-[state=active]:text-[var(--reader-primary)] data-[state=active]:shadow-lg"
-            >
-              目录
-            </TabsTrigger>
-            <TabsTrigger
-              value="bookmarks"
-              className="rounded-[14px] text-[12px] font-bold tracking-tight transition-all data-[state=active]:bg-[var(--reader-bg)] data-[state=active]:text-[var(--reader-primary)] data-[state=active]:shadow-lg"
-            >
-              书签
-            </TabsTrigger>
-            <TabsTrigger
-              value="notes"
-              className="rounded-[14px] text-[12px] font-bold tracking-tight transition-all data-[state=active]:bg-[var(--reader-bg)] data-[state=active]:text-[var(--reader-primary)] data-[state=active]:shadow-lg"
-            >
-              笔记
-            </TabsTrigger>
-          </TabsList>
+            <div className="px-6 mt-4 shrink-0">
+              <TabsList
+                className="grid h-11 grid-cols-3 rounded-[16px] bg-[var(--reader-text)]/5 p-1 gap-1"
+              >
+                <TabsTrigger
+                  value="toc"
+                  className="rounded-[14px] text-[12px] font-bold tracking-tight transition-all data-[state=active]:bg-[var(--reader-bg)] data-[state=active]:text-[var(--reader-primary)] data-[state=active]:shadow-lg"
+                >
+                  目录
+                </TabsTrigger>
+                <TabsTrigger
+                  value="bookmarks"
+                  className="rounded-[14px] text-[12px] font-bold tracking-tight transition-all data-[state=active]:bg-[var(--reader-bg)] data-[state=active]:text-[var(--reader-primary)] data-[state=active]:shadow-lg"
+                >
+                  书签
+                </TabsTrigger>
+                <TabsTrigger
+                  value="notes"
+                  className="rounded-[14px] text-[12px] font-bold tracking-tight transition-all data-[state=active]:bg-[var(--reader-bg)] data-[state=active]:text-[var(--reader-primary)] data-[state=active]:shadow-lg"
+                >
+                  笔记
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
-          <TabsContent value="toc" className="mt-0 flex-1 overflow-hidden">
-            <TocTab
-              toc={toc}
-              currentHref={currentHref}
-              onTocItemClick={onTocItemClick}
-              onClose={handleClose}
-            />
-          </TabsContent>
+            <TabsContent value="toc" className="mt-0 flex-1 min-h-0 overflow-hidden outline-none">
+              <TocTab
+                toc={toc}
+                currentHref={currentHref}
+                onTocItemClick={onTocItemClick}
+                onClose={handleClose}
+              />
+            </TabsContent>
 
-          <TabsContent value="bookmarks" className="mt-0 flex-1 overflow-hidden">
-            <BookmarksTab
-              bookmarks={bookmarks}
-              onBookmarkClick={onBookmarkClick}
-              onBookmarkDelete={onBookmarkDelete}
-              onBookmarkEdit={onBookmarkEdit}
-              onClose={handleClose}
-            />
-          </TabsContent>
+            <TabsContent value="bookmarks" className="mt-0 flex-1 min-h-0 overflow-hidden outline-none">
+              <BookmarksTab
+                bookmarks={bookmarks}
+                onBookmarkClick={onBookmarkClick}
+                onBookmarkDelete={onBookmarkDelete}
+                onBookmarkEdit={onBookmarkEdit}
+                onClose={handleClose}
+              />
+            </TabsContent>
 
-          <TabsContent value="notes" className="mt-0 flex-1 overflow-hidden">
-            <NotesTab
-              notes={notes}
-              onNoteClick={onNoteClick}
-              onNoteDelete={onNoteDelete}
-              onNoteEdit={onNoteEdit}
-              onClose={handleClose}
-            />
-          </TabsContent>
-        </Tabs>
+            <TabsContent value="notes" className="mt-0 flex-1 min-h-0 overflow-hidden outline-none">
+              <NotesTab
+                notes={notes}
+                onNoteClick={onNoteClick}
+                onNoteDelete={onNoteDelete}
+                onNoteEdit={onNoteEdit}
+                onClose={handleClose}
+              />
+            </TabsContent>
+          </Tabs>
+        </div>
       </SheetContent>
     </Sheet>
   );

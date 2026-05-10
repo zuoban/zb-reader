@@ -33,7 +33,7 @@ export const TocTab = memo(function TocTab({
       viewportClassName="reader-toc-scroll-viewport"
       showHorizontalScrollbar
     >
-      <div className="p-6 pb-12 space-y-8 min-w-full w-max">
+      <div className="p-6 pb-12 space-y-5 min-w-full w-max">
         {/* Header Section */}
         <div className="flex items-center justify-between gap-4 px-1">
           <span

@@ -9,6 +9,7 @@ interface TocItemRowProps {
   currentHref?: string;
   onTocItemClick: (href: string) => void;
   onClose: () => void;
+  parentActive?: boolean;
 }
 
 export const TocItemRow = memo(function TocItemRow({
@@ -17,14 +18,17 @@ export const TocItemRow = memo(function TocItemRow({
   currentHref,
   onTocItemClick,
   onClose,
+  parentActive = false,
 }: TocItemRowProps) {
   const [expanded, setExpanded] = useState(true);
   const itemRef = useRef<HTMLDivElement>(null);
   const hasChildren = item.subitems && item.subitems.length > 0;
 
-  const isActive =
+  const isMatched =
     currentHref &&
     (item.href === currentHref || currentHref.startsWith(item.href?.split("#")[0]));
+  
+  const isActive = isMatched && !parentActive;
 
   useEffect(() => {
     if (isActive && itemRef.current) {
@@ -71,8 +75,8 @@ export const TocItemRow = memo(function TocItemRow({
 
         <button
           className={cn(
-            "flex-1 min-w-max cursor-pointer whitespace-nowrap px-2 py-3 text-left transition-all duration-300",
-            isActive ? "font-bold text-[15px]" : "text-[14px] font-medium"
+            "flex-1 min-w-max cursor-pointer whitespace-nowrap px-2 py-1.5 text-left transition-all duration-300",
+            isActive ? "font-bold text-[14px]" : "text-[13px] font-medium"
           )}
           style={{
             color: isActive ? "var(--reader-primary)" : "var(--reader-text)",
@@ -88,7 +92,7 @@ export const TocItemRow = memo(function TocItemRow({
         </button>
 
         {isActive && (
-          <div className="px-4 text-[10px] font-bold tracking-widest opacity-40 italic" style={{ color: "var(--reader-primary)" }}>
+          <div className="px-4 text-[9px] font-bold tracking-widest opacity-40 italic" style={{ color: "var(--reader-primary)" }}>
             Reading
           </div>
         )}
@@ -96,7 +100,7 @@ export const TocItemRow = memo(function TocItemRow({
 
       {hasChildren && expanded && (
         <div
-          className="relative ml-[17px] mt-1 space-y-1"
+          className="relative ml-[17px] mt-0.5 space-y-0.5"
         >
           {/* Vertical Nesting Line */}
           <div 
@@ -113,6 +117,7 @@ export const TocItemRow = memo(function TocItemRow({
                 currentHref={currentHref}
                 onTocItemClick={onTocItemClick}
                 onClose={onClose}
+                parentActive={parentActive || isMatched}
               />
             ))}
           </div>
