@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, Tags, X } from "lucide-react";
 import { toast } from "sonner";
-import { BackgroundDecoration } from "@/components/bookshelf/BackgroundDecoration";
 import { SearchBar } from "@/components/bookshelf/SearchBar";
 import { BookCardSkeleton } from "@/components/bookshelf/BookCardSkeleton";
 import { BookGrid } from "@/components/bookshelf/BookGrid";

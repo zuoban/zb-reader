@@ -153,7 +153,8 @@ export const BookCard = memo(function BookCard({
   const hasProgress = progress > 0 && progress < 1;
   const isCompleted = progress >= 1;
   const lastReadText = lastReadAt ? formatLastRead(lastReadAt) : null;
-  const statusText = isCompleted ? "已完成" : hasProgress ? `${Math.round(progress * 100)}%` : "未开始";
+  // statusText 用于显示阅读状态，目前通过进度条展示，保留以备将来使用
+  void (isCompleted ? "已完成" : hasProgress ? `${Math.round(progress * 100)}%` : "未开始");
 
   return (
     <Card

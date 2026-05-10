@@ -70,13 +70,7 @@ export function TtsFloatingControl({
   }, [onOpenImmersiveView]);
 
   const text = "#09090b";
-  const textDark = "#d8dee7";
-  const bg = "#f5f7fb";
-  const bgDark = "#101419";
-  const primary = "#18181b";
-  const primaryDark = "#c9d7e8";
   const destructive = "#ef4444";
-  const destructiveDark = "#f87171";
 
   return (
     <div

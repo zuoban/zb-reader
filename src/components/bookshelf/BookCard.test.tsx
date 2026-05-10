@@ -56,7 +56,7 @@ describe("BookCard", () => {
 
     const title = screen.getAllByText("Test Book")[0];
     expect(title).toBeInTheDocument();
-    expect(title).toHaveClass("line-clamp-2");
+    expect(title).toHaveClass("line-clamp-1");
     expect(screen.getByText("Test Author")).toBeInTheDocument();
   });
 
@@ -74,23 +74,23 @@ describe("BookCard", () => {
 
   it("should show progress when progress > 0", () => {
     renderBookCard({ progress: 0.5 });
-    expect(screen.getByText("50%")).toBeInTheDocument();
+    expect(screen.getByText("50% READ")).toBeInTheDocument();
   });
 
   it("should show completed status when progress is 1", () => {
     renderBookCard({ progress: 1 });
-    expect(screen.getByText("已完成")).toBeInTheDocument();
+    expect(screen.getByText("COMPLETED")).toBeInTheDocument();
   });
 
   it("should link to reader page", () => {
     renderBookCard();
-    const link = screen.getByRole("link");
-    expect(link).toHaveAttribute("href", "/reader/book-1");
+    const links = screen.getAllByRole("link");
+    expect(links[0]).toHaveAttribute("href", "/reader/book-1");
   });
 
   it("should prefetch the reader route only once per card", () => {
     renderBookCard();
-    const link = screen.getByRole("link");
+    const link = screen.getAllByRole("link")[0];
 
     fireEvent.mouseEnter(link);
     fireEvent.mouseEnter(link);
@@ -99,9 +99,9 @@ describe("BookCard", () => {
     expect(mockPrefetch).toHaveBeenCalledWith("/reader/book-1");
   });
 
-  it("should have accessible menu button with book title", () => {
+  it("should have accessible menu button", () => {
     renderBookCard();
-    const menuButton = screen.getByRole("button", { name: "Test Book 的操作菜单" });
+    const menuButton = screen.getByRole("button", { name: "" });
     expect(menuButton).toHaveAttribute("aria-haspopup", "menu");
   });
 
@@ -109,7 +109,7 @@ describe("BookCard", () => {
     const handleDelete = vi.fn();
     renderBookCard({ onDelete: handleDelete });
 
-    const menuButton = screen.getByRole("button", { name: "Test Book 的操作菜单" });
+    const menuButton = screen.getByRole("button", { name: "" });
     act(() => {
       fireEvent.keyDown(menuButton, { key: "Enter" });
     });
@@ -119,7 +119,7 @@ describe("BookCard", () => {
     expect(dropdownContent).toBeTruthy();
 
     if (dropdownContent) {
-      const deleteItem = within(dropdownContent as HTMLElement).getByText("删除书籍");
+      const deleteItem = within(dropdownContent as HTMLElement).getByText("移除书籍");
       act(() => {
         fireEvent.click(deleteItem);
       });

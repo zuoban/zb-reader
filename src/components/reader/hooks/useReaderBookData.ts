@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { cacheBook, getCachedBook } from "@/lib/book-cache";
+import { getCachedBook } from "@/lib/book-cache";
 import { logger } from "@/lib/logger";
 import type { ServerProgressSnapshot } from "@/lib/local-progress";
 import type { Book, Bookmark, Note } from "@/lib/db/schema";

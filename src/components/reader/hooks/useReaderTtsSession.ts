@@ -105,7 +105,8 @@ export function useReaderTtsSession({
     return [] as ReaderParagraph[];
   }, [book, epubReaderRef]);
 
-  const getInitialParagraphIndex = useCallback(
+  // 保留以备将来使用
+  const _getInitialParagraphIndex = useCallback(
     (_paragraphs: ReaderParagraph[]): number => {
       if (!book) return 0;
 
@@ -532,6 +533,7 @@ export function useReaderTtsSession({
     stopCurrentAudio,
     ttsSessionRef,
     waitForPageChange,
+    allSentencesRef,
   ]);
 
   const handleTtsNextChapter = useCallback(async () => {
@@ -596,6 +598,7 @@ export function useReaderTtsSession({
     stopCurrentAudio,
     ttsSessionRef,
     waitForPageChange,
+    allSentencesRef,
   ]);
 
   return {

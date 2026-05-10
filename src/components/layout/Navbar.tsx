@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
 import { Library, LogOut, Moon, Sun, User } from "lucide-react";
 import { UploadButton } from "@/components/bookshelf/UploadButton";

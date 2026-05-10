@@ -1,38 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
-
-interface Particle {
-  id: number;
-  left: string;
-  top: string;
-  size: string;
-  duration: string;
-  delay: string;
-  opacity: number;
-  blur: string;
-}
-
-function generateParticles(count: number): Particle[] {
-  return Array.from({ length: count }).map((_, i) => ({
-    id: i,
-    left: `${Math.random() * 100}%`,
-    top: `${Math.random() * 100}%`,
-    size: `${Math.random() * 6 + 3}px`,
-    duration: `${Math.random() * 35 + 25}s`,
-    delay: `-${Math.random() * 30}s`,
-    opacity: Math.random() * 0.15 + 0.05,
-    blur: Math.random() > 0.5 ? "blur(1px)" : "none",
-  }));
-}
-
 export function AuthBackground() {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   return (
     <div className="paper-texture pointer-events-none fixed inset-0 z-0 overflow-hidden bg-background">
       {/* Subtle Ambient Light */}

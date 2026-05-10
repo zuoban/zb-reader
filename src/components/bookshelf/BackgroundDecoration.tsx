@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
+
+const alwaysTrue = () => true;
+const subscribe = () => () => {};
 
 export function BackgroundDecoration() {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useSyncExternalStore(subscribe, alwaysTrue, () => false);
 
   if (!mounted) return null;
 
