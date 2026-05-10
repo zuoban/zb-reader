@@ -23,7 +23,8 @@ import { useEpubTtsHighlighting } from "./hooks/useEpubTtsHighlighting";
 
 interface EpubReaderProps {
   bookId: string;
-  bookData: ArrayBuffer;
+  bookData?: ArrayBuffer | null;
+  bookUrl?: string | null;
   initialLocation?: string;
   fontSize?: number;
   fontFamily?: string;
@@ -73,6 +74,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     {
       bookId,
       bookData,
+      bookUrl,
       initialLocation,
       fontSize = 16,
       fontFamily = "system",
@@ -213,6 +215,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     useEpubInitializer({
       bookId,
       bookData,
+      bookUrl,
       bookRef,
       currentLocationRef,
       epubContextRef,

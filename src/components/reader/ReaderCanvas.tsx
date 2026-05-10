@@ -20,6 +20,7 @@ interface ReaderCanvasProps {
   activeTtsParagraph: string;
   activeTtsParagraphId: string | null;
   bookData: ArrayBuffer | null;
+  bookUrl: string | null;
   bookFormat: string;
   bookId: string;
   bookTitle: string;
@@ -54,6 +55,7 @@ export function ReaderCanvas({
   activeTtsParagraph,
   activeTtsParagraphId,
   bookData,
+  bookUrl,
   bookFormat,
   bookId,
   bookTitle,
@@ -101,12 +103,13 @@ export function ReaderCanvas({
               paddingBottom: isTtsViewOpen ? 0 : 36,
             }}
           >
-            {bookFormat === "epub" && bookData && (
+            {bookFormat === "epub" && (bookData || bookUrl) && (
               <EpubReader
                 key={bookId}
                 ref={epubReaderRef}
                 bookId={bookId}
                 bookData={bookData}
+                bookUrl={bookUrl}
                 initialLocation={initialLocation}
                 fontSize={fontSize}
                 fontFamily={fontFamily}

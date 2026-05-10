@@ -27,6 +27,7 @@ export function useReaderBookData({
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(true);
   const [bookData, setBookData] = useState<ArrayBuffer | null>(null);
+  const [bookUrl, setBookUrl] = useState<string | null>(null);
   const [initialLocation, setInitialLocation] = useState<string | undefined>();
   const [initialProgress, setInitialProgress] = useState<ServerProgressSnapshot | null>();
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
@@ -82,30 +83,13 @@ export function useReaderBookData({
         setBookmarks(Array.isArray(bmData.bookmarks) ? bmData.bookmarks : []);
         setNotes(Array.isArray(notesData.notes) ? notesData.notes.filter(Boolean) : []);
 
-        let fileData: ArrayBuffer;
-
         if (cached) {
-          fileData = cached;
+          setBookData(cached);
         } else {
-          const fileRes = await fetch(`/api/books/${bookId}/file`);
-          if (!fileRes.ok) {
-            throw new Error("Failed to load book file");
-          }
-          fileData = await fileRes.arrayBuffer();
-          await cacheBook(bookId, fileData, {
-            meta: {
-              title: data.book.title,
-              author: data.book.author,
-              format: data.book.format,
-            },
-          });
+          // Use on-demand proxy instead of downloading the whole file
+          // This satisfies the user's request for "server-side rendering" (on-demand loading)
+          setBookUrl(`/api/books/${bookId}/proxy/`);
         }
-
-        if (cancelled) {
-          return;
-        }
-
-        setBookData(fileData);
       } catch (error) {
         logger.error("reader", "加载书籍失败", error);
         toast.error("加载失败");
@@ -127,6 +111,7 @@ export function useReaderBookData({
     book,
     loading,
     bookData,
+    bookUrl,
     initialLocation,
     initialProgress,
     bookmarks,

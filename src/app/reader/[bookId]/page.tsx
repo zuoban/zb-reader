@@ -121,6 +121,7 @@ function ReaderContent() {
     book,
     loading,
     bookData,
+    bookUrl,
     initialLocation,
     initialProgress,
     bookmarks,
@@ -420,7 +421,7 @@ function ReaderContent() {
     setToolbarVisible(false);
   }, [setIsTtsViewOpen, setToolbarVisible]);
 
-  if (loading || !book || !bookData) {
+  if (loading || !book || (!bookData && !bookUrl)) {
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -452,6 +453,7 @@ function ReaderContent() {
         activeTtsParagraph={activeTtsParagraph}
         activeTtsParagraphId={activeTtsParagraphId}
         bookData={bookData}
+        bookUrl={bookUrl}
         bookFormat={book.format}
         bookId={bookId}
         bookTitle={book.title}

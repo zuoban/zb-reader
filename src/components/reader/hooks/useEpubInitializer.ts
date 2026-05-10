@@ -19,7 +19,8 @@ import { cacheBookLocations, getCachedLocations } from "@/lib/book-cache";
 
 interface UseEpubInitializerParams {
   bookId: string;
-  bookData: ArrayBuffer;
+  bookData?: ArrayBuffer | null;
+  bookUrl?: string | null;
   bookRef: MutableRefObject<Book | null>;
   currentLocationRef: MutableRefObject<string | null>;
   epubContextRef: MutableRefObject<EpubContext>;
@@ -116,6 +117,7 @@ function restoreInitialScroll(viewer: HTMLDivElement | null, ratio: number) {
 export function useEpubInitializer({
   bookId,
   bookData,
+  bookUrl,
   bookRef,
   currentLocationRef,
   epubContextRef,
@@ -143,6 +145,7 @@ export function useEpubInitializer({
   // EPUB initialization registers event handlers once; callbacks captured via refs
   useEffect(() => {
     if (!viewerRef.current) return;
+    if (!bookData && !bookUrl) return;
 
     let cancelled = false;
     let book: Book | null = null;
@@ -151,7 +154,9 @@ export function useEpubInitializer({
       try {
         if (cancelled || !viewerRef.current) return;
 
-        book = ePub(bookData);
+        // Use bookData if available (cached), otherwise use bookUrl (proxy)
+        const source = (bookData || bookUrl) as string | ArrayBuffer;
+        book = ePub(source);
         bookRef.current = book;
 
         book.spine.hooks.serialize.register(
@@ -308,5 +313,5 @@ export function useEpubInitializer({
       if (book) book.destroy();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookData, bookId, initialLocation]);
+  }, [bookData, bookUrl, bookId, initialLocation]);
 }
