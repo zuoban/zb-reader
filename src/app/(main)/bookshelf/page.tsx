@@ -249,7 +249,7 @@ export default function BookshelfPage() {
 
       <main className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-10 pt-8 sm:px-6 sm:pb-14 sm:pt-12">
         <div className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative -mx-1 flex w-fit max-w-[calc(100%+0.5rem)] gap-1 overflow-x-auto rounded-2xl border border-white/30 bg-white/40 p-1.5 shadow-[0_4px_16px_rgba(0,0,0,0.06)] backdrop-blur-xl saturate-150 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden dark:border-white/10 dark:bg-black/20">
+          <div className="relative -mx-1 flex w-fit max-w-[calc(100%+0.5rem)] gap-1 overflow-x-auto rounded-2xl border border-white/30 bg-white/40 p-1.5 shadow-[0_4px_16px_rgba(0,0,0,0.06)] backdrop-blur-xl saturate-150 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden dark:border-white/5 dark:bg-white/5">
             <Button
               type="button"
               variant="ghost"
@@ -267,7 +267,7 @@ export default function BookshelfPage() {
                 variant="outline"
                 className={cn(
                   "ml-1.5 border-transparent bg-foreground/5 px-1.5 py-0 text-[10px] font-bold text-muted-foreground/80 shadow-none transition-colors",
-                  selectedCategory === ALL_CATEGORY && "bg-[color:var(--cta)]/15 text-[color:var(--cta)]"
+                  selectedCategory === ALL_CATEGORY && "bg-white/20 text-foreground dark:bg-white/15 dark:text-foreground"
                 )}
               >
                 {totalBooks}
@@ -292,7 +292,7 @@ export default function BookshelfPage() {
                   variant="outline"
                   className={cn(
                     "ml-1.5 border-transparent bg-foreground/5 px-1.5 py-0 text-[10px] font-bold text-muted-foreground/80 shadow-none transition-colors",
-                    selectedCategory === category.name && "bg-[color:var(--cta)]/15 text-[color:var(--cta)]"
+                    selectedCategory === category.name && "bg-white/20 text-foreground dark:bg-white/15 dark:text-foreground"
                   )}
                 >
                   {category.count}

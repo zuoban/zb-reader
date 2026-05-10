@@ -46,7 +46,7 @@ export function Navbar({ onUploadComplete, className }: NavbarProps) {
   return (
     <header className={cn("sticky top-2 z-50 w-full sm:top-4", className)}>
       <nav className="mx-auto w-full max-w-7xl px-4 sm:px-6">
-        <div className="relative flex h-14 items-center justify-between overflow-hidden rounded-[1.25rem] border border-white/30 bg-white/40 px-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.12)] backdrop-blur-xl saturate-150 transition-all duration-500 hover:border-white/40 hover:bg-white/50 sm:h-16 sm:rounded-[1.5rem] sm:px-4 dark:border-white/10 dark:bg-black/20 dark:hover:border-white/20 dark:hover:bg-black/30">
+        <div className="relative flex h-14 items-center justify-between overflow-hidden rounded-[1.25rem] border border-white/30 bg-white/40 px-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.12)] backdrop-blur-xl saturate-150 transition-all duration-500 hover:border-white/40 hover:bg-white/50 sm:h-16 sm:rounded-[1.5rem] sm:px-4 dark:border-white/5 dark:bg-white/5 dark:hover:border-white/8 dark:hover:bg-white/8">
           {/* Dynamic Light Reflection Edge */}
           <div className="liquid-hairline absolute inset-x-4 top-0 h-px opacity-80" />
           
@@ -78,12 +78,12 @@ export function Navbar({ onUploadComplete, className }: NavbarProps) {
 
           {/* Right: Actions Area */}
           <div className="flex items-center gap-1.5 sm:gap-3">
-            <div className="flex items-center gap-1.5 rounded-[1.25rem] bg-black/5 p-1 transition-all duration-400 dark:bg-white/5">
+            <div className="flex items-center gap-1.5 rounded-[1.25rem] bg-black/5 p-1 transition-all duration-400 dark:bg-white/6">
               {onUploadComplete && (
                 <UploadButton
                   onUploadComplete={onUploadComplete}
                   variant="ghost"
-                  className="h-9 gap-2 rounded-xl border border-white/20 bg-white/40 px-3 text-xs font-bold shadow-sm transition-all duration-400 hover:scale-[1.02] hover:bg-white/60 hover:shadow-md sm:h-10 sm:px-5 dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15"
+                  className="h-9 gap-2 rounded-xl border border-white/22 bg-white/55 px-3 text-xs font-bold shadow-sm transition-all duration-400 hover:scale-[1.02] hover:bg-white/70 hover:shadow-md sm:h-10 sm:px-5 dark:border-white/5 dark:bg-white/5 dark:hover:bg-white/10"
                 />
               )}
 
@@ -93,7 +93,7 @@ export function Navbar({ onUploadComplete, className }: NavbarProps) {
                 size="icon"
                 onClick={handleThemeToggle}
                 aria-label="切换主题"
-                className="group relative h-9 w-9 overflow-hidden rounded-xl border border-white/20 bg-white/40 shadow-sm transition-all duration-500 hover:scale-105 hover:bg-white/60 hover:shadow-md sm:h-10 sm:w-10 dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/20"
+                className="group relative h-9 w-9 overflow-hidden rounded-xl border border-white/22 bg-white/55 shadow-sm transition-all duration-500 hover:scale-105 hover:bg-white/70 hover:shadow-md sm:h-10 sm:w-10 dark:border-white/5 dark:bg-white/5 dark:hover:bg-white/10"
               >
                 <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
                 
