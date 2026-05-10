@@ -155,6 +155,7 @@ export class LocalProgressManager {
         bookId,
         progress: updated.progress,
         location: updated.location,
+        clientUpdatedAt: new Date().toISOString(),
       };
 
       const isSignificant =

@@ -5,6 +5,7 @@ export interface SyncItem {
   bookId: string;
   progress: number;
   location: string;
+  clientUpdatedAt: string;
 }
 
 const DB_NAME = 'zb-reader-sync-queue';

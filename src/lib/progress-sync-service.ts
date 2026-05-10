@@ -33,6 +33,7 @@ export async function syncReadingProgressItem(
 
   const now = new Date().toISOString();
   const incomingProgress = progress ?? 0;
+  const incomingUpdatedAt = item.clientUpdatedAt ?? now;
 
   if (!currentProgress) {
     await db.insert(readingProgress).values({
@@ -42,18 +43,22 @@ export async function syncReadingProgressItem(
       progress: incomingProgress,
       furthestProgress: incomingProgress,
       location: location ?? null,
-      lastReadAt: now,
+      lastReadAt: incomingUpdatedAt,
       createdAt: now,
-      updatedAt: now,
+      updatedAt: incomingUpdatedAt,
     });
 
     return "created";
   }
 
-  const finalProgress = progress ?? currentProgress.progress;
+  const currentUpdatedAt = currentProgress.updatedAt ?? currentProgress.lastReadAt ?? "";
+  const isStaleLocationUpdate = incomingUpdatedAt < currentUpdatedAt;
+  const finalProgress = isStaleLocationUpdate
+    ? currentProgress.progress
+    : progress ?? currentProgress.progress;
   const finalFurthestProgress = Math.max(
     currentProgress.furthestProgress ?? currentProgress.progress ?? 0,
-    finalProgress
+    progress ?? currentProgress.progress ?? 0
   );
 
   await db
@@ -61,9 +66,9 @@ export async function syncReadingProgressItem(
     .set({
       progress: finalProgress,
       furthestProgress: finalFurthestProgress,
-      location: location ?? currentProgress.location,
-      lastReadAt: now,
-      updatedAt: now,
+      location: isStaleLocationUpdate ? currentProgress.location : location ?? currentProgress.location,
+      lastReadAt: isStaleLocationUpdate ? currentProgress.lastReadAt : incomingUpdatedAt,
+      updatedAt: isStaleLocationUpdate ? currentProgress.updatedAt : incomingUpdatedAt,
     })
     .where(
       and(

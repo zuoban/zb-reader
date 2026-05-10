@@ -3,6 +3,8 @@ import { z } from "zod";
 const optionalNumber = z.coerce.number().finite().optional();
 const MAX_PROGRESS_LOCATION_LENGTH = 4000;
 
+const clientUpdatedAtSchema = z.string().datetime("无效的同步时间").optional();
+
 /** 书签创建/更新校验 */
 export const bookmarkSchema = z.object({
   bookId: z.string().min(1, "无效的书籍 ID"),
@@ -126,6 +128,7 @@ export const progressSchema = z.object({
   bookId: progressBookIdSchema.shape.bookId,
   progress: z.number().min(0).max(1).optional(),
   location: z.string().max(MAX_PROGRESS_LOCATION_LENGTH, "阅读位置不能超过 4000 个字符").optional(),
+  clientUpdatedAt: clientUpdatedAtSchema,
 });
 
 /** 书籍分类更新校验 */

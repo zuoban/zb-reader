@@ -19,9 +19,19 @@ describe("progressSchema", () => {
       bookId: "0f4f7a72-0b99-4f1d-80f8-63a704eb0b1d",
       progress: 0.42,
       location: "epubcfi(/6/2!/4/2/1:0)",
+      clientUpdatedAt: "2026-05-10T12:00:00.000Z",
     });
 
     expect(result.success).toBe(true);
+  });
+
+  it("rejects invalid client sync timestamps", () => {
+    const result = progressSchema.safeParse({
+      bookId: "0f4f7a72-0b99-4f1d-80f8-63a704eb0b1d",
+      clientUpdatedAt: "not-a-date",
+    });
+
+    expect(result.success).toBe(false);
   });
 
   it("rejects out-of-range progress values", () => {

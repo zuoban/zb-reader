@@ -45,6 +45,7 @@ describe('sync-queue', () => {
       bookId: 'book-1',
       progress: 0.5,
       location: 'location-1',
+      clientUpdatedAt: '2026-05-10T12:00:00.000Z',
       ...overrides,
     };
   }
