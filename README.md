@@ -59,7 +59,7 @@ cd zb-reader
 2. **安装依赖**
 
 ```bash
-npm install
+pnpm install
 ```
 
 3. **配置环境变量**
@@ -79,13 +79,13 @@ NEXTAUTH_URL=http://localhost:3000
 4. **初始化数据库**
 
 ```bash
-npx drizzle-kit push
+pnpm exec drizzle-kit push
 ```
 
 5. **启动开发服务器**
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 6. **访问应用**
@@ -97,13 +97,13 @@ npm run dev
 1. **构建应用**
 
 ```bash
-npm run build
+pnpm build
 ```
 
 2. **启动生产服务器**
 
 ```bash
-npm start
+pnpm start
 ```
 
 ## 🐳 Docker 部署
@@ -222,24 +222,24 @@ zb-reader/
 
 ```bash
 # 开发
-npm run dev              # 启动开发服务器
+pnpm dev                 # 启动开发服务器
 
 # 构建
-npm run build            # 生产构建
-npm run start            # 启动生产服务器
+pnpm build               # 生产构建
+pnpm start               # 启动生产服务器
 
 # 代码质量
-npm run lint             # ESLint 检查
-npx tsc --noEmit         # TypeScript 类型检查
+pnpm lint                # ESLint 检查
+pnpm exec tsc --noEmit   # TypeScript 类型检查
 
 # 测试
-npm run test             # 运行测试（watch 模式）
-npm run test:run         # 运行所有测试
-npm run test:coverage    # 生成覆盖率报告
+pnpm test                # 运行测试（watch 模式）
+pnpm test:run            # 运行所有测试
+pnpm test:coverage       # 生成覆盖率报告
 
 # 数据库
-npx drizzle-kit push     # 推送 schema 到数据库
-npx drizzle-kit studio   # 打开数据库 GUI
+pnpm exec drizzle-kit push     # 推送 schema 到数据库
+pnpm exec drizzle-kit studio   # 打开数据库 GUI
 ```
 
 ### 数据库管理
@@ -277,8 +277,8 @@ npx drizzle-kit migrate
 ### 运行测试
 
 ```bash
-npm run test:run         # 运行所有测试
-npm run test:coverage    # 生成覆盖率报告
+pnpm test:run            # 运行所有测试
+pnpm test:coverage       # 生成覆盖率报告
 ```
 
 ## 🤝 贡献指南

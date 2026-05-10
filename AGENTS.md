@@ -7,17 +7,17 @@ ZB Reader is a self-hosted web-based e-book reader built with Next.js 16 (App Ro
 ## Build / Lint / Dev Commands
 
 ```bash
-npm run dev              # Start dev server (next dev)
-npm run build            # Production build (next build)
-npm run start            # Start production server (next start)
-npm run lint             # ESLint check
-npm run test             # Run all tests in watch mode (Vitest)
-npm run test:run         # Run all tests once
-npm run test:coverage    # Run tests with coverage
-npm run analyze          # Analyze bundle size (opens browser)
-npx vitest path/to/file.test.ts  # Run single test file
-npx vitest -t "test name"         # Run tests matching name pattern
-npx tsc --noEmit         # Type-check without emitting files
+pnpm dev              # Start dev server (next dev)
+pnpm build            # Production build (next build)
+pnpm start            # Start production server (next start)
+pnpm lint             # ESLint check
+pnpm test             # Run all tests in watch mode (Vitest)
+pnpm test:run         # Run all tests once
+pnpm test:coverage    # Run tests with coverage
+pnpm analyze          # Analyze bundle size (opens browser)
+pnpm exec vitest path/to/file.test.ts  # Run single test file
+pnpm exec vitest -t "test name"        # Run tests matching name pattern
+pnpm exec tsc --noEmit                 # Type-check without emitting files
 ```
 
 ### Database

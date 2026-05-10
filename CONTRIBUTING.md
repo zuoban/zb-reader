@@ -34,13 +34,13 @@ git clone https://贡献者/yourusername/zb-reader.git
 cd zb-runner
 
 # 安装依赖
-npm install
+pnpm install
 
 # 创建分支
 git checkout -b feature/your-feature
 
 # 启动开发服务器
-npm run dev
+pnpm dev
 ```
 
 #### 代码规范
@@ -79,10 +79,10 @@ test: 添加 API 测试
 
 ```bash
 # 运行测试
-npm run test:run
+pnpm test:run
 
 # 生成覆盖率报告
-npm run coverage
+pnpm test:coverage
 ```
 
 #### 提交 Pull Request
@@ -160,8 +160,8 @@ npx drizzle-kit push
 
 提交 PR 前请确认：
 
-- [ ] 代码通过 `npm run lint`
-- [ ] 代码通过 `npm run test:run`
+- [ ] 代码通过 `pnpm lint`
+- [ ] 代码通过 `pnpm test:run`
 - [ ] 新功能有对应测试
 - [ ] 文档已更新
 - [ ] 提交信息符合规范
