@@ -92,8 +92,15 @@ export const TocItemRow = memo(function TocItemRow({
         </button>
 
         {isActive && (
-          <div className="px-4 text-[9px] font-bold tracking-widest opacity-40 italic" style={{ color: "var(--reader-primary)" }}>
-            Reading
+          <div className="px-4 flex items-center gap-1.5">
+            <div className="flex gap-0.5 items-end h-2.5">
+              <div className="w-0.5 bg-[var(--reader-primary)] animate-[reader-playing_0.6s_ease-in-out_infinite_alternate]" style={{ height: '40%' }} />
+              <div className="w-0.5 bg-[var(--reader-primary)] animate-[reader-playing_0.8s_ease-in-out_infinite_alternate]" style={{ height: '100%' }} />
+              <div className="w-0.5 bg-[var(--reader-primary)] animate-[reader-playing_0.5s_ease-in-out_infinite_alternate]" style={{ height: '60%' }} />
+            </div>
+            <span className="text-[9px] font-bold tracking-widest opacity-40 uppercase italic" style={{ color: "var(--reader-primary)" }}>
+              Reading
+            </span>
           </div>
         )}
       </div>
@@ -104,7 +111,7 @@ export const TocItemRow = memo(function TocItemRow({
         >
           {/* Vertical Nesting Line */}
           <div 
-            className="absolute left-0 top-0 bottom-0 w-px opacity-10"
+            className="absolute left-0 top-0 bottom-0 w-[1.5px] rounded-full opacity-[0.08]"
             style={{ background: "var(--reader-text)" }}
           />
           

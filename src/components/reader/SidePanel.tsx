@@ -73,39 +73,39 @@ export const SidePanel = memo(function SidePanel({
         </div>
 
         <div className="flex flex-col h-full">
-          <div className="flex flex-col items-center pt-6 shrink-0">
-            <div className="w-12 h-1.5 rounded-full bg-[var(--reader-text)]/10" />
-          </div>
+          <div className="flex flex-col items-center pt-5 shrink-0">
+          <div className="w-10 h-1.25 rounded-full bg-[var(--reader-text)]/15 mb-1" />
+        </div>
 
-          <Tabs
-            value={activeTab}
-            onValueChange={(v) => onTabChange(v as "toc" | "bookmarks" | "notes")}
-            className="flex flex-1 min-h-0 flex-col"
-          >
-            <div className="px-6 mt-4 shrink-0">
-              <TabsList
-                className="grid h-11 grid-cols-3 rounded-[16px] bg-[var(--reader-text)]/5 p-1 gap-1"
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => onTabChange(v as "toc" | "bookmarks" | "notes")}
+          className="flex flex-1 min-h-0 flex-col"
+        >
+          <div className="px-6 mt-2 shrink-0">
+            <TabsList
+              className="grid h-11 grid-cols-3 rounded-[18px] bg-[var(--reader-text)]/5 p-1 gap-1"
+            >
+              <TabsTrigger
+                value="toc"
+                className="rounded-[15px] text-[12px] font-bold tracking-tight transition-all duration-300 data-[state=active]:bg-[var(--reader-bg)] data-[state=active]:text-[var(--reader-primary)] data-[state=active]:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.15)] dark:data-[state=active]:shadow-[0_8px_25px_-6px_rgba(0,0,0,0.4)]"
               >
-                <TabsTrigger
-                  value="toc"
-                  className="rounded-[14px] text-[12px] font-bold tracking-tight transition-all data-[state=active]:bg-[var(--reader-bg)] data-[state=active]:text-[var(--reader-primary)] data-[state=active]:shadow-lg"
-                >
-                  目录
-                </TabsTrigger>
-                <TabsTrigger
-                  value="bookmarks"
-                  className="rounded-[14px] text-[12px] font-bold tracking-tight transition-all data-[state=active]:bg-[var(--reader-bg)] data-[state=active]:text-[var(--reader-primary)] data-[state=active]:shadow-lg"
-                >
-                  书签
-                </TabsTrigger>
-                <TabsTrigger
-                  value="notes"
-                  className="rounded-[14px] text-[12px] font-bold tracking-tight transition-all data-[state=active]:bg-[var(--reader-bg)] data-[state=active]:text-[var(--reader-primary)] data-[state=active]:shadow-lg"
-                >
-                  笔记
-                </TabsTrigger>
-              </TabsList>
-            </div>
+                目录
+              </TabsTrigger>
+              <TabsTrigger
+                value="bookmarks"
+                className="rounded-[15px] text-[12px] font-bold tracking-tight transition-all duration-300 data-[state=active]:bg-[var(--reader-bg)] data-[state=active]:text-[var(--reader-primary)] data-[state=active]:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.15)] dark:data-[state=active]:shadow-[0_8px_25px_-6px_rgba(0,0,0,0.4)]"
+              >
+                书签
+              </TabsTrigger>
+              <TabsTrigger
+                value="notes"
+                className="rounded-[15px] text-[12px] font-bold tracking-tight transition-all duration-300 data-[state=active]:bg-[var(--reader-bg)] data-[state=active]:text-[var(--reader-primary)] data-[state=active]:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.15)] dark:data-[state=active]:shadow-[0_8px_25px_-6px_rgba(0,0,0,0.4)]"
+              >
+                笔记
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
             <TabsContent value="toc" className="mt-0 flex-1 min-h-0 overflow-hidden outline-none">
               <TocTab

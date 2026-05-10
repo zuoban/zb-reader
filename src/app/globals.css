@@ -986,6 +986,11 @@
 }
 
 /* Reading rhythm indicator */
+@keyframes reader-playing {
+  from { height: 20%; }
+  to { height: 100%; }
+}
+
 .reading-rhythm-indicator {
   position: absolute;
   left: 0;

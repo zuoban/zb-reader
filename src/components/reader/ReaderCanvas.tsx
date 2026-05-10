@@ -81,56 +81,70 @@ export function ReaderCanvas({
   onTocLoaded,
 }: ReaderCanvasProps) {
   return (
-    <div className="relative h-full w-full">
-      <div className="relative h-full w-full">
-        {/* Minimalist Footer */}
-        {!isTtsViewOpen && (
-          <div 
-            className={cn(
-              "pointer-events-none fixed inset-x-0 bottom-3 z-10 flex items-center justify-between px-8 text-[9px] font-bold tracking-[0.2em] uppercase transition-all duration-500",
-              toolbarVisible ? "opacity-0 -translate-y-2" : "opacity-25 translate-y-0"
-            )}
-            style={{ color: "var(--reader-text)" }}
-          >
+    <div className="relative h-full w-full flex flex-col overflow-hidden bg-[var(--reader-bg)]">
+      <div className="relative flex-1 min-h-0 w-full">
+        {bookFormat === "epub" && (bookData || bookUrl) && (
+          <EpubReader
+            key={bookId}
+            ref={epubReaderRef}
+            bookId={bookId}
+            bookData={bookData}
+            bookUrl={bookUrl}
+            initialLocation={initialLocation}
+            fontSize={fontSize}
+            fontFamily={fontFamily}
+            theme={readerTheme}
+            onLocationChange={onLocationChange}
+            onTocLoaded={onTocLoaded}
+            onTextSelected={onTextSelected}
+            onClick={isSpeaking ? undefined : onClick}
+            highlights={highlights}
+            activeTtsParagraph={activeTtsParagraph}
+            activeTtsParagraphId={activeTtsParagraphId}
+            activeTtsLocation={activeTtsLocation}
+            ttsHighlightColor={ttsHighlightColor}
+          />
+        )}
+      </div>
+
+      {/* Minimalist Footer Area - Dedicated Space */}
+      {!isTtsViewOpen && (
+        <div 
+          className={cn(
+            "relative shrink-0 flex items-center justify-between px-6 sm:px-8 text-[10px] font-bold tracking-[0.15em] uppercase transition-all duration-500 ease-in-out border-t border-[var(--reader-text)]/10 overflow-hidden",
+            toolbarVisible ? "h-0 opacity-0 pointer-events-none border-t-transparent" : "h-11 opacity-60"
+          )}
+          style={{ 
+            color: "var(--reader-text)",
+            background: "var(--reader-bg)"
+          }}
+        >
+          {/* Left: Progress */}
+          <div className="flex items-center shrink-0 min-w-[3rem]">
             <span className="tabular-nums">
               {(progress * 100).toFixed(0)}%
             </span>
-            <span className="mx-4 truncate font-heading italic normal-case tracking-normal opacity-80">
+          </div>
+
+          {/* Center: Title (Absolute Centered) */}
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[45vw] sm:max-w-md text-center">
+            <span className="truncate block font-heading italic normal-case tracking-normal text-[11px]">
               {currentChapterTitle || bookTitle}
             </span>
-            <span className="tabular-nums">
-              {currentPage != null && totalPages != null
-                ? `${currentPage} / ${totalPages}`
-                : ""}
-            </span>
           </div>
-        )}
 
-        <div className="h-full w-full">
-          {bookFormat === "epub" && (bookData || bookUrl) && (
-            <EpubReader
-              key={bookId}
-              ref={epubReaderRef}
-              bookId={bookId}
-              bookData={bookData}
-              bookUrl={bookUrl}
-              initialLocation={initialLocation}
-              fontSize={fontSize}
-              fontFamily={fontFamily}
-              theme={readerTheme}
-              onLocationChange={onLocationChange}
-              onTocLoaded={onTocLoaded}
-              onTextSelected={onTextSelected}
-              onClick={isSpeaking ? undefined : onClick}
-              highlights={highlights}
-              activeTtsParagraph={activeTtsParagraph}
-              activeTtsParagraphId={activeTtsParagraphId}
-              activeTtsLocation={activeTtsLocation}
-              ttsHighlightColor={ttsHighlightColor}
-            />
-          )}
+          {/* Right: Page Count */}
+          <div className="flex items-center justify-end gap-1.5 tabular-nums shrink-0 min-w-[3rem]">
+            {currentPage != null && totalPages != null && (
+              <>
+                <span className="opacity-90">{currentPage}</span>
+                <span className="opacity-20">/</span>
+                <span className="opacity-40">{totalPages}</span>
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
