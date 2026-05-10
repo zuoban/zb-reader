@@ -68,7 +68,8 @@ export default [
       "react-hooks/set-state-in-effect": "warn",
       "react-hooks/purity": "warn",
       "react-hooks/refs": "warn",
-      "react-hooks/exhaustive-deps": "warn",
+      // Exhaustive deps catches stale closure bugs — should be enforced
+      "react-hooks/exhaustive-deps": "error",
       "@typescript-eslint/no-unused-vars": ["warn", {
         "argsIgnorePattern": "^_",
         "varsIgnorePattern": "^_"

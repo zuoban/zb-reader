@@ -14,6 +14,7 @@ if (!fs.existsSync(DATA_DIR)) {
 
 let _sqlite: Database.Database | null = null;
 let _db: ReturnType<typeof drizzle<typeof schema>> | null = null;
+let _initializing = false;
 
 // Migration strategy:
 // - CREATE TABLE IF NOT EXISTS handles fresh database initialization
@@ -121,6 +122,14 @@ function ensureReaderSettingsTtsEngineConstraint(sqlite: Database.Database) {
 
 function getConnection() {
   if (_sqlite && _db) return { sqlite: _sqlite, db: _db };
+
+  // Prevent concurrent initialization: if another call is
+  // already initializing, block synchronously until it completes
+  // In Node.js this is safe because JavaScript is single-threaded
+  if (_initializing) {
+    throw new Error("Database is still initializing");
+  }
+  _initializing = true;
 
   const sqlite = new Database(DB_PATH);
 
@@ -291,11 +300,12 @@ function getConnection() {
 
   _sqlite = sqlite;
   _db = drizzle(sqlite, { schema });
+  _initializing = false;
 
   return { sqlite: _sqlite, db: _db };
 }
 
-// Lazy-initialized exports
+// Lazy-initialized exports with initialization guard
 export const db = new Proxy({} as ReturnType<typeof drizzle<typeof schema>>, {
   get(_target, prop) {
     const { db } = getConnection();
