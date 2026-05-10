@@ -699,14 +699,13 @@
 }
 
 .reader-toolbar-surface {
-  border-color: color-mix(in srgb, var(--reader-border, #ddd) 70%, transparent);
-  outline: none;
-  background:
-    linear-gradient(180deg, color-mix(in srgb, white 26%, transparent), transparent 62%),
-    color-mix(in srgb, var(--reader-bg, white) 82%, white 18%);
+  border: 1px solid color-mix(in srgb, var(--reader-border, #ddd) 60%, transparent);
+  background: color-mix(in srgb, var(--reader-card-bg, white) 98%, transparent);
   box-shadow:
-    0 1px 0 color-mix(in srgb, white 42%, transparent) inset,
-    0 12px 34px -28px color-mix(in srgb, var(--reader-text, #111) 26%, transparent);
+    0 1px 2px color-mix(in srgb, var(--reader-text, #111) 5%, transparent),
+    0 8px 24px -12px color-mix(in srgb, var(--reader-text, #111) 15%, transparent);
+  backdrop-filter: blur(16px) saturate(1.1);
+  -webkit-backdrop-filter: blur(16px) saturate(1.1);
 }
 
 .reader-toolbar-hairline {
@@ -757,12 +756,10 @@
 }
 
 .reader-toolbar-tooltip {
-  border-color: color-mix(in srgb, var(--reader-border, #ddd) 84%, transparent);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, white 30%, transparent), transparent 56%),
-    color-mix(in srgb, var(--reader-card-bg, white) 96%, var(--reader-bg, white));
-  color: var(--reader-text) !important;
-  font-weight: 600;
+  border: 1px solid color-mix(in srgb, var(--reader-border, #ddd) 60%, transparent);
+  background: color-mix(in srgb, var(--reader-card-bg, white) 95%, var(--reader-bg, white));
+  color: var(--reader-text);
+  font-weight: 500;
 }
 
 [data-reader-theme="dark"] .reader-liquid-control {
@@ -823,13 +820,13 @@
 }
 
 [data-reader-theme="dark"] .reader-toolbar-surface {
-  border-color: color-mix(in srgb, var(--reader-border, #333) 76%, transparent);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, white 7%, transparent), transparent 62%),
-    color-mix(in srgb, var(--reader-bg, #111) 86%, white 4%);
+  border-color: color-mix(in srgb, var(--reader-border, #333) 70%, transparent);
+  background: color-mix(in srgb, var(--reader-card-bg, #111) 98%, transparent);
   box-shadow:
-    0 1px 0 color-mix(in srgb, white 10%, transparent) inset,
-    0 12px 34px -28px color-mix(in srgb, black 74%, transparent);
+    0 1px 2px color-mix(in srgb, black 20%, transparent),
+    0 8px 24px -12px color-mix(in srgb, black 40%, transparent);
+  backdrop-filter: blur(16px) saturate(1.1);
+  -webkit-backdrop-filter: blur(16px) saturate(1.1);
 }
 
 [data-reader-theme="dark"] .reader-toolbar-button {
@@ -859,10 +856,9 @@
 }
 
 [data-reader-theme="dark"] .reader-toolbar-tooltip {
-  border-color: color-mix(in srgb, var(--reader-border, #333) 86%, transparent);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, white 8%, transparent), transparent 58%),
-    color-mix(in srgb, var(--reader-card-bg, #111) 96%, var(--reader-bg, #111));
+  border-color: color-mix(in srgb, var(--reader-border, #333) 70%, transparent);
+  background: color-mix(in srgb, var(--reader-card-bg, #111) 95%, var(--reader-bg, #111));
+  color: var(--reader-text);
 }
 
 @media (prefers-reduced-motion: reduce) {

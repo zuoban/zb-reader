@@ -73,22 +73,22 @@ const ToolbarButton = memo(function ToolbarButton({
           onClick={onClick}
           aria-label={tooltip}
           className={cn(
-            "h-8 w-8 cursor-pointer rounded-full transition-all duration-300 ease-out sm:h-9 sm:w-9",
+            "h-7 w-7 cursor-pointer rounded-md transition-all duration-200 ease-out sm:h-8 sm:w-8",
             "focus-visible:ring-1 focus-visible:ring-[var(--reader-primary)] focus-visible:ring-offset-0",
             isActive
-              ? "bg-[color-mix(in_srgb,var(--reader-text)_12%,transparent)] text-[var(--reader-primary)]"
-              : "text-[color-mix(in_srgb,var(--reader-text)_80%,transparent)] hover:bg-[color-mix(in_srgb,var(--reader-text)_8%,transparent)] hover:text-[var(--reader-text)]",
+              ? "bg-[var(--reader-primary)]/10 text-[var(--reader-primary)]"
+              : "text-[var(--reader-text)]/70 hover:bg-[var(--reader-text)]/5 hover:text-[var(--reader-text)]",
             className
           )}
         >
           {children}
         </Button>
       </TooltipTrigger>
-      <TooltipContent 
-        side="bottom" 
-        sideOffset={12}
+      <TooltipContent
+        side="bottom"
+        sideOffset={8}
         hideArrow
-        className="reader-liquid-surface text-xs shadow-lg"
+        className="reader-toolbar-tooltip text-xs border shadow-lg"
       >
         {tooltip}
       </TooltipContent>
@@ -99,7 +99,6 @@ const ToolbarButton = memo(function ToolbarButton({
 export const ReaderToolbar = memo(function ReaderToolbar({
   visible,
   title,
-  progress: _progress,
   isBookmarked,
   isFullscreen,
   onBack,
@@ -126,46 +125,43 @@ export const ReaderToolbar = memo(function ReaderToolbar({
           visible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
         )}
       >
-        <div className="mx-auto max-w-3xl px-4 pt-4">
+        <div className="mx-auto max-w-3xl px-4 pt-3">
           <div
-            className="reader-liquid-surface reader-toolbar-surface pointer-events-auto relative flex items-center justify-between overflow-hidden rounded-full px-2 py-1.5 transition-shadow duration-300 sm:px-2.5 sm:py-2"
+            className="reader-toolbar-surface pointer-events-auto flex items-center justify-between rounded-xl px-2 py-1.5 shadow-sm transition-shadow duration-300 sm:px-3"
             style={{
               color: "var(--reader-text)",
             }}
           >
-            <div className="reader-toolbar-hairline pointer-events-none absolute inset-x-6 top-0 h-px" />
             {/* 左侧：返回和目录 */}
-            <div className="flex items-center gap-0.5 sm:gap-1">
+            <div className="flex items-center gap-0.5">
               <ToolbarButton onClick={onBack} tooltip="返回书架">
-                <ArrowLeft className="size-[18px]" />
+                <ArrowLeft className="size-4" />
               </ToolbarButton>
-              <div className="mx-1 h-5 w-px" style={{ background: "var(--reader-border)" }} />
               <ToolbarButton onClick={onToggleToc} tooltip="目录">
-                <List className="size-[18px]" />
+                <List className="size-4" />
               </ToolbarButton>
             </div>
 
             {/* 中间：书名 */}
-            <div className="min-w-0 flex-1 px-2 text-center sm:px-3">
+            <div className="min-w-0 flex-1 px-4 text-center">
               <h1
-                className="truncate text-sm font-semibold tracking-tight"
-                style={{ color: "var(--reader-text)" }}
+                className="truncate text-sm font-medium tracking-tight text-[var(--reader-text)]/90"
               >
                 {title}
               </h1>
             </div>
 
             {/* 右侧：操作按钮 */}
-            <div className="flex items-center gap-0.5 sm:gap-1">
+            <div className="flex items-center gap-0.5">
               <ToolbarButton
                 onClick={onToggleBookmark}
                 tooltip={isBookmarked ? "取消书签" : "添加书签"}
                 isActive={isBookmarked}
               >
                 {isBookmarked ? (
-                  <BookmarkCheck className="size-[18px]" />
+                  <BookmarkCheck className="size-4" />
                 ) : (
-                  <Bookmark className="size-[18px]" />
+                  <Bookmark className="size-4" />
                 )}
               </ToolbarButton>
 
@@ -175,13 +171,11 @@ export const ReaderToolbar = memo(function ReaderToolbar({
                 isActive={isSpeaking}
               >
                 {isSpeaking ? (
-                  <Pause className="size-[18px]" />
+                  <Pause className="size-4" />
                 ) : (
-                  <Volume2 className="size-[18px]" />
+                  <Volume2 className="size-4" />
                 )}
               </ToolbarButton>
-
-              <div className="mx-1 h-5 w-px" style={{ background: "var(--reader-border)" }} />
 
               <ToolbarButton
                 onClick={onToggleFullscreen}
@@ -189,14 +183,14 @@ export const ReaderToolbar = memo(function ReaderToolbar({
                 isActive={isFullscreen}
               >
                 {isFullscreen ? (
-                  <Minimize className="size-[18px]" />
+                  <Minimize className="size-4" />
                 ) : (
-                  <Maximize className="size-[18px]" />
+                  <Maximize className="size-4" />
                 )}
               </ToolbarButton>
 
               <ToolbarButton onClick={onToggleSettings} tooltip="设置">
-                <Settings className="size-[18px]" />
+                <Settings className="size-4" />
               </ToolbarButton>
 
               {rightContent}
@@ -212,8 +206,8 @@ export const ReaderToolbar = memo(function ReaderToolbar({
           visible ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
         )}
       >
-        <div className="mx-auto max-w-3xl px-4 pb-[calc(env(safe-area-inset-bottom)+0.35rem)]">
-          <div className="reader-page-turn-dock pointer-events-auto mx-auto flex w-fit items-center justify-center gap-1 rounded-full px-1.5 py-1">
+        <div className="mx-auto max-w-3xl px-4 pb-[calc(env(safe-area-inset-bottom)+0.25rem)]">
+          <div className="reader-page-turn-dock pointer-events-auto mx-auto flex w-fit items-center justify-center gap-0.5 rounded-full px-1 py-0.5">
             {onPrevChapter && (
               <Button
                 variant="ghost"
@@ -221,13 +215,13 @@ export const ReaderToolbar = memo(function ReaderToolbar({
                 onClick={onPrevChapter}
                 disabled={!hasPrevChapter}
                 className={cn(
-                  "reader-page-turn-button h-10 w-10 rounded-full",
+                  "reader-page-turn-button h-9 w-9 rounded-full",
                   !hasPrevChapter && "cursor-not-allowed opacity-30 hover:translate-y-0"
                 )}
                 style={{ color: "var(--reader-text)" }}
                 aria-label="上一章"
               >
-                <ChevronsLeft className="h-4.5 w-4.5" />
+                <ChevronsLeft className="h-4 w-4" />
               </Button>
             )}
 
@@ -236,16 +230,16 @@ export const ReaderToolbar = memo(function ReaderToolbar({
                 variant="ghost"
                 size="icon"
                 onClick={onPrevPage}
-                className="reader-page-turn-button h-10 w-10 rounded-full"
+                className="reader-page-turn-button h-9 w-9 rounded-full"
                 style={{ color: "var(--reader-text)" }}
                 aria-label="上一页"
               >
-                <ChevronLeft className="h-4.5 w-4.5" />
+                <ChevronLeft className="h-4 w-4" />
               </Button>
             )}
 
             {(onPrevPage || onPrevChapter) && (onNextPage || onNextChapter) ? (
-              <div className="h-5 w-px bg-[color-mix(in_srgb,var(--reader-border)_64%,transparent)]" />
+              <div className="h-4 w-px bg-[color-mix(in_srgb,var(--reader-border)_64%,transparent)]" />
             ) : null}
 
             {onNextPage && (
@@ -253,11 +247,11 @@ export const ReaderToolbar = memo(function ReaderToolbar({
                 variant="ghost"
                 size="icon"
                 onClick={onNextPage}
-                className="reader-page-turn-button h-10 w-10 rounded-full"
+                className="reader-page-turn-button h-9 w-9 rounded-full"
                 style={{ color: "var(--reader-text)" }}
                 aria-label="下一页"
               >
-                <ChevronRight className="h-4.5 w-4.5" />
+                <ChevronRight className="h-4 w-4" />
               </Button>
             )}
 
@@ -268,13 +262,13 @@ export const ReaderToolbar = memo(function ReaderToolbar({
                 onClick={onNextChapter}
                 disabled={!hasNextChapter}
                 className={cn(
-                  "reader-page-turn-button h-10 w-10 rounded-full",
+                  "reader-page-turn-button h-9 w-9 rounded-full",
                   !hasNextChapter && "cursor-not-allowed opacity-30 hover:translate-y-0"
                 )}
                 style={{ color: "var(--reader-text)" }}
                 aria-label="下一章"
               >
-                <ChevronsRight className="h-4.5 w-4.5" />
+                <ChevronsRight className="h-4 w-4" />
               </Button>
             )}
           </div>
