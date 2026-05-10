@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { books } from "@/lib/db/schema";
 import { logger } from "@/lib/logger";
 import { badRequest, serverError, getAuthUserId, validateJson } from "@/lib/api-utils";
-import { categoryRenameSchema } from "@/lib/validations";
+import { categoryDeleteSchema, categoryRenameSchema } from "@/lib/validations";
 
 /**
  * GET: 获取用户所有分类及对应书籍数量
@@ -85,11 +85,14 @@ export async function DELETE(req: NextRequest) {
   const { userId } = authResult;
 
   const { searchParams } = new URL(req.url);
-  const name = searchParams.get("name");
+  const validation = categoryDeleteSchema.safeParse({
+    name: searchParams.get("name") ?? "",
+  });
 
-  if (!name) {
-    return badRequest("请指定要删除的分类名称");
+  if (!validation.success) {
+    return badRequest(validation.error.issues[0]?.message || "参数错误");
   }
+  const { name } = validation.data;
 
   try {
     await db

@@ -12,12 +12,32 @@ import { MAX_EPUB_FILE_SIZE_BYTES } from "@/lib/upload-limits";
 const DEFAULT_BOOKS_PAGE = 1;
 const DEFAULT_BOOKS_LIMIT = 20;
 const MAX_BOOKS_LIMIT = 100;
+const MAX_BOOKS_SEARCH_LENGTH = 100;
+const MAX_BOOKS_CATEGORY_LENGTH = 40;
+const MAX_EPUB_ENTRY_COUNT = 10000;
+const MAX_EPUB_UNCOMPRESSED_SIZE_BYTES = MAX_EPUB_FILE_SIZE_BYTES * 3;
 // EPUB files are ZIP files, magic bytes: PK\x03\x04
 const EPUB_MAGIC_BYTES = new Uint8Array([0x50, 0x4b, 0x03, 0x04]);
 
 interface UploadedEpubInfo {
   storageFormat: "epub";
   titleBase: string;
+}
+
+interface ZipEntryLike {
+  dir: boolean;
+  name: string;
+  unsafeOriginalName?: string;
+  _data?: {
+    uncompressedSize?: number;
+  };
+}
+
+export class EpubValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "EpubValidationError";
+  }
 }
 
 export function normalizeBooksPagination(pageParam: string | null, limitParam: string | null) {
@@ -58,6 +78,54 @@ export function resolveEpubRelativePath(basePath: string, href: string): string 
   }
 
   return resultParts.length > 0 ? resultParts.join("/") : null;
+}
+
+function validateZipEntryPath(pathName: string): boolean {
+  const normalizedPath = pathName.replace(/\\/g, "/").trim();
+  if (
+    !normalizedPath ||
+    normalizedPath.includes("\0") ||
+    normalizedPath.startsWith("/") ||
+    /^[a-z][a-z0-9+.-]*:/i.test(normalizedPath)
+  ) {
+    return false;
+  }
+
+  return resolveEpubRelativePath("", normalizedPath) !== null;
+}
+
+export function validateEpubZipEntries(zip: { files: Record<string, ZipEntryLike> }) {
+  const entries = Object.values(zip.files);
+  const fileEntries = entries.filter((entry) => !entry.dir);
+
+  if (fileEntries.length > MAX_EPUB_ENTRY_COUNT) {
+    throw new EpubValidationError("EPUB 内文件数量过多");
+  }
+
+  let knownUncompressedSize = 0;
+  for (const entry of entries) {
+    if (!validateZipEntryPath(entry.unsafeOriginalName ?? entry.name)) {
+      throw new EpubValidationError("EPUB 包含不安全的文件路径");
+    }
+
+    const uncompressedSize = entry._data?.uncompressedSize;
+    if (typeof uncompressedSize === "number" && Number.isFinite(uncompressedSize)) {
+      knownUncompressedSize += uncompressedSize;
+      if (knownUncompressedSize > MAX_EPUB_UNCOMPRESSED_SIZE_BYTES) {
+        throw new EpubValidationError("EPUB 解压后体积过大");
+      }
+    }
+  }
+}
+
+function hasEpubMagicBytes(buffer: Buffer): boolean {
+  return (
+    buffer.length >= 4 &&
+    buffer[0] === EPUB_MAGIC_BYTES[0] &&
+    buffer[1] === EPUB_MAGIC_BYTES[1] &&
+    buffer[2] === EPUB_MAGIC_BYTES[2] &&
+    buffer[3] === EPUB_MAGIC_BYTES[3]
+  );
 }
 
 function decodeXmlEntities(value: string): string {
@@ -163,6 +231,7 @@ function getUploadedEpubInfo(fileName: string): UploadedEpubInfo | null {
 async function normalizeEpubBuffer(buffer: Buffer): Promise<Buffer> {
   const JSZip = (await import("jszip")).default;
   const zip = await JSZip.loadAsync(buffer);
+  validateEpubZipEntries(zip);
 
   if (zip.file("META-INF/container.xml")) {
     return buffer;
@@ -189,10 +258,14 @@ async function normalizeEpubBuffer(buffer: Buffer): Promise<Buffer> {
     })
   );
 
-  return normalizedZip.generateAsync({
+  const normalizedBuffer = await normalizedZip.generateAsync({
     type: "nodebuffer",
     compression: "DEFLATE",
   });
+  const normalizedLoadedZip = await JSZip.loadAsync(normalizedBuffer);
+  validateEpubZipEntries(normalizedLoadedZip);
+
+  return normalizedBuffer;
 }
 
 export async function GET(req: NextRequest) {
@@ -201,13 +274,22 @@ export async function GET(req: NextRequest) {
   const { userId } = authResult;
 
   const { searchParams } = new URL(req.url);
-  const search = searchParams.get("search") || "";
+  const search = searchParams.get("search")?.trim() || "";
   const { page, limit, offset } = normalizeBooksPagination(
     searchParams.get("page"),
     searchParams.get("limit")
   );
   const withProgress = searchParams.get("withProgress") === "true";
+  const includeFacets = searchParams.get("includeFacets") !== "false";
   const category = searchParams.get("category")?.trim() || "";
+
+  if (search.length > MAX_BOOKS_SEARCH_LENGTH) {
+    return badRequest("搜索关键词不能超过 100 个字符");
+  }
+
+  if (category.length > MAX_BOOKS_CATEGORY_LENGTH) {
+    return badRequest("分类名称不能超过 40 个字符");
+  }
 
   try {
     let whereClause = eq(books.uploaderId, userId);
@@ -246,24 +328,28 @@ export async function GET(req: NextRequest) {
         .limit(limit)
         .offset(offset),
       db.select({ count: count() }).from(books).where(whereClause),
-      db.select({ count: count() }).from(books).where(eq(books.uploaderId, userId)),
-      db
-        .select({
-          name: books.category,
-          count: count(),
-        })
-        .from(books)
-        .where(
-          and(
-            eq(books.uploaderId, userId),
-            sql`coalesce(${books.category}, '') <> ''`
+      includeFacets
+        ? db.select({ count: count() }).from(books).where(eq(books.uploaderId, userId))
+        : Promise.resolve([]),
+      includeFacets
+        ? db
+          .select({
+            name: books.category,
+            count: count(),
+          })
+          .from(books)
+          .where(
+            and(
+              eq(books.uploaderId, userId),
+              sql`coalesce(${books.category}, '') <> ''`
+            )
           )
-        )
-        .groupBy(books.category)
-        .orderBy(books.category),
+          .groupBy(books.category)
+          .orderBy(books.category)
+        : Promise.resolve([]),
     ]);
     const total = totalResult[0]?.count ?? 0;
-    const allTotal = allTotalResult[0]?.count ?? total;
+    const allTotal = includeFacets ? allTotalResult[0]?.count ?? total : total;
     const categories = categoryRows.map((row) => ({
       name: row.name ?? "",
       count: row.count,
@@ -333,16 +419,23 @@ export async function POST(req: NextRequest) {
       return badRequest(`文件不能超过 ${formatBytes(MAX_EPUB_FILE_SIZE_BYTES)}`);
     }
 
-    // Verify file content via magic bytes to prevent extension spoofing
-    const buffer = await normalizeEpubBuffer(Buffer.from(await file.arrayBuffer()));
-    const hasZipMagicBytes =
-      buffer.length >= 4 &&
-      buffer[0] === EPUB_MAGIC_BYTES[0] &&
-      buffer[1] === EPUB_MAGIC_BYTES[1] &&
-      buffer[2] === EPUB_MAGIC_BYTES[2] &&
-      buffer[3] === EPUB_MAGIC_BYTES[3];
+    // Verify file content via magic bytes before ZIP parsing to prevent extension spoofing.
+    const uploadedBuffer = Buffer.from(await file.arrayBuffer());
+    if (!hasEpubMagicBytes(uploadedBuffer)) {
+      return badRequest("文件内容无效，不是有效的 EPUB 文件");
+    }
 
-    if (!hasZipMagicBytes) {
+    let buffer: Buffer;
+    try {
+      buffer = await normalizeEpubBuffer(uploadedBuffer);
+    } catch (error) {
+      if (error instanceof EpubValidationError) {
+        return badRequest(error.message);
+      }
+      throw error;
+    }
+
+    if (!hasEpubMagicBytes(buffer)) {
       return badRequest("文件内容无效，不是有效的 EPUB 文件");
     }
 

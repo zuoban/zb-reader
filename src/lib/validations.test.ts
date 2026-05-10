@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   bookmarkUpdateSchema,
+  bookCategorySchema,
+  categoryDeleteSchema,
+  categoryRenameSchema,
   noteUpdateSchema,
   progressSchema,
   readerSettingsSchema,
@@ -29,6 +32,18 @@ describe("progressSchema", () => {
 
     expect(result.success).toBe(false);
   });
+
+  it("rejects excessively long reading locations", () => {
+    const result = progressSchema.safeParse({
+      bookId: "0f4f7a72-0b99-4f1d-80f8-63a704eb0b1d",
+      location: "a".repeat(4001),
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe("阅读位置不能超过 4000 个字符");
+    }
+  });
 });
 
 describe("bookmarkUpdateSchema", () => {
@@ -38,6 +53,51 @@ describe("bookmarkUpdateSchema", () => {
     });
 
     expect(result.success).toBe(false);
+  });
+});
+
+describe("book category schemas", () => {
+  it("trims single-book category values", () => {
+    const result = bookCategorySchema.safeParse({
+      category: " 技术 ",
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.category).toBe("技术");
+    }
+  });
+
+  it("rejects single-book categories over 40 characters after trimming", () => {
+    const result = bookCategorySchema.safeParse({
+      category: ` ${"a".repeat(41)} `,
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("trims category rename values", () => {
+    const result = categoryRenameSchema.safeParse({
+      oldName: " 旧分类 ",
+      newName: " 新分类 ",
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.oldName).toBe("旧分类");
+      expect(result.data.newName).toBe("新分类");
+    }
+  });
+
+  it("trims category delete names", () => {
+    const result = categoryDeleteSchema.safeParse({
+      name: " 技术 ",
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.name).toBe("技术");
+    }
   });
 });
 

@@ -81,6 +81,13 @@ describe("Storage utilities", () => {
       expect(() => deleteBookFile("nonexistent.epub")).not.toThrow();
       expect(mockFs.unlinkSync).not.toHaveBeenCalled();
     });
+
+    it("should reject unsafe book file names", async () => {
+      const { deleteBookFile, StoragePathError } = await import("./storage");
+
+      expect(() => deleteBookFile("../db.sqlite")).toThrow(StoragePathError);
+      expect(mockFs.unlinkSync).not.toHaveBeenCalled();
+    });
   });
 
   describe("getBookFilePath", () => {
@@ -88,6 +95,12 @@ describe("Storage utilities", () => {
       const { getBookFilePath } = await import("./storage");
       const result = getBookFilePath("book.epub");
       expect(result).toBe(path.join(BOOKS_DIR, "book.epub"));
+    });
+
+    it("should reject absolute paths", async () => {
+      const { getBookFilePath, StoragePathError } = await import("./storage");
+
+      expect(() => getBookFilePath("/tmp/book.epub")).toThrow(StoragePathError);
     });
   });
 
@@ -109,6 +122,12 @@ describe("Storage utilities", () => {
 
       const result = bookFileExists("book.epub");
       expect(result).toBe(false);
+    });
+
+    it("should reject nested paths", async () => {
+      const { bookFileExists, StoragePathError } = await import("./storage");
+
+      expect(() => bookFileExists("nested/book.epub")).toThrow(StoragePathError);
     });
   });
 
@@ -147,6 +166,13 @@ describe("Storage utilities", () => {
       expect(() => deleteCoverImage("nonexistent.jpg")).not.toThrow();
       expect(mockFs.unlinkSync).not.toHaveBeenCalled();
     });
+
+    it("should reject unsafe cover file names", async () => {
+      const { deleteCoverImage, StoragePathError } = await import("./storage");
+
+      expect(() => deleteCoverImage("..\\secret.jpg")).toThrow(StoragePathError);
+      expect(mockFs.unlinkSync).not.toHaveBeenCalled();
+    });
   });
 
   describe("getCoverFilePath", () => {
@@ -154,6 +180,12 @@ describe("Storage utilities", () => {
       const { getCoverFilePath } = await import("./storage");
       const result = getCoverFilePath("book.jpg");
       expect(result).toBe(path.join(COVERS_DIR, "book.jpg"));
+    });
+
+    it("should reject unsupported characters", async () => {
+      const { getCoverFilePath, StoragePathError } = await import("./storage");
+
+      expect(() => getCoverFilePath("book name.jpg")).toThrow(StoragePathError);
     });
   });
 

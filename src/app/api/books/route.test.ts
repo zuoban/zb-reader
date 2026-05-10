@@ -3,6 +3,8 @@ import type { NextRequest } from "next/server";
 
 const mockAuth = vi.fn();
 const mockInsertValues = vi.fn();
+const mockSelect = vi.fn();
+const mockSelectResults: unknown[][] = [];
 const mockSaveBookFile = vi.fn();
 const mockDeleteBookFile = vi.fn();
 const mockDeleteCoverImage = vi.fn();
@@ -13,6 +15,7 @@ vi.mock("@/lib/auth", () => ({
 
 vi.mock("@/lib/db", () => ({
   db: {
+    select: (...args: unknown[]) => mockSelect(...args),
     insert: vi.fn(() => ({
       values: mockInsertValues,
     })),
@@ -53,9 +56,35 @@ function createUploadRequest(file: MockUploadFile): NextRequest {
   } as unknown as NextRequest;
 }
 
+function createBooksGetRequest(url: string): NextRequest {
+  return {
+    url,
+  } as unknown as NextRequest;
+}
+
+function createQueryResult(result: unknown[]) {
+  const query = {
+    from: vi.fn(() => query),
+    leftJoin: vi.fn(() => query),
+    where: vi.fn(() => query),
+    orderBy: vi.fn(() => query),
+    groupBy: vi.fn(() => query),
+    limit: vi.fn(() => query),
+    offset: vi.fn(() => query),
+    then: (onFulfilled?: (value: unknown[]) => unknown, onRejected?: (reason: unknown) => unknown) =>
+      Promise.resolve(result).then(onFulfilled, onRejected),
+    catch: (onRejected?: (reason: unknown) => unknown) => Promise.resolve(result).catch(onRejected),
+    finally: (onFinally?: () => void) => Promise.resolve(result).finally(onFinally),
+  };
+
+  return query;
+}
+
 describe("Books API upload", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSelectResults.length = 0;
+    mockSelect.mockImplementation(() => createQueryResult(mockSelectResults.shift() ?? []));
     mockAuth.mockResolvedValue({
       user: { id: "user-1", username: "test", email: "test@test.com" },
       expires: new Date().toISOString(),
@@ -121,6 +150,28 @@ describe("Books API upload", () => {
     expect(mockSaveBookFile).not.toHaveBeenCalled();
   });
 
+  it("rejects files with an EPUB extension but invalid ZIP content", async () => {
+    const invalidBuffer = Buffer.from("not a zip");
+    const file = {
+      name: "book.epub",
+      size: invalidBuffer.length,
+      arrayBuffer: vi.fn().mockResolvedValue(
+        invalidBuffer.buffer.slice(
+          invalidBuffer.byteOffset,
+          invalidBuffer.byteOffset + invalidBuffer.byteLength
+        )
+      ),
+    };
+
+    const { POST } = await import("./route");
+    const res = await POST(createUploadRequest(file));
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toBe("文件内容无效，不是有效的 EPUB 文件");
+    expect(mockSaveBookFile).not.toHaveBeenCalled();
+  });
+
   it("cleans up the saved EPUB file when database insert fails", async () => {
     const JSZip = (await import("jszip")).default;
     const zip = new JSZip();
@@ -141,6 +192,151 @@ describe("Books API upload", () => {
     expect(data.error).toBe("上传失败");
     expect(mockSaveBookFile).toHaveBeenCalled();
     expect(mockDeleteBookFile).toHaveBeenCalledWith("book-1.epub");
+  });
+});
+
+describe("Books API list", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockSelectResults.length = 0;
+    mockSelect.mockImplementation(() => createQueryResult(mockSelectResults.shift() ?? []));
+    mockAuth.mockResolvedValue({
+      user: { id: "user-1", username: "test", email: "test@test.com" },
+      expires: new Date().toISOString(),
+    });
+  });
+
+  it("skips facet queries when includeFacets is false", async () => {
+    mockSelectResults.push(
+      [
+        {
+          book: { id: "book-1", title: "Book", author: "Author" },
+          progress: null,
+          lastReadAt: null,
+        },
+      ],
+      [{ count: 1 }]
+    );
+
+    const { GET } = await import("./route");
+    const res = await GET(
+      createBooksGetRequest("http://localhost:3000/api/books?page=2&includeFacets=false")
+    );
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(mockSelect).toHaveBeenCalledTimes(2);
+    expect(data.books).toHaveLength(1);
+    expect(data.categories).toEqual([]);
+    expect(data.total).toBe(1);
+    expect(data.allTotal).toBe(1);
+  });
+
+  it("includes facet queries by default", async () => {
+    mockSelectResults.push(
+      [],
+      [{ count: 0 }],
+      [{ count: 2 }],
+      [{ name: "小说", count: 2 }]
+    );
+
+    const { GET } = await import("./route");
+    const res = await GET(createBooksGetRequest("http://localhost:3000/api/books"));
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(mockSelect).toHaveBeenCalledTimes(4);
+    expect(data.categories).toEqual([{ name: "小说", count: 2 }]);
+    expect(data.total).toBe(0);
+    expect(data.allTotal).toBe(2);
+  });
+
+  it("rejects overlong search keywords before querying", async () => {
+    const { GET } = await import("./route");
+    const res = await GET(
+      createBooksGetRequest(`http://localhost:3000/api/books?search=${"a".repeat(101)}`)
+    );
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toBe("搜索关键词不能超过 100 个字符");
+    expect(mockSelect).not.toHaveBeenCalled();
+  });
+
+  it("rejects overlong category filters before querying", async () => {
+    const { GET } = await import("./route");
+    const res = await GET(
+      createBooksGetRequest(`http://localhost:3000/api/books?category=${"a".repeat(41)}`)
+    );
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toBe("分类名称不能超过 40 个字符");
+    expect(mockSelect).not.toHaveBeenCalled();
+  });
+
+  it("trims search and category filters", async () => {
+    mockSelectResults.push([], [{ count: 0 }]);
+
+    const { GET } = await import("./route");
+    const res = await GET(
+      createBooksGetRequest(
+        "http://localhost:3000/api/books?search=%20Book%20&category=%20Tech%20&includeFacets=false"
+      )
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockSelect).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("EPUB ZIP safety validation", () => {
+  it("rejects unsafe entry paths", async () => {
+    const { validateEpubZipEntries, EpubValidationError } = await import("./route");
+
+    expect(() =>
+      validateEpubZipEntries({
+        files: {
+          "../evil.txt": {
+            dir: false,
+            name: "evil.txt",
+            unsafeOriginalName: "../evil.txt",
+          },
+        },
+      })
+    ).toThrow(EpubValidationError);
+  });
+
+  it("rejects archives with too many file entries", async () => {
+    const { validateEpubZipEntries, EpubValidationError } = await import("./route");
+    const files: Record<string, { dir: boolean; name: string }> = {};
+
+    for (let i = 0; i < 10001; i++) {
+      files[`text/${i}.xhtml`] = {
+        dir: false,
+        name: `text/${i}.xhtml`,
+      };
+    }
+
+    expect(() => validateEpubZipEntries({ files })).toThrow(EpubValidationError);
+  });
+
+  it("rejects archives with excessive known uncompressed size", async () => {
+    const { validateEpubZipEntries, EpubValidationError } = await import("./route");
+
+    expect(() =>
+      validateEpubZipEntries({
+        files: {
+          "text/chapter.xhtml": {
+            dir: false,
+            name: "text/chapter.xhtml",
+            _data: {
+              uncompressedSize: 901 * 1024 * 1024,
+            },
+          },
+        },
+      })
+    ).toThrow(EpubValidationError);
   });
 });
 

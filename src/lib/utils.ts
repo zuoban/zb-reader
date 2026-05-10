@@ -33,20 +33,32 @@ export function formatDate(dateStr: string): string {
 /**
  * 防抖函数
  */
-export type DebouncedFunction<Args extends unknown[]> = (...args: Args) => void;
+export interface DebouncedFunction<Args extends unknown[]> {
+  (...args: Args): void;
+  cancel: () => void;
+}
 
 export function debounce<Args extends unknown[], This, Return>(
   fn: (this: This, ...args: Args) => Return,
   delay: number
-): (this: This, ...args: Args) => void {
+): DebouncedFunction<Args> {
   let timer: ReturnType<typeof setTimeout> | null = null;
-  return function (this: This, ...args: Args) {
+  const debounced = function (this: This, ...args: Args) {
     if (timer) clearTimeout(timer);
     timer = setTimeout(() => {
       fn.apply(this, args);
       timer = null;
     }, delay);
+  } as DebouncedFunction<Args>;
+
+  debounced.cancel = () => {
+    if (timer) {
+      clearTimeout(timer);
+      timer = null;
+    }
   };
+
+  return debounced;
 }
 
 /**

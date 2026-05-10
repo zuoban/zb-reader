@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { cn } from "@/lib/utils";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { cn, debounce } from "@/lib/utils";
 
 describe("cn utility", () => {
   it("merges class names", () => {
@@ -22,5 +22,40 @@ describe("cn utility", () => {
 
   it("handles object notation", () => {
     expect(cn({ active: true, disabled: false })).toBe("active");
+  });
+});
+
+describe("debounce utility", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("runs only the latest call after the delay", () => {
+    vi.useFakeTimers();
+    const fn = vi.fn();
+    const debounced = debounce(fn, 400);
+
+    debounced("first");
+    debounced("second");
+    vi.advanceTimersByTime(399);
+
+    expect(fn).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(1);
+
+    expect(fn).toHaveBeenCalledTimes(1);
+    expect(fn).toHaveBeenCalledWith("second");
+  });
+
+  it("can cancel a pending call", () => {
+    vi.useFakeTimers();
+    const fn = vi.fn();
+    const debounced = debounce(fn, 400);
+
+    debounced("pending");
+    debounced.cancel();
+    vi.advanceTimersByTime(400);
+
+    expect(fn).not.toHaveBeenCalled();
   });
 });

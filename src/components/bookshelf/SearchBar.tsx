@@ -26,6 +26,7 @@ export function SearchBar({ onSearch, className }: SearchBarProps) {
   };
 
   const handleClear = () => {
+    searchRef.current?.cancel();
     setQuery("");
     onSearch("");
   };

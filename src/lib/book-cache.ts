@@ -1,7 +1,8 @@
 import { logger } from "@/lib/logger";
 const DB_NAME = "zb-reader-books";
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 const STORE_NAME = "books";
+const LOCATIONS_STORE_NAME = "locations";
 
 interface CachedBook {
   id: string;
@@ -41,6 +42,9 @@ function openDB(): Promise<IDBDatabase> {
           keyPath: "id",
         });
         store.createIndex("timestamp", "timestamp");
+      }
+      if (!database.objectStoreNames.contains(LOCATIONS_STORE_NAME)) {
+        database.createObjectStore(LOCATIONS_STORE_NAME);
       }
     };
 
@@ -111,11 +115,12 @@ export async function cacheBookLocations(
 ): Promise<void> {
   try {
     const database = await openDB();
-    const transaction = database.transaction([STORE_NAME], "readwrite");
-    const store = transaction.objectStore(STORE_NAME);
+    const transaction = database.transaction([STORE_NAME, LOCATIONS_STORE_NAME], "readwrite");
+    const bookStore = transaction.objectStore(STORE_NAME);
+    const locationsStore = transaction.objectStore(LOCATIONS_STORE_NAME);
 
     const existing = await new Promise<CachedBook | undefined>((resolve, reject) => {
-      const request = store.get(bookId);
+      const request = bookStore.get(bookId);
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
@@ -123,11 +128,17 @@ export async function cacheBookLocations(
     if (existing) {
       existing.locations = locationsData;
       await new Promise<void>((resolve, reject) => {
-        const request = store.put(existing);
+        const request = bookStore.put(existing);
         request.onsuccess = () => resolve();
         request.onerror = () => reject(request.error);
       });
     }
+
+    await new Promise<void>((resolve, reject) => {
+      const request = locationsStore.put(locationsData, bookId);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
   } catch (error) {
     logger.error("book-cache", "Failed to cache locations:", error);
   }
@@ -138,11 +149,22 @@ export async function getCachedLocations(
 ): Promise<ArrayBuffer | null> {
   try {
     const database = await openDB();
-    const transaction = database.transaction([STORE_NAME], "readonly");
-    const store = transaction.objectStore(STORE_NAME);
+    const transaction = database.transaction([STORE_NAME, LOCATIONS_STORE_NAME], "readonly");
+    const bookStore = transaction.objectStore(STORE_NAME);
+    const locationsStore = transaction.objectStore(LOCATIONS_STORE_NAME);
+
+    const standaloneLocations = await new Promise<ArrayBuffer | undefined>((resolve, reject) => {
+      const request = locationsStore.get(bookId);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+
+    if (standaloneLocations) {
+      return standaloneLocations;
+    }
 
     return new Promise((resolve, reject) => {
-      const request = store.get(bookId);
+      const request = bookStore.get(bookId);
       request.onsuccess = () => {
         const book = request.result as CachedBook | undefined;
         resolve(book?.locations ?? null);
@@ -187,11 +209,17 @@ export async function getCachedBookMeta(
 export async function clearBookCache(bookId: string): Promise<void> {
   try {
     const database = await openDB();
-    const transaction = database.transaction([STORE_NAME], "readwrite");
-    const store = transaction.objectStore(STORE_NAME);
+    const transaction = database.transaction([STORE_NAME, LOCATIONS_STORE_NAME], "readwrite");
+    const bookStore = transaction.objectStore(STORE_NAME);
+    const locationsStore = transaction.objectStore(LOCATIONS_STORE_NAME);
 
     await new Promise<void>((resolve, reject) => {
-      const request = store.delete(bookId);
+      const request = bookStore.delete(bookId);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+    await new Promise<void>((resolve, reject) => {
+      const request = locationsStore.delete(bookId);
       request.onsuccess = () => resolve();
       request.onerror = () => reject(request.error);
     });
@@ -232,11 +260,17 @@ export async function getAllCachedBooks(): Promise<
 export async function clearAllCache(): Promise<void> {
   try {
     const database = await openDB();
-    const transaction = database.transaction([STORE_NAME], "readwrite");
-    const store = transaction.objectStore(STORE_NAME);
+    const transaction = database.transaction([STORE_NAME, LOCATIONS_STORE_NAME], "readwrite");
+    const bookStore = transaction.objectStore(STORE_NAME);
+    const locationsStore = transaction.objectStore(LOCATIONS_STORE_NAME);
 
     await new Promise<void>((resolve, reject) => {
-      const request = store.clear();
+      const request = bookStore.clear();
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+    await new Promise<void>((resolve, reject) => {
+      const request = locationsStore.clear();
       request.onsuccess = () => resolve();
       request.onerror = () => reject(request.error);
     });

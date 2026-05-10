@@ -146,7 +146,7 @@ describe('sync-queue', () => {
       expect(mockSyncFn).toHaveBeenCalledWith([item1, item2, item3], undefined);
       expect(syncQueue.getPendingCount()).toBe(0);
     });
-    it('should stop syncing on error after max retries', async () => {
+    it('should keep failed items queued after max retries', async () => {
       vi.useFakeTimers();
       const error = new Error('Sync failed');
       mockSyncFn.mockRejectedValue(error);
@@ -165,7 +165,7 @@ describe('sync-queue', () => {
       vi.useRealTimers();
 
       expect(mockSyncFn).toHaveBeenCalledTimes(5);
-      expect(syncQueue.getPendingCount()).toBe(0);
+      expect(syncQueue.getPendingCount()).toBe(1);
     });
 
     it('should retry with exponential backoff', async () => {

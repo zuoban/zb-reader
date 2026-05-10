@@ -5,7 +5,11 @@ import { logger } from "@/lib/logger";
 import { syncReadingProgressItem } from "@/lib/progress-sync-service";
 import { progressSchema } from "@/lib/validations";
 
-const batchProgressSchema = z.array(progressSchema);
+const MAX_PROGRESS_BATCH_SIZE = 100;
+const batchProgressSchema = z
+  .array(progressSchema)
+  .min(1, "同步列表不能为空")
+  .max(MAX_PROGRESS_BATCH_SIZE, "一次最多同步 100 条进度");
 
 export async function POST(req: NextRequest) {
   const authResult = await getAuthUserId();

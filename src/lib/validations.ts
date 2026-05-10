@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 const optionalNumber = z.coerce.number().finite().optional();
+const MAX_PROGRESS_LOCATION_LENGTH = 4000;
 
 /** 书签创建/更新校验 */
 export const bookmarkSchema = z.object({
@@ -117,24 +118,28 @@ export const ttsSpeakSchema = z.object({
 });
 
 /** 进度保存校验 */
-export const progressSchema = z.object({
+export const progressBookIdSchema = z.object({
   bookId: z.string().uuid("无效的书籍 ID"),
+});
+
+export const progressSchema = z.object({
+  bookId: progressBookIdSchema.shape.bookId,
   progress: z.number().min(0).max(1).optional(),
-  location: z.string().optional(),
+  location: z.string().max(MAX_PROGRESS_LOCATION_LENGTH, "阅读位置不能超过 4000 个字符").optional(),
 });
 
 /** 书籍分类更新校验 */
 export const bookCategorySchema = z.object({
-  category: z.string().max(40, "分类名称不能超过 40 个字符").optional(),
+  category: z.string().trim().max(40, "分类名称不能超过 40 个字符").optional(),
 });
 
 /** 书籍分类重命名校验 */
 export const categoryRenameSchema = z.object({
-  oldName: z.string().min(1, "原分类名称不能为空"),
-  newName: z.string().min(1, "新分类名称不能为空").max(40, "分类名称不能超过 40 个字符"),
+  oldName: z.string().trim().min(1, "原分类名称不能为空").max(40, "分类名称不能超过 40 个字符"),
+  newName: z.string().trim().min(1, "新分类名称不能为空").max(40, "分类名称不能超过 40 个字符"),
 });
 
 /** 书籍分类删除校验 */
 export const categoryDeleteSchema = z.object({
-  name: z.string().min(1, "分类名称不能为空"),
+  name: z.string().trim().min(1, "分类名称不能为空").max(40, "分类名称不能超过 40 个字符"),
 });

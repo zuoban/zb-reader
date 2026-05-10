@@ -101,8 +101,6 @@ export class SyncQueue {
               break; 
             }
 
-            this.queue = this.queue.filter(i => !batch.includes(i));
-            await this.persistQueue();
             break;
           }
 

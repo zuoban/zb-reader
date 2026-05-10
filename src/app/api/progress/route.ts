@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { readingProgress } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { badRequest, serverError, getAuthUserId } from "@/lib/api-utils";
+import { progressBookIdSchema } from "@/lib/validations";
 
 export async function GET(req: NextRequest) {
   const authResult = await getAuthUserId();
@@ -11,11 +12,18 @@ export async function GET(req: NextRequest) {
   const { userId } = authResult;
 
   const { searchParams } = new URL(req.url);
-  const bookId = searchParams.get("bookId");
+  const parsed = progressBookIdSchema.safeParse({
+    bookId: searchParams.get("bookId") ?? "",
+  });
 
-  if (!bookId) {
-    return badRequest("缺少 bookId 参数");
+  if (!parsed.success) {
+    return badRequest(
+      searchParams.has("bookId")
+        ? parsed.error.issues[0]?.message || "参数错误"
+        : "缺少 bookId 参数"
+    );
   }
+  const { bookId } = parsed.data;
 
   try {
     const progress = await db.query.readingProgress.findFirst({
