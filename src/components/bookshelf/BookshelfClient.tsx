@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, Loader2, Tags } from "lucide-react";
-import { toast } from "sonner";
 import { SearchBar } from "@/components/bookshelf/SearchBar";
 import { BackgroundDecoration } from "@/components/bookshelf/BackgroundDecoration";
 import { BookCardSkeleton } from "@/components/bookshelf/BookCardSkeleton";
 import { BookGrid } from "@/components/bookshelf/BookGrid";
+import { useBookCategoryAction } from "@/components/bookshelf/hooks/useBookCategoryAction";
 import { useBookDeleteAction } from "@/components/bookshelf/hooks/useBookDeleteAction";
 import { ALL_CATEGORY, useBookshelfData } from "@/components/bookshelf/hooks/useBookshelfData";
 import { Navbar } from "@/components/layout/Navbar";
@@ -27,7 +27,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import type { Book } from "@/lib/db/schema";
 import type { BookshelfInitialData } from "@/components/bookshelf/hooks/useBookshelfData";
 
 const SKELETON_COUNT = 8;
@@ -58,10 +57,16 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
     totalBooks,
   } = useBookshelfData(initialData);
   const [spotlightBookId, _setSpotlightBookId] = useState<string | null>(null);
-  const [categoryDialogBook, setCategoryDialogBook] = useState<Book | null>(null);
-  const [categoryInput, setCategoryInput] = useState("");
-  const [savingCategory, setSavingCategory] = useState(false);
   const { setTheme } = useTheme();
+  const {
+    categoryDialogBook,
+    categoryInput,
+    handleCategoryDialogOpenChange,
+    openCategoryDialog: handleOpenCategoryDialog,
+    saveCategory: handleSaveCategory,
+    savingCategory,
+    setCategoryInput,
+  } = useBookCategoryAction({ onSaved: refreshBooks });
   const {
     confirmDelete: handleConfirmDelete,
     deleteDialogBook,
@@ -93,44 +98,6 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
     }
     syncTheme();
   }, [setTheme]);
-
-  const handleOpenCategoryDialog = useCallback((book: Book) => {
-    setCategoryDialogBook(book);
-    setCategoryInput(book.category || "");
-  }, []);
-
-  const handleSaveCategory = useCallback(async () => {
-    if (!categoryDialogBook) return;
-
-    const nextCategory = categoryInput.trim();
-    if (nextCategory.length > 40) {
-      toast.error("分类名称不能超过 40 个字符");
-      return;
-    }
-
-    setSavingCategory(true);
-    try {
-      const res = await fetch(`/api/books/${categoryDialogBook.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category: nextCategory }),
-      });
-
-      if (!res.ok) {
-        toast.error("分类保存失败");
-        return;
-      }
-
-      setCategoryDialogBook(null);
-      setCategoryInput("");
-      await refreshBooks();
-      toast.success(nextCategory ? "分类已更新" : "分类已清除");
-    } catch {
-      toast.error("分类保存失败");
-    } finally {
-      setSavingCategory(false);
-    }
-  }, [categoryDialogBook, categoryInput, refreshBooks]);
 
   const handleUploadComplete = useCallback(() => {
     void refreshBooks();
@@ -304,12 +271,7 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
 
       <Dialog
         open={Boolean(categoryDialogBook)}
-        onOpenChange={(open) => {
-          if (!open) {
-            setCategoryDialogBook(null);
-            setCategoryInput("");
-          }
-        }}
+        onOpenChange={handleCategoryDialogOpenChange}
       >
         <DialogContent className="liquid-panel overflow-hidden border-none p-0 sm:max-w-md shadow-2xl">
           {/* Background Dampening */}
