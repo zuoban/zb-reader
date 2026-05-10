@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v2";
+const CACHE_VERSION = "v3";
 const STATIC_CACHE = `zb-reader-static-${CACHE_VERSION}`;
 const ASSET_CACHE = `zb-reader-assets-${CACHE_VERSION}`;
 const OFFLINE_PAGE = "/offline.html";
@@ -6,8 +6,6 @@ const OFFLINE_PAGE = "/offline.html";
 const IS_LOCAL_DEV = ["localhost", "127.0.0.1", "::1"].includes(self.location.hostname);
 
 const STATIC_ASSETS = [
-  "/",
-  "/bookshelf",
   "/logo.svg",
   "/favicon.ico",
   "/manifest.json",

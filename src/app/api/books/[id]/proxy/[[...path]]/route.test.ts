@@ -27,6 +27,7 @@ vi.mock("@/lib/storage", () => ({
 
 vi.mock("@/lib/api-utils", () => ({
   getAuthUserId: vi.fn(),
+  badRequest: vi.fn((msg) => new Response(JSON.stringify({ error: msg }), { status: 400 })),
   notFound: vi.fn((msg) => new Response(JSON.stringify({ error: msg }), { status: 404 })),
   serverError: vi.fn((msg) => new Response(JSON.stringify({ error: msg }), { status: 500 })),
 }));
@@ -77,8 +78,26 @@ describe("EPUB Proxy API", () => {
 
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toBe("text/html");
+    expect(res.headers.get("X-Content-Type-Options")).toBe("nosniff");
     const text = await res.text();
     expect(text).toBe("<html><body>Test</body></html>");
+  });
+
+  it.each([
+    [["..", "META-INF", "container.xml"]],
+    [["http:", "example.com", "style.css"]],
+    [["a\0b.css"]],
+    [["OPS\\style.css"]],
+    [["", "style.css"]],
+  ])("rejects unsafe proxy paths: %j", async (path) => {
+    (getAuthUserId as MockFn).mockResolvedValue({ userId: "user1" });
+    const req = new NextRequest("http://localhost/api/books/1/proxy/unsafe");
+    const res = await GET(req, { params: Promise.resolve({ id: "1", path }) });
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toBe("无效的文件路径");
+    expect(db.query.books.findFirst).not.toHaveBeenCalled();
   });
 
   it("reuses the cached zip for repeated requests to the same book file", async () => {

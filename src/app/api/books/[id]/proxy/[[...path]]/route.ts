@@ -5,7 +5,7 @@ import { eq, and } from "drizzle-orm";
 import { getBookFilePath, bookFileExists } from "@/lib/storage";
 import { logger } from "@/lib/logger";
 import { getCachedEpubZip } from "@/lib/server-epub-cache";
-import { getAuthUserId, notFound, serverError } from "@/lib/api-utils";
+import { badRequest, getAuthUserId, notFound, serverError } from "@/lib/api-utils";
 
 const MIME_TYPES: Record<string, string> = {
   ".html": "text/html",
@@ -33,6 +33,35 @@ function getMimeType(filePath: string): string {
   return MIME_TYPES[ext] || "application/octet-stream";
 }
 
+export function normalizeProxyPath(pathSegments?: string[]): string | null {
+  if (!pathSegments || pathSegments.length === 0) {
+    return "";
+  }
+
+  const normalizedSegments = pathSegments.map((segment) => segment.trim());
+  if (
+    normalizedSegments.some(
+      (segment) =>
+        !segment ||
+        segment === "." ||
+        segment === ".." ||
+        segment.includes("\0") ||
+        segment.includes("/") ||
+        segment.includes("\\") ||
+        /^[a-z][a-z0-9+.-]*:/i.test(segment)
+    )
+  ) {
+    return null;
+  }
+
+  const normalizedPath = normalizedSegments.join("/");
+  if (normalizedPath.startsWith("/") || /^[a-z][a-z0-9+.-]*:/i.test(normalizedPath)) {
+    return null;
+  }
+
+  return normalizedPath;
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string; path?: string[] }> }
@@ -42,7 +71,10 @@ export async function GET(
   const { userId } = authResult;
 
   const { id, path: pathSegments } = await params;
-  const filePathInsideZip = pathSegments ? pathSegments.join("/") : "";
+  const filePathInsideZip = normalizeProxyPath(pathSegments);
+  if (filePathInsideZip === null) {
+    return badRequest("无效的文件路径");
+  }
 
   if (!filePathInsideZip) {
     return new NextResponse("EPUB Proxy Root", { status: 200 });
@@ -76,6 +108,7 @@ export async function GET(
       headers: {
         "Content-Type": mimeType,
         "Cache-Control": "private, max-age=3600",
+        "X-Content-Type-Options": "nosniff",
       },
     });
   } catch (error) {
