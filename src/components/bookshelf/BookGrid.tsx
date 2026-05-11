@@ -1,9 +1,10 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useEffect, useState } from "react";
 import { BookOpen, Sparkles, Upload } from "lucide-react";
 import { BookCard } from "./BookCard";
 import type { Book } from "@/lib/db/schema";
+import { useWindowVirtualizer } from "@tanstack/react-virtual";
 
 interface BookGridProps {
   books: Book[];
@@ -26,6 +27,30 @@ export const BookGrid = memo(function BookGrid({
   onDelete,
   onChangeCategory,
 }: BookGridProps) {
+  const [columns, setColumns] = useState(2);
+
+  useEffect(() => {
+    const updateColumns = () => {
+      const width = window.innerWidth;
+      if (width >= 1536) setColumns(6);
+      else if (width >= 1280) setColumns(5);
+      else if (width >= 1024) setColumns(4);
+      else if (width >= 640) setColumns(3);
+      else setColumns(2);
+    };
+    updateColumns();
+    window.addEventListener("resize", updateColumns);
+    return () => window.removeEventListener("resize", updateColumns);
+  }, []);
+
+  const rowCount = Math.ceil(books.length / columns);
+  
+  const virtualizer = useWindowVirtualizer({
+    count: rowCount,
+    estimateSize: () => 380,
+    overscan: 2,
+  });
+
   if (books.length === 0) {
     return (
       <div className="surface-glass surface-elevated animate-reader-fade-up relative mt-4 overflow-hidden rounded-[2.5rem] px-8 py-16 text-center sm:mt-6 sm:px-16 sm:py-24">
@@ -53,18 +78,47 @@ export const BookGrid = memo(function BookGrid({
   }
 
   return (
-    <div className="animate-reader-fade-up grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-3.5 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6" style={{ animationDelay: "120ms" }}>
-      {books.map((book) => (
-        <BookCard
-          key={book.id}
-          book={book}
-          progress={progressMap[book.id] || 0}
-          lastReadAt={lastReadAtMap[book.id]}
-          spotlight={spotlightBookId === book.id}
-          onDelete={onDelete}
-          onChangeCategory={onChangeCategory}
-        />
-      ))}
+    <div className="animate-reader-fade-up relative w-full" style={{ animationDelay: "120ms" }}>
+      <div
+        style={{
+          height: `${virtualizer.getTotalSize()}px`,
+          width: "100%",
+          position: "relative",
+        }}
+      >
+        {virtualizer.getVirtualItems().map((virtualRow) => {
+          const startIndex = virtualRow.index * columns;
+          const rowBooks = books.slice(startIndex, startIndex + columns);
+          
+          return (
+            <div
+              key={virtualRow.key}
+              data-index={virtualRow.index}
+              ref={virtualizer.measureElement}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                transform: `translateY(${virtualRow.start}px)`,
+              }}
+              className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-3.5 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 pb-3 sm:pb-3.5"
+            >
+              {rowBooks.map((book) => (
+                <BookCard
+                  key={book.id}
+                  book={book}
+                  progress={progressMap[book.id] || 0}
+                  lastReadAt={lastReadAtMap[book.id]}
+                  spotlight={spotlightBookId === book.id}
+                  onDelete={onDelete}
+                  onChangeCategory={onChangeCategory}
+                />
+              ))}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 });

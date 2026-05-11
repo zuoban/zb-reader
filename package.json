@@ -42,6 +42,7 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.1",
     "uuid": "^13.0.0",
+    "yauzl": "^3.3.0",
     "zod": "^4.3.6",
     "zustand": "^5.0.11"
   },
@@ -60,6 +61,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/uuid": "^10.0.0",
+    "@types/yauzl": "^2.10.3",
     "@typescript-eslint/eslint-plugin": "^8.56.1",
     "@typescript-eslint/parser": "^8.56.1",
     "@vitejs/plugin-react": "^5.1.4",

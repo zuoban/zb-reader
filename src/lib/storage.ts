@@ -58,6 +58,39 @@ export async function saveBookFile(
   return fileName;
 }
 
+export async function saveBookFileFromStream(
+  stream: ReadableStream | NodeJS.ReadableStream,
+  bookId: string,
+  format: string
+): Promise<string> {
+  await ensureDirs();
+  const fileName = `${bookId}.${format}`;
+  const filePath = resolveStoredFilePath(BOOKS_DIR, fileName);
+  
+  const writeStream = fsSync.createWriteStream(filePath);
+  
+  if ("getReader" in stream) {
+    // Web ReadableStream
+    const reader = stream.getReader();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      writeStream.write(Buffer.from(value));
+    }
+    writeStream.end();
+  } else {
+    // NodeJS ReadableStream
+    await new Promise<void>((resolve, reject) => {
+      stream.pipe(writeStream);
+      stream.on("error", reject);
+      writeStream.on("finish", () => resolve());
+      writeStream.on("error", reject);
+    });
+  }
+  
+  return fileName;
+}
+
 export async function deleteBookFile(fileName: string): Promise<void> {
   const filePath = resolveStoredFilePath(BOOKS_DIR, fileName);
   if (fsSync.existsSync(filePath)) {

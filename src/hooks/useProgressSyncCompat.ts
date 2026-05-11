@@ -11,7 +11,11 @@ import type { ServerProgressSnapshot } from "@/lib/local-progress";
  */
 export function useProgressSyncCompat(
   bookId: string,
-  initialProgress?: ServerProgressSnapshot | null
+  initialProgress?: ServerProgressSnapshot | null,
+  options?: {
+    currentLocationRef?: React.RefObject<string | null>;
+    progressRef?: React.RefObject<number>;
+  }
 ) {
   const {
     updateProgress,
@@ -19,8 +23,11 @@ export function useProgressSyncCompat(
   } = useProgressSync(bookId, initialProgress);
 
   // Refs for compatibility with old code
-  const currentLocationRef = useRef<string | null>(null);
-  const progressRef = useRef(0);
+  const internalLocationRef = useRef<string | null>(null);
+  const internalProgressRef = useRef(0);
+  
+  const currentLocationRef = options?.currentLocationRef || internalLocationRef;
+  const progressRef = options?.progressRef || internalProgressRef;
 
   // Compatible saveProgress function
   const saveProgress = useCallback(

@@ -1,13 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
-import { and, count, desc, eq, like, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, sql } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { db } from "@/lib/db";
 import { books, readingProgress } from "@/lib/db/schema";
-import { deleteBookFile, deleteCoverImage, saveBookFile, saveCoverImage } from "@/lib/storage";
+import { 
+  deleteBookFile, 
+  deleteCoverImage, 
+  saveBookFile, 
+  saveBookFileFromStream,
+  saveCoverImage,
+  getBookFilePath 
+} from "@/lib/storage";
 import { logger } from "@/lib/logger";
 import { badRequest, serverError, getAuthUserId } from "@/lib/api-utils";
 import { formatBytes } from "@/lib/utils";
 import { MAX_EPUB_FILE_SIZE_BYTES } from "@/lib/upload-limits";
+import yauzl from "yauzl";
+import fs from "fs";
+import { Readable } from "stream";
 
 const DEFAULT_BOOKS_PAGE = 1;
 const DEFAULT_BOOKS_LIMIT = 20;
@@ -295,12 +305,11 @@ export async function GET(req: NextRequest) {
     let whereClause = eq(books.uploaderId, userId);
 
     if (search) {
+      // Escape double quotes to prevent FTS match syntax errors
+      const escapedSearch = search.replace(/"/g, '""');
       whereClause = and(
         whereClause,
-        or(
-          like(books.title, `%${search}%`),
-          like(books.author, `%${search}%`)
-        )
+        sql`books.rowid IN (SELECT rowid FROM books_fts WHERE books_fts MATCH ${`"${escapedSearch}"`})`
       )!;
     }
 
@@ -399,6 +408,7 @@ export async function POST(req: NextRequest) {
 
   let savedFileName: string | null = null;
   let coverFileName: string | null = null;
+  const bookId = uuidv4();
 
   try {
     const formData = await req.formData();
@@ -419,40 +429,47 @@ export async function POST(req: NextRequest) {
       return badRequest(`文件不能超过 ${formatBytes(MAX_EPUB_FILE_SIZE_BYTES)}`);
     }
 
-    // Verify file content via magic bytes before ZIP parsing to prevent extension spoofing.
-    const uploadedBuffer = Buffer.from(await file.arrayBuffer());
-    if (!hasEpubMagicBytes(uploadedBuffer)) {
+    // Save the file first to disk using stream
+    savedFileName = await saveBookFileFromStream(file.stream(), bookId, epubInfo.storageFormat);
+    const filePath = getBookFilePath(savedFileName);
+
+    // Verify magic bytes (just first 4 bytes)
+    const fd = fs.openSync(filePath, "r");
+    const magicBuffer = Buffer.alloc(4);
+    fs.readSync(fd, magicBuffer, 0, 4, 0);
+    fs.closeSync(fd);
+
+    if (!hasEpubMagicBytes(magicBuffer)) {
+      await deleteBookFile(savedFileName);
       return badRequest("文件内容无效，不是有效的 EPUB 文件");
     }
 
-    let buffer: Buffer;
+    // Validate and extract metadata using yauzl (streaming/file-based)
+    let metadata: any;
     try {
-      buffer = await normalizeEpubBuffer(uploadedBuffer);
+      metadata = await validateAndExtractMetadataFromFile(filePath, bookId);
     } catch (error) {
+      await deleteBookFile(savedFileName);
       if (error instanceof EpubValidationError) {
         return badRequest(error.message);
       }
       throw error;
     }
 
-    if (!hasEpubMagicBytes(buffer)) {
-      return badRequest("文件内容无效，不是有效的 EPUB 文件");
+    // Handle normalization if needed (fallback to jszip/memory for now as it's rare)
+    if (metadata.needsNormalization) {
+      const buffer = fs.readFileSync(filePath);
+      const normalizedBuffer = await normalizeEpubBuffer(buffer);
+      await deleteBookFile(savedFileName);
+      savedFileName = await saveBookFile(normalizedBuffer, bookId, epubInfo.storageFormat);
+      // Re-extract metadata from normalized buffer
+      const normalizedMeta = await extractEpubMetadata(normalizedBuffer, bookId);
+      metadata = { ...normalizedMeta, needsNormalization: false };
     }
 
-    const bookId = uuidv4();
-    savedFileName = await saveBookFile(buffer, bookId, epubInfo.storageFormat);
-
-    let title = epubInfo.titleBase;
-    let author = "未知作者";
-
-    try {
-      const metadata = await extractEpubMetadata(buffer, bookId);
-      title = metadata.title || title;
-      author = metadata.author || author;
-      coverFileName = metadata.coverFileName || null;
-    } catch (e) {
-      logger.warn("books", "Failed to extract EPUB metadata", e);
-    }
+    let title = metadata.title || epubInfo.titleBase;
+    let author = metadata.author || "未知作者";
+    coverFileName = metadata.coverFileName || null;
 
     const manualTitle = formData.get("title") as string | null;
     const manualAuthor = formData.get("author") as string | null;
@@ -465,7 +482,7 @@ export async function POST(req: NextRequest) {
       author,
       cover: coverFileName,
       filePath: savedFileName,
-      fileSize: buffer.length,
+      fileSize: fs.statSync(getBookFilePath(savedFileName)).size,
       format: epubInfo.storageFormat,
       uploaderId: userId,
     });
@@ -493,6 +510,129 @@ export async function POST(req: NextRequest) {
     logger.error("books", "Failed to upload book", error);
     return serverError("上传失败");
   }
+}
+
+async function readZipEntry(zipfile: yauzl.ZipFile, entry: yauzl.Entry): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    zipfile.openReadStream(entry, (err, readStream) => {
+      if (err) return reject(err);
+      if (!readStream) return reject(new Error("Failed to open read stream"));
+      const chunks: Buffer[] = [];
+      readStream.on("data", (chunk) => chunks.push(chunk));
+      readStream.on("end", () => resolve(Buffer.concat(chunks)));
+      readStream.on("error", reject);
+    });
+  });
+}
+
+async function validateAndExtractMetadataFromFile(
+  filePath: string,
+  bookId: string
+): Promise<{
+  title?: string;
+  author?: string;
+  coverFileName?: string;
+  needsNormalization: boolean;
+}> {
+  return new Promise((resolve, reject) => {
+    yauzl.open(filePath, { lazyEntries: true }, async (err, zipfile) => {
+      if (err) return reject(err);
+      if (!zipfile) return reject(new Error("Failed to open zip file"));
+
+      let entryCount = 0;
+      let totalUncompressedSize = 0;
+      let hasContainerXml = false;
+      let containerXmlContent = "";
+      let opfPath = "";
+      let opfContent = "";
+      let coverItemHref = "";
+      let metadata: any = {};
+      let needsNormalization = false;
+
+      zipfile.readEntry();
+      zipfile.on("entry", async (entry: yauzl.Entry) => {
+        entryCount++;
+        if (entryCount > MAX_EPUB_ENTRY_COUNT) {
+          zipfile.close();
+          return reject(new EpubValidationError("EPUB 内文件数量过多"));
+        }
+
+        totalUncompressedSize += entry.uncompressedSize;
+        if (totalUncompressedSize > MAX_EPUB_UNCOMPRESSED_SIZE_BYTES) {
+          zipfile.close();
+          return reject(new EpubValidationError("EPUB 解压后体积过大"));
+        }
+
+        if (!validateZipEntryPath(entry.fileName)) {
+          zipfile.close();
+          return reject(new EpubValidationError("EPUB 包含不安全的文件路径"));
+        }
+
+        if (entry.fileName === "META-INF/container.xml") {
+          hasContainerXml = true;
+          const buffer = await readZipEntry(zipfile, entry);
+          containerXmlContent = buffer.toString();
+        } else if (/(^|\/)META-INF\/container\.xml$/i.test(entry.fileName)) {
+          needsNormalization = true;
+        }
+
+        zipfile.readEntry();
+      });
+
+      zipfile.on("end", async () => {
+        if (!hasContainerXml) {
+          zipfile.close();
+          return resolve({ needsNormalization: true });
+        }
+
+        const rootFilePath = parseEpubContainerRootfilePath(containerXmlContent);
+        if (!rootFilePath) {
+          zipfile.close();
+          return resolve({ needsNormalization: false });
+        }
+
+        opfPath = resolveEpubRelativePath("", rootFilePath) || "";
+        
+        // Re-scan for OPF and Cover
+        yauzl.open(filePath, { lazyEntries: true }, (err2, zipfile2) => {
+          if (err2 || !zipfile2) return reject(err2 || new Error("Failed to re-open zip"));
+          
+          zipfile2.readEntry();
+          zipfile2.on("entry", async (entry: yauzl.Entry) => {
+            if (entry.fileName === opfPath) {
+              const buffer = await readZipEntry(zipfile2, entry);
+              opfContent = buffer.toString();
+              const opfMeta = parseEpubOpfMetadata(opfContent);
+              metadata.title = opfMeta.title;
+              metadata.author = opfMeta.author;
+              coverItemHref = opfMeta.coverItemHref || "";
+              
+              if (!coverItemHref) {
+                zipfile2.close();
+                return resolve({ ...metadata, needsNormalization: false });
+              }
+            } else if (coverItemHref) {
+              const resolvedCoverPath = resolveEpubRelativePath(opfPath, coverItemHref);
+              if (entry.fileName === resolvedCoverPath) {
+                const coverData = await readZipEntry(zipfile2, entry);
+                metadata.coverFileName = await saveCoverImage(coverData, bookId);
+                zipfile2.close();
+                return resolve({ ...metadata, needsNormalization: false });
+              }
+            }
+            zipfile2.readEntry();
+          });
+          
+          zipfile2.on("end", () => {
+            zipfile2.close();
+            resolve({ ...metadata, needsNormalization: false });
+          });
+        });
+      });
+      
+      zipfile.on("error", reject);
+    });
+  });
 }
 
 async function extractEpubMetadata(

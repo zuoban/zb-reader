@@ -33,6 +33,7 @@ import {
 import { Loader2 } from "lucide-react";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
+import { ReaderProvider, useReaderContext } from "@/components/reader/ReaderContext";
 import type { EpubReaderRef } from "@/components/reader/EpubReader";
 import type { Note } from "@/lib/db/schema";
 import { useProgressSyncCompat } from "@/hooks/useProgressSyncCompat";
@@ -49,13 +50,23 @@ function ReaderContent() {
   const params = useParams();
   const bookId = params.bookId as string;
 
-  const epubReaderRef = useRef<EpubReaderRef>(null);
-
-  // Reader state
-  const [toolbarVisible, setToolbarVisible] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [currentPage, setCurrentPage] = useState<number | undefined>();
-  const [totalPages, setTotalPages] = useState<number | undefined>();
+  const {
+    epubReaderRef,
+    currentLocationRef,
+    currentCfiRef,
+    progressRef,
+    toolbarVisible,
+    setToolbarVisible,
+    progress,
+    setProgress,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    setTotalPages,
+    isCurrentBookmarked,
+    setIsCurrentBookmarked,
+    handleBackRef,
+  } = useReaderContext();
 
   // Settings from store
   const {
@@ -107,8 +118,6 @@ function ReaderContent() {
   // Fullscreen
   const { isFullscreen, toggleFullscreen: handleToggleFullscreen } = useReaderFullscreen();
 
-  const [isCurrentBookmarked, setIsCurrentBookmarked] = useState(false);
-
   const handleMissingBook = useCallback(() => {
     router.push("/bookshelf");
   }, [router]);
@@ -145,15 +154,12 @@ function ReaderContent() {
   } = useReaderSelectionState();
 
   // Progress sync using compat hook
-  const progressSync = useProgressSyncCompat(bookId, loading ? null : initialProgress ?? null);
-  const currentLocationRef = progressSync.currentLocationRef;
-  const progressRef = progressSync.progressRef;
+  const progressSync = useProgressSyncCompat(bookId, loading ? null : initialProgress ?? null, {
+    currentLocationRef,
+    progressRef,
+  });
   const saveProgress = progressSync.saveProgress;
   const debouncedSaveProgress = progressSync.debouncedSaveProgress;
-
-  const currentCfiRef = useRef<string | null>(null);
-
-  const handleBackRef = useRef<(() => Promise<void>) | null>(null);
 
   const { browserVoices, currentTheme } = useReaderSettingsLifecycle(
     settingsLifecycleState,
@@ -600,9 +606,11 @@ export default function ReaderPage() {
         enableSystem
         disableTransitionOnChange
       >
-        <ReaderErrorBoundary>
-          <ReaderContent />
-        </ReaderErrorBoundary>
+        <ReaderProvider>
+          <ReaderErrorBoundary>
+            <ReaderContent />
+          </ReaderErrorBoundary>
+        </ReaderProvider>
       </ThemeProvider>
     </SessionProvider>
   );
