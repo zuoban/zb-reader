@@ -7,6 +7,13 @@ import { logger } from "@/lib/logger";
 import { extractFileFromZip } from "@/lib/zip-utils";
 import { badRequest, getAuthUserId, notFound, serverError } from "@/lib/api-utils";
 
+interface BookProxyCacheEntry {
+  filePath: string;
+  fileSize: number;
+  updatedAt: string;
+  timestamp: number;
+}
+
 const MIME_TYPES: Record<string, string> = {
   ".html": "text/html",
   ".xhtml": "application/xhtml+xml",
@@ -28,9 +35,54 @@ const MIME_TYPES: Record<string, string> = {
   ".sfnt": "application/font-sfnt",
 };
 
+const bookProxyCache = new Map<string, BookProxyCacheEntry>();
+const BOOK_PROXY_CACHE_TTL_MS = 1000 * 60 * 5;
+const MAX_BOOK_PROXY_CACHE_SIZE = 500;
+
 function getMimeType(filePath: string): string {
   const ext = filePath.toLowerCase().substring(filePath.lastIndexOf("."));
   return MIME_TYPES[ext] || "application/octet-stream";
+}
+
+async function getCachedBookProxyInfo(bookId: string, userId: string): Promise<BookProxyCacheEntry | null> {
+  const cacheKey = `${userId}:${bookId}`;
+  const cached = bookProxyCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp <= BOOK_PROXY_CACHE_TTL_MS) {
+    bookProxyCache.delete(cacheKey);
+    bookProxyCache.set(cacheKey, cached);
+    return cached;
+  }
+
+  if (cached) {
+    bookProxyCache.delete(cacheKey);
+  }
+
+  const book = await db.query.books.findFirst({
+    columns: {
+      filePath: true,
+      fileSize: true,
+      updatedAt: true,
+    },
+    where: and(eq(books.id, bookId), eq(books.uploaderId, userId)),
+  });
+
+  if (!book) return null;
+
+  const entry: BookProxyCacheEntry = {
+    filePath: book.filePath,
+    fileSize: book.fileSize,
+    updatedAt: book.updatedAt,
+    timestamp: Date.now(),
+  };
+
+  bookProxyCache.set(cacheKey, entry);
+  while (bookProxyCache.size > MAX_BOOK_PROXY_CACHE_SIZE) {
+    const oldestKey = bookProxyCache.keys().next().value;
+    if (!oldestKey) break;
+    bookProxyCache.delete(oldestKey);
+  }
+
+  return entry;
 }
 
 export function normalizeProxyPath(pathSegments?: string[]): string | null {
@@ -85,15 +137,13 @@ export async function GET(
   }
 
   try {
-    const book = await db.query.books.findFirst({
-      where: and(eq(books.id, id), eq(books.uploaderId, userId)),
-    });
+    const book = await getCachedBookProxyInfo(id, userId);
 
     if (!book) {
       return notFound("书籍不存在");
     }
 
-    if (!bookFileExists(book.filePath)) {
+    if (!(await bookFileExists(book.filePath))) {
       return notFound("文件不存在");
     }
 
@@ -105,11 +155,23 @@ export async function GET(
     }
 
     const mimeType = getMimeType(filePathInsideZip);
+    const etag = `"${id}-${book.updatedAt}-${book.fileSize}-${filePathInsideZip}-${content.length}"`;
+
+    if (req.headers.get("if-none-match") === etag) {
+      return new NextResponse(null, {
+        status: 304,
+        headers: {
+          "Cache-Control": "private, max-age=86400",
+          ETag: etag,
+        },
+      });
+    }
 
     return new NextResponse(new Uint8Array(content), {
       headers: {
         "Content-Type": mimeType,
-        "Cache-Control": "private, max-age=3600",
+        "Cache-Control": "private, max-age=86400",
+        ETag: etag,
         "X-Content-Type-Options": "nosniff",
       },
     });

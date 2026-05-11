@@ -150,34 +150,33 @@ function ReaderCanvasInner({
 }
 
 export const ReaderCanvas = React.memo(ReaderCanvasInner, (prev, next) => {
-  // Skip re-render for callback reference changes only
-  if (prev.onClick !== next.onClick) return false;
-  if (prev.onLocationChange !== next.onLocationChange) return false;
-  if (prev.onTextSelected !== next.onTextSelected) return false;
-  if (prev.onTocLoaded !== next.onTocLoaded) return false;
-
   return (
-    prev.activeTtsLocation !== next.activeTtsLocation ||
-    prev.activeTtsParagraph !== next.activeTtsParagraph ||
-    prev.activeTtsParagraphId !== next.activeTtsParagraphId ||
-    prev.activeTtsSentenceIndexInParagraph !== next.activeTtsSentenceIndexInParagraph ||
-    prev.bookData !== next.bookData ||
-    prev.bookUrl !== next.bookUrl ||
-    prev.bookFormat !== next.bookFormat ||
-    prev.bookId !== next.bookId ||
-    prev.bookTitle !== next.bookTitle ||
-    prev.currentChapterTitle !== next.currentChapterTitle ||
-    prev.currentPage !== next.currentPage ||
-    prev.fontFamily !== next.fontFamily ||
-    prev.fontSize !== next.fontSize ||
-    prev.highlights !== next.highlights ||
-    prev.initialLocation !== next.initialLocation ||
-    prev.isSpeaking !== next.isSpeaking ||
-    prev.isTtsViewOpen !== next.isTtsViewOpen ||
-    prev.toolbarVisible !== next.toolbarVisible ||
-    prev.progress !== next.progress ||
-    prev.readerTheme !== next.readerTheme ||
-    prev.totalPages !== next.totalPages ||
-    prev.ttsHighlightColor !== next.ttsHighlightColor
+    prev.activeTtsLocation === next.activeTtsLocation &&
+    prev.activeTtsParagraph === next.activeTtsParagraph &&
+    prev.activeTtsParagraphId === next.activeTtsParagraphId &&
+    prev.activeTtsSentenceIndexInParagraph === next.activeTtsSentenceIndexInParagraph &&
+    prev.bookData === next.bookData &&
+    prev.bookUrl === next.bookUrl &&
+    prev.bookFormat === next.bookFormat &&
+    prev.bookId === next.bookId &&
+    prev.bookTitle === next.bookTitle &&
+    prev.currentChapterTitle === next.currentChapterTitle &&
+    prev.currentPage === next.currentPage &&
+    prev.epubReaderRef === next.epubReaderRef &&
+    prev.fontFamily === next.fontFamily &&
+    prev.fontSize === next.fontSize &&
+    prev.highlights === next.highlights &&
+    prev.initialLocation === next.initialLocation &&
+    prev.isSpeaking === next.isSpeaking &&
+    prev.isTtsViewOpen === next.isTtsViewOpen &&
+    prev.onClick === next.onClick &&
+    prev.onLocationChange === next.onLocationChange &&
+    prev.onTextSelected === next.onTextSelected &&
+    prev.onTocLoaded === next.onTocLoaded &&
+    prev.toolbarVisible === next.toolbarVisible &&
+    prev.progress === next.progress &&
+    prev.readerTheme === next.readerTheme &&
+    prev.totalPages === next.totalPages &&
+    prev.ttsHighlightColor === next.ttsHighlightColor
   );
 });

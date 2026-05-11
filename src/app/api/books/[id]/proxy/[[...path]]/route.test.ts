@@ -56,7 +56,11 @@ describe("EPUB Proxy API", () => {
 
   it("serves a file from the epub zip", async () => {
     (getAuthUserId as MockFn).mockResolvedValue({ userId: "user1" });
-    (db.query.books.findFirst as MockFn).mockResolvedValue({ id: "1", uploaderId: "user1", filePath: "book.epub" });
+    (db.query.books.findFirst as MockFn).mockResolvedValue({
+      filePath: "book.epub",
+      fileSize: 1024,
+      updatedAt: "2026-01-01T00:00:00.000Z",
+    });
     (bookFileExists as MockFn).mockReturnValue(true);
     (getBookFilePath as MockFn).mockReturnValue("/path/to/book.epub");
     (extractFileFromZip as MockFn).mockResolvedValue(Buffer.from("<html><body>Test</body></html>"));
@@ -91,7 +95,11 @@ describe("EPUB Proxy API", () => {
 
   it("returns 404 if file is not in zip", async () => {
     (getAuthUserId as MockFn).mockResolvedValue({ userId: "user1" });
-    (db.query.books.findFirst as MockFn).mockResolvedValue({ id: "1", uploaderId: "user1", filePath: "book.epub" });
+    (db.query.books.findFirst as MockFn).mockResolvedValue({
+      filePath: "book.epub",
+      fileSize: 1024,
+      updatedAt: "2026-01-01T00:00:00.000Z",
+    });
     (bookFileExists as MockFn).mockReturnValue(true);
     (getBookFilePath as MockFn).mockReturnValue("/path/to/book.epub");
     (extractFileFromZip as MockFn).mockResolvedValue(null);

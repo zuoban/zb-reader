@@ -50,7 +50,7 @@ export function useReaderBookData({
 
     async function loadBook() {
       try {
-        const res = await fetch(`/api/books/${bookId}`);
+        const res = await fetch(`/api/reader/bootstrap?bookId=${bookId}`);
         if (!res.ok) {
           toast.error("书籍不存在");
           onMissingBook();
@@ -58,30 +58,19 @@ export function useReaderBookData({
         }
         const data = await res.json();
         if (cancelled) return;
-        setBook(data.book);
+        setBook(data.book ?? null);
 
-        const [progressRes, bmRes, notesRes, cached] = await Promise.all([
-          fetch(`/api/progress?bookId=${bookId}`),
-          fetch(`/api/bookmarks?bookId=${bookId}`),
-          fetch(`/api/notes?bookId=${bookId}`),
-          getCachedBook(bookId),
-        ]);
-
-        const [progressData, bmData, notesData] = await Promise.all([
-          progressRes.ok ? progressRes.json() : Promise.resolve({}),
-          bmRes.ok ? bmRes.json() : Promise.resolve({ bookmarks: [] }),
-          notesRes.ok ? notesRes.json() : Promise.resolve({ notes: [] }),
-        ]);
+        const cached = await getCachedBook(bookId);
 
         if (cancelled) return;
 
-        if (progressData.progress?.location) {
-          setInitialLocation(progressData.progress.location);
-          onProgressLoaded(progressData.progress.progress || 0);
+        if (data.progress?.location) {
+          setInitialLocation(data.progress.location);
+          onProgressLoaded(data.progress.progress || 0);
         }
-        setInitialProgress(progressData.progress ?? null);
-        setBookmarks(Array.isArray(bmData.bookmarks) ? bmData.bookmarks : []);
-        setNotes(Array.isArray(notesData.notes) ? notesData.notes.filter(Boolean) : []);
+        setInitialProgress(data.progress ?? null);
+        setBookmarks(Array.isArray(data.bookmarks) ? data.bookmarks : []);
+        setNotes(Array.isArray(data.notes) ? data.notes.filter(Boolean) : []);
 
         if (cached) {
           setBookData(cached);

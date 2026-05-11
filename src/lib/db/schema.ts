@@ -44,6 +44,12 @@ export const books = sqliteTable(
   (table) => ({
     uploaderIdIdx: index("idx_books_uploader_id").on(table.uploaderId),
     categoryIdx: index("idx_books_category").on(table.category),
+    uploaderUpdatedAtIdx: index("idx_books_uploader_updated_at").on(table.uploaderId, table.updatedAt),
+    uploaderCategoryUpdatedAtIdx: index("idx_books_uploader_category_updated_at").on(
+      table.uploaderId,
+      table.category,
+      table.updatedAt
+    ),
   })
 );
 
@@ -101,6 +107,11 @@ export const bookmarks = sqliteTable(
   (table) => ({
     uniqueLocation: unique().on(table.userId, table.bookId, table.location),
     userBookIdx: index("idx_bookmarks_user_book").on(table.userId, table.bookId),
+    userBookCreatedAtIdx: index("idx_bookmarks_user_book_created_at").on(
+      table.userId,
+      table.bookId,
+      table.createdAt
+    ),
     bookIdIdx: index("idx_bookmarks_book_id").on(table.bookId),
   })
 );
@@ -131,6 +142,11 @@ export const notes = sqliteTable(
   (table) => ({
     uniqueLocation: unique().on(table.userId, table.bookId, table.location),
     userBookIdx: index("idx_notes_user_book").on(table.userId, table.bookId),
+    userBookCreatedAtIdx: index("idx_notes_user_book_created_at").on(
+      table.userId,
+      table.bookId,
+      table.createdAt
+    ),
     bookIdIdx: index("idx_notes_book_id").on(table.bookId),
   })
 );

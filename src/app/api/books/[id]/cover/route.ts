@@ -32,10 +32,22 @@ export async function GET(
       return notFound("封面文件读取失败");
     }
 
+    const etag = `"${book.id}-${book.updatedAt}-${coverBuffer.length}"`;
+    if (_req.headers.get("if-none-match") === etag) {
+      return new NextResponse(null, {
+        status: 304,
+        headers: {
+          "Cache-Control": "private, max-age=31536000, immutable",
+          ETag: etag,
+        },
+      });
+    }
+
     return new NextResponse(new Uint8Array(coverBuffer), {
       headers: {
         "Content-Type": "image/jpeg",
         "Cache-Control": "private, max-age=31536000, immutable",
+        ETag: etag,
       },
     });
   } catch (error) {
