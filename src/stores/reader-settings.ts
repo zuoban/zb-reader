@@ -272,13 +272,18 @@ export function useReaderSettingsValues() {
       theme: s.theme,
       browserVoiceId: s.browserVoiceId,
       ttsRate: s.ttsRate,
+      ttsPitch: s.ttsPitch,
+      ttsVolume: s.ttsVolume,
       microsoftPreloadCount: s.microsoftPreloadCount,
       ttsAutoNextChapter: s.ttsAutoNextChapter,
       ttsHighlightColor: s.ttsHighlightColor,
       flipMode: s.flipMode,
       ttsEngine: s.ttsEngine,
       legadoRate: s.legadoRate,
+      legadoConfigId: s.legadoConfigId,
       legadoPreloadCount: s.legadoPreloadCount,
+      ttsImmersiveMode: s.ttsImmersiveMode,
+      ttsHighlightStyle: s.ttsHighlightStyle,
     }))
   );
 }

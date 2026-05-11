@@ -45,6 +45,7 @@ interface UseReaderTtsSessionParams {
   stopCurrentAudio: () => void;
   ttsAutoNextChapter: boolean;
   ttsCurrentIndexRef: React.MutableRefObject<number>;
+  ttsPreloadWindowSize: number;
   ttsSessionRef: React.MutableRefObject<number>;
   ttsTotalSentencesRef: React.MutableRefObject<number>;
 }
@@ -92,6 +93,7 @@ export function useReaderTtsSession({
   stopCurrentAudio,
   ttsAutoNextChapter,
   ttsCurrentIndexRef,
+  ttsPreloadWindowSize,
   ttsSessionRef,
   ttsTotalSentencesRef,
 }: UseReaderTtsSessionParams) {
@@ -206,7 +208,7 @@ export function useReaderTtsSession({
       setIsSpeaking(true);
 
       const preparedTaskMap = new Map<number, Promise<string>>();
-      const preloadWindowSize = 5;
+      const preloadWindowSize = Math.max(1, Math.floor(ttsPreloadWindowSize));
 
       const ensurePreloadWindow = (windowStart: number) => {
         for (
@@ -336,6 +338,7 @@ export function useReaderTtsSession({
       setIsSpeaking,
       stopCurrentAudio,
       ttsCurrentIndexRef,
+      ttsPreloadWindowSize,
       ttsSessionRef,
     ]
   );

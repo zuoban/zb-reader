@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { READER_THEME_STYLES } from "@/lib/reader-theme";
 import type { BrowserVoiceOption } from "@/lib/tts";
-import type { FontFamily } from "@/stores/reader-settings";
+import type { FontFamily, TtsEngine, TtsHighlightStyle } from "@/stores/reader-settings";
 
 interface ReaderSettingsLifecycleState {
   fontSize: number;
@@ -11,10 +11,18 @@ interface ReaderSettingsLifecycleState {
   fontFamily: FontFamily;
   browserVoiceId: string;
   ttsRate: number;
+  ttsPitch: number;
+  ttsVolume: number;
   microsoftPreloadCount: number;
   ttsAutoNextChapter: boolean;
   ttsHighlightColor: string;
   autoScrollToActive: boolean;
+  ttsEngine: TtsEngine;
+  legadoRate: number;
+  legadoConfigId: string | null;
+  legadoPreloadCount: number;
+  ttsImmersiveMode: boolean;
+  ttsHighlightStyle: TtsHighlightStyle;
   loaded: boolean;
   loadFromServer: () => Promise<void>;
   setBrowserVoiceId: (id: string) => void;
@@ -43,10 +51,18 @@ export function useReaderSettingsLifecycle(
     settings.fontFamily,
     settings.browserVoiceId,
     settings.ttsRate,
+    settings.ttsPitch,
+    settings.ttsVolume,
     settings.microsoftPreloadCount,
     settings.ttsAutoNextChapter,
     settings.ttsHighlightColor,
     settings.autoScrollToActive,
+    settings.ttsEngine,
+    settings.legadoRate,
+    settings.legadoConfigId,
+    settings.legadoPreloadCount,
+    settings.ttsImmersiveMode,
+    settings.ttsHighlightStyle,
   ]);
 
   useEffect(() => {

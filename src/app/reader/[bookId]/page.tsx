@@ -75,11 +75,11 @@ function ReaderContent() {
     theme: readerTheme,
     browserVoiceId: selectedBrowserVoiceId,
     ttsRate,
+    microsoftPreloadCount,
     ttsAutoNextChapter,
     ttsHighlightColor,
   } = useReaderSettingsValues();
   const setTtsRate = useReaderSettingsStore((s) => s.setTtsRate);
-  const _microsoftPreloadCount = useReaderSettingsStore((s) => s.microsoftPreloadCount);
   const _setMicrosoftPreloadCount = useReaderSettingsStore((s) => s.setMicrosoftPreloadCount);
   const setTtsHighlightColor = useReaderSettingsStore((s) => s.setTtsHighlightColor);
   const settingsLifecycleState = useReaderSettingsLifecycleState();
@@ -350,16 +350,9 @@ function ReaderContent() {
   } = useReaderTtsAudio({
     bookTitle: book?.title,
     bookAuthor: book?.author,
-    activeTtsParagraph,
-    currentParagraphIndexRef,
-    isPaused,
-    isSpeaking,
-    requestMicrosoftSpeech,
-    selectedBrowserVoiceId,
     setIsPaused,
     setIsSpeaking,
     setIsTtsViewOpen,
-    ttsRate,
     ttsSessionRef,
   });
 
@@ -401,6 +394,7 @@ function ReaderContent() {
       stopCurrentAudio,
       ttsAutoNextChapter,
       ttsCurrentIndexRef,
+      ttsPreloadWindowSize: microsoftPreloadCount,
       ttsSessionRef,
       ttsTotalSentencesRef,
     });

@@ -1,22 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
 
 interface UseReaderTtsAudioParams {
   bookTitle?: string | null;
   bookAuthor?: string | null;
-  activeTtsParagraph: string;
-  currentParagraphIndexRef: React.MutableRefObject<number>;
-  isPaused: boolean;
-  isSpeaking: boolean;
-  requestMicrosoftSpeech: (text: string, options?: { prefetch?: boolean }) => Promise<string>;
-  selectedBrowserVoiceId: string;
   setIsPaused: (value: boolean) => void;
   setIsSpeaking: (value: boolean) => void;
   setIsTtsViewOpen: (value: boolean) => void;
-  ttsRate: number;
   ttsSessionRef: React.MutableRefObject<number>;
 }
 
@@ -31,22 +24,14 @@ const IS_DEV = process.env.NODE_ENV !== "production";
 export function useReaderTtsAudio({
   bookTitle,
   bookAuthor,
-  activeTtsParagraph,
-  currentParagraphIndexRef,
-  isPaused,
-  isSpeaking,
-  requestMicrosoftSpeech,
-  selectedBrowserVoiceId,
   setIsPaused,
   setIsSpeaking,
   setIsTtsViewOpen,
-  ttsRate,
   ttsSessionRef,
 }: UseReaderTtsAudioParams) {
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const ttsProgressRafRef = useRef<number | null>(null);
   const ttsResumeRef = useRef<(() => void) | null>(null);
-  const prevTtsSettingsRef = useRef({ rate: ttsRate, voiceId: selectedBrowserVoiceId });
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   const mediaSessionSetupRef = useRef(false);
 
@@ -173,17 +158,31 @@ export function useReaderTtsAudio({
                 ? error.name || "UnknownError"
                 : "UnknownError";
 
-          dispose();
-
           if (reason === "NotAllowedError") {
+            setIsPaused(true);
             ttsResumeRef.current = () => {
               if (ttsSessionRef.current !== sessionId) return;
               audio.play().catch(() => {
-                // user can click again to retry resume
+                setIsPaused(true);
               });
             };
             toast.error("播放被浏览器拦截，点击朗读按钮继续");
+
+            if ("mediaSession" in navigator && mediaSessionSetupRef.current) {
+              navigator.mediaSession.playbackState = "paused";
+            }
+
+            if (IS_DEV) {
+              logger.warn("tts", "audio.play rejected", {
+                ...options?.debugMeta,
+                reason,
+              });
+            }
+
+            return;
           }
+
+          dispose();
 
           if (IS_DEV) {
             logger.warn("tts", "audio.play rejected", {
@@ -196,7 +195,7 @@ export function useReaderTtsAudio({
         });
       });
     },
-    [requestWakeLock, setupMediaSession, ttsSessionRef]
+    [requestWakeLock, setIsPaused, setupMediaSession, ttsSessionRef]
   );
 
   const pausePlayback = useCallback(() => {
@@ -212,11 +211,17 @@ export function useReaderTtsAudio({
 
   const resumePlayback = useCallback(() => {
     if (currentAudioRef.current) {
-      currentAudioRef.current.play().catch((err) => {
-        logger.warn("tts", "Failed to resume audio", err);
-      });
+      currentAudioRef.current
+        .play()
+        .then(() => {
+          ttsResumeRef.current = null;
+          setIsPaused(false);
+        })
+        .catch((err) => {
+          setIsPaused(true);
+          logger.warn("tts", "Failed to resume audio", err);
+        });
     }
-    setIsPaused(false);
     setIsTtsViewOpen(true);
 
     if ("mediaSession" in navigator && mediaSessionSetupRef.current) {
@@ -239,54 +244,6 @@ export function useReaderTtsAudio({
     resume();
     return true;
   }, [setIsSpeaking]);
-
-  useEffect(() => {
-    const prev = prevTtsSettingsRef.current;
-    const current = { rate: ttsRate, voiceId: selectedBrowserVoiceId };
-    const hasChanged = prev.rate !== current.rate || prev.voiceId !== current.voiceId;
-
-    prevTtsSettingsRef.current = current;
-
-    if (!hasChanged || !isSpeaking || !activeTtsParagraph || isPaused) {
-      return;
-    }
-
-    const replayCurrentTtsParagraph = async () => {
-      const currentIndex = currentParagraphIndexRef.current;
-
-      ttsSessionRef.current += 1;
-      const sessionId = ttsSessionRef.current;
-      ttsResumeRef.current = null;
-
-      stopCurrentAudio();
-
-      try {
-        const objectUrl = await requestMicrosoftSpeech(activeTtsParagraph);
-        if (ttsSessionRef.current !== sessionId) {
-          return;
-        }
-
-        await playAudioSource(objectUrl, sessionId, {
-          debugMeta: { engine: "microsoft", sentenceIndex: currentIndex },
-        });
-      } catch {
-        // ignore replay errors caused by settings switch
-      }
-    };
-
-    void replayCurrentTtsParagraph();
-  }, [
-    activeTtsParagraph,
-    currentParagraphIndexRef,
-    isPaused,
-    isSpeaking,
-    playAudioSource,
-    requestMicrosoftSpeech,
-    selectedBrowserVoiceId,
-    stopCurrentAudio,
-    ttsRate,
-    ttsSessionRef,
-  ]);
 
   return {
     hasPendingResume,
