@@ -2,14 +2,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 
 const mockAuth = vi.fn();
-const mockFindFirst = vi.fn();
-const mockBookFindFirst = vi.fn();
-const mockSelect = vi.fn();
-const mockFrom = vi.fn();
-const mockWhere = vi.fn();
-const mockOrderBy = vi.fn();
-const mockInsert = vi.fn();
-const mockValues = vi.fn();
 
 vi.mock("@/lib/auth", () => ({
   auth: () => mockAuth(),
@@ -17,18 +9,28 @@ vi.mock("@/lib/auth", () => ({
 
 vi.mock("@/lib/db", () => ({
   db: {
+    select: vi.fn(),
+    insert: vi.fn(),
     query: {
       books: {
-        findFirst: () => mockBookFindFirst(),
+        findFirst: vi.fn(),
       },
       notes: {
-        findFirst: () => mockFindFirst(),
+        findFirst: vi.fn(),
       },
     },
-    select: () => mockSelect(),
-    insert: () => mockInsert(),
   },
 }));
+
+function createMockChain(finalResult: unknown) {
+  const mockOffset = vi.fn().mockResolvedValue(finalResult);
+  const mockLimit = vi.fn().mockReturnValue({ offset: mockOffset });
+  const mockOrderBy = vi.fn().mockReturnValue({ limit: mockLimit });
+  const mockWhere = vi.fn().mockReturnValue({ orderBy: mockOrderBy });
+  const mockFrom = vi.fn().mockReturnValue({ where: mockWhere });
+  const mockSelect = vi.fn().mockReturnValue({ from: mockFrom });
+  return { mockSelect, mockFrom, mockWhere, mockOrderBy, mockLimit, mockOffset };
+}
 
 function createRequest(url: string, body?: unknown): NextRequest {
   return new NextRequest(new URL(url, "http://localhost:3000"), {
@@ -39,9 +41,10 @@ function createRequest(url: string, body?: unknown): NextRequest {
 }
 
 describe("Notes API", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
-    mockBookFindFirst.mockResolvedValue({
+    const mockDb = vi.mocked(await import("@/lib/db")).db;
+    (mockDb.query.books.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue({
       id: "book-1",
       uploaderId: "user-1",
     });
@@ -97,13 +100,7 @@ describe("Notes API", () => {
         },
       ];
 
-      mockSelect.mockReturnValue({
-        from: mockFrom.mockReturnValue({
-          where: mockWhere.mockReturnValue({
-            orderBy: mockOrderBy.mockResolvedValue(mockNotes),
-          }),
-        }),
-      });
+      vi.mocked(await import("@/lib/db")).db.select = createMockChain(mockNotes).mockSelect;
 
       const { GET } = await import("./route");
       const req = createRequest("/api/notes?bookId=book-1");
@@ -120,13 +117,7 @@ describe("Notes API", () => {
         expires: new Date().toISOString(),
       });
 
-      mockSelect.mockReturnValue({
-        from: mockFrom.mockReturnValue({
-          where: mockWhere.mockReturnValue({
-            orderBy: mockOrderBy.mockResolvedValue([]),
-          }),
-        }),
-      });
+      vi.mocked(await import("@/lib/db")).db.select = createMockChain([]).mockSelect;
 
       const { GET } = await import("./route");
       const req = createRequest("/api/notes?bookId=book-1");
@@ -190,11 +181,16 @@ describe("Notes API", () => {
         updatedAt: "2024-01-01 00:00:00",
       };
 
-      mockInsert.mockReturnValue({
-        values: mockValues.mockResolvedValue(undefined),
+      const mockDb = vi.mocked(await import("@/lib/db")).db;
+      mockDb.insert = vi.fn().mockReturnValue({
+        values: vi.fn().mockResolvedValue(undefined),
       });
 
-      mockFindFirst.mockResolvedValue(mockNote);
+      // First call: duplicate check → no existing note
+      // Second call: query created note
+      (mockDb.query.notes.findFirst as ReturnType<typeof vi.fn>)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(mockNote);
 
       const { POST } = await import("./route");
       const req = createRequest("/api/notes", {
@@ -233,11 +229,14 @@ describe("Notes API", () => {
         updatedAt: "2024-01-01 00:00:00",
       };
 
-      mockInsert.mockReturnValue({
-        values: mockValues.mockResolvedValue(undefined),
+      const mockDb = vi.mocked(await import("@/lib/db")).db;
+      mockDb.insert = vi.fn().mockReturnValue({
+        values: vi.fn().mockResolvedValue(undefined),
       });
 
-      mockFindFirst.mockResolvedValue(mockNote);
+      (mockDb.query.notes.findFirst as ReturnType<typeof vi.fn>)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(mockNote);
 
       const { POST } = await import("./route");
       const req = createRequest("/api/notes", {
@@ -272,11 +271,14 @@ describe("Notes API", () => {
         updatedAt: "2024-01-01 00:00:00",
       };
 
-      mockInsert.mockReturnValue({
-        values: mockValues.mockResolvedValue(undefined),
+      const mockDb = vi.mocked(await import("@/lib/db")).db;
+      mockDb.insert = vi.fn().mockReturnValue({
+        values: vi.fn().mockResolvedValue(undefined),
       });
 
-      mockFindFirst.mockResolvedValue(mockNote);
+      (mockDb.query.notes.findFirst as ReturnType<typeof vi.fn>)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(mockNote);
 
       const { POST } = await import("./route");
       const req = createRequest("/api/notes", {

@@ -99,6 +99,7 @@ export const bookmarks = sqliteTable(
       .notNull(),
   },
   (table) => ({
+    uniqueLocation: unique().on(table.userId, table.bookId, table.location),
     userBookIdx: index("idx_bookmarks_user_book").on(table.userId, table.bookId),
     bookIdIdx: index("idx_bookmarks_book_id").on(table.bookId),
   })
@@ -128,6 +129,7 @@ export const notes = sqliteTable(
       .notNull(),
   },
   (table) => ({
+    uniqueLocation: unique().on(table.userId, table.bookId, table.location),
     userBookIdx: index("idx_notes_user_book").on(table.userId, table.bookId),
     bookIdIdx: index("idx_notes_book_id").on(table.bookId),
   })

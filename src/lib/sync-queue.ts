@@ -9,9 +9,10 @@ export interface SyncItem {
 }
 
 const DB_NAME = 'zb-reader-sync-queue';
-const DB_VERSION = 1;
+const DB_VERSION = 2; // Incremented for syncing state
 const STORE_NAME = 'queue';
 const QUEUE_KEY = 'items';
+const SYNCING_KEY = 'syncing';
 
 const MAX_QUEUE_SIZE = 100;
 const MAX_RETRY_COUNT = 5;
@@ -68,6 +69,7 @@ export class SyncQueue {
     }
 
     this.syncing = true;
+    await this.persistSyncingState(true);
 
     while (this.queue.length > 0) {
       const batch = [...this.queue];
@@ -116,6 +118,7 @@ export class SyncQueue {
     }
 
     this.syncing = false;
+    await this.persistSyncingState(false);
   }
 
   getPendingCount(): number {
@@ -148,6 +151,23 @@ export class SyncQueue {
     }
   }
 
+  private async persistSyncingState(state: boolean): Promise<void> {
+    if (typeof window === 'undefined') return;
+
+    try {
+      const db = await openDB(DB_NAME, DB_VERSION, {
+        upgrade(db) {
+          if (!db.objectStoreNames.contains(STORE_NAME)) {
+            db.createObjectStore(STORE_NAME);
+          }
+        },
+      });
+      await db.put(STORE_NAME, state, SYNCING_KEY);
+    } catch (error) {
+      logger.error('sync-queue', 'Failed to persist syncing state to IDB', error);
+    }
+  }
+
   private async loadFromStorage(): Promise<void> {
     if (typeof window === 'undefined') return;
 
@@ -159,6 +179,16 @@ export class SyncQueue {
           }
         },
       });
+
+      // Load syncing state
+      const wasSyncing = await db.get(STORE_NAME, SYNCING_KEY);
+      if (wasSyncing) {
+        // Last sync was interrupted; reset and retry on next load
+        logger.info('sync-queue', 'Previous sync was interrupted, will retry');
+        await db.put(STORE_NAME, false, SYNCING_KEY);
+      }
+
+      // Load queue
       const stored = await db.get(STORE_NAME, QUEUE_KEY);
       if (stored && Array.isArray(stored)) {
         this.queue = stored;

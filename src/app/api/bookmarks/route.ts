@@ -8,6 +8,9 @@ import { findOwnedBook } from "@/lib/book-ownership";
 import { badRequest, getAuthUserId, notFound, serverError, validateJson } from "@/lib/api-utils";
 import { bookmarkSchema } from "@/lib/validations";
 
+const DEFAULT_LIMIT = 100;
+const MAX_LIMIT = 500;
+
 export async function GET(req: NextRequest) {
   const authResult = await getAuthUserId();
   if (authResult.error) return authResult.error;
@@ -19,6 +22,11 @@ export async function GET(req: NextRequest) {
     return badRequest("缺少 bookId 参数");
   }
 
+  const limitParam = searchParams.get("limit");
+  const offsetParam = searchParams.get("offset");
+  const limit = limitParam ? Math.min(parseInt(limitParam, 10) || DEFAULT_LIMIT, MAX_LIMIT) : DEFAULT_LIMIT;
+  const offset = offsetParam ? Math.max(parseInt(offsetParam, 10) || 0, 0) : 0;
+
   try {
     const result = await db
       .select()
@@ -29,9 +37,11 @@ export async function GET(req: NextRequest) {
           eq(bookmarks.bookId, bookId)
         )
       )
-      .orderBy(desc(bookmarks.createdAt));
+      .orderBy(desc(bookmarks.createdAt))
+      .limit(limit)
+      .offset(offset);
 
-    return NextResponse.json({ bookmarks: result });
+    return NextResponse.json({ bookmarks: result, hasMore: result.length === limit });
   } catch (error) {
     logger.error("api", "Get bookmarks error:", error);
     return serverError("获取书签失败");
@@ -54,12 +64,27 @@ export async function POST(req: NextRequest) {
 
     const id = uuidv4();
 
+    const locationStr = typeof location === "string" ? location : JSON.stringify(location);
+
+    // Prevent duplicate bookmarks at the same location
+    const existing = await db.query.bookmarks.findFirst({
+      where: and(
+        eq(bookmarks.userId, authResult.userId),
+        eq(bookmarks.bookId, bookId),
+        eq(bookmarks.location, locationStr)
+      ),
+    });
+
+    if (existing) {
+      return NextResponse.json({ bookmark: existing }, { status: 200 });
+    }
+
     await db.insert(bookmarks)
       .values({
         id,
         userId: authResult.userId,
         bookId,
-        location: typeof location === "string" ? location : JSON.stringify(location),
+        location: locationStr,
         label: label || `书签 ${new Date().toLocaleString("zh-CN")}`,
         pageNumber,
         progress,

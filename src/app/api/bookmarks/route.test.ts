@@ -6,28 +6,24 @@ const mockBookFindFirst = vi.fn().mockResolvedValue({
   id: "book-1",
   uploaderId: "user-1",
 });
-const mockSelect = vi.fn(() => ({
-  from: vi.fn(() => ({
-    where: vi.fn(() => ({
-      orderBy: vi.fn().mockResolvedValue([]),
-    })),
+const mockOrderBy = vi.fn(() => ({
+  limit: vi.fn(() => ({
+    offset: vi.fn().mockResolvedValue([]),
   })),
+}));
+const mockWhere = vi.fn(() => ({
+  orderBy: mockOrderBy,
+}));
+const mockFrom = vi.fn(() => ({
+  where: mockWhere,
+}));
+const mockSelect = vi.fn(() => ({
+  from: mockFrom,
 }));
 const mockInsert = vi.fn(() => ({
-  values: vi.fn(() => ({
-    returning: vi.fn().mockResolvedValue([{
-      id: "bookmark-1",
-      userId: "user-1",
-      bookId: "book-1",
-      location: "chapter-1",
-      label: "Test Bookmark",
-      pageNumber: 10,
-      progress: 25.5,
-      createdAt: "2024-01-01 00:00:00",
-      updatedAt: "2024-01-01 00:00:00",
-    }]),
-  })),
+  values: vi.fn().mockResolvedValue(undefined),
 }));
+const mockFindFirst = vi.fn().mockResolvedValue(null);
 
 vi.mock("@/lib/auth", () => ({
   auth: () => mockAuth(),
@@ -113,13 +109,12 @@ describe("Bookmarks API", () => {
         },
       ];
 
-      mockSelect.mockReturnValueOnce({
-        from: vi.fn(() => ({
-          where: vi.fn(() => ({
-            orderBy: vi.fn().mockResolvedValue(mockBookmarks),
-          })),
-        })),
-      });
+      const mockOffset = vi.fn().mockResolvedValue(mockBookmarks);
+      const mockLimit = vi.fn(() => ({ offset: mockOffset }));
+      const mockOrderBy = vi.fn(() => ({ limit: mockLimit }));
+      const mockWhere = vi.fn(() => ({ orderBy: mockOrderBy }));
+      const mockFrom = vi.fn(() => ({ where: mockWhere }));
+      mockSelect.mockReturnValueOnce({ from: mockFrom });
 
       const { GET } = await import("./route");
       const req = createRequest("/api/bookmarks?bookId=book-1");
@@ -181,7 +176,11 @@ describe("Bookmarks API", () => {
         updatedAt: "2024-01-01 00:00:00",
       };
 
-      (mockDb.query.bookmarks.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue(mockBookmark);
+      // First call: duplicate check → no existing bookmark
+      // Second call: query created bookmark
+      (mockDb.query.bookmarks.findFirst as ReturnType<typeof vi.fn>)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(mockBookmark);
 
       const { POST } = await import("./route");
       const req = createRequest("/api/bookmarks", {

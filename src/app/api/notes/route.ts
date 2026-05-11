@@ -8,6 +8,9 @@ import { findOwnedBook } from "@/lib/book-ownership";
 import { badRequest, getAuthUserId, notFound, serverError, validateJson } from "@/lib/api-utils";
 import { noteSchema } from "@/lib/validations";
 
+const DEFAULT_LIMIT = 100;
+const MAX_LIMIT = 500;
+
 export async function GET(req: NextRequest) {
   const authResult = await getAuthUserId();
   if (authResult.error) return authResult.error;
@@ -19,6 +22,11 @@ export async function GET(req: NextRequest) {
     return badRequest("缺少 bookId 参数");
   }
 
+  const limitParam = searchParams.get("limit");
+  const offsetParam = searchParams.get("offset");
+  const limit = limitParam ? Math.min(parseInt(limitParam, 10) || DEFAULT_LIMIT, MAX_LIMIT) : DEFAULT_LIMIT;
+  const offset = offsetParam ? Math.max(parseInt(offsetParam, 10) || 0, 0) : 0;
+
   try {
     const result = await db
       .select()
@@ -26,9 +34,11 @@ export async function GET(req: NextRequest) {
       .where(
         and(eq(notes.userId, authResult.userId), eq(notes.bookId, bookId))
       )
-      .orderBy(desc(notes.createdAt));
+      .orderBy(desc(notes.createdAt))
+      .limit(limit)
+      .offset(offset);
 
-    return NextResponse.json({ notes: result });
+    return NextResponse.json({ notes: result, hasMore: result.length === limit });
   } catch (error) {
     logger.error("api", "Get notes error:", error);
     return serverError("获取笔记失败");
@@ -50,13 +60,27 @@ export async function POST(req: NextRequest) {
     }
 
     const id = uuidv4();
+    const locationStr = typeof location === "string" ? location : JSON.stringify(location);
+
+    // Prevent duplicate notes at the same location
+    const existing = await db.query.notes.findFirst({
+      where: and(
+        eq(notes.userId, authResult.userId),
+        eq(notes.bookId, bookId),
+        eq(notes.location, locationStr)
+      ),
+    });
+
+    if (existing) {
+      return NextResponse.json({ note: existing }, { status: 200 });
+    }
 
     await db.insert(notes)
       .values({
         id,
         userId: authResult.userId,
         bookId,
-        location: typeof location === "string" ? location : JSON.stringify(location),
+        location: locationStr,
         selectedText,
         content,
         color: color || "yellow",

@@ -298,6 +298,15 @@ function getConnection() {
     CREATE INDEX IF NOT EXISTS idx_tts_configs_user_id ON tts_configs (user_id);
   `);
 
+  // Unique constraints for bookmarks and notes (prevent duplicates at same location)
+  // Note: SQLite unique constraints are implemented as unique indexes
+  sqlite.exec(`
+    CREATE UNIQUE INDEX IF NOT EXISTS uq_bookmarks_user_book_location
+      ON bookmarks (user_id, book_id, location);
+    CREATE UNIQUE INDEX IF NOT EXISTS uq_notes_user_book_location
+      ON notes (user_id, book_id, location);
+  `);
+
   _sqlite = sqlite;
   _db = drizzle(sqlite, { schema });
   _initializing = false;

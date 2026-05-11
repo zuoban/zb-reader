@@ -251,8 +251,14 @@ describe('sync-queue', () => {
         createSyncItem({ bookId: 'book-2' }),
       ];
 
-      // Setup mock to return the stored value async
-      (mockDb.get as Mock).mockResolvedValueOnce(items);
+      // Destroy the queue created in beforeEach and set up mock before new construction
+      syncQueue.destroy();
+
+      // First get call: syncing state check → null
+      // Second get call: queue items → items array
+      (mockDb.get as Mock)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(items);
 
       const newQueue = new SyncQueue({
         syncFn: mockSyncFn,
@@ -262,6 +268,7 @@ describe('sync-queue', () => {
       await new Promise(resolve => setTimeout(resolve, 0));
 
       expect(newQueue.getPendingCount()).toBe(2);
+      newQueue.destroy();
     });
   });
 });
