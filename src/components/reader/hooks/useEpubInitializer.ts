@@ -45,12 +45,27 @@ function applyTransparentShell(viewer: HTMLDivElement | null) {
 
   viewer.style.background = "transparent";
 
-  const epubContainer = viewer.querySelector(".epub-container") as HTMLElement | null;
-  if (epubContainer) {
-    epubContainer.style.background = "transparent";
-    epubContainer.style.boxShadow = "none";
-    epubContainer.style.overflowX = "hidden";
-  }
+  // Apply styles to ALL epub-container elements (epubjs may create multiple)
+  const epubContainers = viewer.querySelectorAll(".epub-container");
+  epubContainers.forEach((container, index) => {
+    const el = container as HTMLElement;
+    el.style.background = "transparent";
+    el.style.boxShadow = "none";
+    el.style.overflowX = "hidden";
+    
+    // Only the last container (with actual content) should be scrollable
+    // Other containers should not take up space
+    if (index === epubContainers.length - 1) {
+      el.style.overflowY = "auto";
+      el.style.position = "relative";
+      el.style.height = "100%";
+    } else {
+      el.style.overflowY = "hidden";
+      el.style.position = "absolute";
+      el.style.height = "0";
+      el.style.visibility = "hidden";
+    }
+  });
 
   const iframeEl = viewer.querySelector("iframe") as HTMLIFrameElement | null;
   if (iframeEl) {

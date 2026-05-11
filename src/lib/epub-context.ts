@@ -59,7 +59,11 @@ export class EpubContext {
   }
 
   getScrollContainer(): HTMLElement | null {
-    return this.containerEl?.querySelector(".epub-container") as HTMLElement | null;
+    if (!this.containerEl) return null;
+    const containers = this.containerEl.querySelectorAll(".epub-container");
+    if (containers.length === 0) return null;
+    // Return the last container (the one with actual content)
+    return containers[containers.length - 1] as HTMLElement;
   }
 
   getScrollTop(): number {
@@ -123,8 +127,14 @@ export class EpubContext {
 
     const { absoluteTop } = this.getElementOffset(element);
     const targetScrollTop = absoluteTop - container.clientHeight * offsetRatio;
+    
+    const clampedScrollTop = Math.max(0, Math.min(
+      targetScrollTop,
+      container.scrollHeight - container.clientHeight
+    ));
+    
     container.scrollTo({
-      top: Math.max(0, targetScrollTop),
+      top: clampedScrollTop,
       behavior: "smooth",
     });
   }
@@ -134,8 +144,13 @@ export class EpubContext {
     if (!container) return;
 
     const { absoluteTop } = this.getElementOffset(element);
+    const clampedScrollTop = Math.max(0, Math.min(
+      absoluteTop,
+      container.scrollHeight - container.clientHeight
+    ));
+    
     container.scrollTo({
-      top: Math.max(0, absoluteTop),
+      top: clampedScrollTop,
       behavior: "smooth",
     });
   }
@@ -364,14 +379,28 @@ export class EpubContext {
     if (this.containerEl) {
       this.containerEl.style.background = "transparent";
 
-      const epubContainer = this.containerEl.querySelector(".epub-container") as HTMLElement | null;
+      // Apply styles to ALL epub-container elements
+      const epubContainers = this.containerEl.querySelectorAll(".epub-container");
+      epubContainers.forEach((container, index) => {
+        const el = container as HTMLElement;
+        el.style.background = "transparent";
+        el.style.boxShadow = "none";
+        
+        // Only the last container (with actual content) should be scrollable
+        // Other containers should not take up space
+        if (index === epubContainers.length - 1) {
+          el.style.overflowY = "auto";
+          el.style.position = "relative";
+          el.style.height = "100%";
+        } else {
+          el.style.overflowY = "hidden";
+          el.style.position = "absolute";
+          el.style.height = "0";
+          el.style.visibility = "hidden";
+        }
+      });
+
       const iframeEl = this.containerEl.querySelector("iframe") as HTMLIFrameElement | null;
-
-      if (epubContainer) {
-        epubContainer.style.background = "transparent";
-        epubContainer.style.boxShadow = "none";
-      }
-
       if (iframeEl) {
         iframeEl.style.background = "transparent";
         iframeEl.style.boxShadow = "none";

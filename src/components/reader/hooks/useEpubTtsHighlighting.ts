@@ -256,9 +256,12 @@ export function useEpubTtsHighlighting({
       ctx.scrollToElement(activeElement, 0.25);
     };
 
-    doScroll();
-    const timeoutId = setTimeout(doScroll, 100);
+    const timeoutId1 = setTimeout(doScroll, 150);
+    const timeoutId2 = setTimeout(doScroll, 400);
 
-    return () => clearTimeout(timeoutId);
+    return () => {
+      clearTimeout(timeoutId1);
+      clearTimeout(timeoutId2);
+    };
   }, [activeTtsParagraph, epubContextRef]);
 }
