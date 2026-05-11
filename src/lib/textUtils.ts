@@ -2,6 +2,7 @@ export interface Sentence {
   text: string;
   html?: string;
   paragraphId: string;
+  sentenceIndexInParagraph: number;
   location?: string;
   isCodeBlock?: boolean;
 }
@@ -303,6 +304,7 @@ export function paragraphsToSentences(
         text,
         html: paragraph.html,
         paragraphId: paragraph.id,
+        sentenceIndexInParagraph: 0,
         location: paragraph.location,
         isCodeBlock: true,
       });
@@ -311,13 +313,14 @@ export function paragraphsToSentences(
 
     const sentenceTexts = splitIntoSentences(text, maxLength);
 
-    for (const sentenceText of sentenceTexts) {
+    for (const [sentenceIndexInParagraph, sentenceText] of sentenceTexts.entries()) {
       const trimmed = sentenceText.trim();
       if (trimmed.length > 0 && !punctuationOnlyRegex.test(trimmed)) {
         sentences.push({
           text: trimmed,
           html: paragraph.html,
           paragraphId: paragraph.id,
+          sentenceIndexInParagraph,
           location: paragraph.location,
         });
       }
@@ -325,4 +328,14 @@ export function paragraphsToSentences(
   }
 
   return sentences;
+}
+
+export function getTtsSentenceKey(sentence: Sentence, absoluteIndex: number): string {
+  return [
+    sentence.location || "no-location",
+    sentence.paragraphId,
+    sentence.sentenceIndexInParagraph,
+    absoluteIndex,
+    sentence.text.length,
+  ].join(":");
 }

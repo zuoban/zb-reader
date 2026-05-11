@@ -4,7 +4,7 @@ import { useCallback, useRef } from "react";
 import { toast } from "sonner";
 import type { EpubReaderRef } from "@/components/reader/EpubReader";
 import type { Book } from "@/lib/db/schema";
-import { paragraphsToSentences, type Sentence } from "@/lib/textUtils";
+import { getTtsSentenceKey, paragraphsToSentences, type Sentence } from "@/lib/textUtils";
 import type { ReaderParagraph } from "@/types/reader";
 
 const MAX_TTS_RETRY_COUNT = 5;
@@ -302,7 +302,7 @@ export function useReaderTtsSession({
         setActiveTtsIsCodeBlock(!!sentence.isCodeBlock);
         setActiveTtsHtml(sentence.html || sentence.text);
 
-        const hash = sentence.location || sentence.text.slice(0, 50);
+        const hash = getTtsSentenceKey(sentence, startIndex + i);
         if (readSentencesHashRef.current.has(hash)) {
           ensurePreloadWindow(i + 1);
           continue;
@@ -457,9 +457,9 @@ export function useReaderTtsSession({
 
       try {
         await speakWithBrowserParagraphs(sentencesToRead, sessionId, currentStart);
-        sentencesToRead.forEach((sentence) => {
+        sentencesToRead.forEach((sentence, index) => {
           readSentencesHashRef.current.add(
-            sentence.location || sentence.text.slice(0, 50)
+            getTtsSentenceKey(sentence, currentStart + index)
           );
         });
       } catch {
