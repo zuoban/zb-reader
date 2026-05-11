@@ -16,9 +16,9 @@ const IS_LOCAL_DEV = ["localhost", "127.0.0.1", "::1"].includes(self.location.ho
 const STATIC_ASSETS = ["/logo.svg", "/favicon.ico", "/manifest.json", OFFLINE_PAGE];
 
 // 监听安装事件
-self.addEventListener("install", (event: any) => {
+self.addEventListener("install", (event) => {
   if (IS_LOCAL_DEV) {
-    (self as any).skipWaiting();
+    self.skipWaiting();
     return;
   }
 
@@ -27,11 +27,11 @@ self.addEventListener("install", (event: any) => {
       return cache.addAll(STATIC_ASSETS);
     })
   );
-  (self as any).skipWaiting();
+  self.skipWaiting();
 });
 
 // 监听激活事件
-self.addEventListener("activate", (event: any) => {
+self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
@@ -41,18 +41,18 @@ self.addEventListener("activate", (event: any) => {
       );
     })
   );
-  (self as any).clients.claim();
+  self.clients.claim();
 });
 
 // 监听来自客户端的消息
-self.addEventListener("message", (event: any) => {
+self.addEventListener("message", (event) => {
   if (event.data && event.data.type === "SKIP_WAITING") {
-    (self as any).skipWaiting();
+    self.skipWaiting();
   }
 });
 
 // 处理请求拦截
-self.addEventListener("fetch", (event: any) => {
+self.addEventListener("fetch", (event) => {
   if (IS_LOCAL_DEV) return;
 
   const url = new URL(event.request.url);
@@ -103,7 +103,7 @@ self.addEventListener("fetch", (event: any) => {
   );
 });
 
-async function staleWhileRevalidate(request: Request, cacheName: string) {
+async function staleWhileRevalidate(request, cacheName) {
   const cache = await caches.open(cacheName);
   const cachedResponse = await cache.match(request);
 
@@ -119,7 +119,7 @@ async function staleWhileRevalidate(request: Request, cacheName: string) {
 
 // --- Background Sync ---
 
-self.addEventListener("sync", (event: any) => {
+self.addEventListener("sync", (event) => {
   if (event.tag === SYNC_TAG) {
     event.waitUntil(syncProgress());
   }

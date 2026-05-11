@@ -8,6 +8,12 @@ export interface SyncItem {
   clientUpdatedAt: string;
 }
 
+interface BackgroundSyncRegistration extends ServiceWorkerRegistration {
+  sync?: {
+    register: (tag: string) => Promise<void>;
+  };
+}
+
 const DB_NAME = 'zb-reader-sync-queue';
 const DB_VERSION = 2; // Incremented for syncing state
 const STORE_NAME = 'queue';
@@ -62,8 +68,8 @@ export class SyncQueue {
     if (options?.autoSync !== false) {
       if (typeof window !== "undefined" && "serviceWorker" in navigator && "SyncManager" in window) {
         try {
-          const registration = await navigator.serviceWorker.ready;
-          await (registration as any).sync.register(SyncQueue.SYNC_TAG);
+          const registration = await navigator.serviceWorker.ready as BackgroundSyncRegistration;
+          await registration.sync?.register(SyncQueue.SYNC_TAG);
         } catch (error) {
           logger.warn("sync-queue", "Background Sync registration failed, falling back to regular sync", error);
           if (navigator.onLine && !this.syncing) {

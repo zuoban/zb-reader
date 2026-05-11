@@ -51,7 +51,7 @@ export function useProgressSyncCompat(
         return { conflict: false };
       }
     },
-    [updateProgress]
+    [currentLocationRef, progressRef, updateProgress]
   );
 
   // Compatible name; sync debouncing is handled by LocalProgressManager.

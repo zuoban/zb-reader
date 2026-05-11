@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+
 import Database from "better-sqlite3";
 
 try {

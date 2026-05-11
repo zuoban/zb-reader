@@ -1,6 +1,7 @@
+/* eslint-disable no-console */
+
 import Database from "better-sqlite3";
 import fs from "fs";
-import path from "path";
 
 try {
   const db = new Database("data/db.sqlite");

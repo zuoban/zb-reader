@@ -406,6 +406,7 @@ export function useReaderTtsSession({
       setActiveTtsLocation,
       setActiveTtsParagraph,
       setActiveTtsParagraphId,
+      setActiveTtsSentenceIndexInParagraph,
       setIsSpeaking,
       stopCurrentAudio,
       ttsCurrentIndexRef,

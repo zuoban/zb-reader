@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { SessionProvider } from "next-auth/react";
 import { IdleCountdownWarning } from "@/components/reader/IdleCountdownWarning";
@@ -34,7 +34,6 @@ import { Loader2 } from "lucide-react";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
 import { ReaderProvider, useReaderContext } from "@/components/reader/ReaderContext";
-import type { EpubReaderRef } from "@/components/reader/EpubReader";
 import type { Note } from "@/lib/db/schema";
 import { useProgressSyncCompat } from "@/hooks/useProgressSyncCompat";
 import {
@@ -126,7 +125,7 @@ function ReaderContent() {
 
   const handleProgressLoaded = useCallback((loadedProgress: number) => {
     setProgress(loadedProgress);
-  }, []);
+  }, [setProgress]);
 
   const {
     book,
@@ -240,7 +239,7 @@ function ReaderContent() {
   // Wire up handleBack ref for idle timeout
   useEffect(() => {
     handleBackRef.current = handleBack;
-  }, [handleBack]);
+  }, [handleBack, handleBackRef]);
 
   // ---- Idle timeout: 5 minutes no activity -> return to bookshelf ----
   const { idleCountdown, resetIdleTimer: _resetIdleTimer } = useIdleTimeout(() => handleBackRef.current?.(), !isSpeaking);
@@ -366,7 +365,7 @@ function ReaderContent() {
     if (book?.format === "epub") {
       epubReaderRef.current?.scrollToActiveParagraph();
     }
-  }, [book?.format, resetTtsState, stopTransport]);
+  }, [book?.format, epubReaderRef, resetTtsState, stopTransport]);
 
   const { handleToggleTts, handleTtsNextChapter, handleTtsPrevChapter } =
     useReaderTtsSession({

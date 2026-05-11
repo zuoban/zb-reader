@@ -4,6 +4,7 @@
  *
  * Usage: npx tsx scripts/migrate-legacy-db.ts
  */
+/* eslint-disable no-console */
 
 import Database from "better-sqlite3";
 import path from "path";
