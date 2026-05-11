@@ -440,7 +440,7 @@ export async function POST(req: NextRequest) {
     }
 
     const bookId = uuidv4();
-    savedFileName = saveBookFile(buffer, bookId, epubInfo.storageFormat);
+    savedFileName = await saveBookFile(buffer, bookId, epubInfo.storageFormat);
 
     let title = epubInfo.titleBase;
     let author = "未知作者";
@@ -478,14 +478,14 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     if (savedFileName) {
       try {
-        deleteBookFile(savedFileName);
+        await deleteBookFile(savedFileName);
       } catch (cleanupError) {
         logger.warn("books", "Failed to cleanup uploaded book file", cleanupError);
       }
     }
     if (coverFileName) {
       try {
-        deleteCoverImage(coverFileName);
+        await deleteCoverImage(coverFileName);
       } catch (cleanupError) {
         logger.warn("books", "Failed to cleanup uploaded cover file", cleanupError);
       }
@@ -530,7 +530,7 @@ async function extractEpubMetadata(
 
       const coverData = await zip.file(coverPath)?.async("nodebuffer");
       if (coverData) {
-        coverFileName = saveCoverImage(Buffer.from(coverData), bookId);
+        coverFileName = await saveCoverImage(Buffer.from(coverData), bookId);
       }
     }
   } catch (e) {

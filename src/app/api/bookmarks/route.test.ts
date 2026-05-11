@@ -23,7 +23,7 @@ const mockSelect = vi.fn(() => ({
 const mockInsert = vi.fn(() => ({
   values: vi.fn().mockResolvedValue(undefined),
 }));
-const mockFindFirst = vi.fn().mockResolvedValue(null);
+const _mockFindFirst = vi.fn().mockResolvedValue(null);
 
 vi.mock("@/lib/auth", () => ({
   auth: () => mockAuth(),

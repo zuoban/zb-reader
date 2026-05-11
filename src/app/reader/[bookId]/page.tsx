@@ -64,12 +64,12 @@ function ReaderContent() {
     theme: readerTheme,
     browserVoiceId: selectedBrowserVoiceId,
     ttsRate,
-    microsoftPreloadCount,
     ttsAutoNextChapter,
     ttsHighlightColor,
   } = useReaderSettingsValues();
   const setTtsRate = useReaderSettingsStore((s) => s.setTtsRate);
-  const setMicrosoftPreloadCount = useReaderSettingsStore((s) => s.setMicrosoftPreloadCount);
+  const _microsoftPreloadCount = useReaderSettingsStore((s) => s.microsoftPreloadCount);
+  const _setMicrosoftPreloadCount = useReaderSettingsStore((s) => s.setMicrosoftPreloadCount);
   const setTtsHighlightColor = useReaderSettingsStore((s) => s.setTtsHighlightColor);
   const settingsLifecycleState = useReaderSettingsLifecycleState();
   const settingsControlsState = useReaderSettingsControlsState();

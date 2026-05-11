@@ -1,5 +1,6 @@
-import fs from "fs";
+import * as fsAsync from "fs/promises";
 import path from "path";
+import fsSync from "fs";
 
 const DATA_DIR = path.join(/*turbopackIgnore: true*/ process.cwd(), "data");
 const BOOKS_DIR = path.join(/*turbopackIgnore: true*/ process.cwd(), "data/books");
@@ -13,10 +14,10 @@ export class StoragePathError extends Error {
   }
 }
 
-function ensureDirs() {
+async function ensureDirs() {
   for (const dir of [DATA_DIR, BOOKS_DIR, COVERS_DIR]) {
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+    if (!fsSync.existsSync(dir)) {
+      await fsAsync.mkdir(dir, { recursive: true });
     }
   }
 }
@@ -45,22 +46,22 @@ function resolveStoredFilePath(baseDir: string, fileName: string): string {
   return resolvedPath;
 }
 
-export function saveBookFile(
+export async function saveBookFile(
   buffer: Buffer,
   bookId: string,
   format: string
-): string {
-  ensureDirs();
+): Promise<string> {
+  await ensureDirs();
   const fileName = `${bookId}.${format}`;
   const filePath = resolveStoredFilePath(BOOKS_DIR, fileName);
-  fs.writeFileSync(filePath, buffer);
+  await fsAsync.writeFile(filePath, buffer);
   return fileName;
 }
 
-export function deleteBookFile(fileName: string): void {
+export async function deleteBookFile(fileName: string): Promise<void> {
   const filePath = resolveStoredFilePath(BOOKS_DIR, fileName);
-  if (fs.existsSync(filePath)) {
-    fs.unlinkSync(filePath);
+  if (fsSync.existsSync(filePath)) {
+    await fsAsync.unlink(filePath);
   }
 }
 
@@ -68,22 +69,27 @@ export function getBookFilePath(fileName: string): string {
   return resolveStoredFilePath(BOOKS_DIR, fileName);
 }
 
-export function bookFileExists(fileName: string): boolean {
-  return fs.existsSync(resolveStoredFilePath(BOOKS_DIR, fileName));
+export async function bookFileExists(fileName: string): Promise<boolean> {
+  try {
+    await fsAsync.access(resolveStoredFilePath(BOOKS_DIR, fileName));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
-export function saveCoverImage(buffer: Buffer, bookId: string): string {
-  ensureDirs();
+export async function saveCoverImage(buffer: Buffer, bookId: string): Promise<string> {
+  await ensureDirs();
   const fileName = `${bookId}.jpg`;
   const filePath = resolveStoredFilePath(COVERS_DIR, fileName);
-  fs.writeFileSync(filePath, buffer);
+  await fsAsync.writeFile(filePath, buffer);
   return fileName;
 }
 
-export function deleteCoverImage(fileName: string): void {
+export async function deleteCoverImage(fileName: string): Promise<void> {
   const filePath = resolveStoredFilePath(COVERS_DIR, fileName);
-  if (fs.existsSync(filePath)) {
-    fs.unlinkSync(filePath);
+  if (fsSync.existsSync(filePath)) {
+    await fsAsync.unlink(filePath);
   }
 }
 
@@ -91,8 +97,13 @@ export function getCoverFilePath(fileName: string): string {
   return resolveStoredFilePath(COVERS_DIR, fileName);
 }
 
-export function coverExists(fileName: string): boolean {
-  return fs.existsSync(resolveStoredFilePath(COVERS_DIR, fileName));
+export async function coverExists(fileName: string): Promise<boolean> {
+  try {
+    await fsAsync.access(resolveStoredFilePath(COVERS_DIR, fileName));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export { BOOKS_DIR, COVERS_DIR, DATA_DIR };

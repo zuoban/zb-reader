@@ -53,9 +53,9 @@ export async function DELETE(
       return notFound("书籍不存在");
     }
 
-    deleteBookFile(book.filePath);
+    await deleteBookFile(book.filePath);
     if (book.cover) {
-      deleteCoverImage(book.cover);
+      await deleteCoverImage(book.cover);
       invalidateCoverCache(book.cover);
     }
 

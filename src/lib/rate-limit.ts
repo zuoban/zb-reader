@@ -18,7 +18,6 @@ async function ensureRateLimitTable() {
       )
     `);
 
-    // Failed login tracking table
     await db.run(sql`
       CREATE TABLE IF NOT EXISTS failed_logins (
         key TEXT PRIMARY KEY,
@@ -29,10 +28,14 @@ async function ensureRateLimitTable() {
 
     rateLimitTableInitialized = true;
   } catch (error) {
-    // Table creation failed, fall back to in-memory
     logger.warn("rate-limit", "Failed to create rate limit tables, using in-memory store", error);
   }
 }
+
+// Initialize rate limit tables on module load
+ensureRateLimitTable().catch((err) => {
+  logger.warn("rate-limit", "Failed to initialize rate limit tables on startup", err);
+});
 
 interface RateLimitEntry {
   count: number;

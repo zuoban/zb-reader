@@ -63,7 +63,7 @@ interface VoicePackagePickerProps {
 }
 
 export function VoicePackagePicker({ browserVoices, selectedBrowserVoiceId, onChange }: VoicePackagePickerProps) {
-  const { activeVoiceLabel, voiceGroups, selectedVoiceValue } = useVoiceGroups(browserVoices, selectedBrowserVoiceId);
+  const { voiceGroups, selectedVoiceValue } = useVoiceGroups(browserVoices, selectedBrowserVoiceId);
 
   return (
     <div className="reader-liquid-control rounded-[26px] px-5 py-4.5">

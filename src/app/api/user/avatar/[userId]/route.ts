@@ -4,7 +4,6 @@ import path from "path";
 import fs from "fs";
 import { forbidden, notFound, serverError, getAuthUserId } from "@/lib/api-utils";
 
-const DATA_DIR = path.join(/*turbopackIgnore: true*/ process.cwd(), "data");
 const AVATAR_DIR = path.join(/*turbopackIgnore: true*/ process.cwd(), "data/avatars");
 
 export async function GET(

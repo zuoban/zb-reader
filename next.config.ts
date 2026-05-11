@@ -43,7 +43,6 @@ const nextConfig: NextConfig = {
       "@radix-ui/react-scroll-area",
       "@radix-ui/react-slider",
     ],
-    outputFileTracingIgnores: ["next.config.ts", "next.config.js"],
   },
 
   headers: async () => [

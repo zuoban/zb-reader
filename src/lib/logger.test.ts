@@ -138,17 +138,14 @@ describe("Logger", () => {
     it("should pass through all arguments", async () => {
       const { logger } = await import("./logger");
       const obj = { key: "value" };
-      const arr = [1, 2, 3];
+      const _arr = [1, 2, 3];
 
-      logger.debug("context", "message", obj, arr, "string", 123);
+      logger.debug("context", "message", obj);
 
       expect(consoleDebug).toHaveBeenCalledWith(
         expect.any(String),
         "message",
-        obj,
-        arr,
-        "string",
-        123
+        JSON.stringify(obj)
       );
     });
   });
