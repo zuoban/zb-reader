@@ -49,28 +49,28 @@ export function TtsSettingsDialog({
   return (
     <>
       <div
-        className="fixed inset-0 z-[80] bg-black/42 backdrop-blur-md"
+        className="fixed inset-0 z-[80] bg-slate-950/54 backdrop-blur-md"
         onClick={() => onOpenChange(false)}
       />
       <div
         className={cn(
-          "reader-liquid-surface animate-reader-fade-up fixed left-1/2 top-1/2 z-[80] w-full max-w-[calc(100%-2.5rem)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[32px] p-6 sm:p-8",
+          "tts-settings-dialog animate-reader-fade-up fixed left-1/2 top-1/2 z-[80] w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[28px] p-5 sm:rounded-[32px] sm:p-7",
           "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
           "sm:max-w-md"
         )}
         style={{ transition: "all 150ms cubic-bezier(0.4, 0, 0.2, 1)" }}
       >
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-[linear-gradient(180deg,color-mix(in_srgb,white_12%,transparent),transparent)]" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-[linear-gradient(180deg,rgba(191,219,254,0.12),transparent)]" />
 
-        <div className="relative mb-8 flex items-start justify-between gap-4">
-          <div className="flex flex-col items-center flex-1">
-            <div className="w-12 h-1.5 rounded-full bg-[var(--reader-text)]/10 mb-4" />
+        <div className="relative mb-6 flex items-start justify-between gap-4 sm:mb-7">
+          <div className="flex flex-1 flex-col items-center">
+            <div className="mb-4 h-1.5 w-12 rounded-full bg-white/14" />
             <div
               className="flex flex-col items-center gap-1"
               style={{ color: "var(--reader-text)" }}
             >
-              <h2 className="font-heading text-2xl font-bold tracking-tight">朗读设置</h2>
-              <p className="text-[10px] font-bold tracking-[0.2em] uppercase opacity-30">
+              <h2 className="font-heading text-2xl font-bold tracking-tight text-white/94">朗读设置</h2>
+              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/34">
                 Immersive Voice Settings
               </p>
             </div>
@@ -78,15 +78,14 @@ export function TtsSettingsDialog({
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="reader-liquid-control absolute right-0 top-6 flex size-9 cursor-pointer items-center justify-center rounded-full transition-all hover:scale-105 active:scale-95"
-            style={{ color: "var(--reader-text)" }}
+            className="tts-settings-icon-button absolute right-0 top-5 flex size-10 cursor-pointer items-center justify-center rounded-full transition-all hover:scale-105 active:scale-95"
             aria-label="关闭"
           >
-            <X className="size-4.5" />
+            <X className="size-4.5 text-white/86" />
           </button>
         </div>
 
-        <div className="relative space-y-6">
+        <div className="relative space-y-4.5 sm:space-y-5">
           <div className="grid grid-cols-2 gap-3.5">
             {[
               { label: "当前语速 · RATE", value: formatRateLabel(ttsRate) },
@@ -94,18 +93,12 @@ export function TtsSettingsDialog({
             ].map((item) => (
               <div
                 key={item.label}
-                className="reader-liquid-control rounded-[22px] px-4 py-3.5"
+                className="tts-settings-card rounded-[20px] px-4 py-3.5"
               >
-                <p
-                  className="text-[9px] font-bold tracking-[0.18em] uppercase opacity-30"
-                  style={{ color: "var(--reader-text)" }}
-                >
+                <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-white/36">
                   {item.label}
                 </p>
-                <p
-                  className="mt-1.5 truncate text-[13px] font-bold"
-                  style={{ color: "var(--reader-text)" }}
-                >
+                <p className="mt-1.5 truncate text-[13px] font-bold text-white/92">
                   {item.value}
                 </p>
               </div>
@@ -119,20 +112,6 @@ export function TtsSettingsDialog({
           />
 
           <RateControl ttsRate={ttsRate} onChange={onTtsRateChange} />
-        </div>
-
-        <div className="relative mt-8 flex justify-center">
-          <button
-            type="button"
-            onClick={() => onOpenChange(false)}
-            className="reader-liquid-control w-full cursor-pointer rounded-full px-8 py-3.5 text-sm font-bold tracking-widest transition-all hover:-translate-y-0.5 active:scale-[0.98]"
-            style={{
-              background: "var(--reader-primary)",
-              color: "var(--reader-bg)",
-            }}
-          >
-            确认并保存
-          </button>
         </div>
       </div>
     </>

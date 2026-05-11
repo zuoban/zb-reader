@@ -924,6 +924,125 @@
     rgba(55, 67, 82, 0.46);
 }
 
+@keyframes tts-record-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.tts-record-button::before {
+  pointer-events: none;
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 50% 44%, transparent 0 58%, rgba(148, 163, 184, 0.26) 59%, rgba(15, 23, 42, 0.92) 67%, transparent 69%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.14), rgba(15, 23, 42, 0.24));
+  box-shadow:
+    0 0 0 1px rgba(226, 232, 240, 0.14) inset,
+    0 18px 32px -22px rgba(0, 0, 0, 0.94);
+}
+
+.tts-record-disc {
+  background:
+    radial-gradient(circle at center, transparent 0 13%, rgba(255, 255, 255, 0.16) 13.5% 14.5%, transparent 15%),
+    radial-gradient(circle at center, transparent 0 28%, rgba(255, 255, 255, 0.11) 28.5% 29.5%, transparent 30%),
+    radial-gradient(circle at center, transparent 0 48%, rgba(255, 255, 255, 0.08) 48.5% 49.5%, transparent 50%),
+    repeating-radial-gradient(circle at center, rgba(255, 255, 255, 0.12) 0 1px, rgba(255, 255, 255, 0.02) 1px 2px, transparent 2px 6px),
+    radial-gradient(circle at 32% 22%, rgba(191, 219, 254, 0.28), transparent 30%),
+    radial-gradient(circle at 70% 78%, rgba(15, 23, 42, 0.72), transparent 38%),
+    linear-gradient(145deg, #26364d 0%, #07101f 32%, #020409 62%, #1d2939 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.2) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.8) inset,
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset,
+    0 12px 24px -14px rgba(0, 0, 0, 0.92);
+  animation: tts-record-spin 5.5s linear infinite;
+  animation-play-state: paused;
+  transform-origin: center;
+  will-change: transform;
+}
+
+.tts-record-disc::before {
+  pointer-events: none;
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    conic-gradient(from 18deg, transparent 0deg, rgba(255, 255, 255, 0.2) 24deg, transparent 52deg, transparent 182deg, rgba(255, 255, 255, 0.08) 212deg, transparent 238deg),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.24), transparent 30%, transparent 70%, rgba(255, 255, 255, 0.08));
+  mix-blend-mode: screen;
+  opacity: 0.62;
+}
+
+.tts-record-label {
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.34),
+    0 1px 0 rgba(255, 255, 255, 0.18) inset,
+    0 10px 18px -14px rgba(0, 0, 0, 0.88);
+}
+
+.tts-record-tonearm {
+  overflow: visible;
+}
+
+.tts-record-tonearm-arm {
+  transform-box: view-box;
+  transform-origin: 64px 13px;
+  transform: rotate(-34deg);
+  transition: transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.tts-record-button[data-playing="true"] .tts-record-disc {
+  animation-play-state: running;
+}
+
+.tts-record-button[data-playing="true"] .tts-record-tonearm-arm {
+  transform: rotate(0deg);
+}
+
+.tts-settings-dialog {
+  border: 1px solid rgba(205, 219, 236, 0.18);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 24%),
+    linear-gradient(145deg, rgba(47, 57, 70, 0.9), rgba(13, 18, 25, 0.94) 54%, rgba(8, 12, 18, 0.96));
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.18) inset,
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+    0 34px 90px -44px rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(28px) saturate(1.18);
+  -webkit-backdrop-filter: blur(28px) saturate(1.18);
+}
+
+.tts-settings-card {
+  border: 1px solid rgba(205, 219, 236, 0.14);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 38%),
+    rgba(19, 26, 36, 0.68);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.12) inset,
+    0 18px 40px -34px rgba(0, 0, 0, 0.72);
+}
+
+.tts-settings-icon-button {
+  border: 1px solid rgba(205, 219, 236, 0.16);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 62%),
+    rgba(15, 21, 30, 0.72);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.12) inset,
+    0 14px 30px -24px rgba(0, 0, 0, 0.8);
+}
+
+.tts-settings-icon-button:hover {
+  border-color: rgba(205, 219, 236, 0.28);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18), transparent 62%),
+    rgba(31, 42, 57, 0.78);
+}
+
 [data-reader-theme="dark"] .reader-toolbar-surface {
   border-color: color-mix(in srgb, var(--reader-border, #333) 70%, transparent);
   background: color-mix(in srgb, var(--reader-card-bg, #111) 98%, transparent);
@@ -974,6 +1093,12 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  .tts-record-button[data-playing="true"] .tts-record-disc {
+    animation-duration: 5.5s !important;
+    animation-iteration-count: infinite !important;
+    animation-play-state: running !important;
   }
 }
 

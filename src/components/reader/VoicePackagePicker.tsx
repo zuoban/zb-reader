@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BrowserVoiceOption } from "@/lib/tts";
@@ -64,21 +64,27 @@ interface VoicePackagePickerProps {
 
 export function VoicePackagePicker({ ttsVoices, selectedTtsVoiceId, onChange }: VoicePackagePickerProps) {
   const { voiceGroups, selectedVoiceValue } = useVoiceGroups(ttsVoices, selectedTtsVoiceId);
+  const selectedButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    selectedButtonRef.current?.scrollIntoView({
+      block: "center",
+      inline: "nearest",
+    });
+  }, [selectedVoiceValue]);
 
   return (
-    <div className="reader-liquid-control rounded-[26px] px-5 py-4.5">
-      <div className="space-y-3">
-        <p
-          className="text-[10px] font-bold tracking-[0.18em] uppercase opacity-30"
-          style={{ color: "var(--reader-text)" }}
-        >
+    <div className="tts-settings-card rounded-[24px] px-5 py-4.5">
+      <div className="space-y-3.5">
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/36">
           语音包 · Voice Package
         </p>
-        <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto [scrollbar-color:color-mix(in_srgb,var(--reader-text)_22%,transparent)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[color-mix(in_srgb,var(--reader-text)_20%,transparent)]">
+        <div className="grid max-h-[200px] grid-cols-2 gap-2 overflow-y-auto pr-1 [scrollbar-color:rgba(255,255,255,0.22)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/20">
           {voiceGroups.flatMap((group) =>
             group.voices.map((option) => (
               <button
                 key={option.value}
+                ref={selectedVoiceValue === option.value ? selectedButtonRef : undefined}
                 type="button"
                 disabled={option.disabled}
                 onClick={() => {
@@ -87,16 +93,15 @@ export function VoicePackagePicker({ ttsVoices, selectedTtsVoiceId, onChange }: 
                   }
                 }}
                 className={cn(
-                  "flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm transition-all",
-                  option.disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:bg-[color-mix(in_srgb,var(--reader-primary)_8%,transparent)]",
+                  "flex min-h-10 items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-white/84 transition-all",
+                  option.disabled ? "cursor-not-allowed opacity-45" : "cursor-pointer hover:bg-white/8 hover:text-white",
                   selectedVoiceValue === option.value &&
-                    "reader-liquid-control bg-[color-mix(in_srgb,var(--reader-primary)_12%,transparent)]"
+                    "bg-sky-200/14 text-white shadow-[0_0_0_1px_rgba(191,219,254,0.22)_inset]"
                 )}
-                style={{ color: "var(--reader-text)" }}
               >
                 <span className="truncate">{option.label}</span>
                 {selectedVoiceValue === option.value && (
-                  <Check className="ml-auto size-4 shrink-0" style={{ color: "var(--reader-primary)" }} />
+                  <Check className="ml-auto size-4 shrink-0 text-sky-200" />
                 )}
               </button>
             ))
