@@ -115,6 +115,13 @@ function injectSupSubImageStyle(doc: Document) {
       height: auto !important;
       vertical-align: super;
     }
+    img, svg, video, canvas {
+      max-width: 100% !important;
+      width: auto !important;
+      height: auto !important;
+      object-fit: contain !important;
+      box-sizing: border-box !important;
+    }
   `;
   doc.head.appendChild(style);
 }
