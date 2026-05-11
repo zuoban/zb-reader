@@ -20,9 +20,9 @@ const EMPTY_GROUP: VoiceGroup[] = [
   { label: "暂无可用语音", voices: [{ value: "__empty__", label: "暂无可用语音", disabled: true }] },
 ];
 
-function useVoiceGroups(browserVoices: BrowserVoiceOption[], selectedBrowserVoiceId: string) {
+function useVoiceGroups(ttsVoices: BrowserVoiceOption[], selectedTtsVoiceId: string) {
   return useMemo(() => {
-    if (browserVoices.length === 0) {
+    if (ttsVoices.length === 0) {
       return {
         activeVoiceLabel: "默认语音",
         voiceGroups: EMPTY_GROUP,
@@ -30,8 +30,8 @@ function useVoiceGroups(browserVoices: BrowserVoiceOption[], selectedBrowserVoic
       };
     }
 
-    const grouped = new Map<string, typeof browserVoices>();
-    browserVoices.forEach((voice) => {
+    const grouped = new Map<string, typeof ttsVoices>();
+    ttsVoices.forEach((voice) => {
       const lang = voice.lang.startsWith("zh") ? "中文" : voice.lang.startsWith("en") ? "英文" : "其他";
       if (!grouped.has(lang)) grouped.set(lang, []);
       grouped.get(lang)!.push(voice);
@@ -47,23 +47,23 @@ function useVoiceGroups(browserVoices: BrowserVoiceOption[], selectedBrowserVoic
         voices: voices.map((v) => ({ value: v.id, label: v.name, disabled: false })),
       }));
 
-    const activeLabel = browserVoices.find((v) => v.id === selectedBrowserVoiceId)?.name ?? "默认语音";
-    const selectedValue = browserVoices.some((v) => v.id === selectedBrowserVoiceId)
-      ? selectedBrowserVoiceId
-      : browserVoices[0]?.id ?? "__empty__";
+    const activeLabel = ttsVoices.find((v) => v.id === selectedTtsVoiceId)?.name ?? "默认语音";
+    const selectedValue = ttsVoices.some((v) => v.id === selectedTtsVoiceId)
+      ? selectedTtsVoiceId
+      : ttsVoices[0]?.id ?? "__empty__";
 
     return { activeVoiceLabel: activeLabel, voiceGroups: sortedGroups, selectedVoiceValue: selectedValue };
-  }, [browserVoices, selectedBrowserVoiceId]);
+  }, [ttsVoices, selectedTtsVoiceId]);
 }
 
 interface VoicePackagePickerProps {
-  browserVoices: BrowserVoiceOption[];
-  selectedBrowserVoiceId: string;
+  ttsVoices: BrowserVoiceOption[];
+  selectedTtsVoiceId: string;
   onChange: (voiceId: string) => void;
 }
 
-export function VoicePackagePicker({ browserVoices, selectedBrowserVoiceId, onChange }: VoicePackagePickerProps) {
-  const { voiceGroups, selectedVoiceValue } = useVoiceGroups(browserVoices, selectedBrowserVoiceId);
+export function VoicePackagePicker({ ttsVoices, selectedTtsVoiceId, onChange }: VoicePackagePickerProps) {
+  const { voiceGroups, selectedVoiceValue } = useVoiceGroups(ttsVoices, selectedTtsVoiceId);
 
   return (
     <div className="reader-liquid-control rounded-[26px] px-5 py-4.5">

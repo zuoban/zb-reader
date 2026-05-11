@@ -10,20 +10,20 @@ interface ReaderTtsLayerProps {
   activeIsCodeBlock: boolean;
   activeParagraph: string;
   book: Book;
-  browserVoices: BrowserVoiceOption[];
+  ttsVoices: BrowserVoiceOption[];
   currentChapterTitle?: string;
   isFullscreen: boolean;
   isPaused: boolean;
   isSpeaking: boolean;
   isTtsViewOpen: boolean;
   progress: number;
-  selectedBrowserVoiceId: string;
+  selectedTtsVoiceId: string;
   ttsRate: number;
   onBackToReader: () => void;
   onNext: () => void;
   onOpenImmersiveView: () => void;
   onPrev: () => void;
-  onSelectedBrowserVoiceIdChange: (voiceId: string) => void;
+  onSelectedTtsVoiceIdChange: (voiceId: string) => void;
   onStop: () => void;
   onToggle: () => void;
   onToggleFullscreen: () => void;
@@ -35,20 +35,20 @@ export function ReaderTtsLayer({
   activeIsCodeBlock,
   activeParagraph,
   book,
-  browserVoices,
+  ttsVoices,
   currentChapterTitle,
   isFullscreen,
   isPaused,
   isSpeaking,
   isTtsViewOpen,
   progress,
-  selectedBrowserVoiceId,
+  selectedTtsVoiceId,
   ttsRate,
   onBackToReader,
   onNext,
   onOpenImmersiveView,
   onPrev,
-  onSelectedBrowserVoiceIdChange,
+  onSelectedTtsVoiceIdChange,
   onStop,
   onToggle,
   onToggleFullscreen,
@@ -67,15 +67,15 @@ export function ReaderTtsLayer({
         isPaused={isPaused}
         progress={progress}
         ttsRate={ttsRate}
-        selectedBrowserVoiceId={selectedBrowserVoiceId}
-        browserVoices={browserVoices}
+        selectedTtsVoiceId={selectedTtsVoiceId}
+        ttsVoices={ttsVoices}
         isFullscreen={isFullscreen}
         onBackToReader={onBackToReader}
         onToggle={onToggle}
         onStop={onStop}
         onPrev={onPrev}
         onNext={onNext}
-        onSelectedBrowserVoiceIdChange={onSelectedBrowserVoiceIdChange}
+        onSelectedTtsVoiceIdChange={onSelectedTtsVoiceIdChange}
         onTtsRateChange={onTtsRateChange}
         onToggleFullscreen={onToggleFullscreen}
       />

@@ -11,10 +11,10 @@ interface TtsSettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   ttsRate: number;
-  selectedBrowserVoiceId: string;
-  browserVoices: BrowserVoiceOption[];
+  selectedTtsVoiceId: string;
+  ttsVoices: BrowserVoiceOption[];
   onTtsRateChange: (value: number) => void;
-  onSelectedBrowserVoiceIdChange: (voiceId: string) => void;
+  onSelectedTtsVoiceIdChange: (voiceId: string) => void;
 }
 
 function formatRateLabel(rate: number) {
@@ -26,12 +26,12 @@ export function TtsSettingsDialog({
   open,
   onOpenChange,
   ttsRate,
-  selectedBrowserVoiceId,
-  browserVoices,
+  selectedTtsVoiceId,
+  ttsVoices,
   onTtsRateChange,
-  onSelectedBrowserVoiceIdChange,
+  onSelectedTtsVoiceIdChange,
 }: TtsSettingsDialogProps) {
-  const activeVoiceLabel = browserVoices.find((v) => v.id === selectedBrowserVoiceId)?.name ?? "默认语音";
+  const activeVoiceLabel = ttsVoices.find((v) => v.id === selectedTtsVoiceId)?.name ?? "默认语音";
 
   useEffect(() => {
     if (!open) return;
@@ -113,9 +113,9 @@ export function TtsSettingsDialog({
           </div>
 
           <VoicePackagePicker
-            browserVoices={browserVoices}
-            selectedBrowserVoiceId={selectedBrowserVoiceId}
-            onChange={onSelectedBrowserVoiceIdChange}
+            ttsVoices={ttsVoices}
+            selectedTtsVoiceId={selectedTtsVoiceId}
+            onChange={onSelectedTtsVoiceIdChange}
           />
 
           <RateControl ttsRate={ttsRate} onChange={onTtsRateChange} />

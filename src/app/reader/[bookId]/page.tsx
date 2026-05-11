@@ -73,7 +73,7 @@ function ReaderContent() {
     fontSize,
     fontFamily,
     theme: readerTheme,
-    browserVoiceId: selectedBrowserVoiceId,
+    ttsVoiceId: selectedTtsVoiceId,
     ttsRate,
     ttsPreloadCount,
     ttsAutoNextChapter,
@@ -163,7 +163,7 @@ function ReaderContent() {
   const saveProgress = progressSync.saveProgress;
   const debouncedSaveProgress = progressSync.debouncedSaveProgress;
 
-  const { browserVoices, currentTheme } = useReaderSettingsLifecycle(
+  const { ttsVoices, currentTheme } = useReaderSettingsLifecycle(
     settingsLifecycleState,
     debouncedSaveSettings
   );
@@ -335,11 +335,11 @@ function ReaderContent() {
   const {
     handleFontFamilyChange,
     handleFontSizeChange,
-    handleSelectedBrowserVoiceIdChange,
+    handleSelectedTtsVoiceIdChange,
     handleThemeChange,
   } = useReaderSettingsControls(settingsControlsState);
 
-  const requestBuiltinSpeech = useBuiltinTtsSpeech(selectedBrowserVoiceId, ttsRate);
+  const requestBuiltinSpeech = useBuiltinTtsSpeech(selectedTtsVoiceId, ttsRate);
 
   const {
     hasPendingResume,
@@ -568,20 +568,20 @@ function ReaderContent() {
         activeIsCodeBlock={activeTtsIsCodeBlock}
         activeParagraph={activeTtsParagraph}
         book={book}
-        browserVoices={browserVoices}
+        ttsVoices={ttsVoices}
         currentChapterTitle={currentChapterTitle}
         isFullscreen={isFullscreen}
         isPaused={isPaused}
         isSpeaking={isSpeaking}
         isTtsViewOpen={isTtsViewOpen}
         progress={progress}
-        selectedBrowserVoiceId={selectedBrowserVoiceId}
+        selectedTtsVoiceId={selectedTtsVoiceId}
         ttsRate={ttsRate}
         onBackToReader={handleBackToReader}
         onNext={handleTtsNextChapter}
         onOpenImmersiveView={handleOpenTtsView}
         onPrev={handleTtsPrevChapter}
-        onSelectedBrowserVoiceIdChange={handleSelectedBrowserVoiceIdChange}
+        onSelectedTtsVoiceIdChange={handleSelectedTtsVoiceIdChange}
         onStop={stopSpeaking}
         onToggle={handleToggleTts}
         onToggleFullscreen={handleToggleFullscreen}

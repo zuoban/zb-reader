@@ -4,7 +4,7 @@ import { useCallback } from "react";
 import type { FontFamily } from "@/stores/reader-settings";
 
 interface ReaderSettingsControlsState {
-  setBrowserVoiceId: (id: string) => void;
+  setTtsVoiceId: (id: string) => void;
   setFontFamily: (fontFamily: FontFamily) => void;
   setFontSize: (size: number) => void;
   setTheme: (theme: "light" | "dark" | "sepia") => void;
@@ -32,9 +32,9 @@ export function useReaderSettingsControls(settings: ReaderSettingsControlsState)
     [settings]
   );
 
-  const handleSelectedBrowserVoiceIdChange = useCallback(
+  const handleSelectedTtsVoiceIdChange = useCallback(
     (voiceId: string) => {
-      settings.setBrowserVoiceId(voiceId);
+      settings.setTtsVoiceId(voiceId);
     },
     [settings]
   );
@@ -42,7 +42,7 @@ export function useReaderSettingsControls(settings: ReaderSettingsControlsState)
   return {
     handleFontFamilyChange,
     handleFontSizeChange,
-    handleSelectedBrowserVoiceIdChange,
+    handleSelectedTtsVoiceIdChange,
     handleThemeChange,
   };
 }

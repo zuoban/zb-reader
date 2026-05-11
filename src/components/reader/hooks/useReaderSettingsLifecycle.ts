@@ -9,7 +9,7 @@ interface ReaderSettingsLifecycleState {
   fontSize: number;
   theme: "light" | "dark" | "sepia";
   fontFamily: FontFamily;
-  browserVoiceId: string;
+  ttsVoiceId: string;
   ttsRate: number;
   ttsPitch: number;
   ttsVolume: number;
@@ -21,14 +21,14 @@ interface ReaderSettingsLifecycleState {
   ttsHighlightStyle: TtsHighlightStyle;
   loaded: boolean;
   loadFromServer: () => Promise<void>;
-  setBrowserVoiceId: (id: string) => void;
+  setTtsVoiceId: (id: string) => void;
 }
 
 export function useReaderSettingsLifecycle(
   settings: ReaderSettingsLifecycleState,
   debouncedSaveSettings: () => void
 ) {
-  const [browserVoices, setBrowserVoices] = useState<BrowserVoiceOption[]>([]);
+  const [ttsVoices, setTtsVoices] = useState<BrowserVoiceOption[]>([]);
   const currentTheme =
     READER_THEME_STYLES[settings.theme] || READER_THEME_STYLES.light;
 
@@ -45,7 +45,7 @@ export function useReaderSettingsLifecycle(
     settings.fontSize,
     settings.theme,
     settings.fontFamily,
-    settings.browserVoiceId,
+    settings.ttsVoiceId,
     settings.ttsRate,
     settings.ttsPitch,
     settings.ttsVolume,
@@ -66,13 +66,13 @@ export function useReaderSettingsLifecycle(
         if (!res.ok) return;
         const data = (await res.json()) as { voices?: BrowserVoiceOption[] };
         const mapped = data.voices || [];
-        setBrowserVoices(mapped);
-        const currentVoiceId = settings.browserVoiceId;
+        setTtsVoices(mapped);
+        const currentVoiceId = settings.ttsVoiceId;
         if (mapped.length > 0) {
           if (currentVoiceId && mapped.some((voice) => voice.id === currentVoiceId)) {
             return;
           }
-          settings.setBrowserVoiceId(mapped[0].id);
+          settings.setTtsVoiceId(mapped[0].id);
         }
       } catch {
         // ignore
@@ -97,7 +97,7 @@ export function useReaderSettingsLifecycle(
   }, [currentTheme]);
 
   return {
-    browserVoices,
+    ttsVoices,
     currentTheme,
   };
 }

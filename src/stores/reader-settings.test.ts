@@ -22,7 +22,7 @@ describe("useReaderSettingsStore", () => {
     useReaderSettingsStore.setState({
       fontSize: 16,
       theme: "light",
-      browserVoiceId: "",
+      ttsVoiceId: "",
       ttsRate: 1,
       ttsPitch: 1,
       ttsVolume: 1,
@@ -145,7 +145,11 @@ describe("useReaderSettingsStore", () => {
     });
 
     it("saves to API when loaded", async () => {
-      useReaderSettingsStore.setState({ loaded: true, fontSize: 18 });
+      useReaderSettingsStore.setState({
+        loaded: true,
+        fontSize: 18,
+        ttsVoiceId: "zh-CN-XiaoxiaoNeural",
+      });
 
       mockFetch.mockResolvedValueOnce({ ok: true });
 
@@ -158,6 +162,7 @@ describe("useReaderSettingsStore", () => {
         expect.objectContaining({
           method: "PUT",
           headers: { "Content-Type": "application/json" },
+          body: expect.stringContaining('"browserVoiceId":"zh-CN-XiaoxiaoNeural"'),
         })
       );
     });

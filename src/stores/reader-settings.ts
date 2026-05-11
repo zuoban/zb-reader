@@ -23,7 +23,7 @@ interface ReaderSettingsState {
   theme: "light" | "dark" | "sepia";
   fontFamily: FontFamily;
   pageWidth: number;
-  browserVoiceId: string;
+  ttsVoiceId: string;
   ttsRate: number;
   ttsPitch: number;
   ttsVolume: number;
@@ -42,7 +42,7 @@ interface ReaderSettingsActions {
   setTheme: (theme: "light" | "dark" | "sepia") => void;
   setFontFamily: (fontFamily: FontFamily) => void;
   setPageWidth: (width: number) => void;
-  setBrowserVoiceId: (id: string) => void;
+  setTtsVoiceId: (id: string) => void;
   setTtsRate: (rate: number) => void;
   setTtsPitch: (pitch: number) => void;
   setTtsVolume: (volume: number) => void;
@@ -58,6 +58,7 @@ interface ReaderSettingsActions {
 }
 
 type ReaderSettingsApiResponse = Partial<ReaderSettingsState> & {
+  browserVoiceId?: string;
   microsoftPreloadCount?: number;
 };
 
@@ -66,7 +67,7 @@ const DEFAULT_STATE: ReaderSettingsState = {
   theme: "light",
   fontFamily: "system",
   pageWidth: 100,
-  browserVoiceId: "",
+  ttsVoiceId: "",
   ttsRate: 1,
   ttsPitch: 1,
   ttsVolume: 1,
@@ -91,7 +92,7 @@ export const useReaderSettingsStore = create<
       setTheme: (theme) => set({ theme }),
       setFontFamily: (fontFamily: FontFamily) => set({ fontFamily }),
       setPageWidth: (width) => set({ pageWidth: clampPageWidth(width) }),
-      setBrowserVoiceId: (browserVoiceId) => set({ browserVoiceId }),
+      setTtsVoiceId: (ttsVoiceId) => set({ ttsVoiceId }),
       setTtsRate: (rate) => set({ ttsRate: clampTtsRate(rate) }),
       setTtsPitch: (pitch) => set({ ttsPitch: clampTtsPitch(pitch) }),
       setTtsVolume: (volume) => set({ ttsVolume: clampTtsVolume(volume) }),
@@ -129,7 +130,7 @@ export const useReaderSettingsStore = create<
               typeof settings.pageWidth === "number"
                 ? clampPageWidth(settings.pageWidth)
                 : DEFAULT_STATE.pageWidth,
-            browserVoiceId: settings.browserVoiceId || DEFAULT_STATE.browserVoiceId,
+            ttsVoiceId: settings.browserVoiceId || DEFAULT_STATE.ttsVoiceId,
             ttsRate:
               typeof settings.ttsRate === "number"
                 ? clampTtsRate(settings.ttsRate)
@@ -172,7 +173,7 @@ export const useReaderSettingsStore = create<
               theme: state.theme,
               fontFamily: state.fontFamily,
               pageWidth: state.pageWidth,
-              browserVoiceId: state.browserVoiceId,
+              browserVoiceId: state.ttsVoiceId,
               ttsRate: state.ttsRate,
               ttsPitch: state.ttsPitch,
               ttsVolume: state.ttsVolume,
@@ -245,7 +246,7 @@ export function useReaderSettingsValues() {
       fontSize: s.fontSize,
       fontFamily: s.fontFamily,
       theme: s.theme,
-      browserVoiceId: s.browserVoiceId,
+      ttsVoiceId: s.ttsVoiceId,
       ttsRate: s.ttsRate,
       ttsPitch: s.ttsPitch,
       ttsVolume: s.ttsVolume,
@@ -264,25 +265,25 @@ export function useReaderSettingsLifecycleState() {
   const autoScrollToActive = useReaderSettingsStore((s) => s.autoScrollToActive);
   const loaded = useReaderSettingsStore((s) => s.loaded);
   const loadFromServer = useReaderSettingsStore((s) => s.loadFromServer);
-  const setBrowserVoiceId = useReaderSettingsStore((s) => s.setBrowserVoiceId);
+  const setTtsVoiceId = useReaderSettingsStore((s) => s.setTtsVoiceId);
 
   return {
     ...values,
     autoScrollToActive,
     loaded,
     loadFromServer,
-    setBrowserVoiceId,
+    setTtsVoiceId,
   };
 }
 
 export function useReaderSettingsControlsState() {
-  const setBrowserVoiceId = useReaderSettingsStore((s) => s.setBrowserVoiceId);
+  const setTtsVoiceId = useReaderSettingsStore((s) => s.setTtsVoiceId);
   const setFontFamily = useReaderSettingsStore((s) => s.setFontFamily);
   const setFontSize = useReaderSettingsStore((s) => s.setFontSize);
   const setTheme = useReaderSettingsStore((s) => s.setTheme);
 
   return {
-    setBrowserVoiceId,
+    setTtsVoiceId,
     setFontFamily,
     setFontSize,
     setTheme,

@@ -30,15 +30,15 @@ interface FullscreenTtsViewProps {
   isPaused: boolean;
   progress: number;
   ttsRate: number;
-  selectedBrowserVoiceId: string;
-  browserVoices: BrowserVoiceOption[];
+  selectedTtsVoiceId: string;
+  ttsVoices: BrowserVoiceOption[];
   isFullscreen: boolean;
   onBackToReader: () => void;
   onToggle: () => void;
   onStop: () => void;
   onPrev?: () => void;
   onNext?: () => void;
-  onSelectedBrowserVoiceIdChange: (voiceId: string) => void;
+  onSelectedTtsVoiceIdChange: (voiceId: string) => void;
   onTtsRateChange: (value: number) => void;
   onToggleFullscreen?: () => void;
 }
@@ -72,15 +72,15 @@ export function FullscreenTtsView({
   isPaused,
   progress,
   ttsRate,
-  selectedBrowserVoiceId,
-  browserVoices,
+  selectedTtsVoiceId,
+  ttsVoices,
   isFullscreen,
   onBackToReader,
   onToggle,
   onStop,
   onPrev,
   onNext,
-  onSelectedBrowserVoiceIdChange,
+  onSelectedTtsVoiceIdChange,
   onTtsRateChange,
   onToggleFullscreen,
 }: FullscreenTtsViewProps) {
@@ -259,10 +259,10 @@ export function FullscreenTtsView({
           open={settingsOpen}
           onOpenChange={handleSettingsOpenChange}
           ttsRate={ttsRate}
-          selectedBrowserVoiceId={selectedBrowserVoiceId}
-          browserVoices={browserVoices}
+          selectedTtsVoiceId={selectedTtsVoiceId}
+          ttsVoices={ttsVoices}
           onTtsRateChange={onTtsRateChange}
-          onSelectedBrowserVoiceIdChange={onSelectedBrowserVoiceIdChange}
+          onSelectedTtsVoiceIdChange={onSelectedTtsVoiceIdChange}
         />
       </div>
     </div>
