@@ -4,8 +4,21 @@ import { useRef, useEffect, useCallback } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { logger } from "@/lib/logger";
 import { toast } from "sonner";
+import {
+  clampFontSize,
+  clampPageWidth,
+  clampTtsRate,
+  clampTtsPitch,
+  clampTtsVolume,
+  clampLegadoRate,
+  normalizeMicrosoftPreloadCount,
+  isValidFontFamily,
+} from "@/lib/utils";
 
 export type FontFamily = "system" | "serif" | "sans" | "kaiti";
+export type FlipMode = "scroll" | "page";
+export type TtsEngine = "browser" | "legado" | "microsoft";
+export type TtsHighlightStyle = "background" | "indicator";
 
 interface ReaderSettingsState {
   fontSize: number;
@@ -20,6 +33,13 @@ interface ReaderSettingsState {
   ttsHighlightColor: string;
   ttsAutoNextChapter: boolean;
   autoScrollToActive: boolean;
+  flipMode: FlipMode;
+  ttsEngine: TtsEngine;
+  legadoRate: number;
+  legadoConfigId: string | null;
+  legadoPreloadCount: number;
+  ttsImmersiveMode: boolean;
+  ttsHighlightStyle: TtsHighlightStyle;
   loaded: boolean;
 }
 
@@ -36,11 +56,16 @@ interface ReaderSettingsActions {
   setTtsHighlightColor: (color: string) => void;
   setTtsAutoNextChapter: (enabled: boolean) => void;
   setAutoScrollToActive: (enabled: boolean) => void;
+  setFlipMode: (mode: FlipMode) => void;
+  setTtsEngine: (engine: TtsEngine) => void;
+  setLegadoRate: (rate: number) => void;
+  setLegadoConfigId: (id: string | null) => void;
+  setLegadoPreloadCount: (count: number) => void;
+  setTtsImmersiveMode: (enabled: boolean) => void;
+  setTtsHighlightStyle: (style: TtsHighlightStyle) => void;
   loadFromServer: () => Promise<void>;
   saveToServer: () => Promise<void>;
 }
-
-const ALLOWED_FONT_FAMILIES: FontFamily[] = ["system", "serif", "sans", "kaiti"];
 
 const DEFAULT_STATE: ReaderSettingsState = {
   fontSize: 16,
@@ -55,6 +80,13 @@ const DEFAULT_STATE: ReaderSettingsState = {
   ttsHighlightColor: "#3b82f6",
   ttsAutoNextChapter: true,
   autoScrollToActive: true,
+  flipMode: "scroll",
+  ttsEngine: "browser",
+  legadoRate: 50,
+  legadoConfigId: null,
+  legadoPreloadCount: 3,
+  ttsImmersiveMode: false,
+  ttsHighlightStyle: "indicator",
   loaded: false,
 };
 
@@ -65,19 +97,26 @@ export const useReaderSettingsStore = create<
     (set, get) => ({
       ...DEFAULT_STATE,
 
-      setFontSize: (size) => set({ fontSize: Math.min(28, Math.max(12, size)) }),
+      setFontSize: (size) => set({ fontSize: clampFontSize(size) }),
       setTheme: (theme) => set({ theme }),
       setFontFamily: (fontFamily: FontFamily) => set({ fontFamily }),
-      setPageWidth: (width) => set({ pageWidth: Math.min(100, Math.max(50, width)) }),
+      setPageWidth: (width) => set({ pageWidth: clampPageWidth(width) }),
       setBrowserVoiceId: (browserVoiceId) => set({ browserVoiceId }),
-      setTtsRate: (rate) => set({ ttsRate: Math.min(5, Math.max(1, rate)) }),
-      setTtsPitch: (pitch) => set({ ttsPitch: Math.min(2, Math.max(0.5, pitch)) }),
-      setTtsVolume: (volume) => set({ ttsVolume: Math.min(1, Math.max(0, volume)) }),
+      setTtsRate: (rate) => set({ ttsRate: clampTtsRate(rate) }),
+      setTtsPitch: (pitch) => set({ ttsPitch: clampTtsPitch(pitch) }),
+      setTtsVolume: (volume) => set({ ttsVolume: clampTtsVolume(volume) }),
       setMicrosoftPreloadCount: (count) =>
-        set({ microsoftPreloadCount: [1, 2, 3, 5, 8].includes(count) ? count : 5 }),
+        set({ microsoftPreloadCount: normalizeMicrosoftPreloadCount(count) }),
       setTtsHighlightColor: (color) => set({ ttsHighlightColor: color }),
       setTtsAutoNextChapter: (enabled) => set({ ttsAutoNextChapter: enabled }),
       setAutoScrollToActive: (enabled) => set({ autoScrollToActive: enabled }),
+      setFlipMode: (flipMode) => set({ flipMode }),
+      setTtsEngine: (ttsEngine) => set({ ttsEngine }),
+      setLegadoRate: (rate) => set({ legadoRate: clampLegadoRate(rate) }),
+      setLegadoConfigId: (legadoConfigId) => set({ legadoConfigId }),
+      setLegadoPreloadCount: (legadoPreloadCount) => set({ legadoPreloadCount }),
+      setTtsImmersiveMode: (ttsImmersiveMode) => set({ ttsImmersiveMode }),
+      setTtsHighlightStyle: (ttsHighlightStyle) => set({ ttsHighlightStyle }),
 
       loadFromServer: async () => {
         try {
@@ -94,37 +133,46 @@ export const useReaderSettingsStore = create<
           set({
             fontSize:
               typeof settings.fontSize === "number"
-                ? Math.min(28, Math.max(12, settings.fontSize))
+                ? clampFontSize(settings.fontSize)
                 : DEFAULT_STATE.fontSize,
             theme: settings.theme || DEFAULT_STATE.theme,
-            fontFamily: ALLOWED_FONT_FAMILIES.includes(settings.fontFamily as FontFamily)
+            fontFamily: isValidFontFamily(settings.fontFamily as string)
               ? (settings.fontFamily as FontFamily)
               : DEFAULT_STATE.fontFamily,
             pageWidth:
               typeof settings.pageWidth === "number"
-                ? Math.min(100, Math.max(50, settings.pageWidth))
+                ? clampPageWidth(settings.pageWidth)
                 : DEFAULT_STATE.pageWidth,
             browserVoiceId: settings.browserVoiceId || DEFAULT_STATE.browserVoiceId,
             ttsRate:
               typeof settings.ttsRate === "number"
-                ? Math.min(5, Math.max(1, settings.ttsRate))
+                ? clampTtsRate(settings.ttsRate)
                 : DEFAULT_STATE.ttsRate,
             ttsPitch:
               typeof settings.ttsPitch === "number"
-                ? Math.min(2, Math.max(0.5, settings.ttsPitch))
+                ? clampTtsPitch(settings.ttsPitch)
                 : DEFAULT_STATE.ttsPitch,
             ttsVolume:
               typeof settings.ttsVolume === "number"
-                ? Math.min(1, Math.max(0, settings.ttsVolume))
+                ? clampTtsVolume(settings.ttsVolume)
                 : DEFAULT_STATE.ttsVolume,
-            microsoftPreloadCount: [1, 2, 3, 5, 8].includes(
-              settings.microsoftPreloadCount as number
-            )
-              ? (settings.microsoftPreloadCount as number)
-              : DEFAULT_STATE.microsoftPreloadCount,
+            microsoftPreloadCount:
+              typeof settings.microsoftPreloadCount === "number"
+                ? normalizeMicrosoftPreloadCount(settings.microsoftPreloadCount)
+                : DEFAULT_STATE.microsoftPreloadCount,
             ttsHighlightColor: settings.ttsHighlightColor || DEFAULT_STATE.ttsHighlightColor,
             ttsAutoNextChapter: settings.ttsAutoNextChapter ?? DEFAULT_STATE.ttsAutoNextChapter,
             autoScrollToActive: settings.autoScrollToActive ?? DEFAULT_STATE.autoScrollToActive,
+            flipMode: settings.flipMode || DEFAULT_STATE.flipMode,
+            ttsEngine: settings.ttsEngine || DEFAULT_STATE.ttsEngine,
+            legadoRate:
+              typeof settings.legadoRate === "number"
+                ? clampLegadoRate(settings.legadoRate)
+                : DEFAULT_STATE.legadoRate,
+            legadoConfigId: settings.legadoConfigId ?? DEFAULT_STATE.legadoConfigId,
+            legadoPreloadCount: settings.legadoPreloadCount || DEFAULT_STATE.legadoPreloadCount,
+            ttsImmersiveMode: settings.ttsImmersiveMode ?? DEFAULT_STATE.ttsImmersiveMode,
+            ttsHighlightStyle: settings.ttsHighlightStyle || DEFAULT_STATE.ttsHighlightStyle,
             loaded: true,
           });
         } catch (error) {
@@ -153,6 +201,13 @@ export const useReaderSettingsStore = create<
               ttsHighlightColor: state.ttsHighlightColor,
               ttsAutoNextChapter: state.ttsAutoNextChapter,
               autoScrollToActive: state.autoScrollToActive,
+              flipMode: state.flipMode,
+              ttsEngine: state.ttsEngine,
+              legadoRate: state.legadoRate,
+              legadoConfigId: state.legadoConfigId,
+              legadoPreloadCount: state.legadoPreloadCount,
+              ttsImmersiveMode: state.ttsImmersiveMode,
+              ttsHighlightStyle: state.ttsHighlightStyle,
             }),
           });
 
@@ -179,26 +234,34 @@ export function useDebouncedSettingsSave() {
   const saveToServer = useReaderSettingsStore((s) => s.saveToServer);
   const loaded = useReaderSettingsStore((s) => s.loaded);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveFnRef = useRef(saveToServer);
 
+  // Keep saveFnRef in sync without triggering useCallback changes
   useEffect(() => {
-    const timer = saveTimerRef.current;
+    saveFnRef.current = saveToServer;
+  }, [saveToServer]);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
     return () => {
-      if (timer) clearTimeout(timer);
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+      }
     };
   }, []);
 
   return useCallback(() => {
     if (!loaded) return;
 
-    const timer = saveTimerRef.current;
-    if (timer) {
-      clearTimeout(timer);
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
     }
 
     saveTimerRef.current = setTimeout(() => {
-      saveToServer();
+      saveFnRef.current();
     }, 220);
-  }, [loaded, saveToServer]);
+  }, [loaded]);
 }
 
 export function useReaderSettingsValues() {
@@ -212,6 +275,10 @@ export function useReaderSettingsValues() {
       microsoftPreloadCount: s.microsoftPreloadCount,
       ttsAutoNextChapter: s.ttsAutoNextChapter,
       ttsHighlightColor: s.ttsHighlightColor,
+      flipMode: s.flipMode,
+      ttsEngine: s.ttsEngine,
+      legadoRate: s.legadoRate,
+      legadoPreloadCount: s.legadoPreloadCount,
     }))
   );
 }

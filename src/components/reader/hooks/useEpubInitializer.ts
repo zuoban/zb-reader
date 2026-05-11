@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import type { MutableRefObject, RefObject } from "react";
-import ePub, { Book, Rendition } from "epubjs";
+import type { Book, Rendition } from "epubjs";
 import { logger } from "@/lib/logger";
 import { EpubContext } from "@/lib/epub-context";
 import { THEME_STYLES } from "@/components/reader/epub-styles";
@@ -154,6 +154,9 @@ export function useEpubInitializer({
       try {
         if (cancelled || !viewerRef.current) return;
 
+        // Dynamic import: epubjs and its dependencies (JSZip, xmldom) are code-split
+        const { default: ePub } = await import("epubjs");
+
         // Use bookData if available (cached), otherwise use bookUrl (proxy)
         const source = (bookData || bookUrl) as string | ArrayBuffer;
         book = ePub(source);
@@ -243,8 +246,7 @@ export function useEpubInitializer({
           };
 
           if ("requestIdleCallback" in window) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (window as any).requestIdleCallback(() => generateLocations(), { timeout: 2000 });
+            window.requestIdleCallback(() => generateLocations(), { timeout: 2000 });
           } else {
             setTimeout(generateLocations, 1000);
           }

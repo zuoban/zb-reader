@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { and, eq, isNull, or } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { ttsConfigs } from "@/lib/db/schema";
-import { getAuthUserId, notFound, serverError, validateJson } from "@/lib/api-utils";
+import { badRequest, getAuthUserId, notFound, serverError, validateJson } from "@/lib/api-utils";
+import { assertSafeServerFetchUrl } from "@/lib/server-url-safety";
 import { logger } from "@/lib/logger";
 import { ttsConfigUpdateSchema } from "@/lib/validations";
 
@@ -34,6 +35,16 @@ export async function PUT(
 
     if (!existing) {
       return notFound("配置不存在");
+    }
+
+    // SSRF protection: validate URL before storing
+    if (body.url) {
+      try {
+        await assertSafeServerFetchUrl(body.url);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "URL 安全校验失败";
+        return badRequest(`URL 无效: ${message}`);
+      }
     }
 
     await db

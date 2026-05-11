@@ -50,6 +50,13 @@ export const readerSettingsSchema = z.object({
   ttsAutoNextChapter: z.boolean().optional(),
   ttsHighlightColor: z.string().optional(),
   autoScrollToActive: z.boolean().optional(),
+  flipMode: z.enum(["scroll", "page"]).optional(),
+  ttsEngine: z.enum(["browser", "legado", "microsoft"]).optional(),
+  legadoRate: optionalNumber,
+  legadoConfigId: z.string().nullable().optional(),
+  legadoPreloadCount: optionalNumber,
+  ttsImmersiveMode: z.boolean().optional(),
+  ttsHighlightStyle: z.enum(["background", "indicator"]).optional(),
 });
 
 /** 用户资料更新校验 */

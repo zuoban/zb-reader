@@ -24,16 +24,11 @@ const nextConfig: NextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     minimumCacheTTL: 60 * 60 * 24 * 30,
     loader: "default",
-    path: "/",
   },
 
   compress: true,
   poweredByHeader: false,
 
-  turbopack: {
-    root: process.cwd(),
-  },
-  
   experimental: {
     proxyClientMaxBodySize: "300mb",
     optimizePackageImports: [
@@ -48,6 +43,7 @@ const nextConfig: NextConfig = {
       "@radix-ui/react-scroll-area",
       "@radix-ui/react-slider",
     ],
+    outputFileTracingIgnores: ["next.config.ts", "next.config.js"],
   },
 
   headers: async () => [

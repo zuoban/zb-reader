@@ -1,7 +1,7 @@
 import Database from "better-sqlite3";
 import { join } from "path";
 
-const dbPath = join(process.cwd(), "data", "db.sqlite");
+const dbPath = join(/*turbopackIgnore: true*/ process.cwd(), "data/db.sqlite");
 const db = new Database(dbPath);
 
 function log(message: string) {

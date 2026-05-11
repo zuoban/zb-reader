@@ -46,7 +46,7 @@ async function requestWithFallback(
 }
 
 export async function POST(req: NextRequest) {
-  const rateLimitResult = checkRateLimit(req, { limit: 30, window: 60 });
+  const rateLimitResult = await checkRateLimit(req, { limit: 30, window: 60 });
   if (rateLimitResult) return rateLimitResult;
 
   const authResult = await getAuthUserId();

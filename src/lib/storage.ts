@@ -2,8 +2,8 @@ import fs from "fs";
 import path from "path";
 
 const DATA_DIR = path.join(/*turbopackIgnore: true*/ process.cwd(), "data");
-const BOOKS_DIR = path.join(/*turbopackIgnore: true*/ process.cwd(), "data", "books");
-const COVERS_DIR = path.join(/*turbopackIgnore: true*/ process.cwd(), "data", "covers");
+const BOOKS_DIR = path.join(/*turbopackIgnore: true*/ process.cwd(), "data/books");
+const COVERS_DIR = path.join(/*turbopackIgnore: true*/ process.cwd(), "data/covers");
 const SAFE_STORED_FILE_NAME_REGEX = /^[A-Za-z0-9._-]+$/;
 
 export class StoragePathError extends Error {

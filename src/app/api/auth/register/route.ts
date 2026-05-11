@@ -11,7 +11,7 @@ import { registerSchema } from "@/lib/validations";
 
 export async function POST(req: NextRequest) {
   // 速率限制检查：每分钟 3 次
-  const rateLimitResponse = checkRateLimit(req, {
+  const rateLimitResponse = await checkRateLimit(req, {
     limit: 3,
     window: 60,
     message: "注册请求过于频繁，请1分钟后再试",

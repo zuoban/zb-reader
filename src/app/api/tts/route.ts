@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import { db } from "@/lib/db";
 import { ttsConfigs } from "@/lib/db/schema";
 import { badRequest, getAuthUserId, serverError, validateJson } from "@/lib/api-utils";
+import { assertSafeServerFetchUrl } from "@/lib/server-url-safety";
 import { logger } from "@/lib/logger";
 import { ttsConfigImportSchema } from "@/lib/validations";
 
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
     const body = validation.data;
     const configsToInsert: (typeof ttsConfigs.$inferInsert)[] = [];
 
-    const processItem = (item: ValidTtsImportItem) => {
+    const processItem = async (item: ValidTtsImportItem) => {
       let headers = item.headers;
       const method = item.method || "GET";
       const requestBody = item.body;
@@ -65,6 +66,14 @@ export async function POST(req: NextRequest) {
           logger.warn("tts", "无法解析 Legado header，使用默认 User-Agent", item.header);
           headers = { "User-Agent": item.header };
         }
+      }
+
+      // SSRF protection: validate URL before storing
+      try {
+        await assertSafeServerFetchUrl(item.url);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "URL 安全校验失败";
+        throw new Error(`配置 "${item.name}" 的 URL 无效: ${message}`);
       }
 
       return {
@@ -81,14 +90,15 @@ export async function POST(req: NextRequest) {
     };
 
     if (Array.isArray(body)) {
-      body.forEach((item) => {
-        const normalizedItem = item as TtsImportItem;
-        if (normalizedItem.url && normalizedItem.name) {
-             configsToInsert.push(processItem(normalizedItem as ValidTtsImportItem));
-        }
-      });
+      const validItems = body.filter(
+        (item) => (item as TtsImportItem).url && (item as TtsImportItem).name
+      );
+      const processed = await Promise.all(
+        validItems.map((item) => processItem(item as ValidTtsImportItem))
+      );
+      configsToInsert.push(...processed);
     } else if (body.url && body.name) {
-      configsToInsert.push(processItem(body as ValidTtsImportItem));
+      configsToInsert.push(await processItem(body as ValidTtsImportItem));
     } else {
         return badRequest("无效的配置格式");
     }

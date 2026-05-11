@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import React from "react";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { EpubReaderRef } from "@/components/reader/EpubReader";
@@ -52,7 +53,7 @@ interface ReaderCanvasProps {
   onTocLoaded: (tocItems: TocItem[]) => void;
 }
 
-export function ReaderCanvas({
+function ReaderCanvasInner({
   activeTtsLocation,
   activeTtsParagraph,
   activeTtsParagraphId,
@@ -109,12 +110,12 @@ export function ReaderCanvas({
 
       {/* Minimalist Footer Area - Dedicated Space */}
       {!isTtsViewOpen && (
-        <div 
+        <div
           className={cn(
             "relative shrink-0 flex items-center justify-between px-6 sm:px-8 text-[10px] font-bold tracking-[0.15em] uppercase transition-all duration-500 ease-in-out border-t border-[var(--reader-text)]/10 overflow-hidden",
             toolbarVisible ? "h-0 opacity-0 pointer-events-none border-t-transparent" : "h-11 opacity-60"
           )}
-          style={{ 
+          style={{
             color: "var(--reader-text)",
             background: "var(--reader-bg)"
           }}
@@ -148,3 +149,35 @@ export function ReaderCanvas({
     </div>
   );
 }
+
+export const ReaderCanvas = React.memo(ReaderCanvasInner, (prev, next) => {
+  // Skip re-render for callback reference changes only
+  if (prev.onClick !== next.onClick) return false;
+  if (prev.onLocationChange !== next.onLocationChange) return false;
+  if (prev.onTextSelected !== next.onTextSelected) return false;
+  if (prev.onTocLoaded !== next.onTocLoaded) return false;
+
+  return (
+    prev.activeTtsLocation !== next.activeTtsLocation ||
+    prev.activeTtsParagraph !== next.activeTtsParagraph ||
+    prev.activeTtsParagraphId !== next.activeTtsParagraphId ||
+    prev.bookData !== next.bookData ||
+    prev.bookUrl !== next.bookUrl ||
+    prev.bookFormat !== next.bookFormat ||
+    prev.bookId !== next.bookId ||
+    prev.bookTitle !== next.bookTitle ||
+    prev.currentChapterTitle !== next.currentChapterTitle ||
+    prev.currentPage !== next.currentPage ||
+    prev.fontFamily !== next.fontFamily ||
+    prev.fontSize !== next.fontSize ||
+    prev.highlights !== next.highlights ||
+    prev.initialLocation !== next.initialLocation ||
+    prev.isSpeaking !== next.isSpeaking ||
+    prev.isTtsViewOpen !== next.isTtsViewOpen ||
+    prev.toolbarVisible !== next.toolbarVisible ||
+    prev.progress !== next.progress ||
+    prev.readerTheme !== next.readerTheme ||
+    prev.totalPages !== next.totalPages ||
+    prev.ttsHighlightColor !== next.ttsHighlightColor
+  );
+});

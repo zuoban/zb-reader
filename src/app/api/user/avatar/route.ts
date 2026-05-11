@@ -8,8 +8,8 @@ import path from "path";
 import { sql } from "drizzle-orm";
 import { badRequest, serverError, getAuthUserId } from "@/lib/api-utils";
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const AVATAR_DIR = path.join(DATA_DIR, "avatars");
+const DATA_DIR = path.join(/*turbopackIgnore: true*/ process.cwd(), "data");
+const AVATAR_DIR = path.join(/*turbopackIgnore: true*/ process.cwd(), "data/avatars");
 
 // 允许的 MIME 类型
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];

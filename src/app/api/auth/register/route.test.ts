@@ -31,7 +31,7 @@ vi.mock("@/lib/db", () => ({
 }));
 
 vi.mock("@/lib/rate-limit", () => ({
-  checkRateLimit: () => null,
+  checkRateLimit: () => Promise.resolve(null),
 }));
 
 function createPostRequest(body: Record<string, unknown>): NextRequest {

@@ -77,3 +77,42 @@ export function throttle<Args extends unknown[], This, Return>(
     }
   };
 }
+
+// Shared reader settings clamp functions (used by both frontend store and backend API)
+export function clampFontSize(value: number): number {
+  return Math.min(28, Math.max(12, value));
+}
+
+export function clampPageWidth(value: number): number {
+  return Math.min(100, Math.max(50, value));
+}
+
+export function clampTtsRate(value: number): number {
+  return Math.min(5, Math.max(1, value));
+}
+
+export function clampTtsPitch(value: number): number {
+  return Math.min(2, Math.max(0.5, value));
+}
+
+export function clampTtsVolume(value: number): number {
+  return Math.min(1, Math.max(0, value));
+}
+
+export function clampLegadoRate(value: number): number {
+  return Math.min(200, Math.max(10, value));
+}
+
+const ALLOWED_MICROSOFT_PRELOAD_COUNTS = [1, 2, 3, 5, 8] as const;
+export function normalizeMicrosoftPreloadCount(value: number): number {
+  return ALLOWED_MICROSOFT_PRELOAD_COUNTS.includes(
+    value as (typeof ALLOWED_MICROSOFT_PRELOAD_COUNTS)[number]
+  )
+    ? value
+    : 5;
+}
+
+const ALLOWED_FONT_FAMILIES = ["system", "serif", "sans", "kaiti"] as const;
+export function isValidFontFamily(value: string): value is (typeof ALLOWED_FONT_FAMILIES)[number] {
+  return (ALLOWED_FONT_FAMILIES as readonly string[]).includes(value);
+}

@@ -49,7 +49,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const login = credentials.login as string;
 
         // 检查登录失败次数限制（5次失败后锁定5分钟）
-        const lockRemaining = checkFailedLoginLimit(login);
+        const lockRemaining = await checkFailedLoginLimit(login);
         if (lockRemaining !== null) {
           throw new Error(`登录尝试过多，请 ${lockRemaining} 秒后重试`);
         }
@@ -72,7 +72,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
 
         // 登录成功，重置失败计数
-        resetFailedLoginCount(login);
+        await resetFailedLoginCount(login);
 
         return {
           id: user.id,

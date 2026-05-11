@@ -1,8 +1,13 @@
 import { logger } from "@/lib/logger";
 const DB_NAME = "zb-reader-books";
-const DB_VERSION = 4;
+const DB_VERSION = 5; // Incremented for new index
 const STORE_NAME = "books";
 const LOCATIONS_STORE_NAME = "locations";
+
+// Cache limits
+const MAX_CACHE_SIZE_MB = 500;
+const MAX_CACHE_SIZE_BYTES = MAX_CACHE_SIZE_MB * 1024 * 1024;
+const CACHE_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 interface CachedBook {
   id: string;
@@ -42,6 +47,13 @@ function openDB(): Promise<IDBDatabase> {
           keyPath: "id",
         });
         store.createIndex("timestamp", "timestamp");
+        store.createIndex("size", "size");
+      } else {
+        // Add size index for existing stores (migration from v4)
+        const store = database.transaction([STORE_NAME], "readwrite").objectStore(STORE_NAME);
+        if (!store.indexNames.contains("size")) {
+          store.createIndex("size", "size");
+        }
       }
       if (!database.objectStoreNames.contains(LOCATIONS_STORE_NAME)) {
         database.createObjectStore(LOCATIONS_STORE_NAME);
@@ -64,6 +76,10 @@ export async function cacheBook(
 ): Promise<void> {
   try {
     const database = await openDB();
+
+    // Enforce size limit before adding
+    await evictIfNeeded(database, fileData.byteLength);
+
     const transaction = database.transaction([STORE_NAME], "readwrite");
     const store = transaction.objectStore(STORE_NAME);
 
@@ -99,7 +115,18 @@ export async function getCachedBook(
       const request = store.get(bookId);
       request.onsuccess = () => {
         const book = request.result as CachedBook | undefined;
-        resolve(book ? book.file : null);
+        if (!book) {
+          resolve(null);
+          return;
+        }
+        // Check expiry
+        if (Date.now() - book.timestamp > CACHE_EXPIRY_MS) {
+          logger.info("book-cache", `Cache expired for book ${bookId}, removing`);
+          store.delete(bookId);
+          resolve(null);
+          return;
+        }
+        resolve(book.file);
       };
       request.onerror = () => reject(request.error);
     });
@@ -203,6 +230,34 @@ export async function getCachedBookMeta(
     });
   } catch {
     return null;
+  }
+}
+
+/**
+ * Evict cached books if total size would exceed MAX_CACHE_SIZE_BYTES.
+ * Removes oldest books first until there's enough space.
+ */
+async function evictIfNeeded(database: IDBDatabase, newBookSize: number): Promise<void> {
+  const store = database.transaction([STORE_NAME], "readonly").objectStore(STORE_NAME);
+
+  const allBooks = await new Promise<CachedBook[]>((resolve, reject) => {
+    const request = store.getAll();
+    request.onsuccess = () => resolve(request.result as CachedBook[]);
+    request.onerror = () => reject(request.error);
+  });
+
+  const totalSize = allBooks.reduce((sum, b) => sum + b.size, 0);
+  if (totalSize + newBookSize <= MAX_CACHE_SIZE_BYTES) return;
+
+  // Sort by timestamp (oldest first) and evict until under limit
+  const sorted = [...allBooks].sort((a, b) => a.timestamp - b.timestamp);
+  let currentTotal = totalSize;
+
+  for (const book of sorted) {
+    if (currentTotal + newBookSize <= MAX_CACHE_SIZE_BYTES) break;
+    currentTotal -= book.size;
+    logger.info("book-cache", `Evicting book "${book.id}" (${(book.size / 1024 / 1024).toFixed(1)}MB) to free space`);
+    await clearBookCache(book.id);
   }
 }
 

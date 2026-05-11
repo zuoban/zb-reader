@@ -4,8 +4,8 @@ import * as schema from "./schema";
 import path from "path";
 import fs from "fs";
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const DB_PATH = path.join(DATA_DIR, "db.sqlite");
+const DATA_DIR = path.join(/*turbopackIgnore: true*/ process.cwd(), "data");
+const DB_PATH = path.join(/*turbopackIgnore: true*/ process.cwd(), "data/db.sqlite");
 
 // Ensure data directory exists
 if (!fs.existsSync(DATA_DIR)) {

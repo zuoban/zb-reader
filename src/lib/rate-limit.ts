@@ -1,32 +1,140 @@
 import { NextRequest, NextResponse } from "next/server";
+import { sql } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { logger } from "@/lib/logger";
 
-// ⚠️ 内存速率限制器
-// 仅适用于单进程 Next.js 部署。多进程/多副本部署时，每个实例独立计数，
-// 实际限制 = limit × 实例数。生产环境应改用 Redis 等共享存储。
+// Rate limit table is created on-demand if it doesn't exist
+let rateLimitTableInitialized = false;
+
+async function ensureRateLimitTable() {
+  if (rateLimitTableInitialized) return;
+
+  try {
+    await db.run(sql`
+      CREATE TABLE IF NOT EXISTS rate_limits (
+        key TEXT PRIMARY KEY,
+        count INTEGER NOT NULL DEFAULT 1,
+        reset_at INTEGER NOT NULL
+      )
+    `);
+
+    // Failed login tracking table
+    await db.run(sql`
+      CREATE TABLE IF NOT EXISTS failed_logins (
+        key TEXT PRIMARY KEY,
+        count INTEGER NOT NULL DEFAULT 1,
+        lock_until INTEGER NOT NULL DEFAULT 0
+      )
+    `);
+
+    rateLimitTableInitialized = true;
+  } catch (error) {
+    // Table creation failed, fall back to in-memory
+    logger.warn("rate-limit", "Failed to create rate limit tables, using in-memory store", error);
+  }
+}
 
 interface RateLimitEntry {
   count: number;
   resetTime: number;
 }
 
-const rateLimitStore = new Map<string, RateLimitEntry>();
+// In-memory fallback
+const rateLimitFallback = new Map<string, RateLimitEntry>();
 
-// 清理过期的条目（每分钟执行一次）
-let lastCleanup = Date.now();
-function cleanupStore() {
+async function getRateLimitEntry(identifier: string, window: number): Promise<RateLimitEntry> {
+  await ensureRateLimitTable();
+
   const now = Date.now();
-  if (now - lastCleanup > 60000) {
-    for (const [key, entry] of rateLimitStore.entries()) {
-      if (entry.resetTime < now) {
-        rateLimitStore.delete(key);
-      }
+  const resetAt = now + window * 1000;
+
+  try {
+    const row = await db.get<{ count: number; reset_at: number }>(
+      sql`SELECT count, reset_at FROM rate_limits WHERE key = ${identifier}`
+    );
+
+    if (!row || row.reset_at < now) {
+      // Create new entry
+      await db.run(sql`
+        INSERT OR REPLACE INTO rate_limits (key, count, reset_at)
+        VALUES (${identifier}, 1, ${resetAt})
+      `);
+      return { count: 1, resetTime: resetAt };
     }
-    lastCleanup = now;
+
+    // Increment count
+    await db.run(sql`
+      UPDATE rate_limits SET count = count + 1 WHERE key = ${identifier}
+    `);
+    return { count: row.count + 1, resetTime: row.reset_at };
+  } catch {
+    // Fall back to in-memory
+    return getFallbackEntry(identifier, window);
   }
 }
 
-// 专门用于登录失败的速率限制
-const failedLoginStore = new Map<string, { count: number; lockUntil: number }>();
+function getFallbackEntry(identifier: string, window: number): RateLimitEntry {
+  const now = Date.now();
+  const entry = rateLimitFallback.get(identifier);
+
+  if (!entry || entry.resetTime < now) {
+    const newEntry = { count: 1, resetTime: now + window * 1000 };
+    rateLimitFallback.set(identifier, newEntry);
+    return newEntry;
+  }
+
+  entry.count++;
+  return entry;
+}
+
+// Failed login in-memory fallback
+const failedLoginFallback = new Map<string, { count: number; lockUntil: number }>();
+
+interface FailedLoginEntry {
+  count: number;
+  lockUntil: number;
+}
+
+async function getFailedLoginEntry(identifier: string): Promise<FailedLoginEntry> {
+  await ensureRateLimitTable();
+
+  try {
+    const row = await db.get<{ count: number; lock_until: number }>(
+      sql`SELECT count, lock_until FROM failed_logins WHERE key = ${identifier}`
+    );
+
+    if (!row) {
+      await db.run(sql`
+        INSERT OR REPLACE INTO failed_logins (key, count, lock_until)
+        VALUES (${identifier}, 1, 0)
+      `);
+      return { count: 1, lockUntil: 0 };
+    }
+
+    return { count: row.count, lockUntil: row.lock_until };
+  } catch {
+    return getFallbackFailedLoginEntry(identifier);
+  }
+}
+
+function getFallbackFailedLoginEntry(identifier: string): FailedLoginEntry {
+  const entry = failedLoginFallback.get(identifier);
+  return entry || { count: 0, lockUntil: 0 };
+}
+
+async function updateFailedLoginEntry(identifier: string, count: number, lockUntil: number): Promise<void> {
+  await ensureRateLimitTable();
+
+  try {
+    await db.run(sql`
+      INSERT OR REPLACE INTO failed_logins (key, count, lock_until)
+      VALUES (${identifier}, ${count}, ${lockUntil})
+    `);
+  } catch {
+    // Fall back to in-memory
+    failedLoginFallback.set(identifier, { count, lockUntil });
+  }
+}
 
 /**
  * 速率限制中间件
@@ -34,7 +142,7 @@ const failedLoginStore = new Map<string, { count: number; lockUntil: number }>()
  * @param options 配置选项
  * @returns 如果被限制返回 NextResponse，否则返回 null
  */
-export function checkRateLimit(
+export async function checkRateLimit(
   req: NextRequest,
   options: {
     /** 限制次数 */
@@ -46,11 +154,8 @@ export function checkRateLimit(
     /** 自定义错误消息 */
     message?: string;
   }
-): NextResponse | null {
+): Promise<NextResponse | null> {
   const { limit, window, key, message } = options;
-
-  // 定期清理过期条目
-  cleanupStore();
 
   // 获取客户端标识符
   const identifier = key
@@ -59,21 +164,11 @@ export function checkRateLimit(
       req.headers.get("x-real-ip") ||
       "unknown";
 
-  const now = Date.now();
-  const entry = rateLimitStore.get(identifier);
-
-  // 如果不存在或已过期，创建新条目
-  if (!entry || entry.resetTime < now) {
-    rateLimitStore.set(identifier, {
-      count: 1,
-      resetTime: now + window * 1000,
-    });
-    return null;
-  }
+  const entry = await getRateLimitEntry(identifier, window);
 
   // 检查是否超过限制
   if (entry.count >= limit) {
-    const resetSeconds = Math.ceil((entry.resetTime - now) / 1000);
+    const resetSeconds = Math.ceil((entry.resetTime - Date.now()) / 1000);
     return NextResponse.json(
       {
         error: message || "请求过于频繁，请稍后再试",
@@ -91,44 +186,45 @@ export function checkRateLimit(
     );
   }
 
-  // 增加计数
-  entry.count++;
   return null;
 }
 
 /**
  * 登录失败次数限制
- * @param identifier 客户端标识符（用户名或IP）
+ * @param identifier 客户端标识符
  * @param maxAttempts 最大尝试次数
  * @param lockDuration 锁定时间（秒）
- * @returns 如果被锁定返回锁定剩余时间，否则返回 null
+ * @returns 如果超过限制返回锁定剩余秒数，否则返回 null
  */
-export function checkFailedLoginLimit(
+export async function checkFailedLoginLimit(
   identifier: string,
   maxAttempts = 5,
   lockDuration = 300
-): number | null {
+): Promise<number | null> {
   const now = Date.now();
-  const entry = failedLoginStore.get(identifier);
+  const entry = await getFailedLoginEntry(identifier);
 
-  // 如果存在锁定记录且未过期
-  if (entry && entry.lockUntil > now) {
+  // 如果处于锁定状态且未过期
+  if (entry.lockUntil > now) {
     return Math.ceil((entry.lockUntil - now) / 1000);
   }
 
-  // 记录失败尝试
-  if (!entry) {
-    failedLoginStore.set(identifier, { count: 1, lockUntil: 0 });
-  } else {
-    entry.count++;
-
-    // 如果超过最大尝试次数，锁定账户
-    if (entry.count >= maxAttempts) {
-      entry.lockUntil = now + lockDuration * 1000;
-      return lockDuration;
-    }
+  // 如果锁定已过期，重置
+  if (entry.lockUntil > 0 && entry.lockUntil <= now) {
+    await updateFailedLoginEntry(identifier, 0, 0);
   }
 
+  // 增加计数
+  const newCount = entry.count + 1;
+
+  // 如果超过最大尝试次数，锁定
+  if (newCount >= maxAttempts) {
+    const lockUntil = now + lockDuration * 1000;
+    await updateFailedLoginEntry(identifier, newCount, lockUntil);
+    return lockDuration;
+  }
+
+  await updateFailedLoginEntry(identifier, newCount, 0);
   return null;
 }
 
@@ -136,6 +232,12 @@ export function checkFailedLoginLimit(
  * 重置登录失败计数
  * @param identifier 客户端标识符
  */
-export function resetFailedLoginCount(identifier: string) {
-  failedLoginStore.delete(identifier);
+export async function resetFailedLoginCount(identifier: string): Promise<void> {
+  await ensureRateLimitTable();
+
+  try {
+    await db.run(sql`DELETE FROM failed_logins WHERE key = ${identifier}`);
+  } catch {
+    failedLoginFallback.delete(identifier);
+  }
 }

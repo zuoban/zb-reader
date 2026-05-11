@@ -6,6 +6,16 @@ import { db } from "@/lib/db";
 import { readerSettings } from "@/lib/db/schema";
 import { getAuthUserId, serverError, validateJson } from "@/lib/api-utils";
 import { readerSettingsSchema } from "@/lib/validations";
+import {
+  clampFontSize,
+  clampPageWidth,
+  clampTtsRate,
+  clampTtsPitch,
+  clampTtsVolume,
+  clampLegadoRate,
+  normalizeMicrosoftPreloadCount,
+  isValidFontFamily,
+} from "@/lib/utils";
 
 const DEFAULTS = {
   fontSize: 16,
@@ -20,10 +30,14 @@ const DEFAULTS = {
   ttsAutoNextChapter: false,
   ttsHighlightColor: "#3b82f6",
   autoScrollToActive: true,
+  flipMode: "scroll" as const,
+  ttsEngine: "browser" as const,
+  legadoRate: 50,
+  legadoConfigId: null,
+  legadoPreloadCount: 3,
+  ttsImmersiveMode: false,
+  ttsHighlightStyle: "indicator" as const,
 };
-
-const ALLOWED_FONT_FAMILIES = ["system", "serif", "sans", "kaiti"];
-const ALLOWED_MICROSOFT_PRELOAD_COUNTS = [1, 2, 3, 5, 8];
 
 export function clampReaderSettingNumber(
   value: unknown,
@@ -37,11 +51,6 @@ export function clampReaderSettingNumber(
   }
 
   return Math.min(max, Math.max(min, numericValue));
-}
-
-export function normalizeMicrosoftPreloadCount(value: unknown, fallback: number): number {
-  const numericValue = Number(value ?? fallback);
-  return ALLOWED_MICROSOFT_PRELOAD_COUNTS.includes(numericValue) ? numericValue : fallback;
 }
 
 function toResponseShape(settings: typeof readerSettings.$inferSelect | null | undefined) {
@@ -62,6 +71,13 @@ function toResponseShape(settings: typeof readerSettings.$inferSelect | null | u
     ttsAutoNextChapter: settings.ttsAutoNextChapter,
     ttsHighlightColor: settings.ttsHighlightColor || "#3b82f6",
     autoScrollToActive: settings.autoScrollToActive,
+    flipMode: settings.flipMode || DEFAULTS.flipMode,
+    ttsEngine: settings.ttsEngine || DEFAULTS.ttsEngine,
+    legadoRate: settings.legadoRate,
+    legadoConfigId: settings.legadoConfigId,
+    legadoPreloadCount: settings.legadoPreloadCount,
+    ttsImmersiveMode: settings.ttsImmersiveMode,
+    ttsHighlightStyle: settings.ttsHighlightStyle || DEFAULTS.ttsHighlightStyle,
   };
 }
 
@@ -96,45 +112,24 @@ export async function PUT(req: NextRequest) {
     });
 
     const nextValues = {
-      fontSize: clampReaderSettingNumber(
-        payload.fontSize ?? existing?.fontSize,
-        12,
-        28,
-        DEFAULTS.fontSize
-      ),
-      pageWidth: clampReaderSettingNumber(
-        payload.pageWidth ?? existing?.pageWidth,
-        50,
-        100,
-        DEFAULTS.pageWidth
-      ),
+      fontSize: clampFontSize(payload.fontSize ?? existing?.fontSize ?? DEFAULTS.fontSize),
+      pageWidth: clampPageWidth(payload.pageWidth ?? existing?.pageWidth ?? DEFAULTS.pageWidth),
       theme:
         payload.theme === "dark" || payload.theme === "sepia" || payload.theme === "light"
           ? payload.theme
           : existing?.theme ?? DEFAULTS.theme,
-      fontFamily: ALLOWED_FONT_FAMILIES.includes(payload.fontFamily as string)
-        ? (payload.fontFamily as string)
+      fontFamily: isValidFontFamily(payload.fontFamily ?? "")
+        ? payload.fontFamily
         : existing?.fontFamily ?? DEFAULTS.fontFamily,
       browserVoiceId:
         typeof payload.browserVoiceId === "string"
           ? payload.browserVoiceId
           : existing?.browserVoiceId ?? DEFAULTS.browserVoiceId,
-      ttsRate: clampReaderSettingNumber(payload.ttsRate ?? existing?.ttsRate, 1, 5, DEFAULTS.ttsRate),
-      ttsPitch: clampReaderSettingNumber(
-        payload.ttsPitch ?? existing?.ttsPitch,
-        0.5,
-        2,
-        DEFAULTS.ttsPitch
-      ),
-      ttsVolume: clampReaderSettingNumber(
-        payload.ttsVolume ?? existing?.ttsVolume,
-        0,
-        1,
-        DEFAULTS.ttsVolume
-      ),
+      ttsRate: clampTtsRate(payload.ttsRate ?? existing?.ttsRate ?? DEFAULTS.ttsRate),
+      ttsPitch: clampTtsPitch(payload.ttsPitch ?? existing?.ttsPitch ?? DEFAULTS.ttsPitch),
+      ttsVolume: clampTtsVolume(payload.ttsVolume ?? existing?.ttsVolume ?? DEFAULTS.ttsVolume),
       microsoftPreloadCount: normalizeMicrosoftPreloadCount(
-        payload.microsoftPreloadCount ?? existing?.microsoftPreloadCount,
-        DEFAULTS.microsoftPreloadCount
+        payload.microsoftPreloadCount ?? existing?.microsoftPreloadCount ?? DEFAULTS.microsoftPreloadCount
       ),
       ttsAutoNextChapter:
         typeof payload.ttsAutoNextChapter === "boolean"
@@ -148,6 +143,31 @@ export async function PUT(req: NextRequest) {
         typeof payload.autoScrollToActive === "boolean"
           ? payload.autoScrollToActive
           : existing?.autoScrollToActive ?? DEFAULTS.autoScrollToActive,
+      flipMode:
+        payload.flipMode === "scroll" || payload.flipMode === "page"
+          ? payload.flipMode
+          : existing?.flipMode ?? DEFAULTS.flipMode,
+      ttsEngine:
+        payload.ttsEngine === "browser" || payload.ttsEngine === "legado" || payload.ttsEngine === "microsoft"
+          ? payload.ttsEngine
+          : existing?.ttsEngine ?? DEFAULTS.ttsEngine,
+      legadoRate: clampLegadoRate(payload.legadoRate ?? existing?.legadoRate ?? DEFAULTS.legadoRate),
+      legadoConfigId:
+        payload.legadoConfigId === null || typeof payload.legadoConfigId === "string"
+          ? payload.legadoConfigId
+          : existing?.legadoConfigId ?? DEFAULTS.legadoConfigId,
+      legadoPreloadCount:
+        typeof payload.legadoPreloadCount === "number" && Number.isFinite(payload.legadoPreloadCount)
+          ? payload.legadoPreloadCount
+          : existing?.legadoPreloadCount ?? DEFAULTS.legadoPreloadCount,
+      ttsImmersiveMode:
+        typeof payload.ttsImmersiveMode === "boolean"
+          ? payload.ttsImmersiveMode
+          : existing?.ttsImmersiveMode ?? DEFAULTS.ttsImmersiveMode,
+      ttsHighlightStyle:
+        payload.ttsHighlightStyle === "background" || payload.ttsHighlightStyle === "indicator"
+          ? payload.ttsHighlightStyle
+          : existing?.ttsHighlightStyle ?? DEFAULTS.ttsHighlightStyle,
       updatedAt: now,
     };
 
@@ -178,6 +198,13 @@ export async function PUT(req: NextRequest) {
         ttsAutoNextChapter: nextValues.ttsAutoNextChapter,
         ttsHighlightColor: nextValues.ttsHighlightColor,
         autoScrollToActive: nextValues.autoScrollToActive,
+        flipMode: nextValues.flipMode,
+        ttsEngine: nextValues.ttsEngine,
+        legadoRate: nextValues.legadoRate,
+        legadoConfigId: nextValues.legadoConfigId,
+        legadoPreloadCount: nextValues.legadoPreloadCount,
+        ttsImmersiveMode: nextValues.ttsImmersiveMode,
+        ttsHighlightStyle: nextValues.ttsHighlightStyle,
       },
     });
   } catch (error) {
