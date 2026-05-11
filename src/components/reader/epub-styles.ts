@@ -35,7 +35,6 @@ export const THEME_STYLES: Record<
       "margin-left": "auto",
       "margin-right": "auto",
       "box-sizing": "border-box",
-      "overflow-x": "hidden",
     },
     p: { margin: "0 0 1.5em", "text-align": "justify", "text-justify": "inter-character" },
     "h1, h2, h3, h4, h5, h6": {
@@ -88,10 +87,14 @@ export const THEME_STYLES: Record<
     },
     "img, svg, video, canvas": {
       "max-width": "100%",
+      "max-height": "100vh",
       height: "auto",
+      width: "auto",
       "border-radius": "4px",
       "box-shadow": "0 10px 30px rgba(0,0,0,0.08)",
       margin: "2em auto",
+      display: "block",
+      "object-fit": "contain",
     },
     table: {
       margin: "2.5em 0",
@@ -140,7 +143,7 @@ export const THEME_STYLES: Record<
       "box-sizing": "border-box",
       "overflow-x": "hidden",
     },
-    "body > *": { width: "100%", "max-width": "100%", "margin-left": "auto", "margin-right": "auto", "box-sizing": "border-box", "overflow-x": "hidden" },
+    "body > *": { width: "100%", "max-width": "100%", "margin-left": "auto", "margin-right": "auto", "box-sizing": "border-box" },
     p: { margin: "0 0 1.5em", "text-align": "justify", "text-justify": "inter-character" },
     "h1, h2, h3, h4, h5, h6": {
       color: "#ffffff",
@@ -190,7 +193,7 @@ export const THEME_STYLES: Record<
       "font-family": '"JetBrains Mono", monospace',
       "font-size": "0.85em",
     },
-    "img, svg, video, canvas": { "max-width": "100%", height: "auto", "border-radius": "4px", "box-shadow": "0 10px 40px rgba(0,0,0,0.4)", margin: "2em auto" },
+    "img, svg, video, canvas": { "max-width": "100%", "max-height": "100vh", height: "auto", width: "auto", "border-radius": "4px", "box-shadow": "0 10px 40px rgba(0,0,0,0.4)", margin: "2em auto", display: "block", "object-fit": "contain" },
     table: {
       margin: "2.5em 0",
       width: "100%",
@@ -238,7 +241,7 @@ export const THEME_STYLES: Record<
       "box-sizing": "border-box",
       "overflow-x": "hidden",
     },
-    "body > *": { width: "100%", "max-width": "100%", "margin-left": "auto", "margin-right": "auto", "box-sizing": "border-box", "overflow-x": "hidden" },
+    "body > *": { width: "100%", "max-width": "100%", "margin-left": "auto", "margin-right": "auto", "box-sizing": "border-box" },
     p: { margin: "0 0 1.5em", "text-align": "justify", "text-justify": "inter-character" },
     "h1, h2, h3, h4, h5, h6": {
       color: "#4C382B",
@@ -287,7 +290,7 @@ export const THEME_STYLES: Record<
       "font-family": '"JetBrains Mono", monospace',
       "font-size": "0.85em",
     },
-    "img, svg, video, canvas": { "max-width": "100%", height: "auto", "border-radius": "4px", "box-shadow": "0 10px 30px rgba(91,70,54,0.15)", margin: "2em auto" },
+    "img, svg, video, canvas": { "max-width": "100%", "max-height": "100vh", height: "auto", width: "auto", "border-radius": "4px", "box-shadow": "0 10px 30px rgba(91,70,54,0.15)", margin: "2em auto", display: "block", "object-fit": "contain" },
     "a:hover": { "text-decoration": "underline", "text-decoration-color": "rgba(91,70,54,0.3)" },
     table: {
       margin: "2.5em 0",
