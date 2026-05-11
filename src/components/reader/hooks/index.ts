@@ -1,6 +1,6 @@
 export { useIdleTimeout } from "./useIdleTimeout";
 export { useCurrentChapterTitle } from "./useCurrentChapterTitle";
-export { useMicrosoftTtsSpeech } from "./useMicrosoftTtsSpeech";
+export { useBuiltinTtsSpeech } from "./useBuiltinTtsSpeech";
 export { useReaderFullscreen } from "./useReaderFullscreen";
 export { useReaderKeyboardShortcuts } from "./useReaderKeyboardShortcuts";
 export { useReaderMediaSessionActions } from "./useReaderMediaSessionActions";

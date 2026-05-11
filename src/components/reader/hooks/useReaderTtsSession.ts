@@ -11,7 +11,7 @@ const MAX_TTS_RETRY_COUNT = 5;
 const TTS_RETRY_DELAY_MS = 450;
 
 interface PlayAudioOptions {
-  debugMeta?: { engine: "microsoft"; sentenceIndex?: number; paragraph?: string };
+  debugMeta?: { engine: "builtin"; sentenceIndex?: number; paragraph?: string };
 }
 
 interface UseReaderTtsSessionParams {
@@ -31,7 +31,7 @@ interface UseReaderTtsSessionParams {
     options?: PlayAudioOptions
   ) => Promise<void>;
   readSentencesHashRef: React.MutableRefObject<Set<string>>;
-  requestMicrosoftSpeech: (text: string, options?: { prefetch?: boolean }) => Promise<string>;
+  requestBuiltinSpeech: (text: string, options?: { prefetch?: boolean }) => Promise<string>;
   resumePendingPlayback: () => boolean;
   setActiveTtsHtml: (html: string) => void;
   setActiveTtsIsCodeBlock: (value: boolean) => void;
@@ -79,7 +79,7 @@ export function useReaderTtsSession({
   isSpeaking,
   playAudioSource,
   readSentencesHashRef,
-  requestMicrosoftSpeech,
+  requestBuiltinSpeech,
   resumePendingPlayback,
   setActiveTtsHtml,
   setActiveTtsIsCodeBlock,
@@ -217,7 +217,7 @@ export function useReaderTtsSession({
           cursor += 1
         ) {
           if (!preparedTaskMap.has(cursor)) {
-            const task = requestMicrosoftSpeech(queue[cursor].text, { prefetch: true });
+            const task = requestBuiltinSpeech(queue[cursor].text, { prefetch: true });
             task.catch(() => {
               // avoid unhandled promise rejection for preloaded items
             });
@@ -262,8 +262,8 @@ export function useReaderTtsSession({
 
           try {
             objectUrl = await (attempt === 1
-              ? preparedTaskMap.get(i) ?? requestMicrosoftSpeech(sentence.text)
-              : requestMicrosoftSpeech(sentence.text));
+              ? preparedTaskMap.get(i) ?? requestBuiltinSpeech(sentence.text)
+              : requestBuiltinSpeech(sentence.text));
 
             await new Promise<void>((resolve, reject) => {
               if (ttsSessionRef.current !== sessionId) {
@@ -273,7 +273,7 @@ export function useReaderTtsSession({
 
               void playAudioSource(objectUrl as string, sessionId, {
                 debugMeta: {
-                  engine: "microsoft",
+                  engine: "builtin",
                   sentenceIndex: startIndex + i,
                 },
               })
@@ -329,7 +329,7 @@ export function useReaderTtsSession({
       currentParagraphIndexRef,
       playAudioSource,
       readSentencesHashRef,
-      requestMicrosoftSpeech,
+      requestBuiltinSpeech,
       setActiveTtsHtml,
       setActiveTtsIsCodeBlock,
       setActiveTtsLocation,

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { READER_THEME_STYLES } from "@/lib/reader-theme";
 import type { BrowserVoiceOption } from "@/lib/tts";
-import type { FontFamily, TtsEngine, TtsHighlightStyle } from "@/stores/reader-settings";
+import type { FontFamily, TtsHighlightStyle } from "@/stores/reader-settings";
 
 interface ReaderSettingsLifecycleState {
   fontSize: number;
@@ -13,14 +13,10 @@ interface ReaderSettingsLifecycleState {
   ttsRate: number;
   ttsPitch: number;
   ttsVolume: number;
-  microsoftPreloadCount: number;
+  ttsPreloadCount: number;
   ttsAutoNextChapter: boolean;
   ttsHighlightColor: string;
   autoScrollToActive: boolean;
-  ttsEngine: TtsEngine;
-  legadoRate: number;
-  legadoConfigId: string | null;
-  legadoPreloadCount: number;
   ttsImmersiveMode: boolean;
   ttsHighlightStyle: TtsHighlightStyle;
   loaded: boolean;
@@ -53,14 +49,10 @@ export function useReaderSettingsLifecycle(
     settings.ttsRate,
     settings.ttsPitch,
     settings.ttsVolume,
-    settings.microsoftPreloadCount,
+    settings.ttsPreloadCount,
     settings.ttsAutoNextChapter,
     settings.ttsHighlightColor,
     settings.autoScrollToActive,
-    settings.ttsEngine,
-    settings.legadoRate,
-    settings.legadoConfigId,
-    settings.legadoPreloadCount,
     settings.ttsImmersiveMode,
     settings.ttsHighlightStyle,
   ]);

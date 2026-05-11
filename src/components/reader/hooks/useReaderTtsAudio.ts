@@ -16,7 +16,7 @@ interface UseReaderTtsAudioParams {
 interface PlayAudioOptions {
   onEnd?: () => void;
   onCleanup?: () => void;
-  debugMeta?: { engine: "microsoft"; sentenceIndex?: number; paragraph?: string };
+  debugMeta?: { engine: "builtin"; sentenceIndex?: number; paragraph?: string };
 }
 
 const IS_DEV = process.env.NODE_ENV !== "production";

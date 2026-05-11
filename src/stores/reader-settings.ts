@@ -10,14 +10,12 @@ import {
   clampTtsRate,
   clampTtsPitch,
   clampTtsVolume,
-  clampLegadoRate,
-  normalizeMicrosoftPreloadCount,
+  normalizeTtsPreloadCount,
   isValidFontFamily,
 } from "@/lib/utils";
 
 export type FontFamily = "system" | "serif" | "sans" | "kaiti";
 export type FlipMode = "scroll" | "page";
-export type TtsEngine = "browser" | "legado" | "microsoft";
 export type TtsHighlightStyle = "background" | "indicator";
 
 interface ReaderSettingsState {
@@ -29,15 +27,11 @@ interface ReaderSettingsState {
   ttsRate: number;
   ttsPitch: number;
   ttsVolume: number;
-  microsoftPreloadCount: number;
+  ttsPreloadCount: number;
   ttsHighlightColor: string;
   ttsAutoNextChapter: boolean;
   autoScrollToActive: boolean;
   flipMode: FlipMode;
-  ttsEngine: TtsEngine;
-  legadoRate: number;
-  legadoConfigId: string | null;
-  legadoPreloadCount: number;
   ttsImmersiveMode: boolean;
   ttsHighlightStyle: TtsHighlightStyle;
   loaded: boolean;
@@ -52,20 +46,20 @@ interface ReaderSettingsActions {
   setTtsRate: (rate: number) => void;
   setTtsPitch: (pitch: number) => void;
   setTtsVolume: (volume: number) => void;
-  setMicrosoftPreloadCount: (count: number) => void;
+  setTtsPreloadCount: (count: number) => void;
   setTtsHighlightColor: (color: string) => void;
   setTtsAutoNextChapter: (enabled: boolean) => void;
   setAutoScrollToActive: (enabled: boolean) => void;
   setFlipMode: (mode: FlipMode) => void;
-  setTtsEngine: (engine: TtsEngine) => void;
-  setLegadoRate: (rate: number) => void;
-  setLegadoConfigId: (id: string | null) => void;
-  setLegadoPreloadCount: (count: number) => void;
   setTtsImmersiveMode: (enabled: boolean) => void;
   setTtsHighlightStyle: (style: TtsHighlightStyle) => void;
   loadFromServer: () => Promise<void>;
   saveToServer: () => Promise<void>;
 }
+
+type ReaderSettingsApiResponse = Partial<ReaderSettingsState> & {
+  microsoftPreloadCount?: number;
+};
 
 const DEFAULT_STATE: ReaderSettingsState = {
   fontSize: 16,
@@ -76,15 +70,11 @@ const DEFAULT_STATE: ReaderSettingsState = {
   ttsRate: 1,
   ttsPitch: 1,
   ttsVolume: 1,
-  microsoftPreloadCount: 5,
+  ttsPreloadCount: 5,
   ttsHighlightColor: "#3b82f6",
   ttsAutoNextChapter: true,
   autoScrollToActive: true,
   flipMode: "scroll",
-  ttsEngine: "browser",
-  legadoRate: 50,
-  legadoConfigId: null,
-  legadoPreloadCount: 3,
   ttsImmersiveMode: false,
   ttsHighlightStyle: "indicator",
   loaded: false,
@@ -105,16 +95,12 @@ export const useReaderSettingsStore = create<
       setTtsRate: (rate) => set({ ttsRate: clampTtsRate(rate) }),
       setTtsPitch: (pitch) => set({ ttsPitch: clampTtsPitch(pitch) }),
       setTtsVolume: (volume) => set({ ttsVolume: clampTtsVolume(volume) }),
-      setMicrosoftPreloadCount: (count) =>
-        set({ microsoftPreloadCount: normalizeMicrosoftPreloadCount(count) }),
+      setTtsPreloadCount: (count) =>
+        set({ ttsPreloadCount: normalizeTtsPreloadCount(count) }),
       setTtsHighlightColor: (color) => set({ ttsHighlightColor: color }),
       setTtsAutoNextChapter: (enabled) => set({ ttsAutoNextChapter: enabled }),
       setAutoScrollToActive: (enabled) => set({ autoScrollToActive: enabled }),
       setFlipMode: (flipMode) => set({ flipMode }),
-      setTtsEngine: (ttsEngine) => set({ ttsEngine }),
-      setLegadoRate: (rate) => set({ legadoRate: clampLegadoRate(rate) }),
-      setLegadoConfigId: (legadoConfigId) => set({ legadoConfigId }),
-      setLegadoPreloadCount: (legadoPreloadCount) => set({ legadoPreloadCount }),
       setTtsImmersiveMode: (ttsImmersiveMode) => set({ ttsImmersiveMode }),
       setTtsHighlightStyle: (ttsHighlightStyle) => set({ ttsHighlightStyle }),
 
@@ -124,7 +110,7 @@ export const useReaderSettingsStore = create<
           if (!res.ok) return;
 
           const data = (await res.json()) as {
-            settings?: Partial<ReaderSettingsState>;
+            settings?: ReaderSettingsApiResponse;
           };
 
           const settings = data.settings;
@@ -156,21 +142,14 @@ export const useReaderSettingsStore = create<
               typeof settings.ttsVolume === "number"
                 ? clampTtsVolume(settings.ttsVolume)
                 : DEFAULT_STATE.ttsVolume,
-            microsoftPreloadCount:
+            ttsPreloadCount:
               typeof settings.microsoftPreloadCount === "number"
-                ? normalizeMicrosoftPreloadCount(settings.microsoftPreloadCount)
-                : DEFAULT_STATE.microsoftPreloadCount,
+                ? normalizeTtsPreloadCount(settings.microsoftPreloadCount)
+                : DEFAULT_STATE.ttsPreloadCount,
             ttsHighlightColor: settings.ttsHighlightColor || DEFAULT_STATE.ttsHighlightColor,
             ttsAutoNextChapter: settings.ttsAutoNextChapter ?? DEFAULT_STATE.ttsAutoNextChapter,
             autoScrollToActive: settings.autoScrollToActive ?? DEFAULT_STATE.autoScrollToActive,
             flipMode: settings.flipMode || DEFAULT_STATE.flipMode,
-            ttsEngine: settings.ttsEngine || DEFAULT_STATE.ttsEngine,
-            legadoRate:
-              typeof settings.legadoRate === "number"
-                ? clampLegadoRate(settings.legadoRate)
-                : DEFAULT_STATE.legadoRate,
-            legadoConfigId: settings.legadoConfigId ?? DEFAULT_STATE.legadoConfigId,
-            legadoPreloadCount: settings.legadoPreloadCount || DEFAULT_STATE.legadoPreloadCount,
             ttsImmersiveMode: settings.ttsImmersiveMode ?? DEFAULT_STATE.ttsImmersiveMode,
             ttsHighlightStyle: settings.ttsHighlightStyle || DEFAULT_STATE.ttsHighlightStyle,
             loaded: true,
@@ -197,15 +176,11 @@ export const useReaderSettingsStore = create<
               ttsRate: state.ttsRate,
               ttsPitch: state.ttsPitch,
               ttsVolume: state.ttsVolume,
-              microsoftPreloadCount: state.microsoftPreloadCount,
+              microsoftPreloadCount: state.ttsPreloadCount,
               ttsHighlightColor: state.ttsHighlightColor,
               ttsAutoNextChapter: state.ttsAutoNextChapter,
               autoScrollToActive: state.autoScrollToActive,
               flipMode: state.flipMode,
-              ttsEngine: state.ttsEngine,
-              legadoRate: state.legadoRate,
-              legadoConfigId: state.legadoConfigId,
-              legadoPreloadCount: state.legadoPreloadCount,
               ttsImmersiveMode: state.ttsImmersiveMode,
               ttsHighlightStyle: state.ttsHighlightStyle,
             }),
@@ -274,14 +249,10 @@ export function useReaderSettingsValues() {
       ttsRate: s.ttsRate,
       ttsPitch: s.ttsPitch,
       ttsVolume: s.ttsVolume,
-      microsoftPreloadCount: s.microsoftPreloadCount,
+      ttsPreloadCount: s.ttsPreloadCount,
       ttsAutoNextChapter: s.ttsAutoNextChapter,
       ttsHighlightColor: s.ttsHighlightColor,
       flipMode: s.flipMode,
-      ttsEngine: s.ttsEngine,
-      legadoRate: s.legadoRate,
-      legadoConfigId: s.legadoConfigId,
-      legadoPreloadCount: s.legadoPreloadCount,
       ttsImmersiveMode: s.ttsImmersiveMode,
       ttsHighlightStyle: s.ttsHighlightStyle,
     }))

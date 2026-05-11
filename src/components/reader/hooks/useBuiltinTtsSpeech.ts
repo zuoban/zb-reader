@@ -3,7 +3,7 @@
 import { useCallback } from "react";
 import { ttsAudioCache, TtsAudioLruCache } from "@/lib/ttsAudioCache";
 
-interface MicrosoftTtsAudioParams {
+interface BuiltinTtsAudioParams {
   text: string;
   voiceName: string;
   rate: number;
@@ -12,7 +12,7 @@ interface MicrosoftTtsAudioParams {
   prefetch?: boolean;
 }
 
-function buildMicrosoftTtsAudioUrl(params: MicrosoftTtsAudioParams) {
+function buildBuiltinTtsAudioUrl(params: BuiltinTtsAudioParams) {
   const searchParams = new URLSearchParams({
     text: params.text,
     voiceName: params.voiceName,
@@ -28,15 +28,15 @@ function buildMicrosoftTtsAudioUrl(params: MicrosoftTtsAudioParams) {
   return `/api/tts/microsoft?${searchParams.toString()}`;
 }
 
-export function useMicrosoftTtsSpeech(selectedBrowserVoiceId: string, ttsRate: number) {
+export function useBuiltinTtsSpeech(selectedVoiceId: string, ttsRate: number) {
   return useCallback(
     async (text: string, options?: { prefetch?: boolean }) => {
       const ratePercent = Math.round((ttsRate - 1) * 100);
 
       const cacheKey = TtsAudioLruCache.hashKey({
-        engine: "microsoft",
+        engine: "builtin",
         text,
-        voiceName: selectedBrowserVoiceId,
+        voiceName: selectedVoiceId,
         rate: ratePercent,
         pitch: 0,
         volume: 100,
@@ -46,18 +46,18 @@ export function useMicrosoftTtsSpeech(selectedBrowserVoiceId: string, ttsRate: n
         return cached.audioUrl;
       }
 
-      const audioUrl = buildMicrosoftTtsAudioUrl({
+      const audioUrl = buildBuiltinTtsAudioUrl({
         text,
-        voiceName: selectedBrowserVoiceId,
+        voiceName: selectedVoiceId,
         rate: ratePercent,
         pitch: 0,
         volume: 100,
       });
 
       if (options?.prefetch) {
-        const prefetchUrl = buildMicrosoftTtsAudioUrl({
+        const prefetchUrl = buildBuiltinTtsAudioUrl({
           text,
-          voiceName: selectedBrowserVoiceId,
+          voiceName: selectedVoiceId,
           rate: ratePercent,
           pitch: 0,
           volume: 100,
@@ -79,6 +79,6 @@ export function useMicrosoftTtsSpeech(selectedBrowserVoiceId: string, ttsRate: n
 
       return audioUrl;
     },
-    [selectedBrowserVoiceId, ttsRate]
+    [selectedVoiceId, ttsRate]
   );
 }

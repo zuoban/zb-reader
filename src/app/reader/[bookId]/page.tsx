@@ -15,7 +15,7 @@ import { ReaderTtsLayer } from "@/components/reader/ReaderTtsLayer";
 import {
   useIdleTimeout,
   useBookmarkActions,
-  useMicrosoftTtsSpeech,
+  useBuiltinTtsSpeech,
   useNoteActions,
   useReaderBookData,
   useReaderFullscreen,
@@ -75,12 +75,12 @@ function ReaderContent() {
     theme: readerTheme,
     browserVoiceId: selectedBrowserVoiceId,
     ttsRate,
-    microsoftPreloadCount,
+    ttsPreloadCount,
     ttsAutoNextChapter,
     ttsHighlightColor,
   } = useReaderSettingsValues();
   const setTtsRate = useReaderSettingsStore((s) => s.setTtsRate);
-  const _setMicrosoftPreloadCount = useReaderSettingsStore((s) => s.setMicrosoftPreloadCount);
+  const _setTtsPreloadCount = useReaderSettingsStore((s) => s.setTtsPreloadCount);
   const setTtsHighlightColor = useReaderSettingsStore((s) => s.setTtsHighlightColor);
   const settingsLifecycleState = useReaderSettingsLifecycleState();
   const settingsControlsState = useReaderSettingsControlsState();
@@ -337,7 +337,7 @@ function ReaderContent() {
     handleThemeChange,
   } = useReaderSettingsControls(settingsControlsState);
 
-  const requestMicrosoftSpeech = useMicrosoftTtsSpeech(selectedBrowserVoiceId, ttsRate);
+  const requestBuiltinSpeech = useBuiltinTtsSpeech(selectedBrowserVoiceId, ttsRate);
 
   const {
     hasPendingResume,
@@ -380,7 +380,7 @@ function ReaderContent() {
       isSpeaking,
       playAudioSource,
       readSentencesHashRef,
-      requestMicrosoftSpeech,
+      requestBuiltinSpeech,
       resumePendingPlayback,
       setActiveTtsHtml,
       setActiveTtsIsCodeBlock,
@@ -394,7 +394,7 @@ function ReaderContent() {
       stopCurrentAudio,
       ttsAutoNextChapter,
       ttsCurrentIndexRef,
-      ttsPreloadWindowSize: microsoftPreloadCount,
+      ttsPreloadWindowSize: ttsPreloadCount,
       ttsSessionRef,
       ttsTotalSentencesRef,
     });

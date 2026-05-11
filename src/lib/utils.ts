@@ -103,14 +103,16 @@ export function clampLegadoRate(value: number): number {
   return Math.min(200, Math.max(10, value));
 }
 
-const ALLOWED_MICROSOFT_PRELOAD_COUNTS = [1, 2, 3, 5, 8] as const;
-export function normalizeMicrosoftPreloadCount(value: number): number {
-  return ALLOWED_MICROSOFT_PRELOAD_COUNTS.includes(
-    value as (typeof ALLOWED_MICROSOFT_PRELOAD_COUNTS)[number]
+const ALLOWED_TTS_PRELOAD_COUNTS = [1, 2, 3, 5, 8] as const;
+export function normalizeTtsPreloadCount(value: number): number {
+  return ALLOWED_TTS_PRELOAD_COUNTS.includes(
+    value as (typeof ALLOWED_TTS_PRELOAD_COUNTS)[number]
   )
     ? value
     : 5;
 }
+
+export const normalizeMicrosoftPreloadCount = normalizeTtsPreloadCount;
 
 const ALLOWED_FONT_FAMILIES = ["system", "serif", "sans", "kaiti"] as const;
 export function isValidFontFamily(value: string): value is (typeof ALLOWED_FONT_FAMILIES)[number] {
