@@ -15,7 +15,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { cacheBook, hasCachedBook } from "@/lib/book-cache";
 import type { MouseEvent as ReactMouseEvent } from "react";
 import type { Book } from "@/lib/db/schema";
 
@@ -61,28 +60,10 @@ export const BookCard = memo(function BookCard({
   const hasPrefetchedRef = useRef(false);
   const [coverError, setCoverError] = useState(false);
 
-  const handleMouseEnter = async () => {
+  const handleMouseEnter = () => {
     if (hasPrefetchedRef.current) return;
     hasPrefetchedRef.current = true;
     router.prefetch(readerHref);
-
-    const alreadyCached = await hasCachedBook(book.id);
-    if (alreadyCached) return;
-
-    try {
-      const res = await fetch(`/api/books/${book.id}/file`);
-      if (!res.ok) return;
-      const buffer = await res.arrayBuffer();
-      await cacheBook(book.id, buffer, {
-        meta: {
-          title: book.title || "",
-          author: book.author || "",
-          format: book.format || "epub",
-        },
-      });
-    } catch {
-      // Silent failure - file will be loaded when opening reader
-    }
   };
 
   const handleOpenReader = (event: ReactMouseEvent<HTMLAnchorElement>) => {

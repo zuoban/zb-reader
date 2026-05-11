@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useSession, signOut } from "next-auth/react";
 import { Library, LogOut, Moon, Sun, Tags, User } from "lucide-react";
 import { UploadButton } from "@/components/bookshelf/UploadButton";
-import { CategoryManagerDialog } from "@/components/bookshelf/CategoryManagerDialog";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/layout/ThemeProvider";
 import {
@@ -17,6 +17,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+
+const CategoryManagerDialog = dynamic(
+  () => import("@/components/bookshelf/CategoryManagerDialog").then((mod) => mod.CategoryManagerDialog),
+  { ssr: false }
+);
 
 interface NavbarProps {
   onUploadComplete?: () => void;
@@ -158,10 +163,12 @@ export function Navbar({ onUploadComplete, className }: NavbarProps) {
         </div>
       </nav>
 
-      <CategoryManagerDialog
-        open={showCategoryManager}
-        onOpenChange={setShowCategoryManager}
-      />
+      {showCategoryManager ? (
+        <CategoryManagerDialog
+          open={showCategoryManager}
+          onOpenChange={setShowCategoryManager}
+        />
+      ) : null}
     </header>
   );
 }

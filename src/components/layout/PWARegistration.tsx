@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import { toast } from "sonner";
-import { RefreshCw } from "lucide-react";
 
 export function PWARegistration() {
   useEffect(() => {
@@ -26,19 +24,20 @@ export function PWARegistration() {
     const onUpdate = (registration: ServiceWorkerRegistration) => {
       if (!registration.waiting) return;
 
-      toast("发现新版本", {
-        description: "应用已有更新，点击立即刷新体验最新功能。",
-        duration: Infinity,
-        action: {
-          label: "立即更新",
-          onClick: () => {
-            if (registration.waiting) {
-              registration.waiting.postMessage({ type: "SKIP_WAITING" });
-            }
-            window.location.reload();
+      void import("sonner").then(({ toast }) => {
+        toast("发现新版本", {
+          description: "应用已有更新，点击立即刷新体验最新功能。",
+          duration: Infinity,
+          action: {
+            label: "立即更新",
+            onClick: () => {
+              if (registration.waiting) {
+                registration.waiting.postMessage({ type: "SKIP_WAITING" });
+              }
+              window.location.reload();
+            },
           },
-        },
-        icon: <RefreshCw className="h-4 w-4 animate-spin-slow" />,
+        });
       });
     };
 
