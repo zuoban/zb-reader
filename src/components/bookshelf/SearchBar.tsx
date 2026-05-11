@@ -39,7 +39,7 @@ export function SearchBar({ onSearch, className }: SearchBarProps) {
 
   return (
     <div className={`relative flex items-center ${className}`}>
-      <div className="absolute left-3 flex h-full items-center text-muted-foreground/60">
+      <div className="pointer-events-none absolute left-4 flex h-full items-center text-muted-foreground/65">
         <Search className="h-4 w-4" />
       </div>
       <Input
@@ -47,13 +47,14 @@ export function SearchBar({ onSearch, className }: SearchBarProps) {
         placeholder="搜索书名或作者..."
         value={query}
         onChange={handleChange}
-        className="h-10 rounded-full border-border/60 bg-background/50 backdrop-blur-md pl-9 pr-9 text-sm shadow-sm transition-all duration-300 focus:border-primary/50 focus:bg-background/80 focus:ring-4 focus:ring-primary/5 dark:bg-muted/20 dark:focus:bg-muted/40"
+        className="bookshelf-search-input h-12 rounded-full pl-11 pr-11 text-sm"
       />
       {query && (
         <button
           type="button"
           onClick={handleClear}
-          className="absolute right-3 flex h-full items-center text-muted-foreground/40 hover:text-muted-foreground/80"
+          className="absolute right-2.5 flex size-8 cursor-pointer items-center justify-center rounded-full text-muted-foreground/45 transition-colors hover:bg-foreground/5 hover:text-muted-foreground/90"
+          aria-label="清空搜索"
         >
           <X className="h-4 w-4" />
         </button>

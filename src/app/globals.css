@@ -615,60 +615,139 @@
 }
 
 .category-filter-shell {
-  border: 1px solid color-mix(in oklab, var(--glass-border) 86%, transparent);
+  border: 1px solid color-mix(in oklab, var(--border) 82%, transparent);
   background:
-    linear-gradient(180deg, color-mix(in oklab, white 24%, transparent), transparent 64%),
-    color-mix(in oklab, var(--glass) 78%, transparent);
+    linear-gradient(180deg, color-mix(in oklab, white 58%, transparent), transparent 68%),
+    color-mix(in oklab, var(--background) 92%, var(--foreground) 4%);
   box-shadow:
-    0 1px 0 var(--glass-highlight) inset,
-    0 14px 36px -30px color-mix(in oklab, var(--foreground) 34%, transparent);
-  backdrop-filter: blur(20px) saturate(1.2);
-  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+    0 1px 0 color-mix(in oklab, white 74%, transparent) inset,
+    0 16px 42px -34px color-mix(in oklab, var(--foreground) 42%, transparent);
+  backdrop-filter: blur(18px) saturate(1.1);
+  -webkit-backdrop-filter: blur(18px) saturate(1.1);
 }
 
 .dark .category-filter-shell {
-  border-color: color-mix(in oklab, var(--border) 55%, transparent);
+  border-color: color-mix(in oklab, white 8%, var(--border));
   background:
-    linear-gradient(180deg, color-mix(in oklab, white 6%, transparent), transparent 50%),
-    color-mix(in oklab, var(--glass) 60%, transparent);
+    linear-gradient(180deg, color-mix(in oklab, white 6%, transparent), transparent 62%),
+    color-mix(in oklab, var(--background) 88%, white 5%);
   box-shadow:
-    0 1px 0 var(--glass-highlight) inset,
-    0 12px 32px -25px color-mix(in oklab, black 48%, transparent);
+    0 1px 0 color-mix(in oklab, white 7%, transparent) inset,
+    0 18px 44px -32px color-mix(in oklab, black 72%, transparent);
 }
 
 .category-filter-button {
   border: 1px solid transparent;
   background: transparent;
-  color: color-mix(in oklab, var(--muted-foreground) 88%, var(--foreground) 12%);
+  color: color-mix(in oklab, var(--muted-foreground) 82%, var(--foreground) 18%);
   box-shadow: none;
+  min-width: max-content;
 }
 
 .category-filter-button:hover {
-  border-color: color-mix(in oklab, var(--glass-border) 78%, transparent);
-  background: color-mix(in oklab, var(--background) 34%, transparent);
+  border-color: color-mix(in oklab, var(--border) 70%, transparent);
+  background: color-mix(in oklab, var(--foreground) 5%, transparent);
   color: var(--foreground);
 }
 
 .category-filter-button-active {
   position: relative;
-  border-color: color-mix(in oklab, var(--ring) 28%, var(--glass-border));
+  border-color: color-mix(in oklab, var(--foreground) 18%, var(--border));
   background:
-    linear-gradient(180deg, color-mix(in oklab, white 58%, transparent), transparent 54%),
-    linear-gradient(120deg, color-mix(in oklab, var(--cta) 12%, transparent), transparent 64%),
-    color-mix(in oklab, var(--glass-strong) 90%, var(--background) 10%);
+    linear-gradient(180deg, color-mix(in oklab, white 66%, transparent), transparent 58%),
+    color-mix(in oklab, var(--foreground) 8%, var(--background));
   color: var(--foreground);
   box-shadow:
-    0 1px 0 var(--glass-highlight) inset,
-    0 0 0 1px color-mix(in oklab, white 34%, transparent) inset,
-    0 10px 24px -18px color-mix(in oklab, var(--foreground) 32%, transparent),
-    0 8px 22px -20px color-mix(in oklab, var(--cta) 48%, transparent);
+    0 1px 0 color-mix(in oklab, white 70%, transparent) inset,
+    0 10px 26px -20px color-mix(in oklab, var(--foreground) 36%, transparent);
 }
 
 .dark .category-filter-button-active {
-  border-color: color-mix(in oklab, white 6%, transparent);
-  background: color-mix(in oklab, white 8%, transparent);
+  border-color: color-mix(in oklab, white 12%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in oklab, white 13%, transparent), transparent 62%),
+    color-mix(in oklab, white 9%, var(--background));
   color: var(--foreground);
-  box-shadow: none;
+  box-shadow:
+    0 1px 0 color-mix(in oklab, white 10%, transparent) inset,
+    0 10px 24px -20px color-mix(in oklab, black 80%, transparent);
+}
+
+.category-filter-count {
+  min-width: 1.35rem;
+  height: 1.25rem;
+  margin-left: 0.25rem;
+  border-color: transparent;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--foreground) 6%, transparent);
+  color: color-mix(in oklab, var(--muted-foreground) 86%, var(--foreground) 14%);
+  padding: 0 0.35rem;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  line-height: 1.25rem;
+  font-variant-numeric: tabular-nums;
+  transition:
+    background-color 200ms ease,
+    color 200ms ease;
+}
+
+.category-filter-count-active {
+  background: color-mix(in oklab, var(--foreground) 11%, transparent);
+  color: var(--foreground);
+}
+
+.dark .category-filter-count {
+  background: color-mix(in oklab, white 7%, transparent);
+  color: color-mix(in oklab, var(--muted-foreground) 78%, white 22%);
+}
+
+.dark .category-filter-count-active {
+  background: color-mix(in oklab, white 14%, transparent);
+  color: var(--foreground);
+}
+
+.bookshelf-search-input {
+  border-color: color-mix(in oklab, var(--border) 82%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in oklab, white 58%, transparent), transparent 68%),
+    color-mix(in oklab, var(--background) 92%, var(--foreground) 4%);
+  box-shadow:
+    0 1px 0 color-mix(in oklab, white 74%, transparent) inset,
+    0 16px 42px -34px color-mix(in oklab, var(--foreground) 42%, transparent);
+  backdrop-filter: blur(18px) saturate(1.1);
+  -webkit-backdrop-filter: blur(18px) saturate(1.1);
+}
+
+.bookshelf-search-input:focus-visible {
+  border-color: color-mix(in oklab, var(--foreground) 22%, var(--border));
+  background:
+    linear-gradient(180deg, color-mix(in oklab, white 66%, transparent), transparent 62%),
+    color-mix(in oklab, var(--background) 96%, var(--foreground) 3%);
+  box-shadow:
+    0 1px 0 color-mix(in oklab, white 78%, transparent) inset,
+    0 0 0 3px color-mix(in oklab, var(--foreground) 5%, transparent),
+    0 16px 42px -34px color-mix(in oklab, var(--foreground) 42%, transparent);
+}
+
+.dark .bookshelf-search-input {
+  border-color: color-mix(in oklab, white 8%, var(--border));
+  background:
+    linear-gradient(180deg, color-mix(in oklab, white 6%, transparent), transparent 62%),
+    color-mix(in oklab, var(--background) 88%, white 5%);
+  box-shadow:
+    0 1px 0 color-mix(in oklab, white 7%, transparent) inset,
+    0 18px 44px -32px color-mix(in oklab, black 72%, transparent);
+}
+
+.dark .bookshelf-search-input:focus-visible {
+  border-color: color-mix(in oklab, white 14%, var(--border));
+  background:
+    linear-gradient(180deg, color-mix(in oklab, white 9%, transparent), transparent 62%),
+    color-mix(in oklab, var(--background) 84%, white 7%);
+  box-shadow:
+    0 1px 0 color-mix(in oklab, white 9%, transparent) inset,
+    0 0 0 3px color-mix(in oklab, white 5%, transparent),
+    0 18px 44px -32px color-mix(in oklab, black 72%, transparent);
 }
 
 .liquid-hairline {

@@ -132,25 +132,26 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
 
       <main className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-10 pt-8 sm:px-6 sm:pb-14 sm:pt-12">
         <div className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="category-filter-shell flex w-fit max-w-[calc(100%+0.5rem)] gap-1 overflow-x-auto rounded-full p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="category-filter-shell flex w-full max-w-full gap-1 overflow-x-auto rounded-full p-1 sm:w-fit [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <Button
               type="button"
               variant="ghost"
               size="sm"
               className={cn(
-                "h-9 cursor-pointer rounded-full px-4 text-xs font-medium transition-all duration-300",
+                "h-10 cursor-pointer rounded-full px-4 text-sm font-semibold transition-all duration-200",
                 selectedCategory === ALL_CATEGORY
-                  ? "category-filter-button-active shadow-sm"
-                  : "category-filter-button hover:bg-background/40"
+                  ? "category-filter-button-active"
+                  : "category-filter-button"
               )}
+              aria-pressed={selectedCategory === ALL_CATEGORY}
               onClick={() => setSelectedCategory(ALL_CATEGORY)}
             >
               全部
               <Badge
-                variant="outline"
+                variant="ghost"
                 className={cn(
-                  "ml-2 border-transparent bg-foreground/5 px-1.5 py-0 text-[10px] font-bold text-muted-foreground transition-colors",
-                  selectedCategory === ALL_CATEGORY && "bg-primary-foreground/20 text-primary-foreground"
+                  "category-filter-count",
+                  selectedCategory === ALL_CATEGORY && "category-filter-count-active"
                 )}
               >
                 {totalBooks}
@@ -163,19 +164,20 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  "h-9 cursor-pointer rounded-full px-4 text-xs font-medium transition-all duration-300",
+                  "h-10 cursor-pointer rounded-full px-4 text-sm font-semibold transition-all duration-200",
                   selectedCategory === category.name
-                    ? "category-filter-button-active shadow-sm"
-                    : "category-filter-button hover:bg-background/40"
+                    ? "category-filter-button-active"
+                    : "category-filter-button"
                 )}
+                aria-pressed={selectedCategory === category.name}
                 onClick={() => setSelectedCategory(category.name)}
               >
                 <span className="max-w-32 truncate">{category.name}</span>
                 <Badge
-                  variant="outline"
+                  variant="ghost"
                   className={cn(
-                    "ml-2 border-transparent bg-foreground/5 px-1.5 py-0 text-[10px] font-bold text-muted-foreground transition-colors",
-                    selectedCategory === category.name && "bg-primary-foreground/20 text-primary-foreground"
+                    "category-filter-count",
+                    selectedCategory === category.name && "category-filter-count-active"
                   )}
                 >
                   {category.count}
