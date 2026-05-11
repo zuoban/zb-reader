@@ -29,6 +29,14 @@ export class BuiltinTtsSynthesisError extends Error {
 const audioCache = new Map<string, CachedBuiltinTtsAudio>();
 let audioCacheTotalBytes = 0;
 const inflightAudioRequests = new Map<string, Promise<CachedBuiltinTtsAudio | null>>();
+const cacheStats = {
+  cacheHits: 0,
+  cacheMisses: 0,
+  inflightHits: 0,
+  synthesizes: 0,
+  evictions: 0,
+  expiredEvictions: 0,
+};
 
 function clampNumber(value: unknown, min: number, max: number, fallback: number) {
   const numericValue =
@@ -82,16 +90,22 @@ export function buildBuiltinTtsCacheKey(
 
 export function getCachedBuiltinTtsAudio(cacheKey: string) {
   const cached = audioCache.get(cacheKey);
-  if (!cached) return null;
+  if (!cached) {
+    cacheStats.cacheMisses += 1;
+    return null;
+  }
 
   if (cached.expiresAt <= Date.now()) {
     audioCacheTotalBytes -= cached.body.byteLength;
     audioCache.delete(cacheKey);
+    cacheStats.cacheMisses += 1;
+    cacheStats.expiredEvictions += 1;
     return null;
   }
 
   audioCache.delete(cacheKey);
   audioCache.set(cacheKey, cached);
+  cacheStats.cacheHits += 1;
   return cached;
 }
 
@@ -111,6 +125,7 @@ function setCachedBuiltinTtsAudio(cacheKey: string, value: CachedBuiltinTtsAudio
     const oldest = audioCache.get(oldestKey);
     if (oldest) audioCacheTotalBytes -= oldest.body.byteLength;
     audioCache.delete(oldestKey);
+    cacheStats.evictions += 1;
   }
 
   audioCache.set(cacheKey, value);
@@ -132,6 +147,7 @@ export async function prepareBuiltinTtsAudio(body: BuiltinTtsSpeakBody) {
   let pendingRequest = inflightAudioRequests.get(cacheKey);
   if (!pendingRequest) {
     pendingRequest = (async () => {
+      cacheStats.synthesizes += 1;
       const response = await synthesizeMicrosoftSpeech({
         text: payload.text,
         voiceName: payload.voiceName,
@@ -163,6 +179,8 @@ export async function prepareBuiltinTtsAudio(body: BuiltinTtsSpeakBody) {
     });
 
     inflightAudioRequests.set(cacheKey, pendingRequest);
+  } else {
+    cacheStats.inflightHits += 1;
   }
 
   const audio = await pendingRequest;
@@ -171,4 +189,25 @@ export async function prepareBuiltinTtsAudio(body: BuiltinTtsSpeakBody) {
 
 export function isBuiltinTtsCacheKey(value: string) {
   return /^[A-Za-z0-9_-]{43}$/.test(value);
+}
+
+export function getBuiltinTtsCacheStats() {
+  return {
+    ...cacheStats,
+    cacheSize: audioCache.size,
+    totalBytes: audioCacheTotalBytes,
+    inflightRequests: inflightAudioRequests.size,
+  };
+}
+
+export function resetBuiltinTtsCacheForTest() {
+  audioCache.clear();
+  inflightAudioRequests.clear();
+  audioCacheTotalBytes = 0;
+  cacheStats.cacheHits = 0;
+  cacheStats.cacheMisses = 0;
+  cacheStats.inflightHits = 0;
+  cacheStats.synthesizes = 0;
+  cacheStats.evictions = 0;
+  cacheStats.expiredEvictions = 0;
 }

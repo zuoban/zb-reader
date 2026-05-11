@@ -32,8 +32,10 @@ function createGetRequest(key: string): NextRequest {
 }
 
 describe("builtin TTS API", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    const { resetBuiltinTtsCacheForTest } = await import("@/lib/builtinTtsAudio");
+    resetBuiltinTtsCacheForTest();
     vi.mocked(getAuthUserId).mockResolvedValue({ userId: "user-1" });
     vi.mocked(synthesizeMicrosoftSpeech).mockResolvedValue(
       new Response(Buffer.from("audio"), {
@@ -153,6 +155,70 @@ describe("builtin TTS API", () => {
 
     expect(legacyRes.status).toBe(200);
     expect(await legacyRes.text()).toBe("audio");
+    expect(synthesizeMicrosoftSpeech).toHaveBeenCalledTimes(1);
+  });
+
+  it("reports cache stats without exposing text or cache keys", async () => {
+    const { POST } = await import("./prepare/route");
+    const { GET: statsGet } = await import("./stats/route");
+    const secretText = `隐私文本-${Date.now()}`;
+
+    await POST(createPostRequest({ text: secretText }));
+    await POST(createPostRequest({ text: secretText }));
+
+    const res = await statsGet();
+    const data = (await res.json()) as {
+      stats: {
+        cacheHits: number;
+        cacheMisses: number;
+        synthesizes: number;
+        cacheSize: number;
+        totalBytes: number;
+      };
+    };
+    const serialized = JSON.stringify(data);
+
+    expect(res.status).toBe(200);
+    expect(data.stats.synthesizes).toBe(1);
+    expect(data.stats.cacheHits).toBe(1);
+    expect(data.stats.cacheMisses).toBe(1);
+    expect(data.stats.cacheSize).toBe(1);
+    expect(data.stats.totalBytes).toBe(Buffer.byteLength("audio"));
+    expect(serialized).not.toContain(secretText);
+    expect(serialized).not.toMatch(/[A-Za-z0-9_-]{43}/);
+  });
+
+  it("counts inflight hits for concurrent identical prepare requests", async () => {
+    let resolveSynthesis: (value: Response) => void = () => {};
+    vi.mocked(synthesizeMicrosoftSpeech).mockReturnValueOnce(
+      new Promise<Response>((resolve) => {
+        resolveSynthesis = resolve;
+      })
+    );
+
+    const { POST } = await import("./prepare/route");
+    const { GET: statsGet } = await import("./stats/route");
+    const body = { text: `并发请求-${Date.now()}` };
+
+    const first = POST(createPostRequest(body));
+    const second = POST(createPostRequest(body));
+    resolveSynthesis(
+      new Response(Buffer.from("audio"), {
+        status: 200,
+        headers: { "content-type": "audio/mpeg" },
+      })
+    );
+
+    await Promise.all([first, second]);
+
+    const res = await statsGet();
+    const data = (await res.json()) as {
+      stats: { inflightHits: number; synthesizes: number; cacheSize: number };
+    };
+
+    expect(data.stats.inflightHits).toBe(1);
+    expect(data.stats.synthesizes).toBe(1);
+    expect(data.stats.cacheSize).toBe(1);
     expect(synthesizeMicrosoftSpeech).toHaveBeenCalledTimes(1);
   });
 });
