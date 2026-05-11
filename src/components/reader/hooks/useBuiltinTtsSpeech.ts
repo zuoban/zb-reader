@@ -9,28 +9,45 @@ interface BuiltinTtsAudioParams {
   rate: number;
   pitch: number;
   volume: number;
-  prefetch?: boolean;
 }
 
-function buildBuiltinTtsAudioUrl(params: BuiltinTtsAudioParams) {
-  const searchParams = new URLSearchParams({
-    text: params.text,
-    voiceName: params.voiceName,
-    rate: String(params.rate),
-    pitch: String(params.pitch),
-    volume: String(params.volume),
+interface BuiltinTtsPrepareResponse {
+  audioUrl?: string;
+  error?: string;
+  details?: string;
+}
+
+async function prepareBuiltinTtsAudio(params: BuiltinTtsAudioParams, signal?: AbortSignal) {
+  const res = await fetch("/api/tts/builtin/prepare", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      text: params.text,
+      voiceName: params.voiceName,
+      rate: params.rate,
+      pitch: params.pitch,
+      volume: params.volume,
+    }),
+    signal,
   });
 
-  if (params.prefetch) {
-    searchParams.set("prefetch", "1");
+  const data = (await res.json().catch(() => null)) as BuiltinTtsPrepareResponse | null;
+  if (!res.ok) {
+    const message = data?.error || "朗读失败";
+    const details = data?.details ? `: ${data.details}` : "";
+    throw new Error(`${message}${details}`);
   }
 
-  return `/api/tts/microsoft?${searchParams.toString()}`;
+  if (!data?.audioUrl) {
+    throw new Error("朗读失败: 音频地址为空");
+  }
+
+  return data.audioUrl;
 }
 
 export function useBuiltinTtsSpeech(selectedVoiceId: string, ttsRate: number) {
   return useCallback(
-    async (text: string, options?: { prefetch?: boolean }) => {
+    async (text: string, options?: { prefetch?: boolean; signal?: AbortSignal }) => {
       const ratePercent = Math.round((ttsRate - 1) * 100);
 
       const cacheKey = TtsAudioLruCache.hashKey({
@@ -42,40 +59,23 @@ export function useBuiltinTtsSpeech(selectedVoiceId: string, ttsRate: number) {
         volume: 100,
       });
       const cached = ttsAudioCache.get(cacheKey);
-      if (cached?.kind === "url" && !options?.prefetch) {
+      if (cached?.kind === "url") {
         return cached.audioUrl;
       }
 
-      const audioUrl = buildBuiltinTtsAudioUrl({
-        text,
-        voiceName: selectedVoiceId,
-        rate: ratePercent,
-        pitch: 0,
-        volume: 100,
-      });
-
-      if (options?.prefetch) {
-        const prefetchUrl = buildBuiltinTtsAudioUrl({
+      const audioUrl = await prepareBuiltinTtsAudio(
+        {
           text,
           voiceName: selectedVoiceId,
           rate: ratePercent,
           pitch: 0,
           volume: 100,
-          prefetch: true,
-        });
-        const res = await fetch(prefetchUrl, { method: "GET" });
-        if (!res.ok && res.status !== 204) {
-          const data = (await res.json().catch(() => null)) as
-            | { error?: string; details?: string }
-            | null;
-          const message = data?.error || "朗读失败";
-          const details = data?.details ? `: ${data.details}` : "";
-          throw new Error(`${message}${details}`);
-        }
-      } else {
-        // 使用稳定的同源 URL，避免移动端后台对 blob: 音频的兼容性问题
-        ttsAudioCache.set(cacheKey, { kind: "url", audioUrl });
-      }
+        },
+        options?.signal
+      );
+
+      // 使用服务端短 URL，避免完整朗读文本出现在音频 URL 中。
+      ttsAudioCache.set(cacheKey, { kind: "url", audioUrl });
 
       return audioUrl;
     },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { toast } from "sonner";
 import type { EpubReaderRef } from "@/components/reader/EpubReader";
 import type { Book } from "@/lib/db/schema";
@@ -31,7 +31,10 @@ interface UseReaderTtsSessionParams {
     options?: PlayAudioOptions
   ) => Promise<void>;
   readSentencesHashRef: React.MutableRefObject<Set<string>>;
-  requestBuiltinSpeech: (text: string, options?: { prefetch?: boolean }) => Promise<string>;
+  requestBuiltinSpeech: (
+    text: string,
+    options?: { prefetch?: boolean; signal?: AbortSignal }
+  ) => Promise<string>;
   resumePendingPlayback: () => boolean;
   setActiveTtsHtml: (html: string) => void;
   setActiveTtsIsCodeBlock: (value: boolean) => void;
@@ -97,6 +100,26 @@ export function useReaderTtsSession({
   ttsSessionRef,
   ttsTotalSentencesRef,
 }: UseReaderTtsSessionParams) {
+  const ttsRequestAbortControllersRef = useRef<Set<AbortController>>(new Set());
+
+  const createTtsRequestSignal = useCallback(() => {
+    const controller = new AbortController();
+    ttsRequestAbortControllersRef.current.add(controller);
+    return {
+      signal: controller.signal,
+      cleanup: () => {
+        ttsRequestAbortControllersRef.current.delete(controller);
+      },
+    };
+  }, []);
+
+  const abortPendingTtsRequests = useCallback(() => {
+    ttsRequestAbortControllersRef.current.forEach((controller) => {
+      controller.abort();
+    });
+    ttsRequestAbortControllersRef.current.clear();
+  }, []);
+
   const getReadableParagraphs = useCallback(() => {
     if (!book) return [] as ReaderParagraph[];
 
@@ -217,7 +240,11 @@ export function useReaderTtsSession({
           cursor += 1
         ) {
           if (!preparedTaskMap.has(cursor)) {
-            const task = requestBuiltinSpeech(queue[cursor].text, { prefetch: true });
+            const requestSignal = createTtsRequestSignal();
+            const task = requestBuiltinSpeech(queue[cursor].text, {
+              prefetch: true,
+              signal: requestSignal.signal,
+            }).finally(requestSignal.cleanup);
             task.catch(() => {
               // avoid unhandled promise rejection for preloaded items
             });
@@ -261,9 +288,14 @@ export function useReaderTtsSession({
           let objectUrl: string | null = null;
 
           try {
-            objectUrl = await (attempt === 1
-              ? preparedTaskMap.get(i) ?? requestBuiltinSpeech(sentence.text)
-              : requestBuiltinSpeech(sentence.text));
+            if (attempt === 1 && preparedTaskMap.has(i)) {
+              objectUrl = await preparedTaskMap.get(i)!;
+            } else {
+              const requestSignal = createTtsRequestSignal();
+              objectUrl = await requestBuiltinSpeech(sentence.text, {
+                signal: requestSignal.signal,
+              }).finally(requestSignal.cleanup);
+            }
 
             await new Promise<void>((resolve, reject) => {
               if (ttsSessionRef.current !== sessionId) {
@@ -327,6 +359,7 @@ export function useReaderTtsSession({
     },
     [
       currentParagraphIndexRef,
+      createTtsRequestSignal,
       playAudioSource,
       readSentencesHashRef,
       requestBuiltinSpeech,
@@ -449,6 +482,7 @@ export function useReaderTtsSession({
     }
 
     ttsSessionRef.current += 1;
+    abortPendingTtsRequests();
     readSentencesHashRef.current.clear();
     const sessionId = ttsSessionRef.current;
 
@@ -459,6 +493,7 @@ export function useReaderTtsSession({
 
     await startTtsLoop(sessionId, 0);
   }, [
+    abortPendingTtsRequests,
     handlePauseTts,
     handleResumeTts,
     hasPendingResume,
@@ -478,6 +513,7 @@ export function useReaderTtsSession({
     const wasPaused = isPaused || !isSpeaking;
     
     ttsSessionRef.current += 1;
+    abortPendingTtsRequests();
     const sessionId = ttsSessionRef.current;
     stopCurrentAudio();
     readSentencesHashRef.current.clear();
@@ -519,6 +555,7 @@ export function useReaderTtsSession({
       await startTtsLoop(sessionId, 0);
     }
   }, [
+    abortPendingTtsRequests,
     epubReaderRef,
     getPageIdentity,
     getReadableParagraphs,
@@ -543,6 +580,7 @@ export function useReaderTtsSession({
     const wasPaused = isPaused || !isSpeaking;
     
     ttsSessionRef.current += 1;
+    abortPendingTtsRequests();
     const sessionId = ttsSessionRef.current;
     stopCurrentAudio();
     readSentencesHashRef.current.clear();
@@ -584,6 +622,7 @@ export function useReaderTtsSession({
       await startTtsLoop(sessionId, 0);
     }
   }, [
+    abortPendingTtsRequests,
     epubReaderRef,
     getPageIdentity,
     getReadableParagraphs,
