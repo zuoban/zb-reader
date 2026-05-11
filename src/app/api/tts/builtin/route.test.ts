@@ -122,4 +122,37 @@ describe("builtin TTS API", () => {
     expect(data.error).toBe("内置TTS请求失败(503)");
     expect(data.details).toBe("upstream failed");
   });
+
+  it("shares the audio cache with the legacy Microsoft route", async () => {
+    const { POST } = await import("./prepare/route");
+    const { GET: legacyGet } = await import("../microsoft/route");
+
+    const body = {
+      text: `共享缓存-${Date.now()}`,
+      voiceName: "zh-CN-XiaoxiaoMultilingualNeural",
+      rate: 0,
+      pitch: 0,
+      volume: 100,
+    };
+
+    const prepareRes = await POST(createPostRequest(body));
+    expect(prepareRes.status).toBe(200);
+
+    const query = new URLSearchParams({
+      text: body.text,
+      voiceName: body.voiceName,
+      rate: String(body.rate),
+      pitch: String(body.pitch),
+      volume: String(body.volume),
+    });
+    const legacyRes = await legacyGet(
+      new NextRequest(
+        new URL(`/api/tts/microsoft?${query.toString()}`, "http://localhost:3000")
+      )
+    );
+
+    expect(legacyRes.status).toBe(200);
+    expect(await legacyRes.text()).toBe("audio");
+    expect(synthesizeMicrosoftSpeech).toHaveBeenCalledTimes(1);
+  });
 });
