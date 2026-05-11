@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation";
-import { and, count, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { BookshelfClient } from "@/components/bookshelf/BookshelfClient";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { books, readingProgress } from "@/lib/db/schema";
+import { books, readerSettings, readingProgress } from "@/lib/db/schema";
+import { getBookFacets } from "@/lib/book-facets-cache";
 import type { BookshelfInitialData } from "@/components/bookshelf/BookshelfClient";
 
 const BOOKSHELF_PAGE = 1;
@@ -15,7 +16,7 @@ async function getBookshelfInitialData(userId: string): Promise<BookshelfInitial
   const offset = (BOOKSHELF_PAGE - 1) * BOOKSHELF_LIMIT;
   const whereClause = eq(books.uploaderId, userId);
 
-  const [result, totalResult, categoryRows] = await Promise.all([
+  const [result, facets, settings] = await Promise.all([
     db
       .select({
         book: books,
@@ -34,21 +35,13 @@ async function getBookshelfInitialData(userId: string): Promise<BookshelfInitial
       .orderBy(desc(books.updatedAt))
       .limit(BOOKSHELF_LIMIT)
       .offset(offset),
-    db.select({ count: count() }).from(books).where(whereClause),
-    db
-      .select({
-        name: books.category,
-        count: count(),
-      })
-      .from(books)
-      .where(
-        and(
-          eq(books.uploaderId, userId),
-          sql`coalesce(${books.category}, '') <> ''`
-        )
-      )
-      .groupBy(books.category)
-      .orderBy(books.category),
+    getBookFacets(userId),
+    db.query.readerSettings.findFirst({
+      columns: {
+        theme: true,
+      },
+      where: eq(readerSettings.userId, userId),
+    }),
   ]);
 
   const progressMap: Record<string, number> = {};
@@ -60,16 +53,14 @@ async function getBookshelfInitialData(userId: string): Promise<BookshelfInitial
     }
   });
 
-  const total = totalResult[0]?.count ?? 0;
+  const total = facets.allTotal;
 
   return {
     books: result.map((row) => row.book),
-    categories: categoryRows.map((row) => ({
-      name: row.name ?? "",
-      count: row.count,
-    })),
+    categories: facets.categories,
     progressMap,
     lastReadAtMap,
+    theme: settings?.theme === "dark" ? "dark" : "light",
     total,
     allTotal: total,
     page: BOOKSHELF_PAGE,

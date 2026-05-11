@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { and, count, eq, sql } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { books } from "@/lib/db/schema";
 import { logger } from "@/lib/logger";
+import { getBookFacets, invalidateBookFacets } from "@/lib/book-facets-cache";
 import { badRequest, serverError, getAuthUserId, validateJson } from "@/lib/api-utils";
 import { categoryDeleteSchema, categoryRenameSchema } from "@/lib/validations";
 
@@ -15,25 +16,7 @@ export async function GET(_req: NextRequest) {
   const { userId } = authResult;
 
   try {
-    const categoryRows = await db
-      .select({
-        name: books.category,
-        count: count(),
-      })
-      .from(books)
-      .where(
-        and(
-          eq(books.uploaderId, userId),
-          sql`coalesce(${books.category}, '') <> ''`
-        )
-      )
-      .groupBy(books.category)
-      .orderBy(books.category);
-
-    const categories = categoryRows.map((row) => ({
-      name: row.name ?? "",
-      count: row.count,
-    }));
+    const { categories } = await getBookFacets(userId);
 
     return NextResponse.json({ categories }, {
       headers: {
@@ -72,6 +55,7 @@ export async function PATCH(req: NextRequest) {
           eq(books.category, oldName)
         )
       );
+    invalidateBookFacets(userId);
 
     return NextResponse.json({ message: "重命名成功" });
   } catch (error) {
@@ -111,6 +95,7 @@ export async function DELETE(req: NextRequest) {
           eq(books.category, name)
         )
       );
+    invalidateBookFacets(userId);
 
     return NextResponse.json({ message: "分类已删除" });
   } catch (error) {

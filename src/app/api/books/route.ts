@@ -12,12 +12,12 @@ import {
   getBookFilePath 
 } from "@/lib/storage";
 import { logger } from "@/lib/logger";
+import { getBookFacets, invalidateBookFacets } from "@/lib/book-facets-cache";
 import { badRequest, serverError, getAuthUserId } from "@/lib/api-utils";
 import { formatBytes } from "@/lib/utils";
 import { MAX_EPUB_FILE_SIZE_BYTES } from "@/lib/upload-limits";
 import yauzl from "yauzl";
 import fs from "fs";
-import { Readable } from "stream";
 
 const DEFAULT_BOOKS_PAGE = 1;
 const DEFAULT_BOOKS_LIMIT = 20;
@@ -41,6 +41,13 @@ interface ZipEntryLike {
   _data?: {
     uncompressedSize?: number;
   };
+}
+
+interface ExtractedEpubMetadata {
+  title?: string;
+  author?: string;
+  coverFileName?: string;
+  needsNormalization: boolean;
 }
 
 export class EpubValidationError extends Error {
@@ -317,7 +324,7 @@ export async function GET(req: NextRequest) {
       whereClause = and(whereClause, eq(books.category, category))!;
     }
 
-    const [result, totalResult, allTotalResult, categoryRows] = await Promise.all([
+    const [result, totalResult, facets] = await Promise.all([
       db
         .select({
           book: books,
@@ -338,31 +345,12 @@ export async function GET(req: NextRequest) {
         .offset(offset),
       db.select({ count: count() }).from(books).where(whereClause),
       includeFacets
-        ? db.select({ count: count() }).from(books).where(eq(books.uploaderId, userId))
-        : Promise.resolve([]),
-      includeFacets
-        ? db
-          .select({
-            name: books.category,
-            count: count(),
-          })
-          .from(books)
-          .where(
-            and(
-              eq(books.uploaderId, userId),
-              sql`coalesce(${books.category}, '') <> ''`
-            )
-          )
-          .groupBy(books.category)
-          .orderBy(books.category)
-        : Promise.resolve([]),
+        ? getBookFacets(userId)
+        : Promise.resolve({ allTotal: 0, categories: [] }),
     ]);
     const total = totalResult[0]?.count ?? 0;
-    const allTotal = includeFacets ? allTotalResult[0]?.count ?? total : total;
-    const categories = categoryRows.map((row) => ({
-      name: row.name ?? "",
-      count: row.count,
-    }));
+    const allTotal = includeFacets ? facets.allTotal : total;
+    const categories = includeFacets ? facets.categories : [];
 
     if (!withProgress || result.length === 0) {
       return NextResponse.json({
@@ -445,7 +433,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate and extract metadata using yauzl (streaming/file-based)
-    let metadata: any;
+    let metadata: ExtractedEpubMetadata;
     try {
       metadata = await validateAndExtractMetadataFromFile(filePath, bookId);
     } catch (error) {
@@ -486,6 +474,7 @@ export async function POST(req: NextRequest) {
       format: epubInfo.storageFormat,
       uploaderId: userId,
     });
+    invalidateBookFacets(userId);
 
     const book = await db.query.books.findFirst({
       where: eq(books.id, bookId),
@@ -528,12 +517,7 @@ async function readZipEntry(zipfile: yauzl.ZipFile, entry: yauzl.Entry): Promise
 async function validateAndExtractMetadataFromFile(
   filePath: string,
   bookId: string
-): Promise<{
-  title?: string;
-  author?: string;
-  coverFileName?: string;
-  needsNormalization: boolean;
-}> {
+): Promise<ExtractedEpubMetadata> {
   return new Promise((resolve, reject) => {
     yauzl.open(filePath, { lazyEntries: true }, async (err, zipfile) => {
       if (err) return reject(err);
@@ -546,8 +530,7 @@ async function validateAndExtractMetadataFromFile(
       let opfPath = "";
       let opfContent = "";
       let coverItemHref = "";
-      let metadata: any = {};
-      let needsNormalization = false;
+      const metadata: Omit<ExtractedEpubMetadata, "needsNormalization"> = {};
 
       zipfile.readEntry();
       zipfile.on("entry", async (entry: yauzl.Entry) => {
@@ -572,8 +555,6 @@ async function validateAndExtractMetadataFromFile(
           hasContainerXml = true;
           const buffer = await readZipEntry(zipfile, entry);
           containerXmlContent = buffer.toString();
-        } else if (/(^|\/)META-INF\/container\.xml$/i.test(entry.fileName)) {
-          needsNormalization = true;
         }
 
         zipfile.readEntry();

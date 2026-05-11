@@ -16,6 +16,7 @@ export interface BookshelfInitialData {
   categories: CategorySummary[];
   progressMap: Record<string, number>;
   lastReadAtMap: Record<string, string>;
+  theme: "light" | "dark";
   total: number;
   allTotal: number;
   page: number;

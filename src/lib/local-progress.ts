@@ -5,6 +5,7 @@ import { logger } from "./logger";
 const DB_NAME = "zb-reader-progress";
 const DB_VERSION = 1;
 const PROGRESS_STORE = "progress";
+const SYNC_PROGRESS_DELTA_THRESHOLD = 0.005;
 
 export interface LocalProgress {
   bookId: string;
@@ -158,10 +159,12 @@ export class LocalProgressManager {
         clientUpdatedAt: new Date().toISOString(),
       };
 
+      const currentBaseLocation = stripScrollSuffix(current.location);
+      const updatedBaseLocation = stripScrollSuffix(updated.location);
       const isSignificant =
         forceSync ||
-        Math.abs(updated.progress - current.progress) >= 0.1 ||
-        updated.location !== current.location;
+        Math.abs(updated.progress - current.progress) >= SYNC_PROGRESS_DELTA_THRESHOLD ||
+        updatedBaseLocation !== currentBaseLocation;
 
       if (forceSync) {
         await this.syncQueue.enqueue(syncItem, { autoSync: false });
@@ -242,6 +245,11 @@ export class LocalProgressManager {
     }
   }
 
+}
+
+function stripScrollSuffix(location: string): string {
+  const scrollSepIdx = location.indexOf("#scroll=");
+  return scrollSepIdx === -1 ? location : location.slice(0, scrollSepIdx);
 }
 
 let managerInstance: LocalProgressManager | null = null;

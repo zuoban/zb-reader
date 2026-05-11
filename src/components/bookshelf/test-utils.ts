@@ -35,6 +35,7 @@ export function createBookshelfInitialData(
     categories: [{ name: "技术", count: 1 }],
     progressMap: { [books[0]?.id ?? "book-1"]: 0.2 },
     lastReadAtMap: { [books[0]?.id ?? "book-1"]: "2026-05-10T01:00:00.000Z" },
+    theme: "light",
     total: books.length,
     allTotal: books.length,
     page: 1,

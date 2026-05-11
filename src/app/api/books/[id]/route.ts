@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { books } from "@/lib/db/schema";
 import { deleteBookFile, deleteCoverImage } from "@/lib/storage";
 import { invalidateCoverCache } from "@/lib/cover-cache";
+import { invalidateBookFacets } from "@/lib/book-facets-cache";
 import { logger } from "@/lib/logger";
 import { notFound, serverError, getAuthUserId, validateJson } from "@/lib/api-utils";
 import { bookCategorySchema } from "@/lib/validations";
@@ -60,6 +61,7 @@ export async function DELETE(
     }
 
     await db.delete(books).where(eq(books.id, id));
+    invalidateBookFacets(userId);
 
     return NextResponse.json({ message: "删除成功" });
   } catch (error) {
@@ -100,6 +102,7 @@ export async function PATCH(
         updatedAt: new Date().toISOString(),
       })
       .where(and(eq(books.id, id), eq(books.uploaderId, userId)));
+    invalidateBookFacets(userId);
 
     return NextResponse.json({
       book: { ...book, category: rawCategory || null, updatedAt: new Date().toISOString() },

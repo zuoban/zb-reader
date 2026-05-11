@@ -74,26 +74,10 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
     onDeleted: removeBook,
   });
 
-  // Sync theme with reader settings on mount
+  // Keep the global theme aligned with server-loaded reader settings.
   useEffect(() => {
-    async function syncTheme() {
-      try {
-        const res = await fetch("/api/reader-settings");
-        if (!res.ok) return;
-        const data = await res.json();
-        const settings = data.settings;
-        
-        if (settings?.theme) {
-          // Keep the global theme aligned with reader settings.
-          const globalTheme = settings.theme === "dark" ? "dark" : "light";
-          setTheme(globalTheme);
-        }
-      } catch {
-        // ignore
-      }
-    }
-    syncTheme();
-  }, [setTheme]);
+    setTheme(initialData.theme);
+  }, [initialData.theme, setTheme]);
 
   const handleUploadComplete = useCallback(() => {
     void refreshBooks();

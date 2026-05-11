@@ -10,7 +10,7 @@ const lora = Lora({
   weight: ["700"],
   style: ["normal", "italic"],
   display: "swap",
-  preload: true,
+  preload: false,
 });
 
 const inter = Inter({
