@@ -532,13 +532,6 @@ function ReaderContent() {
         onFontFamilyChange={handleFontFamilyChange}
         theme={readerTheme}
         onThemeChange={handleThemeChange}
-        browserVoices={browserVoices}
-        selectedBrowserVoiceId={selectedBrowserVoiceId}
-        onSelectedBrowserVoiceIdChange={handleSelectedBrowserVoiceIdChange}
-        ttsRate={ttsRate}
-        onTtsRateChange={setTtsRate}
-        microsoftPreloadCount={microsoftPreloadCount}
-        onMicrosoftPreloadCountChange={setMicrosoftPreloadCount}
         ttsHighlightColor={ttsHighlightColor}
         onTtsHighlightColorChange={setTtsHighlightColor}
       />

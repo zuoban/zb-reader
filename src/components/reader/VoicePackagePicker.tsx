@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo, useCallback } from "react";
-import { Check, ChevronDown } from "lucide-react";
+import { useMemo } from "react";
+import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BrowserVoiceOption } from "@/lib/tts";
 
@@ -14,103 +14,6 @@ interface VoiceOption {
 interface VoiceGroup {
   label: string;
   voices: VoiceOption[];
-}
-
-interface VoiceSelectProps {
-  value: string;
-  groups: VoiceGroup[];
-  activeLabel: string;
-  onChange: (value: string) => void;
-}
-
-function VoiceSelect({ value, groups, activeLabel, onChange }: VoiceSelectProps) {
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const [flip, setFlip] = useState(false);
-
-  useEffect(() => {
-    if (!open) return;
-    const handleClick = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
-
-  useEffect(() => {
-    if (!open || !buttonRef.current) return;
-    const rect = buttonRef.current.getBoundingClientRect();
-    const spaceBelow = window.innerHeight - rect.bottom;
-    setFlip(spaceBelow < 200);
-  }, [open]);
-
-  return (
-    <div ref={containerRef} className="relative">
-      <button
-        type="button"
-        ref={buttonRef}
-        onClick={() => setOpen(!open)}
-        className="reader-liquid-control flex h-11 w-full cursor-pointer items-center justify-between rounded-2xl px-4 text-left text-sm font-medium transition-all duration-200 hover:-translate-y-0.5"
-        style={{ color: "var(--reader-text)" }}
-      >
-        <span className="truncate">{activeLabel}</span>
-        <ChevronDown className={cn("size-4 shrink-0 opacity-70 transition-transform", open && "rotate-180")} />
-      </button>
-
-      {open && (
-        <div
-          className={cn(
-            "reader-liquid-surface absolute left-0 right-0 z-[90] max-h-[40vh] overflow-y-auto rounded-2xl p-1 [scrollbar-color:color-mix(in_srgb,var(--reader-text)_22%,transparent)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[color-mix(in_srgb,var(--reader-text)_20%,transparent)]",
-            flip ? "bottom-full mb-2" : "top-full mt-2"
-          )}
-        >
-          {groups.map((group) => (
-            <div key={group.label} className="px-2 py-1 first:pt-2">
-              <div
-                className="px-2 py-1.5 text-[10px] font-semibold tracking-[0.18em]"
-                style={{ color: "var(--reader-muted-text)" }}
-              >
-                {group.label}
-              </div>
-              {group.voices.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  disabled={option.disabled}
-                  onClick={() => {
-                    if (!option.disabled) {
-                      onChange(option.value);
-                      setOpen(false);
-                    }
-                  }}
-                  className={cn(
-                    "flex w-full items-center justify-between rounded-[16px] px-3 py-2.5 text-sm transition-colors",
-                    option.disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:bg-[color-mix(in_srgb,var(--reader-primary)_8%,transparent)]",
-                    value === option.value &&
-                      "reader-liquid-control"
-                  )}
-                  style={{ color: "var(--reader-text)" }}
-                >
-                  <span className="truncate">{option.label}</span>
-                  {value === option.value && (
-                    <span
-                      className="ml-2 flex size-5 shrink-0 items-center justify-center rounded-full"
-                      style={{ background: "var(--reader-primary)" }}
-                    >
-                      <Check className="size-3" style={{ color: "var(--reader-bg)" }} />
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
 }
 
 const EMPTY_GROUP: VoiceGroup[] = [
@@ -171,15 +74,34 @@ export function VoicePackagePicker({ browserVoices, selectedBrowserVoiceId, onCh
         >
           语音包 · Voice Package
         </p>
-        <VoiceSelect
-          value={selectedVoiceValue}
-          groups={voiceGroups}
-          activeLabel={activeVoiceLabel}
-          onChange={(value) => {
-            if (value === "__empty__") return;
-            onChange(value);
-          }}
-        />
+        <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto [scrollbar-color:color-mix(in_srgb,var(--reader-text)_22%,transparent)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[color-mix(in_srgb,var(--reader-text)_20%,transparent)]">
+          {voiceGroups.flatMap((group) =>
+            group.voices.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                disabled={option.disabled}
+                onClick={() => {
+                  if (!option.disabled) {
+                    onChange(option.value);
+                  }
+                }}
+                className={cn(
+                  "flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm transition-all",
+                  option.disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:bg-[color-mix(in_srgb,var(--reader-primary)_8%,transparent)]",
+                  selectedVoiceValue === option.value &&
+                    "reader-liquid-control bg-[color-mix(in_srgb,var(--reader-primary)_12%,transparent)]"
+                )}
+                style={{ color: "var(--reader-text)" }}
+              >
+                <span className="truncate">{option.label}</span>
+                {selectedVoiceValue === option.value && (
+                  <Check className="ml-auto size-4 shrink-0" style={{ color: "var(--reader-primary)" }} />
+                )}
+              </button>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );

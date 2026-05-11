@@ -6,7 +6,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import type { BrowserVoiceOption } from "@/lib/tts";
 import type { FontFamily } from "@/stores/reader-settings";
 import { TypographySettings, ThemeSettings, TtsSettings } from "./settings";
 
@@ -21,13 +20,6 @@ interface ReadingSettingsProps {
   onFontFamilyChange: (fontFamily: FontFamily) => void;
   theme: ThemeValue;
   onThemeChange: (theme: ThemeValue) => void;
-  browserVoices: BrowserVoiceOption[];
-  selectedBrowserVoiceId: string;
-  onSelectedBrowserVoiceIdChange: (voiceId: string) => void;
-  ttsRate: number;
-  onTtsRateChange: (value: number) => void;
-  microsoftPreloadCount: number;
-  onMicrosoftPreloadCountChange: (value: number) => void;
   ttsHighlightColor: string;
   onTtsHighlightColorChange: (color: string) => void;
 }
@@ -41,13 +33,6 @@ export function ReadingSettings({
   onFontFamilyChange,
   theme,
   onThemeChange,
-  browserVoices,
-  selectedBrowserVoiceId,
-  onSelectedBrowserVoiceIdChange,
-  ttsRate,
-  onTtsRateChange,
-  microsoftPreloadCount,
-  onMicrosoftPreloadCountChange,
   ttsHighlightColor,
   onTtsHighlightColorChange,
 }: ReadingSettingsProps) {
@@ -89,29 +74,9 @@ export function ReadingSettings({
 
           {/* TTS */}
           <TtsSettings
-            browserVoices={browserVoices}
-            selectedBrowserVoiceId={selectedBrowserVoiceId}
-            onSelectedBrowserVoiceIdChange={onSelectedBrowserVoiceIdChange}
-            ttsRate={ttsRate}
-            onTtsRateChange={onTtsRateChange}
-            microsoftPreloadCount={microsoftPreloadCount}
-            onMicrosoftPreloadCountChange={onMicrosoftPreloadCountChange}
             ttsHighlightColor={ttsHighlightColor}
             onTtsHighlightColorChange={onTtsHighlightColorChange}
           />
-
-          <div className="pt-4 flex justify-center">
-            <button
-              onClick={() => onOpenChange(false)}
-              className="reader-liquid-control flex h-11 items-center justify-center rounded-full px-10 text-sm font-bold tracking-wide transition-all hover:-translate-y-0.5 active:scale-95"
-              style={{
-                background: "var(--reader-primary)",
-                color: "var(--reader-bg)",
-              }}
-            >
-              完成设置
-            </button>
-          </div>
         </div>
       </SheetContent>
     </Sheet>
