@@ -9,6 +9,7 @@ import type { ReaderParagraph } from "@/types/reader";
 
 const MAX_TTS_RETRY_COUNT = 5;
 const TTS_RETRY_DELAY_MS = 450;
+const MAX_TTS_PRELOAD_CONCURRENCY = 2;
 
 interface PlayAudioOptions {
   debugMeta?: { engine: "builtin"; sentenceIndex?: number; paragraph?: string };
@@ -231,7 +232,45 @@ export function useReaderTtsSession({
       setIsSpeaking(true);
 
       const preparedTaskMap = new Map<number, Promise<string>>();
+      const queuedPreloadIndexes = new Set<number>();
+      const preloadQueue: number[] = [];
       const preloadWindowSize = Math.max(1, Math.floor(ttsPreloadWindowSize));
+      let activePreloadCount = 0;
+
+      const removeQueuedPreload = (index: number) => {
+        if (!queuedPreloadIndexes.delete(index)) return;
+        const queuedIndex = preloadQueue.indexOf(index);
+        if (queuedIndex >= 0) {
+          preloadQueue.splice(queuedIndex, 1);
+        }
+      };
+
+      const pumpPreloadQueue = () => {
+        while (
+          activePreloadCount < MAX_TTS_PRELOAD_CONCURRENCY &&
+          preloadQueue.length > 0 &&
+          ttsSessionRef.current === sessionId
+        ) {
+          const index = preloadQueue.shift()!;
+          queuedPreloadIndexes.delete(index);
+          if (preparedTaskMap.has(index)) continue;
+
+          activePreloadCount += 1;
+          const requestSignal = createTtsRequestSignal();
+          const task = requestBuiltinSpeech(queue[index].text, {
+            prefetch: true,
+            signal: requestSignal.signal,
+          }).finally(() => {
+            activePreloadCount = Math.max(0, activePreloadCount - 1);
+            requestSignal.cleanup();
+            pumpPreloadQueue();
+          });
+          task.catch(() => {
+            // avoid unhandled promise rejection for preloaded items
+          });
+          preparedTaskMap.set(index, task);
+        }
+      };
 
       const ensurePreloadWindow = (windowStart: number) => {
         for (
@@ -239,18 +278,12 @@ export function useReaderTtsSession({
           cursor < Math.min(queue.length, windowStart + preloadWindowSize);
           cursor += 1
         ) {
-          if (!preparedTaskMap.has(cursor)) {
-            const requestSignal = createTtsRequestSignal();
-            const task = requestBuiltinSpeech(queue[cursor].text, {
-              prefetch: true,
-              signal: requestSignal.signal,
-            }).finally(requestSignal.cleanup);
-            task.catch(() => {
-              // avoid unhandled promise rejection for preloaded items
-            });
-            preparedTaskMap.set(cursor, task);
+          if (!preparedTaskMap.has(cursor) && !queuedPreloadIndexes.has(cursor)) {
+            queuedPreloadIndexes.add(cursor);
+            preloadQueue.push(cursor);
           }
         }
+        pumpPreloadQueue();
       };
 
       ensurePreloadWindow(0);
@@ -291,6 +324,7 @@ export function useReaderTtsSession({
             if (attempt === 1 && preparedTaskMap.has(i)) {
               objectUrl = await preparedTaskMap.get(i)!;
             } else {
+              removeQueuedPreload(i);
               const requestSignal = createTtsRequestSignal();
               objectUrl = await requestBuiltinSpeech(sentence.text, {
                 signal: requestSignal.signal,
