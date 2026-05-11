@@ -92,6 +92,7 @@ function ReaderContent() {
     activeTtsLocation,
     activeTtsParagraph,
     activeTtsParagraphId,
+    activeTtsSentenceIndexInParagraph,
     allSentencesRef,
     currentParagraphIndexRef,
     isPaused,
@@ -104,6 +105,7 @@ function ReaderContent() {
     setActiveTtsLocation,
     setActiveTtsParagraph,
     setActiveTtsParagraphId,
+    setActiveTtsSentenceIndexInParagraph,
     setIsPaused,
     setIsSpeaking,
     setIsTtsViewOpen,
@@ -387,6 +389,7 @@ function ReaderContent() {
       setActiveTtsLocation,
       setActiveTtsParagraph,
       setActiveTtsParagraphId,
+      setActiveTtsSentenceIndexInParagraph,
       setIsPaused,
       setIsSpeaking,
       setIsTtsViewOpen,
@@ -453,6 +456,7 @@ function ReaderContent() {
         activeTtsLocation={activeTtsLocation}
         activeTtsParagraph={activeTtsParagraph}
         activeTtsParagraphId={activeTtsParagraphId}
+        activeTtsSentenceIndexInParagraph={activeTtsSentenceIndexInParagraph}
         bookData={bookData}
         bookUrl={bookUrl}
         bookFormat={book.format}

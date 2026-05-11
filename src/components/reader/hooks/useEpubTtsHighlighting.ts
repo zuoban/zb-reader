@@ -10,6 +10,7 @@ interface UseEpubTtsHighlightingParams {
   activeTtsLocation?: string | null;
   activeTtsParagraph?: string;
   activeTtsParagraphId?: string | null;
+  activeTtsSentenceIndexInParagraph?: number;
   epubContextRef: MutableRefObject<EpubContext>;
   paragraphLayoutsRef: MutableRefObject<ParagraphLayout[]>;
   positionIndexRef: MutableRefObject<
@@ -34,6 +35,7 @@ export function useEpubTtsHighlighting({
   activeTtsLocation,
   activeTtsParagraph,
   activeTtsParagraphId,
+  activeTtsSentenceIndexInParagraph = 0,
   epubContextRef,
   paragraphLayoutsRef,
   positionIndexRef,
@@ -210,7 +212,11 @@ export function useEpubTtsHighlighting({
       const activeElement = matchedElement as HTMLElement;
       activeElement.setAttribute("data-tts-active", "1");
 
-      const range = findTextRange(activeElement, activeTtsParagraph);
+      const range = findTextRange(
+        activeElement,
+        activeTtsParagraph,
+        activeTtsSentenceIndexInParagraph
+      );
       if (range) {
         const span = ctx.createHighlightSpan(range, ttsHighlightColor);
         if (span) {
@@ -229,6 +235,7 @@ export function useEpubTtsHighlighting({
     };
   }, [
     activeTtsParagraphId,
+    activeTtsSentenceIndexInParagraph,
     activeTtsLocation,
     activeTtsParagraph,
     epubContextRef,

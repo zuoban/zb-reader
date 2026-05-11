@@ -21,6 +21,7 @@ interface ReaderCanvasProps {
   activeTtsLocation: string | null;
   activeTtsParagraph: string;
   activeTtsParagraphId: string | null;
+  activeTtsSentenceIndexInParagraph: number;
   bookData: ArrayBuffer | null;
   bookUrl: string | null;
   bookFormat: string;
@@ -57,6 +58,7 @@ function ReaderCanvasInner({
   activeTtsLocation,
   activeTtsParagraph,
   activeTtsParagraphId,
+  activeTtsSentenceIndexInParagraph,
   bookData,
   bookUrl,
   bookFormat,
@@ -102,6 +104,7 @@ function ReaderCanvasInner({
             highlights={highlights}
             activeTtsParagraph={activeTtsParagraph}
             activeTtsParagraphId={activeTtsParagraphId}
+            activeTtsSentenceIndexInParagraph={activeTtsSentenceIndexInParagraph}
             activeTtsLocation={activeTtsLocation}
             ttsHighlightColor={ttsHighlightColor}
           />
@@ -161,6 +164,7 @@ export const ReaderCanvas = React.memo(ReaderCanvasInner, (prev, next) => {
     prev.activeTtsLocation !== next.activeTtsLocation ||
     prev.activeTtsParagraph !== next.activeTtsParagraph ||
     prev.activeTtsParagraphId !== next.activeTtsParagraphId ||
+    prev.activeTtsSentenceIndexInParagraph !== next.activeTtsSentenceIndexInParagraph ||
     prev.bookData !== next.bookData ||
     prev.bookUrl !== next.bookUrl ||
     prev.bookFormat !== next.bookFormat ||

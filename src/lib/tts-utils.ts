@@ -2,7 +2,11 @@
  * 在元素内查找文本并创建 Range
  * 用于 TTS 高亮和文本选择功能
  */
-export function findTextRange(element: Node, searchText: string): Range | null {
+export function findTextRange(
+  element: Node,
+  searchText: string,
+  occurrenceIndex = 0
+): Range | null {
   const normalizedSearch = searchText.replace(/\s+/g, "").trim();
   if (!normalizedSearch) return null;
 
@@ -30,7 +34,16 @@ export function findTextRange(element: Node, searchText: string): Range | null {
 
   const normalizedFullText = fullText.replace(/\s+/g, "");
 
-  const index = normalizedFullText.indexOf(normalizedSearch);
+  const indexes: number[] = [];
+  let searchFrom = 0;
+  while (searchFrom <= normalizedFullText.length - normalizedSearch.length) {
+    const nextIndex = normalizedFullText.indexOf(normalizedSearch, searchFrom);
+    if (nextIndex === -1) break;
+    indexes.push(nextIndex);
+    searchFrom = nextIndex + Math.max(1, normalizedSearch.length);
+  }
+
+  const index = indexes[occurrenceIndex] ?? indexes[0] ?? -1;
   if (index === -1) return null;
 
   let charCount = 0;

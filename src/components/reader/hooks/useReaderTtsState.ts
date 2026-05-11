@@ -9,6 +9,8 @@ export function useReaderTtsState() {
   const [isTtsViewOpen, setIsTtsViewOpen] = useState(false);
   const [activeTtsParagraph, setActiveTtsParagraph] = useState("");
   const [activeTtsParagraphId, setActiveTtsParagraphId] = useState<string | null>(null);
+  const [activeTtsSentenceIndexInParagraph, setActiveTtsSentenceIndexInParagraph] =
+    useState(0);
   const [activeTtsLocation, setActiveTtsLocation] = useState<string | null>(null);
   const [activeTtsIsCodeBlock, setActiveTtsIsCodeBlock] = useState(false);
   const [activeTtsHtml, setActiveTtsHtml] = useState("");
@@ -29,6 +31,7 @@ export function useReaderTtsState() {
     ttsTotalSentencesRef.current = 0;
     setActiveTtsParagraph("");
     setActiveTtsParagraphId(null);
+    setActiveTtsSentenceIndexInParagraph(0);
     setActiveTtsLocation(null);
     setActiveTtsIsCodeBlock(false);
     setActiveTtsHtml("");
@@ -43,6 +46,7 @@ export function useReaderTtsState() {
     activeTtsLocation,
     activeTtsParagraph,
     activeTtsParagraphId,
+    activeTtsSentenceIndexInParagraph,
     allSentencesRef,
     currentParagraphIndexRef,
     isPaused,
@@ -55,6 +59,7 @@ export function useReaderTtsState() {
     setActiveTtsLocation,
     setActiveTtsParagraph,
     setActiveTtsParagraphId,
+    setActiveTtsSentenceIndexInParagraph,
     setIsPaused,
     setIsSpeaking,
     setIsTtsViewOpen,

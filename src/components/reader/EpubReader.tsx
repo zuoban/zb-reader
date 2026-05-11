@@ -44,6 +44,7 @@ interface EpubReaderProps {
   highlights?: Array<{ cfiRange: string; color: string; id: string }>;
   activeTtsParagraph?: string;
   activeTtsParagraphId?: string | null;
+  activeTtsSentenceIndexInParagraph?: number;
   activeTtsLocation?: string | null;
   ttsHighlightColor?: string;
 }
@@ -87,6 +88,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       highlights,
       activeTtsParagraph,
       activeTtsParagraphId,
+      activeTtsSentenceIndexInParagraph = 0,
       activeTtsLocation,
       ttsHighlightColor = "#3b82f6",
     },
@@ -204,6 +206,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       activeTtsLocation,
       activeTtsParagraph,
       activeTtsParagraphId,
+      activeTtsSentenceIndexInParagraph,
       epubContextRef,
       paragraphLayoutsRef,
       positionIndexRef,

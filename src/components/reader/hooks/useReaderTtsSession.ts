@@ -42,6 +42,7 @@ interface UseReaderTtsSessionParams {
   setActiveTtsLocation: (location: string | null) => void;
   setActiveTtsParagraph: (paragraph: string) => void;
   setActiveTtsParagraphId: (id: string | null) => void;
+  setActiveTtsSentenceIndexInParagraph: (index: number) => void;
   setIsPaused: (value: boolean) => void;
   setIsSpeaking: (value: boolean) => void;
   setIsTtsViewOpen: (value: boolean) => void;
@@ -90,6 +91,7 @@ export function useReaderTtsSession({
   setActiveTtsLocation,
   setActiveTtsParagraph,
   setActiveTtsParagraphId,
+  setActiveTtsSentenceIndexInParagraph,
   setIsPaused,
   setIsSpeaking,
   setIsTtsViewOpen,
@@ -298,6 +300,7 @@ export function useReaderTtsSession({
         const sentence = queue[i];
         setActiveTtsParagraph(sentence.text);
         setActiveTtsParagraphId(sentence.paragraphId);
+        setActiveTtsSentenceIndexInParagraph(sentence.sentenceIndexInParagraph);
         setActiveTtsLocation(sentence.location ?? null);
         setActiveTtsIsCodeBlock(!!sentence.isCodeBlock);
         setActiveTtsHtml(sentence.html || sentence.text);
@@ -371,6 +374,7 @@ export function useReaderTtsSession({
           if (ttsSessionRef.current === sessionId) {
             setActiveTtsParagraph("");
             setActiveTtsParagraphId(null);
+            setActiveTtsSentenceIndexInParagraph(0);
             setActiveTtsLocation(null);
             setActiveTtsIsCodeBlock(false);
             setActiveTtsHtml("");
@@ -478,6 +482,7 @@ export function useReaderTtsSession({
     if (ttsSessionRef.current === sessionId) {
       setActiveTtsParagraph("");
       setActiveTtsParagraphId(null);
+      setActiveTtsSentenceIndexInParagraph(0);
       setActiveTtsLocation(null);
       setIsSpeaking(false);
       setIsTtsViewOpen(false);
@@ -490,6 +495,7 @@ export function useReaderTtsSession({
     setActiveTtsLocation,
     setActiveTtsParagraph,
     setActiveTtsParagraphId,
+    setActiveTtsSentenceIndexInParagraph,
     setIsSpeaking,
     setIsTtsViewOpen,
     speakWithBrowserParagraphs,
@@ -579,6 +585,7 @@ export function useReaderTtsSession({
         if (first) {
           setActiveTtsParagraph(first.text);
           setActiveTtsParagraphId(first.paragraphId);
+          setActiveTtsSentenceIndexInParagraph(first.sentenceIndexInParagraph);
           setActiveTtsLocation(first.location ?? null);
           setActiveTtsIsCodeBlock(!!first.isCodeBlock);
           setActiveTtsHtml(first.html || first.text);
@@ -601,6 +608,7 @@ export function useReaderTtsSession({
     setActiveTtsLocation,
     setActiveTtsParagraph,
     setActiveTtsParagraphId,
+    setActiveTtsSentenceIndexInParagraph,
     setIsPaused,
     setIsSpeaking,
     startTtsLoop,
@@ -646,6 +654,7 @@ export function useReaderTtsSession({
         if (first) {
           setActiveTtsParagraph(first.text);
           setActiveTtsParagraphId(first.paragraphId);
+          setActiveTtsSentenceIndexInParagraph(first.sentenceIndexInParagraph);
           setActiveTtsLocation(first.location ?? null);
           setActiveTtsIsCodeBlock(!!first.isCodeBlock);
           setActiveTtsHtml(first.html || first.text);
@@ -668,6 +677,7 @@ export function useReaderTtsSession({
     setActiveTtsLocation,
     setActiveTtsParagraph,
     setActiveTtsParagraphId,
+    setActiveTtsSentenceIndexInParagraph,
     setIsPaused,
     setIsSpeaking,
     startTtsLoop,
