@@ -49,7 +49,7 @@ export const THEME_STYLES: Record<
       "text-wrap": "balance",
     },
     h1: { "font-size": "2.4em", "border-bottom": "2px solid #171717", "padding-bottom": "0.4em", "margin-top": "0.5em" },
-    h2: { "font-size": "1.8em", "border-left": "4px solid #171717", "padding-left": "0.6em" },
+    h2: { "font-size": "1.8em" },
     h3: { "font-size": "1.4em", "font-style": "italic" },
     hr: {
       width: "6rem",
@@ -153,7 +153,7 @@ export const THEME_STYLES: Record<
       "text-wrap": "balance",
     },
     h1: { "font-size": "2.4em", "border-bottom": "2px solid #ffffff", "padding-bottom": "0.4em", "margin-top": "0.5em" },
-    h2: { "font-size": "1.8em", "border-left": "4px solid #ffffff", "padding-left": "0.6em" },
+    h2: { "font-size": "1.8em" },
     h3: { "font-size": "1.4em", "font-style": "italic" },
     hr: {
       width: "6rem",
@@ -251,7 +251,7 @@ export const THEME_STYLES: Record<
       "text-wrap": "balance",
     },
     h1: { "font-size": "2.4em", "border-bottom": "2px solid #5B4636", "padding-bottom": "0.4em", "margin-top": "0.5em" },
-    h2: { "font-size": "1.8em", "border-left": "4px solid #5B4636", "padding-left": "0.6em" },
+    h2: { "font-size": "1.8em" },
     h3: { "font-size": "1.4em", "font-style": "italic" },
     hr: {
       width: "6rem",
