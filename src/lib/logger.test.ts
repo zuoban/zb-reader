@@ -29,9 +29,8 @@ describe("Logger", () => {
       logger.debug("test-context", "test message", { extra: "data" });
 
       expect(consoleDebug).toHaveBeenCalledWith(
-        "[zb-reader] DEBUG [test-context]",
-        "test message",
-        { extra: "data" }
+        expect.stringMatching(/\[zb-reader\] DEBUG \[test-context\] test message$/),
+        JSON.stringify({ extra: "data" })
       );
     });
 
@@ -40,8 +39,8 @@ describe("Logger", () => {
       logger.info("test-context", "info message");
 
       expect(consoleInfo).toHaveBeenCalledWith(
-        "[zb-reader] INFO [test-context]",
-        "info message"
+        expect.stringMatching(/\[zb-reader\] INFO \[test-context\] info message$/),
+        ""
       );
     });
 
@@ -50,8 +49,7 @@ describe("Logger", () => {
       logger.warn("test-context", "warning message");
 
       expect(consoleWarn).toHaveBeenCalledWith(
-        "[zb-reader] WARN [test-context]",
-        "warning message"
+        expect.stringMatching(/\[zb-reader\] WARN \[test-context\] warning message$/)
       );
     });
 
@@ -61,8 +59,7 @@ describe("Logger", () => {
       logger.error("test-context", "error occurred", error);
 
       expect(consoleError).toHaveBeenCalledWith(
-        "[zb-reader] ERROR [test-context]",
-        "error occurred",
+        expect.stringMatching(/\[zb-reader\] ERROR \[test-context\] error occurred$/),
         error
       );
     });
@@ -92,8 +89,7 @@ describe("Logger", () => {
       logger.warn("test-context", "warning message");
 
       expect(consoleWarn).toHaveBeenCalledWith(
-        "[zb-reader] WARN [test-context]",
-        "warning message"
+        expect.stringMatching(/\[zb-reader\] WARN \[test-context\] warning message$/)
       );
     });
 
@@ -102,8 +98,7 @@ describe("Logger", () => {
       logger.error("test-context", "error message");
 
       expect(consoleError).toHaveBeenCalledWith(
-        "[zb-reader] ERROR [test-context]",
-        "error message"
+        expect.stringMatching(/\[zb-reader\] ERROR \[test-context\] error message$/)
       );
     });
   });
@@ -143,8 +138,7 @@ describe("Logger", () => {
       logger.debug("context", "message", obj);
 
       expect(consoleDebug).toHaveBeenCalledWith(
-        expect.any(String),
-        "message",
+        expect.stringMatching(/\[zb-reader\] DEBUG \[context\] message$/),
         JSON.stringify(obj)
       );
     });

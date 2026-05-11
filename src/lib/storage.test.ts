@@ -2,17 +2,25 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import path from "path";
 const mockFs = {
   existsSync: vi.fn(),
-  mkdirSync: vi.fn(),
-  writeFileSync: vi.fn(),
-  unlinkSync: vi.fn(),
+};
+
+const mockFsAsync = {
+  access: vi.fn(),
+  mkdir: vi.fn(),
+  writeFile: vi.fn(),
+  unlink: vi.fn(),
 };
 
 vi.mock("fs", () => ({
   default: mockFs,
   existsSync: mockFs.existsSync,
-  mkdirSync: mockFs.mkdirSync,
-  writeFileSync: mockFs.writeFileSync,
-  unlinkSync: mockFs.unlinkSync,
+}));
+
+vi.mock("fs/promises", () => ({
+  access: mockFsAsync.access,
+  mkdir: mockFsAsync.mkdir,
+  writeFile: mockFsAsync.writeFile,
+  unlink: mockFsAsync.unlink,
 }));
 
 const mockProcessCwd = "/test/project";
@@ -28,6 +36,10 @@ describe("Storage utilities", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockFs.existsSync.mockReturnValue(true);
+    mockFsAsync.access.mockResolvedValue(undefined);
+    mockFsAsync.mkdir.mockResolvedValue(undefined);
+    mockFsAsync.writeFile.mockResolvedValue(undefined);
+    mockFsAsync.unlink.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -41,10 +53,10 @@ describe("Storage utilities", () => {
       const bookId = "test-book-id";
       const format = "epub";
 
-      const result = saveBookFile(buffer, bookId, format);
+      const result = await saveBookFile(buffer, bookId, format);
 
       expect(result).toBe(`${bookId}.${format}`);
-      expect(mockFs.writeFileSync).toHaveBeenCalledWith(
+      expect(mockFsAsync.writeFile).toHaveBeenCalledWith(
         path.join(BOOKS_DIR, `${bookId}.${format}`),
         buffer
       );
@@ -54,11 +66,11 @@ describe("Storage utilities", () => {
       const { saveBookFile } = await import("./storage");
       const formats = ["epub"];
 
-      formats.forEach((format) => {
+      for (const format of formats) {
         const buffer = Buffer.from("test");
-        const result = saveBookFile(buffer, `book-${format}`, format);
+        const result = await saveBookFile(buffer, `book-${format}`, format);
         expect(result).toBe(`book-${format}.${format}`);
-      });
+      }
     });
   });
 
@@ -67,9 +79,9 @@ describe("Storage utilities", () => {
       const { deleteBookFile } = await import("./storage");
       mockFs.existsSync.mockReturnValue(true);
 
-      deleteBookFile("test-book.epub");
+      await deleteBookFile("test-book.epub");
 
-      expect(mockFs.unlinkSync).toHaveBeenCalledWith(
+      expect(mockFsAsync.unlink).toHaveBeenCalledWith(
         path.join(BOOKS_DIR, "test-book.epub")
       );
     });
@@ -78,15 +90,15 @@ describe("Storage utilities", () => {
       const { deleteBookFile } = await import("./storage");
       mockFs.existsSync.mockReturnValue(false);
 
-      expect(() => deleteBookFile("nonexistent.epub")).not.toThrow();
-      expect(mockFs.unlinkSync).not.toHaveBeenCalled();
+      await expect(deleteBookFile("nonexistent.epub")).resolves.toBeUndefined();
+      expect(mockFsAsync.unlink).not.toHaveBeenCalled();
     });
 
     it("should reject unsafe book file names", async () => {
       const { deleteBookFile, StoragePathError } = await import("./storage");
 
-      expect(() => deleteBookFile("../db.sqlite")).toThrow(StoragePathError);
-      expect(mockFs.unlinkSync).not.toHaveBeenCalled();
+      await expect(deleteBookFile("../db.sqlite")).rejects.toThrow(StoragePathError);
+      expect(mockFsAsync.unlink).not.toHaveBeenCalled();
     });
   });
 
@@ -107,27 +119,27 @@ describe("Storage utilities", () => {
   describe("bookFileExists", () => {
     it("should return true if file exists", async () => {
       const { bookFileExists } = await import("./storage");
-      mockFs.existsSync.mockReturnValue(true);
+      mockFsAsync.access.mockResolvedValue(undefined);
 
-      const result = bookFileExists("book.epub");
+      const result = await bookFileExists("book.epub");
       expect(result).toBe(true);
-      expect(mockFs.existsSync).toHaveBeenCalledWith(
+      expect(mockFsAsync.access).toHaveBeenCalledWith(
         path.join(BOOKS_DIR, "book.epub")
       );
     });
 
     it("should return false if file does not exist", async () => {
       const { bookFileExists } = await import("./storage");
-      mockFs.existsSync.mockReturnValue(false);
+      mockFsAsync.access.mockRejectedValue(new Error("missing"));
 
-      const result = bookFileExists("book.epub");
+      const result = await bookFileExists("book.epub");
       expect(result).toBe(false);
     });
 
     it("should reject nested paths", async () => {
       const { bookFileExists, StoragePathError } = await import("./storage");
 
-      expect(() => bookFileExists("nested/book.epub")).toThrow(StoragePathError);
+      await expect(bookFileExists("nested/book.epub")).rejects.toThrow(StoragePathError);
     });
   });
 
@@ -137,10 +149,10 @@ describe("Storage utilities", () => {
       const buffer = Buffer.from("image data");
       const bookId = "test-book";
 
-      const result = saveCoverImage(buffer, bookId);
+      const result = await saveCoverImage(buffer, bookId);
 
       expect(result).toBe(`${bookId}.jpg`);
-      expect(mockFs.writeFileSync).toHaveBeenCalledWith(
+      expect(mockFsAsync.writeFile).toHaveBeenCalledWith(
         path.join(COVERS_DIR, `${bookId}.jpg`),
         buffer
       );
@@ -152,9 +164,9 @@ describe("Storage utilities", () => {
       const { deleteCoverImage } = await import("./storage");
       mockFs.existsSync.mockReturnValue(true);
 
-      deleteCoverImage("book.jpg");
+      await deleteCoverImage("book.jpg");
 
-      expect(mockFs.unlinkSync).toHaveBeenCalledWith(
+      expect(mockFsAsync.unlink).toHaveBeenCalledWith(
         path.join(COVERS_DIR, "book.jpg")
       );
     });
@@ -163,15 +175,15 @@ describe("Storage utilities", () => {
       const { deleteCoverImage } = await import("./storage");
       mockFs.existsSync.mockReturnValue(false);
 
-      expect(() => deleteCoverImage("nonexistent.jpg")).not.toThrow();
-      expect(mockFs.unlinkSync).not.toHaveBeenCalled();
+      await expect(deleteCoverImage("nonexistent.jpg")).resolves.toBeUndefined();
+      expect(mockFsAsync.unlink).not.toHaveBeenCalled();
     });
 
     it("should reject unsafe cover file names", async () => {
       const { deleteCoverImage, StoragePathError } = await import("./storage");
 
-      expect(() => deleteCoverImage("..\\secret.jpg")).toThrow(StoragePathError);
-      expect(mockFs.unlinkSync).not.toHaveBeenCalled();
+      await expect(deleteCoverImage("..\\secret.jpg")).rejects.toThrow(StoragePathError);
+      expect(mockFsAsync.unlink).not.toHaveBeenCalled();
     });
   });
 
@@ -192,17 +204,17 @@ describe("Storage utilities", () => {
   describe("coverExists", () => {
     it("should return true if cover exists", async () => {
       const { coverExists } = await import("./storage");
-      mockFs.existsSync.mockReturnValue(true);
+      mockFsAsync.access.mockResolvedValue(undefined);
 
-      const result = coverExists("book.jpg");
+      const result = await coverExists("book.jpg");
       expect(result).toBe(true);
     });
 
     it("should return false if cover does not exist", async () => {
       const { coverExists } = await import("./storage");
-      mockFs.existsSync.mockReturnValue(false);
+      mockFsAsync.access.mockRejectedValue(new Error("missing"));
 
-      const result = coverExists("book.jpg");
+      const result = await coverExists("book.jpg");
       expect(result).toBe(false);
     });
   });

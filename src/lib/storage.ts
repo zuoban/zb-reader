@@ -103,8 +103,9 @@ export function getBookFilePath(fileName: string): string {
 }
 
 export async function bookFileExists(fileName: string): Promise<boolean> {
+  const filePath = resolveStoredFilePath(BOOKS_DIR, fileName);
   try {
-    await fsAsync.access(resolveStoredFilePath(BOOKS_DIR, fileName));
+    await fsAsync.access(filePath);
     return true;
   } catch {
     return false;
@@ -131,8 +132,9 @@ export function getCoverFilePath(fileName: string): string {
 }
 
 export async function coverExists(fileName: string): Promise<boolean> {
+  const filePath = resolveStoredFilePath(COVERS_DIR, fileName);
   try {
-    await fsAsync.access(resolveStoredFilePath(COVERS_DIR, fileName));
+    await fsAsync.access(filePath);
     return true;
   } catch {
     return false;

@@ -1,13 +1,22 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import type { NextRequest } from "next/server";
+import { EventEmitter } from "events";
 
 const mockAuth = vi.fn();
 const mockInsertValues = vi.fn();
 const mockSelect = vi.fn();
 const mockSelectResults: unknown[][] = [];
 const mockSaveBookFile = vi.fn();
+const mockSaveBookFileFromStream = vi.fn();
 const mockDeleteBookFile = vi.fn();
 const mockDeleteCoverImage = vi.fn();
+const mockGetBookFilePath = vi.fn();
+const mockOpenSync = vi.fn();
+const mockReadSync = vi.fn();
+const mockCloseSync = vi.fn();
+const mockReadFileSync = vi.fn();
+const mockStatSync = vi.fn();
+const mockYauzlOpen = vi.fn();
 
 vi.mock("@/lib/auth", () => ({
   auth: () => mockAuth(),
@@ -29,9 +38,33 @@ vi.mock("@/lib/db", () => ({
 
 vi.mock("@/lib/storage", () => ({
   saveBookFile: (...args: unknown[]) => mockSaveBookFile(...args),
+  saveBookFileFromStream: (...args: unknown[]) => mockSaveBookFileFromStream(...args),
   saveCoverImage: vi.fn(),
   deleteBookFile: (...args: unknown[]) => mockDeleteBookFile(...args),
   deleteCoverImage: (...args: unknown[]) => mockDeleteCoverImage(...args),
+  getBookFilePath: (...args: unknown[]) => mockGetBookFilePath(...args),
+}));
+
+vi.mock("fs", () => ({
+  default: {
+    openSync: (...args: unknown[]) => mockOpenSync(...args),
+    readSync: (...args: unknown[]) => mockReadSync(...args),
+    closeSync: (...args: unknown[]) => mockCloseSync(...args),
+    readFileSync: (...args: unknown[]) => mockReadFileSync(...args),
+    statSync: (...args: unknown[]) => mockStatSync(...args),
+  },
+  openSync: (...args: unknown[]) => mockOpenSync(...args),
+  readSync: (...args: unknown[]) => mockReadSync(...args),
+  closeSync: (...args: unknown[]) => mockCloseSync(...args),
+  readFileSync: (...args: unknown[]) => mockReadFileSync(...args),
+  statSync: (...args: unknown[]) => mockStatSync(...args),
+}));
+
+vi.mock("yauzl", () => ({
+  default: {
+    open: (...args: unknown[]) => mockYauzlOpen(...args),
+  },
+  open: (...args: unknown[]) => mockYauzlOpen(...args),
 }));
 
 vi.mock("@/lib/logger", () => ({
@@ -46,6 +79,32 @@ interface MockUploadFile {
   name: string;
   size: number;
   arrayBuffer: ReturnType<typeof vi.fn>;
+  stream: ReturnType<typeof vi.fn>;
+}
+
+function installYauzlNeedsNormalizationMock() {
+  mockYauzlOpen.mockImplementation((_path, _options, callback) => {
+    const zipfile = new EventEmitter() as EventEmitter & {
+      readEntry: () => void;
+      close: () => void;
+    };
+    zipfile.close = vi.fn();
+    let emitted = false;
+    zipfile.readEntry = () => {
+      if (emitted) return;
+      emitted = true;
+      queueMicrotask(() => {
+        zipfile.emit("entry", {
+          fileName: "Nested/META-INF/container.xml",
+          uncompressedSize: 100,
+        });
+        queueMicrotask(() => {
+          zipfile.emit("end");
+        });
+      });
+    };
+    callback(null, zipfile);
+  });
 }
 
 function createUploadRequest(file: MockUploadFile): NextRequest {
@@ -89,7 +148,18 @@ describe("Books API upload", () => {
       user: { id: "user-1", username: "test", email: "test@test.com" },
       expires: new Date().toISOString(),
     });
-    mockSaveBookFile.mockReturnValue("book-1.epub");
+    mockSaveBookFileFromStream.mockResolvedValue("book-1.epub");
+    mockSaveBookFile.mockResolvedValue("book-1.epub");
+    mockGetBookFilePath.mockReturnValue("/tmp/book-1.epub");
+    mockOpenSync.mockReturnValue(1);
+    mockReadSync.mockImplementation((_fd, buffer: Buffer) => {
+      buffer.set(Buffer.from([0x50, 0x4b, 0x03, 0x04]));
+      return 4;
+    });
+    mockCloseSync.mockReturnValue(undefined);
+    mockReadFileSync.mockReturnValue(Buffer.from("PK\x03\x04"));
+    mockStatSync.mockReturnValue({ size: 1024 });
+    installYauzlNeedsNormalizationMock();
   });
 
   it("accepts EPUB files exported with an .epub.zip extension", async () => {
@@ -115,7 +185,9 @@ describe("Books API upload", () => {
       name: "Rust 程序设计第2版.epub.zip",
       size: buffer.length,
       arrayBuffer: vi.fn().mockResolvedValue(buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)),
+      stream: vi.fn(),
     };
+    mockReadFileSync.mockReturnValue(buffer);
 
     mockInsertValues.mockResolvedValueOnce(undefined);
 
@@ -138,6 +210,7 @@ describe("Books API upload", () => {
       name: "large.epub",
       size: 301 * 1024 * 1024,
       arrayBuffer: vi.fn(),
+      stream: vi.fn(),
     };
 
     const { POST } = await import("./route");
@@ -161,7 +234,12 @@ describe("Books API upload", () => {
           invalidBuffer.byteOffset + invalidBuffer.byteLength
         )
       ),
+      stream: vi.fn(),
     };
+    mockReadSync.mockImplementation((_fd, buffer: Buffer) => {
+      buffer.set(Buffer.from("nope"));
+      return 4;
+    });
 
     const { POST } = await import("./route");
     const res = await POST(createUploadRequest(file));
@@ -181,7 +259,9 @@ describe("Books API upload", () => {
       name: "book.epub",
       size: 1024,
       arrayBuffer: vi.fn().mockResolvedValue(buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)),
+      stream: vi.fn(),
     };
+    mockReadFileSync.mockReturnValue(buffer);
     mockInsertValues.mockRejectedValueOnce(new Error("insert failed"));
 
     const { POST } = await import("./route");
