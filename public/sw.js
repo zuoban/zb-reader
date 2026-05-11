@@ -1,21 +1,24 @@
-const CACHE_VERSION = "v3";
+import { openDB } from "idb";
+
+const CACHE_VERSION = "v4";
 const STATIC_CACHE = `zb-reader-static-${CACHE_VERSION}`;
 const ASSET_CACHE = `zb-reader-assets-${CACHE_VERSION}`;
 const OFFLINE_PAGE = "/offline.html";
 
+const DB_NAME = "zb-reader-sync-queue";
+const DB_VERSION = 2;
+const STORE_NAME = "queue";
+const QUEUE_KEY = "items";
+const SYNC_TAG = "sync-progress";
+
 const IS_LOCAL_DEV = ["localhost", "127.0.0.1", "::1"].includes(self.location.hostname);
 
-const STATIC_ASSETS = [
-  "/logo.svg",
-  "/favicon.ico",
-  "/manifest.json",
-  OFFLINE_PAGE
-];
+const STATIC_ASSETS = ["/logo.svg", "/favicon.ico", "/manifest.json", OFFLINE_PAGE];
 
 // 监听安装事件
-self.addEventListener("install", (event) => {
+self.addEventListener("install", (event: any) => {
   if (IS_LOCAL_DEV) {
-    self.skipWaiting();
+    (self as any).skipWaiting();
     return;
   }
 
@@ -24,11 +27,11 @@ self.addEventListener("install", (event) => {
       return cache.addAll(STATIC_ASSETS);
     })
   );
-  self.skipWaiting();
+  (self as any).skipWaiting();
 });
 
 // 监听激活事件
-self.addEventListener("activate", (event) => {
+self.addEventListener("activate", (event: any) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
@@ -38,26 +41,24 @@ self.addEventListener("activate", (event) => {
       );
     })
   );
-  self.clients.claim();
+  (self as any).clients.claim();
 });
 
-// 监听来自客户端的消息 (如 SKIP_WAITING)
-self.addEventListener("message", (event) => {
+// 监听来自客户端的消息
+self.addEventListener("message", (event: any) => {
   if (event.data && event.data.type === "SKIP_WAITING") {
-    self.skipWaiting();
+    (self as any).skipWaiting();
   }
 });
 
 // 处理请求拦截
-self.addEventListener("fetch", (event) => {
+self.addEventListener("fetch", (event: any) => {
   if (IS_LOCAL_DEV) return;
 
   const url = new URL(event.request.url);
 
-  // 仅处理同源请求
   if (url.origin !== self.location.origin) return;
 
-  // 1. 导航请求：网络优先，离线回退
   if (event.request.mode === "navigate") {
     event.respondWith(
       fetch(event.request).catch(() => {
@@ -69,23 +70,19 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // 2. 忽略 API 请求 (除了书籍封面)
   if (url.pathname.startsWith("/api/")) {
     if (url.pathname.includes("/cover")) {
-      // 封面图：Stale-While-Revalidate
       event.respondWith(staleWhileRevalidate(event.request, ASSET_CACHE));
       return;
     }
     return;
   }
 
-  // 3. 字体文件：Stale-While-Revalidate
   if (url.pathname.endsWith(".woff2") || url.pathname.endsWith(".ttf") || url.pathname.includes("/fonts/")) {
     event.respondWith(staleWhileRevalidate(event.request, ASSET_CACHE));
     return;
   }
 
-  // 4. 静态资源：缓存优先
   event.respondWith(
     caches.match(event.request).then((response) => {
       if (response) return response;
@@ -106,10 +103,7 @@ self.addEventListener("fetch", (event) => {
   );
 });
 
-/**
- * Stale-While-Revalidate 策略
- */
-async function staleWhileRevalidate(request, cacheName) {
+async function staleWhileRevalidate(request: Request, cacheName: string) {
   const cache = await caches.open(cacheName);
   const cachedResponse = await cache.match(request);
 
@@ -121,4 +115,44 @@ async function staleWhileRevalidate(request, cacheName) {
   });
 
   return cachedResponse || fetchPromise;
+}
+
+// --- Background Sync ---
+
+self.addEventListener("sync", (event: any) => {
+  if (event.tag === SYNC_TAG) {
+    event.waitUntil(syncProgress());
+  }
+});
+
+async function syncProgress() {
+  try {
+    const db = await openDB(DB_NAME, DB_VERSION);
+    const queue = await db.get(STORE_NAME, QUEUE_KEY);
+
+    if (!queue || !Array.isArray(queue) || queue.length === 0) {
+      return;
+    }
+
+    const isBatch = queue.length > 1;
+    const route = isBatch ? "/api/progress/batch-sync" : "/api/progress/sync";
+    const body = isBatch ? queue : queue[0];
+
+    const response = await fetch(route, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    if (response.ok) {
+      // Clear queue on success
+      await db.put(STORE_NAME, [], QUEUE_KEY);
+      console.log("[SW] Progress synced via Background Sync");
+    } else {
+      throw new Error(`Sync failed with status: ${response.status}`);
+    }
+  } catch (error) {
+    console.error("[SW] Background Sync failed:", error);
+    throw error; // Let the browser retry later
+  }
 }

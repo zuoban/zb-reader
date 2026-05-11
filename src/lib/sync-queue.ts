@@ -23,6 +23,7 @@ export class SyncQueue {
   private syncing = false;
   private syncFn: (items: SyncItem[], options?: { keepalive?: boolean }) => Promise<void>;
   private onlineHandler: () => void;
+  public static readonly SYNC_TAG = "sync-progress";
 
   constructor(options: {
     syncFn: (items: SyncItem[], options?: { keepalive?: boolean }) => Promise<void>;
@@ -30,23 +31,23 @@ export class SyncQueue {
     this.syncFn = options.syncFn;
     this.onlineHandler = () => this.sync();
 
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       this.loadFromStorage();
-      window.addEventListener('online', this.onlineHandler);
+      window.addEventListener("online", this.onlineHandler);
     }
   }
 
   /** Clean up event listeners and timers. Call on component unmount. */
   destroy(): void {
-    if (typeof window !== 'undefined') {
-      window.removeEventListener('online', this.onlineHandler);
+    if (typeof window !== "undefined") {
+      window.removeEventListener("online", this.onlineHandler);
     }
     this.queue = [];
   }
 
   async enqueue(item: SyncItem, options?: { autoSync?: boolean }): Promise<void> {
-    const existingIndex = this.queue.findIndex(i => i.bookId === item.bookId);
-    
+    const existingIndex = this.queue.findIndex((i) => i.bookId === item.bookId);
+
     if (existingIndex !== -1) {
       this.queue[existingIndex] = item;
     } else {
@@ -58,13 +59,29 @@ export class SyncQueue {
 
     await this.persistQueue();
 
-    if (options?.autoSync !== false && navigator.onLine && !this.syncing) {
-      void this.sync();
+    if (options?.autoSync !== false) {
+      if (typeof window !== "undefined" && "serviceWorker" in navigator && "SyncManager" in window) {
+        try {
+          const registration = await navigator.serviceWorker.ready;
+          await (registration as any).sync.register(SyncQueue.SYNC_TAG);
+        } catch (error) {
+          logger.warn("sync-queue", "Background Sync registration failed, falling back to regular sync", error);
+          if (navigator.onLine && !this.syncing) {
+            void this.sync();
+          }
+        }
+      } else if (navigator.onLine && !this.syncing) {
+        void this.sync();
+      }
     }
   }
 
   async sync(options?: { keepalive?: boolean }): Promise<void> {
-    if (this.syncing || !navigator.onLine || this.queue.length === 0) {
+    if (this.syncing || this.queue.length === 0) {
+      return;
+    }
+
+    if (!navigator.onLine && !options?.keepalive) {
       return;
     }
 
@@ -83,25 +100,25 @@ export class SyncQueue {
         try {
           await this.syncFn(batch, options);
           success = true;
-          this.queue = this.queue.filter(i => !batch.includes(i));
+          this.queue = this.queue.filter((i) => !batch.includes(i));
           await this.persistQueue();
         } catch (error) {
           retryCount++;
-          
+
           if (!options?.keepalive) {
-            logger.warn('sync-queue', `Sync failed (attempt ${retryCount}/${MAX_RETRY_COUNT})`, {
+            logger.warn("sync-queue", `Sync failed (attempt ${retryCount}/${MAX_RETRY_COUNT})`, {
               error,
             });
           }
 
           if (retryCount >= maxAttempts) {
             if (!options?.keepalive) {
-              logger.error('sync-queue', 'Sync failed after max retries');
+              logger.error("sync-queue", "Sync failed after max retries");
             }
-            
+
             // 卸载时不移除队列，留给下次加载
             if (options?.keepalive) {
-              break; 
+              break;
             }
 
             break;
