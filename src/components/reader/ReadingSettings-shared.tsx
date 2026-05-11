@@ -1,4 +1,4 @@
-import { Check, ChevronDown } from "lucide-react";
+import { Check } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -89,24 +89,22 @@ export function CompactSelect({
   return (
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger
-        className="h-9 gap-2 rounded-xl border-0 pl-3 pr-2.5 text-[13px] font-medium shadow-none focus:ring-0 focus:ring-offset-0 hover:bg-[color-mix(in_srgb,var(--reader-text)_8%,transparent)] transition-colors sm:h-10 sm:pl-3.5 sm:pr-3 sm:text-[14px]"
-        style={{
-          background: "color-mix(in srgb, var(--reader-text) 4%, transparent)",
-          color: "var(--reader-text)",
-          minWidth: "130px",
-          maxWidth: "220px",
-        }}
+        className="reader-compact-select-trigger h-10 min-w-[140px] max-w-[220px] gap-2 rounded-2xl border px-3.5 text-[14px] font-semibold shadow-none transition-all duration-200 focus:ring-0 focus:ring-offset-0 sm:h-11 sm:min-w-[160px] sm:px-4"
       >
         <SelectValue placeholder={placeholder} />
-        <ChevronDown className="size-3.5 sm:size-4 shrink-0 opacity-50" />
       </SelectTrigger>
-      <SelectContent className="rounded-xl">
+      <SelectContent
+        position="popper"
+        align="end"
+        sideOffset={8}
+        className="reader-compact-select-content min-w-[var(--radix-select-trigger-width)] rounded-2xl p-1.5"
+      >
         {options.map((opt) => (
           <SelectItem
             key={opt.value}
             value={opt.value}
             disabled={opt.disabled}
-            className="rounded-lg text-[13px] sm:text-[14px] cursor-pointer"
+            className="reader-compact-select-item h-10 rounded-xl px-3 pr-9 text-[14px] font-medium sm:h-11"
           >
             {opt.label}
           </SelectItem>

@@ -822,6 +822,170 @@
   );
 }
 
+.reader-status-footer {
+  border-top: 1px solid color-mix(in srgb, var(--reader-text, #111) 11%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, white 18%, transparent), transparent 72%),
+    color-mix(in srgb, var(--reader-bg, white) 96%, var(--reader-card-bg, white) 4%);
+  color: var(--reader-text, #111);
+  box-shadow:
+    0 -1px 0 color-mix(in srgb, white 34%, transparent) inset,
+    0 -12px 26px -26px color-mix(in srgb, var(--reader-text, #111) 42%, transparent);
+}
+
+.reader-status-title {
+  color: color-mix(in srgb, var(--reader-text, #111) 88%, transparent);
+  text-shadow: 0 1px 0 color-mix(in srgb, var(--reader-bg, white) 72%, transparent);
+}
+
+.reader-status-meta {
+  color: color-mix(in srgb, var(--reader-text, #111) 68%, transparent);
+  letter-spacing: 0.08em;
+}
+
+.reader-status-divider {
+  color: color-mix(in srgb, var(--reader-text, #111) 34%, transparent);
+}
+
+.reader-compact-select-trigger {
+  border-color: color-mix(in srgb, var(--reader-text, #111) 8%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, white 18%, transparent), transparent 60%),
+    color-mix(in srgb, var(--reader-text, #111) 5%, var(--reader-bg, white));
+  color: color-mix(in srgb, var(--reader-text, #111) 88%, transparent);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, white 42%, transparent) inset,
+    0 10px 22px -20px color-mix(in srgb, var(--reader-text, #111) 38%, transparent);
+}
+
+.reader-compact-select-trigger:hover,
+.reader-compact-select-trigger[data-state="open"] {
+  border-color: color-mix(in srgb, var(--reader-primary, #111) 22%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, white 22%, transparent), transparent 62%),
+    color-mix(in srgb, var(--reader-primary, #111) 7%, var(--reader-bg, white));
+}
+
+.reader-compact-select-trigger:focus-visible {
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--reader-primary, #111) 18%, transparent),
+    0 1px 0 color-mix(in srgb, white 42%, transparent) inset;
+}
+
+.reader-compact-select-trigger svg {
+  color: color-mix(in srgb, var(--reader-text, #111) 54%, transparent);
+  opacity: 1;
+}
+
+.reader-compact-select-content {
+  border-color: color-mix(in srgb, var(--reader-text, #111) 10%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, white 20%, transparent), transparent 52%),
+    color-mix(in srgb, var(--reader-card-bg, white) 94%, var(--reader-bg, white) 6%);
+  color: var(--reader-text, #111);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, white 46%, transparent) inset,
+    0 18px 46px -28px color-mix(in srgb, var(--reader-text, #111) 44%, transparent);
+  backdrop-filter: blur(18px) saturate(1.15);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+}
+
+.reader-compact-select-item {
+  color: color-mix(in srgb, var(--reader-text, #111) 76%, transparent);
+}
+
+.reader-compact-select-item:focus,
+.reader-compact-select-item[data-highlighted] {
+  background: color-mix(in srgb, var(--reader-primary, #111) 9%, transparent);
+  color: var(--reader-text, #111);
+}
+
+.reader-compact-select-item[data-state="checked"] {
+  background: color-mix(in srgb, var(--reader-primary, #111) 13%, transparent);
+  color: color-mix(in srgb, var(--reader-text, #111) 94%, transparent);
+  font-weight: 700;
+}
+
+.reader-compact-select-item [data-slot="select-item-indicator"] {
+  color: color-mix(in srgb, var(--reader-primary, #111) 82%, var(--reader-text, #111));
+}
+
+[data-reader-theme="dark"] .reader-status-footer {
+  border-top-color: color-mix(in srgb, var(--reader-text, #fff) 12%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, white 5%, transparent), transparent 74%),
+    color-mix(in srgb, var(--reader-bg, #111) 96%, var(--reader-card-bg, #111) 4%);
+  box-shadow:
+    0 -1px 0 color-mix(in srgb, white 5%, transparent) inset,
+    0 -12px 26px -26px color-mix(in srgb, black 80%, transparent);
+}
+
+[data-reader-theme="dark"] .reader-status-title {
+  color: color-mix(in srgb, var(--reader-text, #fff) 90%, transparent);
+  text-shadow: none;
+}
+
+[data-reader-theme="dark"] .reader-status-meta {
+  color: color-mix(in srgb, var(--reader-text, #fff) 72%, transparent);
+}
+
+[data-reader-theme="dark"] .reader-status-divider {
+  color: color-mix(in srgb, var(--reader-text, #fff) 40%, transparent);
+}
+
+[data-reader-theme="dark"] .reader-compact-select-trigger {
+  border-color: color-mix(in srgb, var(--reader-text, #fff) 10%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, white 6%, transparent), transparent 62%),
+    color-mix(in srgb, var(--reader-text, #fff) 7%, var(--reader-bg, #111));
+  color: color-mix(in srgb, var(--reader-text, #fff) 88%, transparent);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, white 8%, transparent) inset,
+    0 10px 22px -20px color-mix(in srgb, black 80%, transparent);
+}
+
+[data-reader-theme="dark"] .reader-compact-select-trigger:hover,
+[data-reader-theme="dark"] .reader-compact-select-trigger[data-state="open"] {
+  border-color: color-mix(in srgb, var(--reader-primary, #fff) 24%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, white 8%, transparent), transparent 62%),
+    color-mix(in srgb, var(--reader-primary, #fff) 10%, var(--reader-bg, #111));
+}
+
+[data-reader-theme="dark"] .reader-compact-select-trigger svg {
+  color: color-mix(in srgb, var(--reader-text, #fff) 58%, transparent);
+}
+
+[data-reader-theme="dark"] .reader-compact-select-content {
+  border-color: color-mix(in srgb, var(--reader-text, #fff) 12%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, white 7%, transparent), transparent 52%),
+    color-mix(in srgb, var(--reader-card-bg, #111) 95%, var(--reader-bg, #111) 5%);
+  color: var(--reader-text, #fff);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, white 8%, transparent) inset,
+    0 18px 46px -28px color-mix(in srgb, black 86%, transparent);
+}
+
+[data-reader-theme="dark"] .reader-compact-select-item {
+  color: color-mix(in srgb, var(--reader-text, #fff) 78%, transparent);
+}
+
+[data-reader-theme="dark"] .reader-compact-select-item:focus,
+[data-reader-theme="dark"] .reader-compact-select-item[data-highlighted] {
+  background: color-mix(in srgb, var(--reader-primary, #fff) 12%, transparent);
+  color: var(--reader-text, #fff);
+}
+
+[data-reader-theme="dark"] .reader-compact-select-item[data-state="checked"] {
+  background: color-mix(in srgb, var(--reader-primary, #fff) 16%, transparent);
+  color: color-mix(in srgb, var(--reader-text, #fff) 94%, transparent);
+}
+
+[data-reader-theme="dark"] .reader-compact-select-item [data-slot="select-item-indicator"] {
+  color: color-mix(in srgb, var(--reader-primary, #fff) 84%, var(--reader-text, #fff));
+}
+
 
 
 .reader-page-turn-dock {
