@@ -124,7 +124,7 @@ function createQueryResult(results: unknown[]) {
     limit: vi.fn(() => query),
     offset: vi.fn(() => query),
     then: (resolve: (val: unknown) => void) => resolve(results),
-    catch: (reject: (err: unknown) => void) => {},
+    catch: (_reject: (err: unknown) => void) => {},
   };
 
   return query;

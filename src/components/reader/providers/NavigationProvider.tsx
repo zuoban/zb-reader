@@ -10,9 +10,17 @@ import { useTts } from "./TtsProvider";
 import { useReaderUI } from "./ReaderUIProvider";
 import { useAnnotation } from "./AnnotationProvider";
 
+import type { TocItem } from "@/types/reader";
+
 interface NavigationContextValue {
-  handleLocationChange: (location: any) => void;
-  handleTocLoaded: (tocItems: any[]) => void;
+  handleLocationChange: (location: {
+    cfi: string;
+    progress: number;
+    currentPage?: number;
+    totalPages?: number;
+    href?: string;
+  }) => void;
+  handleTocLoaded: (tocItems: TocItem[]) => void;
   handleTextSelected: (cfiRange: string, text: string) => void;
   handleToggleToolbar: () => void;
   handleBack: () => Promise<void>;
@@ -26,7 +34,7 @@ interface NavigationContextValue {
   handleNextChapter: () => void;
   hasPrevChapter: boolean;
   hasNextChapter: boolean;
-  toc: any[];
+  toc: TocItem[];
   currentHref: string | undefined;
   progress: number;
   currentPage: number | undefined;
@@ -40,7 +48,7 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
   const bookId = params.bookId as string;
   const { book, initialProgress, bookmarks } = useBookData();
   const { isSpeaking } = useTts();
-  const { setToolbarVisible, setSidePanelOpen, setToc, setCurrentHref, toc, currentHref } = useReaderUI();
+  const { setToolbarVisible, setToc, setCurrentHref, toc, currentHref } = useReaderUI();
   const { setSelectionMenu, setSelectionMenuKey, setIsCurrentBookmarked } = useAnnotation();
 
   const {

@@ -7,11 +7,12 @@ import {
   useDebouncedSettingsSave,
   useReaderSettingsValues
 } from "@/stores/reader-settings";
-import { READER_THEME_STYLES } from "@/lib/reader-theme";
+import type { BrowserVoiceOption } from "@/lib/tts";
+import type { ReaderThemeStyle } from "@/lib/reader-theme";
 
 interface ReaderSettingsContextValue {
-  ttsVoices: any[];
-  currentTheme: any;
+  ttsVoices: BrowserVoiceOption[];
+  currentTheme: ReaderThemeStyle;
   readerTheme: string;
 }
 

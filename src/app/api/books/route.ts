@@ -5,7 +5,6 @@ import { db } from "@/lib/db";
 import { books, readingProgress } from "@/lib/db/schema";
 import { 
   deleteBookFile, 
-  saveCoverImage,
   getBookFilePath 
 } from "@/lib/storage";
 import { logger } from "@/lib/logger";

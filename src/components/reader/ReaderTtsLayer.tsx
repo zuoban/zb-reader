@@ -2,15 +2,11 @@
 
 import { FullscreenTtsView } from "@/components/reader/FullscreenTtsView";
 import { TtsFloatingControl } from "@/components/reader/TtsFloatingControl";
-import type { Book } from "@/lib/db/schema";
-import type { BrowserVoiceOption } from "@/lib/tts";
 
 import { useBookData, useTts, useReaderUI, useNavigation } from "./providers";
-import { useReaderSettingsStore, useReaderSettingsValues } from "@/stores/reader-settings";
+import { useReaderSettingsStore } from "@/stores/reader-settings";
 
-interface ReaderTtsLayerProps {}
-
-export function ReaderTtsLayer({}: ReaderTtsLayerProps) {
+export function ReaderTtsLayer() {
   const { book } = useBookData();
   const {
     isSpeaking,
@@ -59,7 +55,7 @@ export function ReaderTtsLayer({}: ReaderTtsLayerProps) {
         progress={progress}
         ttsRate={ttsRate}
         selectedTtsVoiceId={selectedTtsVoiceId}
-        ttsVoices={ttsVoices as any}
+        ttsVoices={ttsVoices}
         isFullscreen={isFullscreen}
         onBackToReader={onBackToReader}
         onToggle={onToggle}

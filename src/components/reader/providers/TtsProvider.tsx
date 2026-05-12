@@ -12,6 +12,7 @@ import { useBookData } from "./BookDataProvider";
 import { useReaderSettings } from "./ReaderSettingsProvider";
 import { useReaderContext } from "@/components/reader/ReaderContext";
 import { useReaderSettingsStore, useReaderSettingsValues } from "@/stores/reader-settings";
+import type { BrowserVoiceOption } from "@/lib/tts";
 
 interface TtsContextValue {
   isSpeaking: boolean;
@@ -30,7 +31,7 @@ interface TtsContextValue {
   handleTtsNextChapter: () => void;
   handleTtsPrevChapter: () => void;
   stopSpeaking: () => void;
-  ttsVoices: any[];
+  ttsVoices: BrowserVoiceOption[];
   ttsRate: number;
   setTtsRate: (rate: number) => void;
 }

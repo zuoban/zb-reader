@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef, memo } from "react";
+import { useState, useEffect, useRef, memo, useCallback } from "react";
 import { Highlighter, StickyNote, Copy, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 import { useAnnotation } from "./providers";
-
-interface TextSelectionMenuProps {}
+import type { ReaderSelectionMenuState } from "@/components/reader/hooks";
 
 const highlightColors = [
   { value: "#facc15", label: "黄色" },
@@ -17,7 +16,7 @@ const highlightColors = [
   { value: "#c084fc", label: "紫色" },
 ];
 
-export const TextSelectionMenu = memo(function TextSelectionMenu({}: TextSelectionMenuProps) {
+export const TextSelectionMenu = memo(function TextSelectionMenu() {
   const {
     selectionMenu: { visible, position },
     selectionMenuKey: instanceKey = 0,
@@ -27,7 +26,9 @@ export const TextSelectionMenu = memo(function TextSelectionMenu({}: TextSelecti
     setSelectionMenu,
   } = useAnnotation();
 
-  const onClose = () => setSelectionMenu((prev: any) => ({ ...prev, visible: false }));
+  const onClose = useCallback(() => 
+    setSelectionMenu((prev: ReaderSelectionMenuState) => ({ ...prev, visible: false })),
+  [setSelectionMenu]);
 
   const menuRef = useRef<HTMLDivElement>(null);
 

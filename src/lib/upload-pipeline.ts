@@ -1,7 +1,5 @@
-import fs from "fs";
 import * as fsAsync from "fs/promises";
 import yauzl from "yauzl";
-import { v4 as uuidv4 } from "uuid";
 import { logger } from "@/lib/logger";
 import { saveCoverImage, moveBookFromTemp, saveBookToTemp } from "@/lib/storage";
 import { MAX_EPUB_FILE_SIZE_BYTES } from "@/lib/upload-limits";
@@ -198,7 +196,7 @@ export async function validateAndExtractMetadataFromFile(
           try {
             const buffer = await readZipEntry(zipfile, entry);
             containerXmlContent = buffer.toString();
-          } catch (e) {
+          } catch {
             zipfile.close();
             return reject(new EpubValidationError("无法读取 container.xml"));
           }
@@ -240,7 +238,7 @@ export async function validateAndExtractMetadataFromFile(
                   zipfile2.close();
                   return resolve({ ...metadata, needsNormalization: false });
                 }
-              } catch (e) {
+              } catch {
                 zipfile2.close();
                 return reject(new EpubValidationError("无法读取 OPF 文件"));
               }
@@ -252,8 +250,8 @@ export async function validateAndExtractMetadataFromFile(
                   metadata.coverFileName = await saveCoverImage(coverData, bookId);
                   zipfile2.close();
                   return resolve({ ...metadata, needsNormalization: false });
-                } catch (e) {
-                  logger.warn("books", "Failed to extract cover", e);
+                } catch (_e) {
+                  logger.warn("books", "Failed to extract cover", _e);
                   // Non-fatal, continue without cover
                 }
               }
@@ -266,16 +264,16 @@ export async function validateAndExtractMetadataFromFile(
             resolve({ ...metadata, needsNormalization: false });
           });
           
-          zipfile2.on("error", (e) => {
+          zipfile2.on("error", (_e) => {
             zipfile2.close();
-            reject(e);
+            reject(_e);
           });
         });
       });
       
-      zipfile.on("error", (e) => {
+      zipfile.on("error", (_e) => {
         zipfile.close();
-        reject(e);
+        reject(_e);
       });
     });
   });

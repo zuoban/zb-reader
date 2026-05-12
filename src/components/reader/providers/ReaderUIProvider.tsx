@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState } from "react";
 import { 
   useReaderSidePanelState, 
   useReaderFullscreen, 
@@ -17,8 +17,8 @@ interface ReaderUIContextValue {
   setToolbarVisible: React.Dispatch<React.SetStateAction<boolean>>;
   sidePanelOpen: boolean;
   setSidePanelOpen: (open: boolean) => void;
-  activeTab: any;
-  setActiveTab: (tab: any) => void;
+  activeTab: "toc" | "bookmarks" | "notes";
+  setActiveTab: React.Dispatch<React.SetStateAction<"toc" | "bookmarks" | "notes">>;
   toc: TocItem[];
   setToc: (toc: TocItem[]) => void;
   currentHref: string | undefined;

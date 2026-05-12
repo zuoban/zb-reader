@@ -14,8 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
 import { useAnnotation } from "./providers";
-
-interface NoteEditorProps {}
+import type { ReaderNoteEditorState } from "@/components/reader/hooks";
 
 const colorOptions = [
   { value: "#facc15", label: "黄色" },
@@ -25,7 +24,7 @@ const colorOptions = [
   { value: "#c084fc", label: "紫色" },
 ];
 
-export function NoteEditor({}: NoteEditorProps) {
+export function NoteEditor() {
   const {
     noteEditor: { open, selectedText, initialContent = "", initialColor = "#facc15" },
     setNoteEditor: onOpenChange,
@@ -35,7 +34,7 @@ export function NoteEditor({}: NoteEditorProps) {
   const [content, setContent] = useState(initialContent);
   const [color, setColor] = useState(initialColor);
 
-  const handleOpenChange = (nextOpen: boolean | ((prev: any) => any)) => {
+  const handleOpenChange = (nextOpen: boolean | ((prev: ReaderNoteEditorState) => ReaderNoteEditorState)) => {
     if (typeof nextOpen === 'boolean' && nextOpen) {
       setContent(initialContent);
       setColor(initialColor);
@@ -44,13 +43,13 @@ export function NoteEditor({}: NoteEditorProps) {
     if (typeof nextOpen === 'function') {
         onOpenChange(nextOpen);
     } else {
-        onOpenChange((prev: any) => ({ ...prev, open: nextOpen }));
+        onOpenChange((prev: ReaderNoteEditorState) => ({ ...prev, open: nextOpen }));
     }
   };
 
   const handleSave = () => {
     onSave(content, color);
-    onOpenChange((prev: any) => ({ ...prev, open: false }));
+    onOpenChange((prev: ReaderNoteEditorState) => ({ ...prev, open: false }));
   };
 
   return (
@@ -199,7 +198,7 @@ export function NoteEditor({}: NoteEditorProps) {
         <DialogFooter className="gap-2">
           <Button
             variant="outline"
-            onClick={() => onOpenChange(false)}
+            onClick={() => onOpenChange((prev: ReaderNoteEditorState) => ({ ...prev, open: false }))}
             className="reader-liquid-control cursor-pointer rounded-xl"
             style={{
               color: "var(--reader-text)",

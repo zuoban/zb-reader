@@ -4,10 +4,13 @@ import React, { createContext, useContext, useState } from "react";
 import { 
   useBookmarkActions, 
   useNoteActions, 
-  useReaderSelectionState 
+  useReaderSelectionState,
+  type ReaderSelectionMenuState,
+  type ReaderNoteEditorState
 } from "@/components/reader/hooks";
 import { useBookData } from "./BookDataProvider";
 import { useReaderContext } from "@/components/reader/ReaderContext";
+import type { Note } from "@/lib/db/schema";
 
 interface AnnotationContextValue {
   isCurrentBookmarked: boolean;
@@ -21,18 +24,18 @@ interface AnnotationContextValue {
   handleSaveNote: (content: string, color: string) => Promise<void>;
   handleNoteDelete: (id: string) => Promise<void>;
   handleNoteEdit: (id: string, content: string, color: string) => Promise<void>;
-  selectionMenu: any;
-  setSelectionMenu: React.Dispatch<React.SetStateAction<any>>;
+  selectionMenu: ReaderSelectionMenuState;
+  setSelectionMenu: React.Dispatch<React.SetStateAction<ReaderSelectionMenuState>>;
   selectionMenuKey: number;
   setSelectionMenuKey: React.Dispatch<React.SetStateAction<number>>;
-  noteEditor: any;
-  setNoteEditor: React.Dispatch<React.SetStateAction<any>>;
+  noteEditor: ReaderNoteEditorState;
+  setNoteEditor: React.Dispatch<React.SetStateAction<ReaderNoteEditorState>>;
 }
 
 const AnnotationContext = createContext<AnnotationContextValue | null>(null);
 
 export function AnnotationProvider({ children }: { children: React.ReactNode }) {
-  const { book, bookmarks, setBookmarks, setNotes, notes } = useBookData();
+  const { book, bookmarks, setBookmarks, setNotes } = useBookData();
   const { currentCfiRef, currentPage, progressRef } = useReaderContext();
   const [isCurrentBookmarked, setIsCurrentBookmarked] = useState(false);
 
@@ -64,7 +67,7 @@ export function AnnotationProvider({ children }: { children: React.ReactNode }) 
     progressRef,
     currentPage,
     onHighlightAdded: (highlight) => {
-      const tempNote = {
+      const tempNote: Note = {
         id: highlight.id,
         bookId: book?.id || "",
         userId: "",
@@ -77,13 +80,13 @@ export function AnnotationProvider({ children }: { children: React.ReactNode }) 
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      setNotes((prev: any) => [tempNote, ...prev]);
+      setNotes((prev: Note[]) => [tempNote, ...prev]);
     },
-    onHighlightRemoved: (id) => setNotes((prev: any) => prev.filter((n: any) => n.id !== id)),
-    onHighlightUpdated: (id, updates) => setNotes((prev: any) => prev.map((n: any) => n.id === id ? { ...n, ...updates } : n)),
-    onNoteAdded: (note) => setNotes((prev: any) => [note, ...prev]),
-    onNoteRemoved: (id) => setNotes((prev: any) => prev.filter((n: any) => n.id !== id)),
-    onNoteUpdated: (id, updates) => setNotes((prev: any) => prev.map((n: any) => n.id === id ? { ...n, ...updates } : n)),
+    onHighlightRemoved: (id) => setNotes((prev: Note[]) => prev.filter((n) => n.id !== id)),
+    onHighlightUpdated: (id, updates) => setNotes((prev: Note[]) => prev.map((n) => n.id === id ? { ...n, ...updates } : n)),
+    onNoteAdded: (note) => setNotes((prev: Note[]) => [note, ...prev]),
+    onNoteRemoved: (id) => setNotes((prev: Note[]) => prev.filter((n) => n.id !== id)),
+    onNoteUpdated: (id, updates) => setNotes((prev: Note[]) => prev.map((n) => n.id === id ? { ...n, ...updates } : n)),
     setSelectionMenu,
     setNoteEditor,
   });

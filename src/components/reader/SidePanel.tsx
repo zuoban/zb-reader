@@ -7,14 +7,11 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { TocItem } from "@/types/reader";
 import { TocTab, BookmarksTab, NotesTab } from "./panels";
 
 import { useBookData, useReaderUI, useNavigation, useAnnotation } from "./providers";
 
-interface SidePanelProps {}
-
-export const SidePanel = memo(function SidePanel({}: SidePanelProps) {
+export const SidePanel = memo(function SidePanel() {
   const { bookmarks, notes } = useBookData();
   const { 
     sidePanelOpen: open, 
@@ -96,7 +93,13 @@ export const SidePanel = memo(function SidePanel({}: SidePanelProps) {
 
             <TabsContent value="bookmarks" className="mt-0 flex-1 min-h-0 overflow-hidden outline-none">
               <BookmarksTab
-                bookmarks={bookmarks as any}
+                bookmarks={bookmarks.map(b => ({
+                    id: b.id,
+                    label: b.label || "未命名书签",
+                    location: b.location as string,
+                    progress: b.progress || 0,
+                    createdAt: b.createdAt
+                }))}
                 onBookmarkClick={handleBookmarkClick}
                 onBookmarkDelete={handleBookmarkDelete}
                 onBookmarkEdit={handleBookmarkEdit}
@@ -106,7 +109,14 @@ export const SidePanel = memo(function SidePanel({}: SidePanelProps) {
 
             <TabsContent value="notes" className="mt-0 flex-1 min-h-0 overflow-hidden outline-none">
               <NotesTab
-                notes={notes as any}
+                notes={notes.map(n => ({
+                    id: n.id,
+                    selectedText: n.selectedText || "",
+                    content: n.content || "",
+                    color: n.color || "#facc15",
+                    location: n.location as string,
+                    createdAt: n.createdAt
+                }))}
                 onNoteClick={handleNoteClick}
                 onNoteDelete={handleNoteDelete}
                 onNoteEdit={handleNoteEdit}

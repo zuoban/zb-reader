@@ -6,17 +6,12 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import type { FontFamily } from "@/stores/reader-settings";
 import { TypographySettings, ThemeSettings, TtsSettings } from "./settings";
 
-type ThemeValue = "light" | "dark" | "sepia";
-
 import { useReaderUI } from "./providers";
-import { useReaderSettingsStore, useReaderSettingsValues } from "@/stores/reader-settings";
+import { useReaderSettingsStore } from "@/stores/reader-settings";
 
-interface ReadingSettingsProps {}
-
-export function ReadingSettings({}: ReadingSettingsProps) {
+export function ReadingSettings() {
   const { settingsOpen: open, setSettingsOpen: onOpenChange } = useReaderUI();
   
   const fontSize = useReaderSettingsStore((s) => s.fontSize);

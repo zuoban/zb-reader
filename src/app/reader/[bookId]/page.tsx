@@ -1,6 +1,5 @@
 "use client";
 
-import { useParams } from "next/navigation";
 import { SessionProvider } from "next-auth/react";
 import { IdleCountdownWarning } from "@/components/reader/IdleCountdownWarning";
 import { ReaderErrorBoundary } from "@/components/reader/ReaderErrorBoundary";
@@ -23,15 +22,13 @@ import {
   NavigationProvider,
   ReaderSettingsProvider,
   useBookData,
-  useTts,
   useReaderUI,
   useReaderSettings,
 } from "@/components/reader/providers";
 
 function ReaderContent() {
   const { book, loading, bookData, bookUrl } = useBookData();
-  const { isTtsViewOpen } = useTts();
-  const { toolbarVisible, idleCountdown } = useReaderUI();
+  const { idleCountdown } = useReaderUI();
   const { currentTheme, readerTheme } = useReaderSettings();
 
   if (loading || !book || (!bookData && !bookUrl)) {

@@ -4,9 +4,6 @@ import dynamic from "next/dynamic";
 import React from "react";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { EpubReaderRef } from "@/components/reader/EpubReader";
-import type { FontFamily } from "@/stores/reader-settings";
-import type { TocItem } from "@/types/reader";
 
 const EpubReader = dynamic(() => import("@/components/reader/EpubReader"), {
   ssr: false,
@@ -21,9 +18,7 @@ import { useBookData, useTts, useReaderUI, useNavigation, useReaderSettings } fr
 import { useReaderContext } from "./ReaderContext";
 import { useReaderSettingsStore } from "@/stores/reader-settings";
 
-interface ReaderCanvasProps {}
-
-function ReaderCanvasInner({}: ReaderCanvasProps) {
+function ReaderCanvasInner() {
   const { book, bookData, bookUrl, highlights, initialLocation } = useBookData();
   const { 
     isSpeaking, 
@@ -65,7 +60,7 @@ function ReaderCanvasInner({}: ReaderCanvasProps) {
             initialLocation={initialLocation}
             fontSize={fontSize}
             fontFamily={fontFamily}
-            theme={readerTheme as any}
+            theme={readerTheme as "light" | "dark" | "sepia"}
             onLocationChange={handleLocationChange}
             onTocLoaded={handleTocLoaded}
             onTextSelected={handleTextSelected}
