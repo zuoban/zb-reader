@@ -5,6 +5,7 @@ import fsSync from "fs";
 const DATA_DIR = path.join(/*turbopackIgnore: true*/ process.cwd(), "data");
 const BOOKS_DIR = path.join(/*turbopackIgnore: true*/ process.cwd(), "data/books");
 const COVERS_DIR = path.join(/*turbopackIgnore: true*/ process.cwd(), "data/covers");
+const TEMP_DIR = path.join(/*turbopackIgnore: true*/ process.cwd(), "data/temp");
 const SAFE_STORED_FILE_NAME_REGEX = /^[A-Za-z0-9._-]+$/;
 
 export class StoragePathError extends Error {
@@ -15,7 +16,7 @@ export class StoragePathError extends Error {
 }
 
 async function ensureDirs() {
-  for (const dir of [DATA_DIR, BOOKS_DIR, COVERS_DIR]) {
+  for (const dir of [DATA_DIR, BOOKS_DIR, COVERS_DIR, TEMP_DIR]) {
     if (!fsSync.existsSync(dir)) {
       await fsAsync.mkdir(dir, { recursive: true });
     }
@@ -66,9 +67,9 @@ export async function saveBookFileFromStream(
   await ensureDirs();
   const fileName = `${bookId}.${format}`;
   const filePath = resolveStoredFilePath(BOOKS_DIR, fileName);
-  
+
   const writeStream = fsSync.createWriteStream(filePath);
-  
+
   if ("getReader" in stream) {
     // Web ReadableStream
     const reader = stream.getReader();
@@ -87,10 +88,52 @@ export async function saveBookFileFromStream(
       writeStream.on("error", reject);
     });
   }
-  
+
   return fileName;
 }
 
+export async function saveBookToTemp(
+  stream: ReadableStream | NodeJS.ReadableStream,
+  bookId: string,
+  format: string
+): Promise<string> {
+  await ensureDirs();
+  const fileName = `${bookId}.${format}`;
+  const filePath = resolveStoredFilePath(TEMP_DIR, fileName);
+
+  const writeStream = fsSync.createWriteStream(filePath);
+
+  if ("getReader" in stream) {
+    const reader = stream.getReader();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      writeStream.write(Buffer.from(value));
+    }
+    writeStream.end();
+  } else {
+    await new Promise<void>((resolve, reject) => {
+      stream.pipe(writeStream);
+      stream.on("error", reject);
+      writeStream.on("finish", () => resolve());
+      writeStream.on("error", reject);
+    });
+  }
+
+  return filePath;
+}
+
+export async function moveBookFromTemp(
+  tempPath: string,
+  bookId: string,
+  format: string
+): Promise<string> {
+  await ensureDirs();
+  const fileName = `${bookId}.${format}`;
+  const destPath = resolveStoredFilePath(BOOKS_DIR, fileName);
+  await fsAsync.rename(tempPath, destPath);
+  return fileName;
+}
 export async function deleteBookFile(fileName: string): Promise<void> {
   const filePath = resolveStoredFilePath(BOOKS_DIR, fileName);
   if (fsSync.existsSync(filePath)) {

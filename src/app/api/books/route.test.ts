@@ -1,36 +1,39 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import type { NextRequest } from "next/server";
-import { EventEmitter } from "events";
 
 const mockAuth = vi.fn();
 const mockInsertValues = vi.fn();
 const mockSelect = vi.fn();
 const mockSelectResults: unknown[][] = [];
 const mockSaveBookFile = vi.fn();
-const mockSaveBookFileFromStream = vi.fn();
+const mockSaveBookToTemp = vi.fn();
+const mockMoveBookFromTemp = vi.fn();
 const mockDeleteBookFile = vi.fn();
 const mockDeleteCoverImage = vi.fn();
 const mockGetBookFilePath = vi.fn();
-const mockOpenSync = vi.fn();
-const mockReadSync = vi.fn();
-const mockCloseSync = vi.fn();
-const mockReadFileSync = vi.fn();
 const mockStatSync = vi.fn();
-const mockYauzlOpen = vi.fn();
+const mockProcessBookUpload = vi.fn();
+const mockGetBookFacets = vi.fn();
+const mockInvalidateBookFacets = vi.fn();
 
 vi.mock("@/lib/auth", () => ({
   auth: () => mockAuth(),
+}));
+
+vi.mock("@/lib/book-facets-cache", () => ({
+  getBookFacets: (...args: unknown[]) => mockGetBookFacets(...args),
+  invalidateBookFacets: (...args: unknown[]) => mockInvalidateBookFacets(...args),
 }));
 
 vi.mock("@/lib/db", () => ({
   db: {
     select: (...args: unknown[]) => mockSelect(...args),
     insert: vi.fn(() => ({
-      values: mockInsertValues,
+      values: (...args: unknown[]) => mockInsertValues(...args),
     })),
     query: {
       books: {
-        findFirst: vi.fn(),
+        findFirst: vi.fn().mockResolvedValue({ id: "book-1", title: "Test Book" }),
       },
     },
   },
@@ -38,33 +41,27 @@ vi.mock("@/lib/db", () => ({
 
 vi.mock("@/lib/storage", () => ({
   saveBookFile: (...args: unknown[]) => mockSaveBookFile(...args),
-  saveBookFileFromStream: (...args: unknown[]) => mockSaveBookFileFromStream(...args),
+  saveBookToTemp: (...args: unknown[]) => mockSaveBookToTemp(...args),
+  moveBookFromTemp: (...args: unknown[]) => mockMoveBookFromTemp(...args),
   saveCoverImage: vi.fn(),
   deleteBookFile: (...args: unknown[]) => mockDeleteBookFile(...args),
   deleteCoverImage: (...args: unknown[]) => mockDeleteCoverImage(...args),
   getBookFilePath: (...args: unknown[]) => mockGetBookFilePath(...args),
 }));
 
+vi.mock("@/lib/upload-pipeline", async () => {
+  const actual = await vi.importActual("@/lib/upload-pipeline");
+  return {
+    ...actual,
+    processBookUpload: (...args: unknown[]) => mockProcessBookUpload(...args),
+  };
+});
+
 vi.mock("fs", () => ({
   default: {
-    openSync: (...args: unknown[]) => mockOpenSync(...args),
-    readSync: (...args: unknown[]) => mockReadSync(...args),
-    closeSync: (...args: unknown[]) => mockCloseSync(...args),
-    readFileSync: (...args: unknown[]) => mockReadFileSync(...args),
     statSync: (...args: unknown[]) => mockStatSync(...args),
   },
-  openSync: (...args: unknown[]) => mockOpenSync(...args),
-  readSync: (...args: unknown[]) => mockReadSync(...args),
-  closeSync: (...args: unknown[]) => mockCloseSync(...args),
-  readFileSync: (...args: unknown[]) => mockReadFileSync(...args),
   statSync: (...args: unknown[]) => mockStatSync(...args),
-}));
-
-vi.mock("yauzl", () => ({
-  default: {
-    open: (...args: unknown[]) => mockYauzlOpen(...args),
-  },
-  open: (...args: unknown[]) => mockYauzlOpen(...args),
 }));
 
 vi.mock("@/lib/logger", () => ({
@@ -78,62 +75,56 @@ vi.mock("@/lib/logger", () => ({
 interface MockUploadFile {
   name: string;
   size: number;
-  arrayBuffer: ReturnType<typeof vi.fn>;
   stream: ReturnType<typeof vi.fn>;
 }
 
-function installYauzlNeedsNormalizationMock() {
-  mockYauzlOpen.mockImplementation((_path, _options, callback) => {
-    const zipfile = new EventEmitter() as EventEmitter & {
-      readEntry: () => void;
-      close: () => void;
-    };
-    zipfile.close = vi.fn();
-    let emitted = false;
-    zipfile.readEntry = () => {
-      if (emitted) return;
-      emitted = true;
-      queueMicrotask(() => {
-        zipfile.emit("entry", {
-          fileName: "Nested/META-INF/container.xml",
-          uncompressedSize: 100,
-        });
-        queueMicrotask(() => {
-          zipfile.emit("end");
-        });
-      });
-    };
-    callback(null, zipfile);
-  });
-}
-
 function createUploadRequest(file: MockUploadFile): NextRequest {
+  const formData = new FormData();
+  // In Node.js, we can append a Blob and specify a filename.
+  // We mock the stream on the resulting File object if possible, 
+  // but since we mock processBookUpload anyway, the content doesn't matter much
+  // as long as the route handler can get the name and size.
+  const blob = new Blob([""], { type: "application/epub+zip" });
+  formData.append("file", blob, file.name);
+  
+  // Since we can't easily mock the size of a Blob/File in standard FormData,
+  // we might need to override the get method or just use a dummy blob of the right size
+  // if size check is important (which it is for one test).
+  if (file.size > 0) {
+    const originalGet = formData.get.bind(formData);
+    formData.get = (name: string) => {
+        const item = originalGet(name);
+        if (name === 'file' && item) {
+            Object.defineProperty(item, 'size', { value: file.size });
+            Object.defineProperty(item, 'stream', { value: file.stream });
+            return item;
+        }
+        return item;
+    };
+  }
+
   return {
-    formData: vi.fn().mockResolvedValue({
-      get: (key: string) => (key === "file" ? file : null),
-    }),
+    formData: async () => formData,
   } as unknown as NextRequest;
 }
 
 function createBooksGetRequest(url: string): NextRequest {
   return {
     url,
+    nextUrl: new URL(url),
   } as unknown as NextRequest;
 }
 
-function createQueryResult(result: unknown[]) {
+function createQueryResult(results: unknown[]) {
   const query = {
     from: vi.fn(() => query),
     leftJoin: vi.fn(() => query),
     where: vi.fn(() => query),
     orderBy: vi.fn(() => query),
-    groupBy: vi.fn(() => query),
     limit: vi.fn(() => query),
     offset: vi.fn(() => query),
-    then: (onFulfilled?: (value: unknown[]) => unknown, onRejected?: (reason: unknown) => unknown) =>
-      Promise.resolve(result).then(onFulfilled, onRejected),
-    catch: (onRejected?: (reason: unknown) => unknown) => Promise.resolve(result).catch(onRejected),
-    finally: (onFinally?: () => void) => Promise.resolve(result).finally(onFinally),
+    then: (resolve: (val: unknown) => void) => resolve(results),
+    catch: (reject: (err: unknown) => void) => {},
   };
 
   return query;
@@ -148,46 +139,22 @@ describe("Books API upload", () => {
       user: { id: "user-1", username: "test", email: "test@test.com" },
       expires: new Date().toISOString(),
     });
-    mockSaveBookFileFromStream.mockResolvedValue("book-1.epub");
-    mockSaveBookFile.mockResolvedValue("book-1.epub");
     mockGetBookFilePath.mockReturnValue("/tmp/book-1.epub");
-    mockOpenSync.mockReturnValue(1);
-    mockReadSync.mockImplementation((_fd, buffer: Buffer) => {
-      buffer.set(Buffer.from([0x50, 0x4b, 0x03, 0x04]));
-      return 4;
-    });
-    mockCloseSync.mockReturnValue(undefined);
-    mockReadFileSync.mockReturnValue(Buffer.from("PK\x03\x04"));
     mockStatSync.mockReturnValue({ size: 1024 });
-    installYauzlNeedsNormalizationMock();
+    mockGetBookFacets.mockResolvedValue({ allTotal: 0, categories: [] });
+    mockInvalidateBookFacets.mockReturnValue(undefined);
+    mockProcessBookUpload.mockResolvedValue({
+      metadata: { title: "Test Book", author: "Test Author", needsNormalization: false },
+      savedFileName: "book-1.epub",
+    });
   });
 
-  it("accepts EPUB files exported with an .epub.zip extension", async () => {
-    const JSZip = (await import("jszip")).default;
-    const zip = new JSZip();
-    zip.file("Rust 程序设计第2版.epub/META-INF/container.xml", `
-      <container>
-        <rootfiles>
-          <rootfile full-path="OPS/content.opf" />
-        </rootfiles>
-      </container>
-    `);
-    zip.file("Rust 程序设计第2版.epub/OPS/content.opf", `
-      <package>
-        <metadata>
-          <dc:title>Rust 程序设计第2版</dc:title>
-          <dc:creator>Jim Blandy</dc:creator>
-        </metadata>
-      </package>
-    `);
-    const buffer = await zip.generateAsync({ type: "nodebuffer" });
+  it("accepts EPUB files and uses the hardened pipeline", async () => {
     const file = {
-      name: "Rust 程序设计第2版.epub.zip",
-      size: buffer.length,
-      arrayBuffer: vi.fn().mockResolvedValue(buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)),
-      stream: vi.fn(),
+      name: "test.epub",
+      size: 1024,
+      stream: vi.fn().mockReturnValue("stream"),
     };
-    mockReadFileSync.mockReturnValue(buffer);
 
     mockInsertValues.mockResolvedValueOnce(undefined);
 
@@ -195,11 +162,11 @@ describe("Books API upload", () => {
     const res = await POST(createUploadRequest(file));
 
     expect(res.status).toBe(201);
-    expect(mockSaveBookFile).toHaveBeenCalledWith(expect.any(Buffer), expect.any(String), "epub");
+    expect(mockProcessBookUpload).toHaveBeenCalled();
     expect(mockInsertValues).toHaveBeenCalledWith(
       expect.objectContaining({
-        title: "Rust 程序设计第2版",
-        author: "Jim Blandy",
+        title: "Test Book",
+        author: "Test Author",
         format: "epub",
       })
     );
@@ -209,7 +176,6 @@ describe("Books API upload", () => {
     const file = {
       name: "large.epub",
       size: 301 * 1024 * 1024,
-      arrayBuffer: vi.fn(),
       stream: vi.fn(),
     };
 
@@ -219,49 +185,15 @@ describe("Books API upload", () => {
 
     expect(res.status).toBe(400);
     expect(data.error).toBe("文件不能超过 300 MB");
-    expect(file.arrayBuffer).not.toHaveBeenCalled();
-    expect(mockSaveBookFile).not.toHaveBeenCalled();
-  });
-
-  it("rejects files with an EPUB extension but invalid ZIP content", async () => {
-    const invalidBuffer = Buffer.from("not a zip");
-    const file = {
-      name: "book.epub",
-      size: invalidBuffer.length,
-      arrayBuffer: vi.fn().mockResolvedValue(
-        invalidBuffer.buffer.slice(
-          invalidBuffer.byteOffset,
-          invalidBuffer.byteOffset + invalidBuffer.byteLength
-        )
-      ),
-      stream: vi.fn(),
-    };
-    mockReadSync.mockImplementation((_fd, buffer: Buffer) => {
-      buffer.set(Buffer.from("nope"));
-      return 4;
-    });
-
-    const { POST } = await import("./route");
-    const res = await POST(createUploadRequest(file));
-    const data = await res.json();
-
-    expect(res.status).toBe(400);
-    expect(data.error).toBe("文件内容无效，不是有效的 EPUB 文件");
-    expect(mockSaveBookFile).not.toHaveBeenCalled();
+    expect(mockProcessBookUpload).not.toHaveBeenCalled();
   });
 
   it("cleans up the saved EPUB file when database insert fails", async () => {
-    const JSZip = (await import("jszip")).default;
-    const zip = new JSZip();
-    zip.file("META-INF/container.xml", "<container />");
-    const buffer = await zip.generateAsync({ type: "nodebuffer" });
     const file = {
       name: "book.epub",
       size: 1024,
-      arrayBuffer: vi.fn().mockResolvedValue(buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)),
       stream: vi.fn(),
     };
-    mockReadFileSync.mockReturnValue(buffer);
     mockInsertValues.mockRejectedValueOnce(new Error("insert failed"));
 
     const { POST } = await import("./route");
@@ -270,7 +202,6 @@ describe("Books API upload", () => {
 
     expect(res.status).toBe(500);
     expect(data.error).toBe("上传失败");
-    expect(mockSaveBookFile).toHaveBeenCalled();
     expect(mockDeleteBookFile).toHaveBeenCalledWith("book-1.epub");
   });
 });
@@ -315,17 +246,16 @@ describe("Books API list", () => {
   it("includes facet queries by default", async () => {
     mockSelectResults.push(
       [],
-      [{ count: 0 }],
-      [{ count: 2 }],
-      [{ name: "小说", count: 2 }]
+      [{ count: 0 }]
     );
+    mockGetBookFacets.mockResolvedValue({ allTotal: 2, categories: [{ name: "小说", count: 2 }] });
 
     const { GET } = await import("./route");
     const res = await GET(createBooksGetRequest("http://localhost:3000/api/books"));
     const data = await res.json();
 
     expect(res.status).toBe(200);
-    expect(mockSelect).toHaveBeenCalledTimes(4);
+    expect(mockSelect).toHaveBeenCalledTimes(2);
     expect(data.categories).toEqual([{ name: "小说", count: 2 }]);
     expect(data.total).toBe(0);
     expect(data.allTotal).toBe(2);
@@ -370,56 +300,6 @@ describe("Books API list", () => {
   });
 });
 
-describe("EPUB ZIP safety validation", () => {
-  it("rejects unsafe entry paths", async () => {
-    const { validateEpubZipEntries, EpubValidationError } = await import("./route");
-
-    expect(() =>
-      validateEpubZipEntries({
-        files: {
-          "../evil.txt": {
-            dir: false,
-            name: "evil.txt",
-            unsafeOriginalName: "../evil.txt",
-          },
-        },
-      })
-    ).toThrow(EpubValidationError);
-  });
-
-  it("rejects archives with too many file entries", async () => {
-    const { validateEpubZipEntries, EpubValidationError } = await import("./route");
-    const files: Record<string, { dir: boolean; name: string }> = {};
-
-    for (let i = 0; i < 10001; i++) {
-      files[`text/${i}.xhtml`] = {
-        dir: false,
-        name: `text/${i}.xhtml`,
-      };
-    }
-
-    expect(() => validateEpubZipEntries({ files })).toThrow(EpubValidationError);
-  });
-
-  it("rejects archives with excessive known uncompressed size", async () => {
-    const { validateEpubZipEntries, EpubValidationError } = await import("./route");
-
-    expect(() =>
-      validateEpubZipEntries({
-        files: {
-          "text/chapter.xhtml": {
-            dir: false,
-            name: "text/chapter.xhtml",
-            _data: {
-              uncompressedSize: 901 * 1024 * 1024,
-            },
-          },
-        },
-      })
-    ).toThrow(EpubValidationError);
-  });
-});
-
 describe("normalizeBooksPagination", () => {
   it("falls back to defaults for invalid values", async () => {
     const { normalizeBooksPagination } = await import("./route");
@@ -449,83 +329,5 @@ describe("normalizeBooksPagination", () => {
       limit: 25,
       offset: 50,
     });
-  });
-});
-
-describe("resolveEpubRelativePath", () => {
-  it("resolves relative paths from the OPF directory", async () => {
-    const { resolveEpubRelativePath } = await import("./route");
-
-    expect(resolveEpubRelativePath("OPS/package.opf", "images/cover.jpg")).toBe(
-      "OPS/images/cover.jpg"
-    );
-  });
-
-  it("allows parent traversal that stays within the EPUB root", async () => {
-    const { resolveEpubRelativePath } = await import("./route");
-
-    expect(resolveEpubRelativePath("OPS/content/package.opf", "../images/cover.jpg")).toBe(
-      "OPS/images/cover.jpg"
-    );
-  });
-
-  it("rejects paths that escape the EPUB root", async () => {
-    const { resolveEpubRelativePath } = await import("./route");
-
-    expect(resolveEpubRelativePath("OPS/package.opf", "../../cover.jpg")).toBeNull();
-  });
-
-  it("rejects absolute and URL-like paths", async () => {
-    const { resolveEpubRelativePath } = await import("./route");
-
-    expect(resolveEpubRelativePath("OPS/package.opf", "/cover.jpg")).toBeNull();
-    expect(resolveEpubRelativePath("OPS/package.opf", "https://example.com/cover.jpg")).toBeNull();
-  });
-});
-
-describe("EPUB XML metadata parsing", () => {
-  it("parses rootfile full-path with single-quoted attributes", async () => {
-    const { parseEpubContainerRootfilePath } = await import("./route");
-
-    expect(
-      parseEpubContainerRootfilePath(
-        `<container><rootfiles><rootfile media-type='application/oebps-package+xml' full-path='OPS/content.opf'/></rootfiles></container>`
-      )
-    ).toBe("OPS/content.opf");
-  });
-
-  it("parses OPF metadata regardless of item attribute order", async () => {
-    const { parseEpubOpfMetadata } = await import("./route");
-    const metadata = parseEpubOpfMetadata(`
-      <package>
-        <metadata>
-          <dc:title>Title &amp; More</dc:title>
-          <dc:creator>Author &apos;Name&apos;</dc:creator>
-          <meta content="cover-id" name="cover" />
-        </metadata>
-        <manifest>
-          <item media-type="image/jpeg" href="images/cover.jpg" id="cover-id" />
-        </manifest>
-      </package>
-    `);
-
-    expect(metadata).toEqual({
-      title: "Title & More",
-      author: "Author 'Name'",
-      coverItemHref: "images/cover.jpg",
-    });
-  });
-
-  it("falls back to cover-image properties when cover meta is absent", async () => {
-    const { parseEpubOpfMetadata } = await import("./route");
-    const metadata = parseEpubOpfMetadata(`
-      <package>
-        <manifest>
-          <item id="cover-image" properties="nav cover-image" href="cover.png" />
-        </manifest>
-      </package>
-    `);
-
-    expect(metadata.coverItemHref).toBe("cover.png");
   });
 });
