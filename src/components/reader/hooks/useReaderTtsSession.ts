@@ -147,16 +147,31 @@ export function useReaderTtsSession({
     [book]
   );
 
+  const getEpubScrollIdentity = useCallback(() => {
+    if (typeof document === "undefined") return "";
+
+    const epubContainer = document.querySelector(
+      "#epub-viewer .epub-container"
+    ) as HTMLElement | null;
+
+    if (!epubContainer) return "";
+
+    return [
+      Math.round(epubContainer.scrollTop),
+      epubContainer.scrollHeight,
+      epubContainer.clientHeight,
+    ].join(":");
+  }, []);
+
   const getPageIdentity = useCallback(() => {
     if (!book) return "";
 
     if (book.format === "epub") {
-      // Use pure CFI so scroll-only location updates do not look like a page turn.
-      return currentCfiRef.current || "";
+      return `${currentCfiRef.current || ""}#${getEpubScrollIdentity()}`;
     }
 
     return "";
-  }, [book, currentCfiRef]);
+  }, [book, currentCfiRef, getEpubScrollIdentity]);
 
   const waitForPageChange = useCallback(
     async (previousIdentity: string, sessionId: number) => {
@@ -394,6 +409,9 @@ export function useReaderTtsSession({
           // ignore preload cleanup errors
         });
       }
+
+      currentParagraphIndexRef.current = startIndex + queue.length;
+      ttsCurrentIndexRef.current = startIndex + queue.length;
     },
     [
       currentParagraphIndexRef,
@@ -416,21 +434,33 @@ export function useReaderTtsSession({
   );
 
   const startTtsLoop = useCallback(async (sessionId: number, startIndex = 0) => {
-    let sentences = allSentencesRef.current;
-    if (sentences.length === 0) {
+    const refreshSentences = async () => {
       let paragraphs = getReadableParagraphs();
       if (paragraphs.length === 0) {
         await wait(220);
         paragraphs = getReadableParagraphs();
       }
+
       if (paragraphs.length === 0) {
+        return [] as Sentence[];
+      }
+
+      const nextSentences = paragraphsToSentences(paragraphs);
+      allSentencesRef.current = nextSentences;
+      ttsTotalSentencesRef.current = nextSentences.length;
+      currentParagraphIndexRef.current = 0;
+      ttsCurrentIndexRef.current = 0;
+      return nextSentences;
+    };
+
+    let sentences = allSentencesRef.current;
+    if (sentences.length === 0) {
+      sentences = await refreshSentences();
+      if (sentences.length === 0) {
         toast.error("当前页面没有可朗读内容");
         setIsSpeaking(false);
         return;
       }
-      sentences = paragraphsToSentences(paragraphs);
-      allSentencesRef.current = sentences;
-      ttsTotalSentencesRef.current = sentences.length;
     }
 
     currentParagraphIndexRef.current = startIndex;
@@ -443,20 +473,9 @@ export function useReaderTtsSession({
       if (sentencesToRead.length === 0) {
         const moved = await tryAutoTurnPage(sessionId);
         if (!moved) break;
-        
-        // Refresh sentences after page turn
-        let paragraphs = getReadableParagraphs();
-        if (paragraphs.length === 0) {
-          await wait(220);
-          paragraphs = getReadableParagraphs();
-        }
-        if (paragraphs.length === 0) break;
-        
-        sentences = paragraphsToSentences(paragraphs);
-        allSentencesRef.current = sentences;
-        ttsTotalSentencesRef.current = sentences.length;
-        currentParagraphIndexRef.current = 0;
-        ttsCurrentIndexRef.current = 0;
+
+        sentences = await refreshSentences();
+        if (sentences.length === 0) break;
         continue;
       }
 
@@ -475,9 +494,9 @@ export function useReaderTtsSession({
 
       const moved = await tryAutoTurnPage(sessionId);
       if (!moved) break;
-      
-      sentences = [];
-      allSentencesRef.current = [];
+
+      sentences = await refreshSentences();
+      if (sentences.length === 0) break;
     }
 
     if (ttsSessionRef.current === sessionId) {
