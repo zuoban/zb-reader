@@ -5,15 +5,9 @@ import { Highlighter, StickyNote, Copy, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-interface TextSelectionMenuProps {
-  visible: boolean;
-  position: { x: number; y: number };
-  instanceKey?: number;
-  onHighlight: (color: string) => void;
-  onAddNote: () => void;
-  onCopy: () => void;
-  onClose?: () => void;
-}
+import { useAnnotation } from "./providers";
+
+interface TextSelectionMenuProps {}
 
 const highlightColors = [
   { value: "#facc15", label: "黄色" },
@@ -23,15 +17,18 @@ const highlightColors = [
   { value: "#c084fc", label: "紫色" },
 ];
 
-export const TextSelectionMenu = memo(function TextSelectionMenu({
-  visible,
-  position,
-  instanceKey = 0,
-  onHighlight,
-  onAddNote,
-  onCopy,
-  onClose,
-}: TextSelectionMenuProps) {
+export const TextSelectionMenu = memo(function TextSelectionMenu({}: TextSelectionMenuProps) {
+  const {
+    selectionMenu: { visible, position },
+    selectionMenuKey: instanceKey = 0,
+    handleHighlight: onHighlight,
+    handleAddNote: onAddNote,
+    handleCopyText: onCopy,
+    setSelectionMenu,
+  } = useAnnotation();
+
+  const onClose = () => setSelectionMenu((prev: any) => ({ ...prev, visible: false }));
+
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

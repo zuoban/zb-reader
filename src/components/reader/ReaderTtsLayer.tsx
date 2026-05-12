@@ -5,55 +5,46 @@ import { TtsFloatingControl } from "@/components/reader/TtsFloatingControl";
 import type { Book } from "@/lib/db/schema";
 import type { BrowserVoiceOption } from "@/lib/tts";
 
-interface ReaderTtsLayerProps {
-  activeHtml: string;
-  activeIsCodeBlock: boolean;
-  activeParagraph: string;
-  book: Book;
-  ttsVoices: BrowserVoiceOption[];
-  currentChapterTitle?: string;
-  isFullscreen: boolean;
-  isPaused: boolean;
-  isSpeaking: boolean;
-  isTtsViewOpen: boolean;
-  progress: number;
-  selectedTtsVoiceId: string;
-  ttsRate: number;
-  onBackToReader: () => void;
-  onNext: () => void;
-  onOpenImmersiveView: () => void;
-  onPrev: () => void;
-  onSelectedTtsVoiceIdChange: (voiceId: string) => void;
-  onStop: () => void;
-  onToggle: () => void;
-  onToggleFullscreen: () => void;
-  onTtsRateChange: (value: number) => void;
-}
+import { useBookData, useTts, useReaderUI, useNavigation } from "./providers";
+import { useReaderSettingsStore, useReaderSettingsValues } from "@/stores/reader-settings";
 
-export function ReaderTtsLayer({
-  activeHtml,
-  activeIsCodeBlock,
-  activeParagraph,
-  book,
-  ttsVoices,
-  currentChapterTitle,
-  isFullscreen,
-  isPaused,
-  isSpeaking,
-  isTtsViewOpen,
-  progress,
-  selectedTtsVoiceId,
-  ttsRate,
-  onBackToReader,
-  onNext,
-  onOpenImmersiveView,
-  onPrev,
-  onSelectedTtsVoiceIdChange,
-  onStop,
-  onToggle,
-  onToggleFullscreen,
-  onTtsRateChange,
-}: ReaderTtsLayerProps) {
+interface ReaderTtsLayerProps {}
+
+export function ReaderTtsLayer({}: ReaderTtsLayerProps) {
+  const { book } = useBookData();
+  const {
+    isSpeaking,
+    isPaused,
+    isTtsViewOpen,
+    activeTtsHtml: activeHtml,
+    activeTtsIsCodeBlock: activeIsCodeBlock,
+    activeTtsParagraph: activeParagraph,
+    handleToggleTts: onToggle,
+    handlePauseTts: _onPause,
+    handleResumeTts: _onResume,
+    handleTtsNextChapter: onNext,
+    handleTtsPrevChapter: onPrev,
+    stopSpeaking: onStop,
+    ttsVoices,
+    ttsRate,
+    setTtsRate: onTtsRateChange,
+    setIsTtsViewOpen,
+  } = useTts();
+  
+  const { isFullscreen, toggleFullscreen: onToggleFullscreen, setToolbarVisible, currentChapterTitle } = useReaderUI();
+  const { progress } = useNavigation();
+  
+  const selectedTtsVoiceId = useReaderSettingsStore((s) => s.ttsVoiceId);
+  const setTtsVoiceId = useReaderSettingsStore((s) => s.setTtsVoiceId);
+
+  const onBackToReader = () => setIsTtsViewOpen(false);
+  const onOpenImmersiveView = () => {
+    setIsTtsViewOpen(true);
+    setToolbarVisible(false);
+  };
+
+  if (!book) return null;
+
   return (
     <>
       <FullscreenTtsView
@@ -68,14 +59,14 @@ export function ReaderTtsLayer({
         progress={progress}
         ttsRate={ttsRate}
         selectedTtsVoiceId={selectedTtsVoiceId}
-        ttsVoices={ttsVoices}
+        ttsVoices={ttsVoices as any}
         isFullscreen={isFullscreen}
         onBackToReader={onBackToReader}
         onToggle={onToggle}
         onStop={onStop}
         onPrev={onPrev}
         onNext={onNext}
-        onSelectedTtsVoiceIdChange={onSelectedTtsVoiceIdChange}
+        onSelectedTtsVoiceIdChange={setTtsVoiceId}
         onTtsRateChange={onTtsRateChange}
         onToggleFullscreen={onToggleFullscreen}
       />

@@ -26,28 +26,9 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
+import { useBookData, useTts, useReaderUI, useNavigation, useAnnotation } from "./providers";
+
 interface ReaderToolbarProps {
-  visible: boolean;
-  title: string;
-  currentPage?: number;
-  totalPages?: number;
-  progress: number;
-  isBookmarked: boolean;
-  isFullscreen: boolean;
-  onBack: () => void;
-  onToggleToc: () => void;
-  onToggleBookmark: () => void;
-  onToggleSettings: () => void;
-  onToggleTts: () => void;
-  onToggleFullscreen: () => void;
-  isSpeaking: boolean;
-  onProgressChange: (progress: number) => void;
-  onPrevPage?: () => void;
-  onNextPage?: () => void;
-  onPrevChapter?: () => void;
-  onNextChapter?: () => void;
-  hasPrevChapter?: boolean;
-  hasNextChapter?: boolean;
   rightContent?: React.ReactNode;
 }
 
@@ -96,66 +77,69 @@ const ToolbarButton = memo(function ToolbarButton({
 });
 
 export const ReaderToolbar = memo(function ReaderToolbar({
-  visible,
-  title,
-  isBookmarked,
-  isFullscreen,
-  progress,
-  onBack,
-  onToggleToc,
-  onToggleBookmark,
-  onToggleSettings,
-  onToggleTts,
-  onToggleFullscreen,
-  isSpeaking,
-  onProgressChange: _onProgressChange,
-  onPrevPage,
-  onNextPage,
-  onPrevChapter,
-  onNextChapter,
-  hasPrevChapter,
-  hasNextChapter,
   rightContent,
 }: ReaderToolbarProps) {
+  const { book } = useBookData();
+  const { isSpeaking, isTtsViewOpen, handleToggleTts } = useTts();
+  const { 
+    toolbarVisible, 
+    isFullscreen, 
+    toggleFullscreen, 
+    openToc, 
+    setSettingsOpen 
+  } = useReaderUI();
+  const {
+    handleBack,
+    handlePrevPage,
+    handleNextPage,
+    handlePrevChapter,
+    handleNextChapter,
+    hasPrevChapter,
+    hasNextChapter,
+    handleProgressChange: _handleProgressChange,
+    progress,
+  } = useNavigation();
+  const { isCurrentBookmarked, handleToggleBookmark } = useAnnotation();
+
   return (
     <TooltipProvider>
       {/* 顶部导航栏 */}
       <div
         className={cn(
           "fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-in-out",
-          visible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
+          toolbarVisible && !isSpeaking && !isTtsViewOpen ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
         )}
       >
         <div className="flex h-16 items-center justify-between border-b border-[color-mix(in_srgb,var(--reader-text)_5%,transparent)] bg-[var(--reader-bg)]/95 px-4 backdrop-blur-md">
           {/* 左侧：返回 */}
           <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
-            <ToolbarButton onClick={onBack} tooltip="返回书架">
+            <ToolbarButton onClick={handleBack} tooltip="返回书架">
               <ArrowLeft className="size-5" />
             </ToolbarButton>
             <div className="h-6 w-px bg-[var(--reader-text)]/10 mx-0.5 sm:mx-2" />
-            <ToolbarButton onClick={onToggleToc} tooltip="目录">
+            <ToolbarButton onClick={openToc} tooltip="目录">
               <List className="size-5" />
             </ToolbarButton>
             <ToolbarButton
-              onClick={onToggleBookmark}
-              tooltip={isBookmarked ? "取消书签" : "添加书签"}
-              isActive={isBookmarked}
+              onClick={handleToggleBookmark}
+              tooltip={isCurrentBookmarked ? "取消书签" : "添加书签"}
+              isActive={isCurrentBookmarked}
             >
-              {isBookmarked ? <BookmarkCheck className="size-5" /> : <Bookmark className="size-5" />}
+              {isCurrentBookmarked ? <BookmarkCheck className="size-5" /> : <Bookmark className="size-5" />}
             </ToolbarButton>
           </div>
 
           {/* 中间：书名 */}
           <div className="absolute left-1/2 -translate-x-1/2 max-w-[30%] sm:max-w-[50%] text-center">
             <h1 className="truncate font-heading text-xs sm:text-sm font-bold tracking-tight text-[var(--reader-text)] uppercase">
-              {title}
+              {book?.title}
             </h1>
           </div>
 
           {/* 右侧：功能 */}
           <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
             <ToolbarButton
-              onClick={onToggleTts}
+              onClick={handleToggleTts}
               tooltip={isSpeaking ? "停止" : "朗读"}
               isActive={isSpeaking}
             >
@@ -163,7 +147,7 @@ export const ReaderToolbar = memo(function ReaderToolbar({
             </ToolbarButton>
 
             <ToolbarButton
-              onClick={onToggleFullscreen}
+              onClick={toggleFullscreen}
               tooltip={isFullscreen ? "退出全屏" : "全屏"}
               isActive={isFullscreen}
             >
@@ -173,7 +157,7 @@ export const ReaderToolbar = memo(function ReaderToolbar({
             <div className="h-6 w-px bg-[var(--reader-text)]/10 mx-0.5 sm:mx-2" />
 
 
-            <ToolbarButton onClick={onToggleSettings} tooltip="阅读设置">
+            <ToolbarButton onClick={() => setSettingsOpen(true)} tooltip="阅读设置">
               <Settings className="size-5" />
             </ToolbarButton>
 
@@ -186,7 +170,7 @@ export const ReaderToolbar = memo(function ReaderToolbar({
       <div
         className={cn(
           "fixed bottom-0 left-0 right-0 z-50 transition-all duration-500 ease-in-out",
-          visible ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
+          toolbarVisible && !isSpeaking && !isTtsViewOpen ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
         )}
       >
         <div className="border-t border-[color-mix(in_srgb,var(--reader-text)_5%,transparent)] bg-[var(--reader-bg)]/95 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 backdrop-blur-md">
@@ -196,7 +180,7 @@ export const ReaderToolbar = memo(function ReaderToolbar({
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={onPrevChapter}
+                onClick={handlePrevChapter}
                 disabled={!hasPrevChapter}
                 className="h-8 w-8 sm:h-9 sm:w-9 rounded-full hover:bg-[var(--reader-text)]/5"
                 style={{ color: "var(--reader-text)" }}
@@ -206,7 +190,7 @@ export const ReaderToolbar = memo(function ReaderToolbar({
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={onPrevPage}
+                onClick={handlePrevPage}
                 className="h-8 w-8 sm:h-9 sm:w-9 rounded-full hover:bg-[var(--reader-text)]/5"
                 style={{ color: "var(--reader-text)" }}
               >
@@ -232,7 +216,7 @@ export const ReaderToolbar = memo(function ReaderToolbar({
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={onNextPage}
+                onClick={handleNextPage}
                 className="h-8 w-8 sm:h-9 sm:w-9 rounded-full hover:bg-[var(--reader-text)]/5"
                 style={{ color: "var(--reader-text)" }}
               >
@@ -241,7 +225,7 @@ export const ReaderToolbar = memo(function ReaderToolbar({
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={onNextChapter}
+                onClick={handleNextChapter}
                 disabled={!hasNextChapter}
                 className="h-8 w-8 sm:h-9 sm:w-9 rounded-full hover:bg-[var(--reader-text)]/5"
                 style={{ color: "var(--reader-text)" }}

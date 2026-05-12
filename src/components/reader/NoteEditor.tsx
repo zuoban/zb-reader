@@ -13,14 +13,9 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
-interface NoteEditorProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  selectedText: string;
-  initialContent?: string;
-  initialColor?: string;
-  onSave: (content: string, color: string) => void;
-}
+import { useAnnotation } from "./providers";
+
+interface NoteEditorProps {}
 
 const colorOptions = [
   { value: "#facc15", label: "黄色" },
@@ -30,28 +25,32 @@ const colorOptions = [
   { value: "#c084fc", label: "紫色" },
 ];
 
-export function NoteEditor({
-  open,
-  onOpenChange,
-  selectedText,
-  initialContent = "",
-  initialColor = "#facc15",
-  onSave,
-}: NoteEditorProps) {
+export function NoteEditor({}: NoteEditorProps) {
+  const {
+    noteEditor: { open, selectedText, initialContent = "", initialColor = "#facc15" },
+    setNoteEditor: onOpenChange,
+    handleSaveNote: onSave,
+  } = useAnnotation();
+
   const [content, setContent] = useState(initialContent);
   const [color, setColor] = useState(initialColor);
 
-  const handleOpenChange = (nextOpen: boolean) => {
-    if (nextOpen) {
+  const handleOpenChange = (nextOpen: boolean | ((prev: any) => any)) => {
+    if (typeof nextOpen === 'boolean' && nextOpen) {
       setContent(initialContent);
       setColor(initialColor);
     }
-    onOpenChange(nextOpen);
+    
+    if (typeof nextOpen === 'function') {
+        onOpenChange(nextOpen);
+    } else {
+        onOpenChange((prev: any) => ({ ...prev, open: nextOpen }));
+    }
   };
 
   const handleSave = () => {
     onSave(content, color);
-    onOpenChange(false);
+    onOpenChange((prev: any) => ({ ...prev, open: false }));
   };
 
   return (

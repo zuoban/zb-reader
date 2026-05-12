@@ -11,31 +11,24 @@ import { TypographySettings, ThemeSettings, TtsSettings } from "./settings";
 
 type ThemeValue = "light" | "dark" | "sepia";
 
-interface ReadingSettingsProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  fontSize: number;
-  onFontSizeChange: (size: number) => void;
-  fontFamily: FontFamily;
-  onFontFamilyChange: (fontFamily: FontFamily) => void;
-  theme: ThemeValue;
-  onThemeChange: (theme: ThemeValue) => void;
-  ttsHighlightColor: string;
-  onTtsHighlightColorChange: (color: string) => void;
-}
+import { useReaderUI } from "./providers";
+import { useReaderSettingsStore, useReaderSettingsValues } from "@/stores/reader-settings";
 
-export function ReadingSettings({
-  open,
-  onOpenChange,
-  fontSize,
-  onFontSizeChange,
-  fontFamily,
-  onFontFamilyChange,
-  theme,
-  onThemeChange,
-  ttsHighlightColor,
-  onTtsHighlightColorChange,
-}: ReadingSettingsProps) {
+interface ReadingSettingsProps {}
+
+export function ReadingSettings({}: ReadingSettingsProps) {
+  const { settingsOpen: open, setSettingsOpen: onOpenChange } = useReaderUI();
+  
+  const fontSize = useReaderSettingsStore((s) => s.fontSize);
+  const fontFamily = useReaderSettingsStore((s) => s.fontFamily);
+  const theme = useReaderSettingsStore((s) => s.theme);
+  const ttsHighlightColor = useReaderSettingsStore((s) => s.ttsHighlightColor);
+  
+  const setFontSize = useReaderSettingsStore((s) => s.setFontSize);
+  const setFontFamily = useReaderSettingsStore((s) => s.setFontFamily);
+  const setTheme = useReaderSettingsStore((s) => s.setTheme);
+  const setTtsHighlightColor = useReaderSettingsStore((s) => s.setTtsHighlightColor);
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
@@ -64,18 +57,18 @@ export function ReadingSettings({
           {/* Typography */}
           <TypographySettings
             fontFamily={fontFamily}
-            onFontFamilyChange={onFontFamilyChange}
+            onFontFamilyChange={setFontFamily}
             fontSize={fontSize}
-            onFontSizeChange={onFontSizeChange}
+            onFontSizeChange={setFontSize}
           />
 
           {/* Theme */}
-          <ThemeSettings theme={theme} onThemeChange={onThemeChange} />
+          <ThemeSettings theme={theme} onThemeChange={setTheme} />
 
           {/* TTS */}
           <TtsSettings
             ttsHighlightColor={ttsHighlightColor}
-            onTtsHighlightColorChange={onTtsHighlightColorChange}
+            onTtsHighlightColorChange={setTtsHighlightColor}
           />
         </div>
       </SheetContent>

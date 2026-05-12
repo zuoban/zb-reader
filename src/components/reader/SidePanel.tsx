@@ -10,54 +10,32 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { TocItem } from "@/types/reader";
 import { TocTab, BookmarksTab, NotesTab } from "./panels";
 
-interface SidePanelProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  activeTab: "toc" | "bookmarks" | "notes";
-  onTabChange: (tab: "toc" | "bookmarks" | "notes") => void;
-  toc: TocItem[];
-  currentHref?: string;
-  bookmarks: Array<{
-    id: string;
-    label: string;
-    location: string;
-    progress: number;
-    createdAt: string;
-  }>;
-  notes: Array<{
-    id: string;
-    selectedText: string;
-    content: string;
-    color: string;
-    location: string;
-    createdAt: string;
-  }>;
-  onTocItemClick: (href: string) => void;
-  onBookmarkClick: (location: string) => void;
-  onBookmarkDelete: (id: string) => void;
-  onBookmarkEdit: (id: string, label: string) => void;
-  onNoteClick: (location: string) => void;
-  onNoteDelete: (id: string) => void;
-  onNoteEdit: (id: string, content: string, color: string) => void;
-}
+import { useBookData, useReaderUI, useNavigation, useAnnotation } from "./providers";
 
-export const SidePanel = memo(function SidePanel({
-  open,
-  onOpenChange,
-  activeTab,
-  onTabChange,
-  toc,
-  currentHref,
-  bookmarks,
-  notes,
-  onTocItemClick,
-  onBookmarkClick,
-  onBookmarkDelete,
-  onBookmarkEdit,
-  onNoteClick,
-  onNoteDelete,
-  onNoteEdit,
-}: SidePanelProps) {
+interface SidePanelProps {}
+
+export const SidePanel = memo(function SidePanel({}: SidePanelProps) {
+  const { bookmarks, notes } = useBookData();
+  const { 
+    sidePanelOpen: open, 
+    setSidePanelOpen: onOpenChange, 
+    activeTab, 
+    setActiveTab: onTabChange,
+    toc,
+    currentHref
+  } = useReaderUI();
+  const { 
+    handleTocItemClick, 
+    handleBookmarkClick, 
+    handleNoteClick 
+  } = useNavigation();
+  const { 
+    handleBookmarkDelete, 
+    handleBookmarkEdit, 
+    handleNoteDelete, 
+    handleNoteEdit 
+  } = useAnnotation();
+
   const handleClose = () => onOpenChange(false);
 
   return (
@@ -111,27 +89,27 @@ export const SidePanel = memo(function SidePanel({
               <TocTab
                 toc={toc}
                 currentHref={currentHref}
-                onTocItemClick={onTocItemClick}
+                onTocItemClick={handleTocItemClick}
                 onClose={handleClose}
               />
             </TabsContent>
 
             <TabsContent value="bookmarks" className="mt-0 flex-1 min-h-0 overflow-hidden outline-none">
               <BookmarksTab
-                bookmarks={bookmarks}
-                onBookmarkClick={onBookmarkClick}
-                onBookmarkDelete={onBookmarkDelete}
-                onBookmarkEdit={onBookmarkEdit}
+                bookmarks={bookmarks as any}
+                onBookmarkClick={handleBookmarkClick}
+                onBookmarkDelete={handleBookmarkDelete}
+                onBookmarkEdit={handleBookmarkEdit}
                 onClose={handleClose}
               />
             </TabsContent>
 
             <TabsContent value="notes" className="mt-0 flex-1 min-h-0 overflow-hidden outline-none">
               <NotesTab
-                notes={notes}
-                onNoteClick={onNoteClick}
-                onNoteDelete={onNoteDelete}
-                onNoteEdit={onNoteEdit}
+                notes={notes as any}
+                onNoteClick={handleNoteClick}
+                onNoteDelete={handleNoteDelete}
+                onNoteEdit={handleNoteEdit}
                 onClose={handleClose}
               />
             </TabsContent>
