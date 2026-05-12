@@ -8,6 +8,7 @@ export { useReaderBookData } from "./useReaderBookData";
 export { useReaderSettingsControls } from "./useReaderSettingsControls";
 export { useReaderSettingsLifecycle } from "./useReaderSettingsLifecycle";
 export { useReaderSelectionState } from "./useReaderSelectionState";
+export type { ReaderNoteEditorState, ReaderSelectionMenuState } from "./useReaderSelectionState";
 export { useReaderSidePanelState } from "./useReaderSidePanelState";
 export { useReaderTtsAudio } from "./useReaderTtsAudio";
 export { useReaderTtsSession } from "./useReaderTtsSession";
