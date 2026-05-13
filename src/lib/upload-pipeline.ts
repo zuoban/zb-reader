@@ -1,5 +1,6 @@
 import * as fsAsync from "fs/promises";
 import yauzl from "yauzl";
+import JSZip from "jszip";
 import { logger } from "@/lib/logger";
 import { saveCoverImage, moveBookFromTemp, saveBookToTemp } from "@/lib/storage";
 import { MAX_EPUB_FILE_SIZE_BYTES } from "@/lib/upload-limits";
@@ -165,9 +166,9 @@ export async function validateAndExtractMetadataFromFile(
 
       let entryCount = 0;
       let totalUncompressedSize = 0;
-      let hasContainerXml = false;
+      let containerXmlPath = "";
       let containerXmlContent = "";
-      let opfPath = "";
+      let folderPrefix = "";
       let opfContent = "";
       let coverItemHref = "";
       const metadata: Omit<ExtractedEpubMetadata, "needsNormalization"> = {};
@@ -192,7 +193,18 @@ export async function validateAndExtractMetadataFromFile(
         }
 
         if (entry.fileName === "META-INF/container.xml") {
-          hasContainerXml = true;
+          containerXmlPath = entry.fileName;
+          try {
+            const buffer = await readZipEntry(zipfile, entry);
+            containerXmlContent = buffer.toString();
+          } catch {
+            zipfile.close();
+            return reject(new EpubValidationError("无法读取 container.xml"));
+          }
+        } else if (!containerXmlPath && entry.fileName.endsWith("/META-INF/container.xml")) {
+          // Nested folder structure: "BookName.epub/META-INF/container.xml"
+          folderPrefix = entry.fileName.split("/META-INF/")[0] + "/";
+          containerXmlPath = entry.fileName;
           try {
             const buffer = await readZipEntry(zipfile, entry);
             containerXmlContent = buffer.toString();
@@ -206,26 +218,30 @@ export async function validateAndExtractMetadataFromFile(
       });
 
       zipfile.on("end", async () => {
-        if (!hasContainerXml) {
+        if (!containerXmlPath) {
           zipfile.close();
           return resolve({ needsNormalization: true });
         }
 
+        const hasPrefix = folderPrefix.length > 0;
+
         const rootFilePath = parseEpubContainerRootfilePath(containerXmlContent);
         if (!rootFilePath) {
           zipfile.close();
-          return resolve({ needsNormalization: false });
+          return resolve({ ...metadata, needsNormalization: !hasPrefix });
         }
 
-        opfPath = resolveEpubRelativePath("", rootFilePath) || "";
-        
+        const prefixedOpfPath = hasPrefix
+          ? `${folderPrefix}${rootFilePath}`
+          : rootFilePath;
+
         // Re-scan for OPF and Cover
         yauzl.open(filePath, { lazyEntries: true }, (err2, zipfile2) => {
           if (err2 || !zipfile2) return reject(err2 || new Error("Failed to re-open zip"));
-          
+
           zipfile2.readEntry();
           zipfile2.on("entry", async (entry: yauzl.Entry) => {
-            if (entry.fileName === opfPath) {
+            if (entry.fileName === prefixedOpfPath) {
               try {
                 const buffer = await readZipEntry(zipfile2, entry);
                 opfContent = buffer.toString();
@@ -233,23 +249,24 @@ export async function validateAndExtractMetadataFromFile(
                 metadata.title = opfMeta.title;
                 metadata.author = opfMeta.author;
                 coverItemHref = opfMeta.coverItemHref || "";
-                
+
                 if (!coverItemHref) {
                   zipfile2.close();
-                  return resolve({ ...metadata, needsNormalization: false });
+                  return resolve({ ...metadata, needsNormalization: hasPrefix });
                 }
               } catch {
                 zipfile2.close();
                 return reject(new EpubValidationError("无法读取 OPF 文件"));
               }
             } else if (coverItemHref) {
-              const resolvedCoverPath = resolveEpubRelativePath(opfPath, coverItemHref);
-              if (entry.fileName === resolvedCoverPath) {
+              // Resolve cover path relative to the OPF file's directory
+              const fullCoverPath = resolveEpubRelativePath(prefixedOpfPath, coverItemHref);
+              if (fullCoverPath && entry.fileName === fullCoverPath) {
                 try {
                   const coverData = await readZipEntry(zipfile2, entry);
                   metadata.coverFileName = await saveCoverImage(coverData, bookId);
                   zipfile2.close();
-                  return resolve({ ...metadata, needsNormalization: false });
+                  return resolve({ ...metadata, needsNormalization: hasPrefix });
                 } catch (_e) {
                   logger.warn("books", "Failed to extract cover", _e);
                   // Non-fatal, continue without cover
@@ -258,25 +275,77 @@ export async function validateAndExtractMetadataFromFile(
             }
             zipfile2.readEntry();
           });
-          
+
           zipfile2.on("end", () => {
             zipfile2.close();
-            resolve({ ...metadata, needsNormalization: false });
+            resolve({ ...metadata, needsNormalization: hasPrefix });
           });
-          
+
           zipfile2.on("error", (_e) => {
             zipfile2.close();
             reject(_e);
           });
         });
       });
-      
+
       zipfile.on("error", (_e) => {
         zipfile.close();
         reject(_e);
       });
     });
   });
+}
+
+/**
+ * Repackage an EPUB zip that has all entries nested under a single folder prefix.
+ * Strips the common folder prefix so that entries are at the zip root.
+ */
+export async function repackageEpubWithoutFolderPrefix(zipPath: string): Promise<Buffer> {
+  const zipData = await fsAsync.readFile(zipPath);
+  const jszip = new JSZip();
+  const originalZip = await jszip.loadAsync(zipData);
+
+  const filePaths = Object.keys(originalZip.files).filter(
+    (p) => !originalZip.files[p].dir
+  );
+  if (filePaths.length === 0) {
+    throw new EpubValidationError("ZIP 文件为空");
+  }
+
+  // Find the common root folder prefix (e.g., "BookName.epub/")
+  const commonPrefix = findCommonFolderPrefix(filePaths);
+  if (!commonPrefix) {
+    throw new EpubValidationError("无法确定 EPUB 文件夹前缀");
+  }
+
+  // Create a new zip with flattened paths
+  const newZip = new JSZip();
+  for (const [relativePath, zipEntry] of Object.entries(originalZip.files)) {
+    const strippedPath = relativePath.startsWith(commonPrefix)
+      ? relativePath.slice(commonPrefix.length)
+      : relativePath;
+
+    if (zipEntry.dir) continue;
+
+    const content = await zipEntry.async("nodebuffer");
+    newZip.file(strippedPath, content);
+  }
+
+  return newZip.generateAsync({
+    type: "nodebuffer",
+    compression: "DEFLATE",
+    compressionOptions: { level: 0 },
+  });
+}
+
+export function findCommonFolderPrefix(filePaths: string[]): string | null {
+  // All paths should share a common first segment (folder name)
+  const firstSegment = filePaths[0]?.split("/")[0];
+  if (!firstSegment) return null;
+
+  const prefix = firstSegment + "/";
+  const allHavePrefix = filePaths.every((p) => p.startsWith(prefix));
+  return allHavePrefix ? prefix : null;
 }
 
 export async function processBookUpload(
@@ -307,7 +376,13 @@ export async function processBookUpload(
     // 3. Extract metadata & validate ZIP
     const metadata = await validateAndExtractMetadataFromFile(tempPath, bookId);
 
-    // 4. Commit to storage
+    // 4. Repackage if EPUB entries are nested under a folder prefix
+    if (metadata.needsNormalization) {
+      const repackaged = await repackageEpubWithoutFolderPrefix(tempPath);
+      await fsAsync.writeFile(tempPath, repackaged);
+    }
+
+    // 5. Commit to storage
     savedFileName = await moveBookFromTemp(tempPath, bookId, storageFormat);
     tempPath = null; // No longer in temp
 
