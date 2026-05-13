@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getCachedBook } from "@/lib/book-cache";
 import { logger } from "@/lib/logger";
+import { getLocalProgressManager } from "@/lib/local-progress";
 import type { ServerProgressSnapshot } from "@/lib/local-progress";
 import type { Book, Bookmark, Note } from "@/lib/db/schema";
 
@@ -61,14 +62,28 @@ export function useReaderBookData({
         setBook(data.book ?? null);
 
         const cached = await getCachedBook(bookId);
-
         if (cancelled) return;
 
-        if (data.progress?.location) {
-          setInitialLocation(data.progress.location);
-          onProgressLoaded(data.progress.progress || 0);
+        // Compare server progress with local progress
+        const localProgress = await getLocalProgressManager().getLocalProgress(bookId);
+        
+        let finalProgress = data.progress;
+        
+        // If local progress exists and is "ahead" of server progress, use it
+        // We consider it ahead if the progress percentage is greater
+        if (localProgress && (!finalProgress || localProgress.progress > (finalProgress.progress || 0))) {
+          finalProgress = {
+            progress: localProgress.progress,
+            location: localProgress.location,
+          };
+          logger.debug("reader", "Using local progress as it is ahead of server", finalProgress);
         }
-        setInitialProgress(data.progress ?? null);
+
+        if (finalProgress?.location) {
+          setInitialLocation(finalProgress.location);
+          onProgressLoaded(finalProgress.progress || 0);
+        }
+        setInitialProgress(finalProgress ?? null);
         setBookmarks(Array.isArray(data.bookmarks) ? data.bookmarks : []);
         setNotes(Array.isArray(data.notes) ? data.notes.filter(Boolean) : []);
 

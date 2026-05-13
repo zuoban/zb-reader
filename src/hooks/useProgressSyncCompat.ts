@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useRef, useEffect } from "react";
+import { useCallback, useRef, useEffect, useMemo } from "react";
 import { logger } from "@/lib/logger";
+import { debounce } from "@/lib/utils";
 import { useProgressSync } from "./useProgressSync";
 import type { ServerProgressSnapshot } from "@/lib/local-progress";
 
@@ -54,15 +55,24 @@ export function useProgressSyncCompat(
     [currentLocationRef, progressRef, updateProgress]
   );
 
-  // Compatible name; sync debouncing is handled by LocalProgressManager.
-  const debouncedSaveProgress = useCallback(() => {
-    void saveProgress();
-  }, [saveProgress]);
+  // Compatible name; properly debounced to avoid excessive DB writes during rapid navigation
+  const debouncedSaveProgress = useMemo(
+    () => debounce(() => void saveProgress(), 500),
+    [saveProgress]
+  );
+
+  // Cleanup debounced function
+  useEffect(() => {
+    return () => {
+      debouncedSaveProgress.cancel();
+    };
+  }, [debouncedSaveProgress]);
 
   // Force sync on unmount
   useEffect(() => {
     const syncPending = () => {
       void (async () => {
+        debouncedSaveProgress.cancel(); // Cancel any pending debounced save
         await saveProgress(true);
         await forceSync({ keepalive: true });
       })();

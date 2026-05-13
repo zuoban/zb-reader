@@ -66,7 +66,7 @@ export class LocalProgressManager {
     });
   }
 
-  private async getProgress(bookId: string): Promise<LocalProgress | null> {
+  async getLocalProgress(bookId: string): Promise<LocalProgress | null> {
     await this.initPromise;
     if (!this.db) return null;
 
@@ -77,6 +77,10 @@ export class LocalProgressManager {
       logger.error("local-progress", "Failed to get progress", error);
       return null;
     }
+  }
+
+  private async getProgress(bookId: string): Promise<LocalProgress | null> {
+    return this.getLocalProgress(bookId);
   }
 
   async loadFromServer(bookId: string): Promise<LocalProgress | null> {

@@ -198,15 +198,37 @@ export const ReaderToolbar = memo(function ReaderToolbar({
               </Button>
             </div>
 
-            {/* 中间：进度展示 (Read-only) */}
-            <div className="flex flex-1 items-center gap-2 sm:gap-4">
-              <span className="min-w-[2rem] sm:min-w-[2.5rem] text-right text-[9px] sm:text-[10px] font-bold tracking-widest text-[var(--reader-text)] opacity-40">
+            {/* 中间：进度展示 (Interactive) */}
+            <div className="flex flex-1 items-center gap-2 sm:gap-4 group">
+              <span className="min-w-[2.25rem] sm:min-w-[2.5rem] text-right text-[9px] sm:text-[10px] font-bold tabular-nums tracking-widest text-[var(--reader-text)] opacity-40">
                 {Math.round(progress * 100)}%
               </span>
-              <div className="relative h-1 flex-1 overflow-hidden rounded-full bg-[var(--reader-text)]/10">
-                <div 
-                  className="h-full bg-[var(--reader-text)] transition-all duration-500 ease-out"
-                  style={{ width: `${progress * 100}%` }}
+              <div className="relative h-6 flex flex-1 items-center cursor-pointer">
+                {/* Custom Track */}
+                <div className="absolute inset-x-0 h-1 overflow-hidden rounded-full bg-[var(--reader-text)]/10">
+                  <div 
+                    className="h-full bg-[var(--reader-text)] transition-all duration-300 ease-out"
+                    style={{ width: `${progress * 100}%` }}
+                  />
+                </div>
+                {/* Invisible native range for interaction */}
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={progress}
+                  onChange={(e) => {
+                    const newProgress = parseFloat(e.target.value);
+                    _handleProgressChange(newProgress);
+                  }}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  aria-label="阅读进度"
+                />
+                {/* Custom Thumb (Visible on hover or touch) */}
+                <div
+                  className="absolute h-3 w-3 rounded-full bg-[var(--reader-card-bg)] border-2 border-[var(--reader-text)] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none shadow-sm"
+                  style={{ left: `calc(${progress * 100}% - 6px)` }}
                 />
               </div>
             </div>

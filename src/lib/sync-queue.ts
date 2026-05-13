@@ -98,6 +98,7 @@ export class SyncQueue {
       const batch = [...this.queue];
       let retryCount = 0;
       let success = false;
+      let isClientError = false;
 
       // 如果是 keepalive 模式（页面卸载时），不进行重试，只尝试发送一次
       const maxAttempts = options?.keepalive ? 1 : MAX_RETRY_COUNT;
@@ -119,12 +120,29 @@ export class SyncQueue {
 
           if (retryCount >= maxAttempts) {
             if (!options?.keepalive) {
-              logger.error("sync-queue", "Sync failed after max retries");
+              logger.error("sync-queue", "Sync failed after max retries", {
+                attempts: retryCount,
+                queueSize: this.queue.length,
+                firstItem: this.queue[0] ?? null,
+                error,
+              });
             }
 
             // 卸载时不移除队列，留给下次加载
             if (options?.keepalive) {
               break;
+            }
+
+            // 对于 4xx 客户端错误（如 401/400），直接移除失败项目
+            // 对于 404（书籍不存在），保留队列以便书籍上传后重试
+            // 对于 5xx 服务器错误，保留队列以便下次重试
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            isClientError = errorMessage.includes("401") || errorMessage.includes("400");
+
+            if (isClientError) {
+              // 移除失败项目，避免阻塞队列
+              this.queue = this.queue.filter((i) => !batch.includes(i));
+              await this.persistQueue();
             }
 
             break;
@@ -135,7 +153,9 @@ export class SyncQueue {
         }
       }
 
-      if (!success) {
+      // 只有在客户端错误或 keepalive 模式下才继续处理下一个批次
+      // 服务器错误时保留队列中的剩余项目，等待下次同步
+      if (!success && !isClientError) {
         break;
       }
     }
