@@ -46,24 +46,10 @@ function clampProgress(value: number) {
   return Math.min(1, Math.max(0, value));
 }
 
-const ALLOWED_HTML_TAGS = new Set([
-  "em", "strong", "b", "i", "u", "sup", "sub", "span", "br", "small", "mark",
-]);
-
-function sanitizeHtml(html: string): string {
-  return html.replace(/<\s*\/?\s*([a-zA-Z]+)[^>]*>/g, (match, tagName) => {
-    if (ALLOWED_HTML_TAGS.has(tagName.toLowerCase())) {
-      return match;
-    }
-    return "";
-  });
-}
-
 export function FullscreenTtsView({
   open,
   book,
   currentChapterTitle,
-  activeHtml,
   activeParagraph,
   activeIsCodeBlock,
   isSpeaking,
@@ -174,21 +160,18 @@ export function FullscreenTtsView({
                   {currentChapterTitle || "当前章节"}
                 </span>
               </div>
-              <div className="mt-5 min-h-0 flex-1 overflow-y-auto pr-1 [scrollbar-color:rgba(255,255,255,0.22)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border [&::-webkit-scrollbar-thumb]:border-transparent [&::-webkit-scrollbar-thumb]:bg-[linear-gradient(180deg,rgba(255,255,255,0.26),rgba(255,255,255,0.12))] [&::-webkit-scrollbar-thumb]:bg-clip-padding">
-                {activeIsCodeBlock ? (
-                  <pre className="rounded-xl bg-white/5 p-4 font-mono text-[13px] leading-relaxed tracking-[0.01em] text-white/90 [text-shadow:0_1px_14px_rgba(0,0,0,0.42)] sm:text-[14px] sm:leading-loose whitespace-pre-wrap break-words">
-                    {paragraphText || "正在准备朗读内容，马上为你定位到当前段落。"}
-                  </pre>
-                ) : activeHtml ? (
-                  <p
-                    className="text-[16px] font-normal leading-9 tracking-[0.01em] text-white/90 [text-shadow:0_1px_14px_rgba(0,0,0,0.42)] sm:text-[18px] sm:leading-[2.6rem] [&>strong]:font-bold [&>b]:font-bold [&>em]:italic [&>i]:italic [&>sup]:text-xs [&>sub]:text-xs [&>mark]:rounded [&>mark]:bg-white/10 [&>mark]:px-0.5"
-                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(activeHtml) }}
-                  />
-                ) : (
-                  <p className="text-[16px] font-normal leading-9 tracking-[0.01em] text-white/90 [text-shadow:0_1px_14px_rgba(0,0,0,0.42)] sm:text-[18px] sm:leading-[2.6rem]">
-                    {paragraphText || "正在准备朗读内容，马上为你定位到当前段落。"}
-                  </p>
-                )}
+              <div className="mt-5 flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto pr-1 [scrollbar-color:rgba(255,255,255,0.22)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border [&::-webkit-scrollbar-thumb]:border-transparent [&::-webkit-scrollbar-thumb]:bg-[linear-gradient(180deg,rgba(255,255,255,0.26),rgba(255,255,255,0.12))] [&::-webkit-scrollbar-thumb]:bg-clip-padding">
+                <div className="w-full text-center">
+                  {activeIsCodeBlock ? (
+                    <pre className="mx-auto max-w-full rounded-xl bg-white/5 p-4 text-left font-mono text-[13px] leading-relaxed tracking-[0.01em] text-white/90 [text-shadow:0_1px_14px_rgba(0,0,0,0.42)] sm:text-[14px] sm:leading-loose whitespace-pre-wrap break-words">
+                      {paragraphText || "正在准备朗读内容..."}
+                    </pre>
+                  ) : (
+                    <p className="text-[20px] font-medium leading-relaxed tracking-[0.02em] text-white [text-shadow:0_2px_20px_rgba(0,0,0,0.5)] sm:text-[24px] sm:leading-relaxed lg:text-[28px]">
+                      {paragraphText || "正在准备朗读内容..."}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </section>
