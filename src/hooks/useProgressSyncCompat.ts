@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useEffect } from "react";
 import { logger } from "@/lib/logger";
-import { debounce } from "@/lib/utils";
+import { debounce, type DebouncedFunction } from "@/lib/utils";
 import { useProgressSync } from "./useProgressSync";
 import type { ServerProgressSnapshot } from "@/lib/local-progress";
 
@@ -79,7 +79,7 @@ export function useProgressSyncCompat(
 
   // Create debounced save function using useCallback with stable reference
   // Using a ref pattern that avoids render-time access by wrapping in effect
-  const debouncedSaveRef = useRef<ReturnType<typeof debounce> | null>(null);
+  const debouncedSaveRef = useRef<DebouncedFunction<[force?: boolean]> | null>(null);
 
   // Initialize the debounce function once using useEffect
   useEffect(() => {
