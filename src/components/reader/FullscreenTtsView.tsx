@@ -193,16 +193,16 @@ export function FullscreenTtsView({
           </section>
         </main>
 
-        <footer className="animate-reader-fade-up mx-auto w-full max-w-3xl rounded-[32px] p-6 sm:p-10 bg-white/[0.03] border border-white/5 backdrop-blur-2xl shadow-2xl" style={{ animationDelay: "70ms" }}>
-          {/* Progress Row: Absolute side labels ensure the bar is perfectly centered */}
-          <div className="relative flex items-center justify-center mb-10 h-6">
-            <div className="absolute left-0 flex items-center">
+        <footer className="animate-reader-fade-up mx-auto w-full max-w-3xl rounded-[32px] p-6 sm:p-8 bg-white/[0.03] border border-white/5 backdrop-blur-2xl shadow-2xl" style={{ animationDelay: "70ms" }}>
+          {/* Progress Row: Balanced 5-column grid */}
+          <div className="grid grid-cols-5 items-center gap-4 mb-8">
+            <div className="flex justify-start">
               <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/25 whitespace-nowrap">
                 {statusLabel}
               </span>
             </div>
             
-            <div className="w-full px-20 sm:px-24">
+            <div className="col-span-3 flex items-center justify-center">
               <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/5 shadow-inner">
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-blue-400 to-indigo-400 shadow-[0_0_15px_rgba(129,140,248,0.5)] transition-[width] duration-700 ease-out"
@@ -211,42 +211,44 @@ export function FullscreenTtsView({
               </div>
             </div>
 
-            <div className="absolute right-0 flex items-center">
+            <div className="flex justify-end">
               <span className="text-[11px] font-bold tabular-nums text-white/35 tracking-wider">
                 {(overallProgress * 100).toFixed(1)}%
               </span>
             </div>
           </div>
 
-          {/* Controls Row: Absolute side buttons ensure the playback group is mathematically centered */}
-          <div className="relative flex items-center justify-center min-h-[80px]">
-            {/* Left: Settings */}
-            <div className="absolute left-0">
+          {/* Controls Row: Balanced 5-column grid ensuring mathematical centering */}
+          <div className="grid grid-cols-5 items-center gap-2">
+            {/* Col 1: Settings + Prev */}
+            <div className="flex items-center gap-1">
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
                 onClick={() => setSettingsOpen(true)}
-                className="size-12 cursor-pointer rounded-full text-white/40 hover:text-white hover:bg-white/10 transition-all active:scale-90"
+                className="size-11 cursor-pointer rounded-full text-white/40 hover:text-white hover:bg-white/10 transition-all active:scale-90"
                 aria-label="朗读设置"
               >
                 <Settings className="size-5" />
               </Button>
-            </div>
-
-            {/* Center: Playback Controls (Mathematically Centered) */}
-            <div className="flex items-center gap-6 sm:gap-14">
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
                 onClick={onPrev}
-                className="size-12 cursor-pointer rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-all active:scale-90"
+                className="size-11 cursor-pointer rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-all active:scale-90"
                 aria-label="上一章"
               >
-                <SkipBack className="size-6" />
+                <SkipBack className="size-5" />
               </Button>
+            </div>
 
+            {/* Col 2: Spacer */}
+            <div />
+
+            {/* Col 3: Play/Pause (Absolute Center) */}
+            <div className="flex justify-center">
               <Button
                 type="button"
                 onClick={onToggle}
@@ -271,7 +273,7 @@ export function FullscreenTtsView({
                   <span className="absolute left-1/2 top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10 bg-slate-950 shadow-lg" />
                 </span>
                 <span className="pointer-events-none absolute inset-0 overflow-hidden rounded-full bg-gradient-to-b from-white/10 to-transparent" />
-                
+
                 <svg
                   className="tts-record-tonearm pointer-events-none absolute inset-0 z-10 size-full overflow-visible"
                   viewBox="0 0 80 80"
@@ -304,27 +306,29 @@ export function FullscreenTtsView({
                   </g>
                 </svg>
               </Button>
+            </div>
 
+            {/* Col 4: Spacer */}
+            <div />
+
+            {/* Col 5: Next + Stop */}
+            <div className="flex items-center justify-end gap-1">
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
                 onClick={onNext}
-                className="size-12 cursor-pointer rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-all active:scale-90"
+                className="size-11 cursor-pointer rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-all active:scale-90"
                 aria-label="下一章"
               >
-                <SkipForward className="size-6" />
+                <SkipForward className="size-5" />
               </Button>
-            </div>
-
-            {/* Right: Stop (Fixed position) */}
-            <div className="absolute right-0">
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
                 onClick={onStop}
-                className="size-12 cursor-pointer rounded-full text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-all active:scale-90"
+                className="size-11 cursor-pointer rounded-full text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-all active:scale-90"
                 aria-label="停止朗读"
               >
                 <Square className="size-5" />
