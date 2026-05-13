@@ -50,7 +50,7 @@ function openDB(): Promise<IDBDatabase> {
         store.createIndex("size", "size");
       } else {
         // Add size index for existing stores (migration from v4)
-        const store = database.transaction([STORE_NAME], "readwrite").objectStore(STORE_NAME);
+        const store = request.transaction!.objectStore(STORE_NAME);
         if (!store.indexNames.contains("size")) {
           store.createIndex("size", "size");
         }
@@ -67,6 +67,13 @@ function openDB(): Promise<IDBDatabase> {
       );
     };
   });
+}
+
+export function closeDB(): void {
+  if (db) {
+    db.close();
+    db = null;
+  }
 }
 
 export async function cacheBook(

@@ -8,6 +8,7 @@ import {
   clearBookCache,
   getAllCachedBooks,
   clearAllCache,
+  closeDB,
 } from "@/lib/book-cache";
 
 const TEST_BOOK_ID = "test-book-123";
@@ -24,9 +25,9 @@ describe("Book Cache (IndexedDB)", () => {
 
   afterEach(async () => {
     try {
-      await clearAllCache();
+      closeDB();
     } catch (error) {
-      console.error("Failed to clear cache:", error);
+      console.error("Failed to close db:", error);
     }
   });
 
@@ -112,5 +113,51 @@ describe("Book Cache (IndexedDB)", () => {
 
     const books = await getAllCachedBooks();
     expect(books).toHaveLength(0);
+  });
+});
+
+describe("Book Cache Migration", () => {
+  const DB_NAME = "zb-reader-books";
+  const STORE_NAME = "books";
+
+  beforeEach(async () => {
+    closeDB();
+    await new Promise<void>((resolve, reject) => {
+      const request = indexedDB.deleteDatabase(DB_NAME);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  });
+
+  afterEach(() => {
+    closeDB();
+  });
+
+  it("successfully migrates from version 4 to version 5", async () => {
+    // 1. Create a version 4 database with the 'books' store but NO 'size' index
+    await new Promise<void>((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, 4);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        const store = db.createObjectStore(STORE_NAME, { keyPath: "id" });
+        store.createIndex("timestamp", "timestamp");
+      };
+      request.onsuccess = () => {
+        request.result.close();
+        resolve();
+      };
+      request.onerror = () => reject(request.error);
+    });
+
+    // 2. Now call cacheBook (which uses version 5)
+    // This should trigger onupgradeneeded and the migration logic
+    const testData = new ArrayBuffer(100);
+    await cacheBook("migration-test", testData);
+
+    // 3. Verify the 'size' index exists and data can be retrieved
+    const books = await getAllCachedBooks();
+    expect(books).toHaveLength(1);
+    expect(books[0].id).toBe("migration-test");
+    expect(books[0].size).toBe(100);
   });
 });
