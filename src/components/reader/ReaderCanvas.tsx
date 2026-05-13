@@ -79,9 +79,10 @@ function ReaderCanvasInner() {
       {!isTtsViewOpen && (
         <div
           className={cn(
-            "reader-status-footer relative flex shrink-0 items-center justify-between overflow-hidden px-5 text-[11px] font-semibold transition-all duration-500 ease-in-out sm:px-8",
-            toolbarVisible ? "h-0 opacity-0 pointer-events-none border-t-transparent" : "h-12 opacity-100"
+            "reader-status-footer relative flex shrink-0 items-center justify-between overflow-hidden px-6 text-[10px] font-medium tracking-wide transition-all duration-500 ease-in-out sm:px-10",
+            toolbarVisible ? "h-0 opacity-0 pointer-events-none border-t-transparent" : "h-10 opacity-100"
           )}
+          style={{ color: "var(--reader-text)", opacity: 0.4 }}
         >
           {/* Left: Progress */}
           <div className="flex min-w-[3rem] shrink-0 items-center">
@@ -91,18 +92,18 @@ function ReaderCanvasInner() {
           </div>
 
           {/* Center: Title (Absolute Centered) */}
-          <div className="absolute left-1/2 top-1/2 w-full max-w-[58vw] -translate-x-1/2 -translate-y-1/2 text-center sm:max-w-xl">
-            <span className="reader-status-title block truncate font-heading text-[12px] font-semibold tracking-normal">
+          <div className="absolute left-1/2 top-1/2 w-full max-w-[60vw] -translate-x-1/2 -translate-y-1/2 text-center sm:max-w-xl">
+            <span className="reader-status-title block truncate font-heading text-[10px] font-medium tracking-tight">
               {currentChapterTitle || book.title}
             </span>
           </div>
 
           {/* Right: Page Count */}
-          <div className="reader-status-meta flex min-w-[3rem] shrink-0 items-center justify-end gap-1.5 tabular-nums">
+          <div className="reader-status-meta flex min-w-[3rem] shrink-0 items-center justify-end gap-1 tabular-nums">
             {currentPage != null && totalPages != null && (
               <>
                 <span>{currentPage}</span>
-                <span className="reader-status-divider">/</span>
+                <span className="mx-0.5 opacity-30">/</span>
                 <span>{totalPages}</span>
               </>
             )}

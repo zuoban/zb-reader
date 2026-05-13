@@ -110,13 +110,13 @@ export const ReaderToolbar = memo(function ReaderToolbar({
           toolbarVisible && !isSpeaking && !isTtsViewOpen ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
         )}
       >
-        <div className="flex h-16 items-center justify-between border-b border-[color-mix(in_srgb,var(--reader-text)_5%,transparent)] bg-[var(--reader-bg)]/95 px-4 backdrop-blur-md">
+        <div className="flex h-14 items-center justify-between border-b border-[color-mix(in_srgb,var(--reader-text)_5%,transparent)] bg-[var(--reader-bg)]/95 px-4 backdrop-blur-md">
           {/* 左侧：返回 */}
           <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
             <ToolbarButton onClick={handleBack} tooltip="返回书架">
               <ArrowLeft className="size-5" />
             </ToolbarButton>
-            <div className="h-6 w-px bg-[var(--reader-text)]/10 mx-0.5 sm:mx-2" />
+            <div className="h-5 w-px bg-[var(--reader-text)]/10 mx-1 sm:mx-2" />
             <ToolbarButton onClick={openToc} tooltip="目录">
               <List className="size-5" />
             </ToolbarButton>
@@ -130,8 +130,8 @@ export const ReaderToolbar = memo(function ReaderToolbar({
           </div>
 
           {/* 中间：书名 */}
-          <div className="absolute left-1/2 -translate-x-1/2 max-w-[30%] sm:max-w-[50%] text-center">
-            <h1 className="truncate font-heading text-xs sm:text-sm font-bold tracking-tight text-[var(--reader-text)] uppercase">
+          <div className="absolute left-1/2 -translate-x-1/2 max-w-[40%] sm:max-w-[50%] text-center">
+            <h1 className="truncate font-heading text-[13px] sm:text-sm font-bold tracking-tight text-[var(--reader-text)]">
               {book?.title}
             </h1>
           </div>
@@ -154,8 +154,7 @@ export const ReaderToolbar = memo(function ReaderToolbar({
               {isFullscreen ? <Minimize className="size-5" /> : <Maximize className="size-5" />}
             </ToolbarButton>
 
-            <div className="h-6 w-px bg-[var(--reader-text)]/10 mx-0.5 sm:mx-2" />
-
+            <div className="h-5 w-px bg-[var(--reader-text)]/10 mx-1 sm:mx-2" />
 
             <ToolbarButton onClick={() => setSettingsOpen(true)} tooltip="阅读设置">
               <Settings className="size-5" />
@@ -173,39 +172,37 @@ export const ReaderToolbar = memo(function ReaderToolbar({
           toolbarVisible && !isSpeaking && !isTtsViewOpen ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
         )}
       >
-        <div className="border-t border-[color-mix(in_srgb,var(--reader-text)_5%,transparent)] bg-[var(--reader-bg)]/95 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 backdrop-blur-md">
+        <div className="border-t border-[color-mix(in_srgb,var(--reader-text)_5%,transparent)] bg-[var(--reader-bg)]/95 px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-4 backdrop-blur-md">
           <div className="mx-auto flex max-w-4xl items-center gap-3 sm:gap-6">
-            {/* 左侧：章节/页面导航 */}
-            <div className="flex items-center gap-0.5 sm:gap-1">
+            
+            {/* 导航：上一章 & 上一页 */}
+            <div className="flex items-center gap-1">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={handlePrevChapter}
                 disabled={!hasPrevChapter}
-                className="h-8 w-8 sm:h-9 sm:w-9 rounded-full hover:bg-[var(--reader-text)]/5"
+                className="h-9 w-9 rounded-full hover:bg-[var(--reader-text)]/5"
                 style={{ color: "var(--reader-text)" }}
               >
-                <ChevronsLeft className="size-4" />
+                <ChevronsLeft className="size-5" />
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={handlePrevPage}
-                className="h-8 w-8 sm:h-9 sm:w-9 rounded-full hover:bg-[var(--reader-text)]/5"
+                className="h-9 w-9 rounded-full hover:bg-[var(--reader-text)]/5"
                 style={{ color: "var(--reader-text)" }}
               >
-                <ChevronLeft className="size-4" />
+                <ChevronLeft className="size-5" />
               </Button>
             </div>
 
-            {/* 中间：进度展示 (Interactive) */}
-            <div className="flex flex-1 items-center gap-2 sm:gap-4 group">
-              <span className="min-w-[2.25rem] sm:min-w-[2.5rem] text-right text-[9px] sm:text-[10px] font-bold tabular-nums tracking-widest text-[var(--reader-text)] opacity-40">
-                {Math.round(progress * 100)}%
-              </span>
-              <div className="relative h-6 flex flex-1 items-center cursor-pointer">
+            {/* 中间：进度展示 */}
+            <div className="flex flex-1 items-center gap-3 sm:gap-4 group">
+              <div className="relative h-8 flex flex-1 items-center cursor-pointer">
                 {/* Custom Track */}
-                <div className="absolute inset-x-0 h-1 overflow-hidden rounded-full bg-[var(--reader-text)]/10">
+                <div className="absolute inset-x-0 h-1.5 overflow-hidden rounded-full bg-[var(--reader-text)]/10">
                   <div 
                     className="h-full bg-[var(--reader-text)] transition-all duration-300 ease-out"
                     style={{ width: `${progress * 100}%` }}
@@ -225,34 +222,37 @@ export const ReaderToolbar = memo(function ReaderToolbar({
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   aria-label="阅读进度"
                 />
-                {/* Custom Thumb (Visible on hover or touch) */}
+                {/* Custom Thumb */}
                 <div
-                  className="absolute h-3 w-3 rounded-full bg-[var(--reader-card-bg)] border-2 border-[var(--reader-text)] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none shadow-sm"
-                  style={{ left: `calc(${progress * 100}% - 6px)` }}
+                  className="absolute h-4 w-4 rounded-full bg-[var(--reader-bg)] border-2 border-[var(--reader-text)] shadow-sm transition-transform duration-200 group-hover:scale-110 pointer-events-none"
+                  style={{ left: `calc(${progress * 100}% - 8px)` }}
                 />
               </div>
+              <span className="min-w-[2.5rem] text-center text-[11px] font-bold tabular-nums text-[var(--reader-text)] opacity-60">
+                {Math.round(progress * 100)}%
+              </span>
             </div>
 
-            {/* 右侧：章节/页面导航 */}
-            <div className="flex items-center gap-0.5 sm:gap-1">
+            {/* 导航：下一页 & 下一章 */}
+            <div className="flex items-center gap-1">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={handleNextPage}
-                className="h-8 w-8 sm:h-9 sm:w-9 rounded-full hover:bg-[var(--reader-text)]/5"
+                className="h-9 w-9 rounded-full hover:bg-[var(--reader-text)]/5"
                 style={{ color: "var(--reader-text)" }}
               >
-                <ChevronRight className="size-4" />
+                <ChevronRight className="size-5" />
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={handleNextChapter}
                 disabled={!hasNextChapter}
-                className="h-8 w-8 sm:h-9 sm:w-9 rounded-full hover:bg-[var(--reader-text)]/5"
+                className="h-9 w-9 rounded-full hover:bg-[var(--reader-text)]/5"
                 style={{ color: "var(--reader-text)" }}
               >
-                <ChevronsRight className="size-4" />
+                <ChevronsRight className="size-5" />
               </Button>
             </div>
 
