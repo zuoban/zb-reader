@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { getCachedBook } from "@/lib/book-cache";
+import { cacheBook, getCachedBook } from "@/lib/book-cache";
 import { logger } from "@/lib/logger";
 import { getLocalProgressManager } from "@/lib/local-progress";
 import type { ServerProgressSnapshot } from "@/lib/local-progress";
@@ -90,9 +90,18 @@ export function useReaderBookData({
         if (cached) {
           setBookData(cached);
         } else {
-          // Use on-demand proxy instead of downloading the whole file
-          // This satisfies the user's request for "server-side rendering" (on-demand loading)
-          setBookUrl(`/api/books/${bookId}/proxy/`);
+          // 下载完整书籍文件并缓存到 IndexedDB
+          const downloadRes = await fetch(`/api/books/${bookId}/file`);
+          if (!downloadRes.ok) {
+            logger.error("reader", "Failed to download book file for caching");
+            // 下载失败时回退到代理 URL
+            setBookUrl(`/api/books/${bookId}/proxy/`);
+          } else {
+            const fileData = await downloadRes.arrayBuffer();
+            // 缓存到 IndexedDB
+            await cacheBook(bookId, fileData);
+            setBookData(fileData);
+          }
         }
       } catch (error) {
         logger.error("reader", "加载书籍失败", error);
