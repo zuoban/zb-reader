@@ -81,18 +81,35 @@ export function FullscreenTtsView({
   return (
     <div
       className={cn(
-        "fixed inset-0 z-[70] transition-all duration-300 ease-out",
+        "fixed inset-0 z-[70] transition-all duration-500 ease-in-out overflow-hidden",
         open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
       )}
       aria-hidden={!open}
     >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-14%,rgba(111,150,196,0.24),transparent_31%),radial-gradient(circle_at_16%_76%,rgba(88,124,161,0.13),transparent_25%),radial-gradient(circle_at_86%_20%,rgba(180,199,224,0.1),transparent_24%),linear-gradient(180deg,#242c37_0%,#121923_46%,#070b11_100%)]" />
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.07),transparent_20%,transparent_74%,rgba(60,84,112,0.12))]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_32%,rgba(0,0,0,0.34)_100%)]" />
-      <div className="animate-reader-breathe absolute left-1/2 top-0 h-[32rem] w-[32rem] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(139,172,211,0.14)_0%,transparent_70%)] blur-3xl" />
+      {/* Dynamic Aurora Background */}
+      <div className="absolute inset-0 bg-[#070b11]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-20%,rgba(111,150,196,0.18),transparent_50%)]" />
+      
+      <div className="absolute inset-0 overflow-hidden opacity-40 pointer-events-none">
+        <div 
+          className="absolute -top-[20%] -left-[10%] w-[70%] h-[70%] rounded-full bg-blue-500/10 blur-[120px]" 
+          style={{ animation: 'aurora-1 20s infinite ease-in-out' }} 
+        />
+        <div 
+          className="absolute top-[20%] -right-[10%] w-[60%] h-[60%] rounded-full bg-indigo-500/10 blur-[100px]" 
+          style={{ animation: 'aurora-2 25s infinite ease-in-out' }} 
+        />
+        <div 
+          className="absolute -bottom-[10%] left-[20%] w-[50%] h-[50%] rounded-full bg-slate-400/10 blur-[110px]" 
+          style={{ animation: 'aurora-3 22s infinite ease-in-out' }} 
+        />
+      </div>
+
+      {/* Grain Texture Overlay */}
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay bg-[url('data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.65\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E')]" />
 
       <div className="relative flex h-full flex-col gap-4 px-4 pb-[calc(env(safe-area-inset-bottom)+16px)] pt-[calc(env(safe-area-inset-top)+12px)] text-white sm:gap-6 sm:px-6">
-        <header className="mx-auto grid w-full max-w-3xl grid-cols-[auto_1fr_auto] items-center gap-3">
+        <header className="mx-auto grid w-full max-w-3xl grid-cols-[auto_1fr_auto] items-center gap-4">
           <div className="flex items-center">
             {onToggleFullscreen && (
               <Button
@@ -100,7 +117,7 @@ export function FullscreenTtsView({
                 variant="ghost"
                 size="icon"
                 onClick={onToggleFullscreen}
-                className="tts-immersive-control size-10 cursor-pointer rounded-full text-white/84 hover:-translate-y-0.5"
+                className="tts-immersive-control size-10 cursor-pointer rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-all"
                 aria-label={isFullscreen ? "退出全屏" : "进入全屏"}
               >
                 {isFullscreen ? <Minimize className="size-4" /> : <Maximize className="size-4" />}
@@ -108,8 +125,8 @@ export function FullscreenTtsView({
             )}
           </div>
 
-          <div className="flex min-w-0 items-center justify-center gap-3 sm:justify-start">
-            <div className="tts-immersive-control relative hidden h-14 w-10 shrink-0 overflow-hidden rounded-[10px] sm:flex">
+          <div className="flex min-w-0 items-center justify-center gap-3.5">
+            <div className="tts-immersive-control relative hidden h-12 w-9 shrink-0 overflow-hidden rounded-lg sm:flex border-white/10 shadow-lg">
               {book.cover ? (
                 <BookCoverImage
                   bookId={book.id}
@@ -117,19 +134,16 @@ export function FullscreenTtsView({
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <span className="flex h-full w-full items-center justify-center bg-white/8 text-[10px] font-bold text-white/58">
+                <span className="flex h-full w-full items-center justify-center bg-white/5 text-[9px] font-bold text-white/40">
                   ZB
                 </span>
               )}
             </div>
             <div className="min-w-0 text-center sm:text-left">
-              <p className="text-[10px] uppercase tracking-[0.22em] text-white/45">
-                沉浸朗读
-              </p>
-              <h1 className="truncate text-base font-semibold tracking-tight text-white/95 sm:text-lg">
+              <h1 className="truncate text-base font-semibold tracking-tight text-white/95 sm:text-lg font-heading">
                 {book.title}
               </h1>
-              <p className="mt-0.5 truncate text-xs text-white/58 sm:text-sm">
+              <p className="mt-0.5 truncate text-xs font-medium text-white/40 tracking-wide uppercase sm:text-[11px]">
                 {book.author || "未知作者"}
               </p>
             </div>
@@ -141,7 +155,7 @@ export function FullscreenTtsView({
               variant="ghost"
               size="icon"
               onClick={onBackToReader}
-              className="tts-immersive-control size-10 cursor-pointer rounded-full text-white/84 hover:-translate-y-0.5"
+              className="tts-immersive-control size-10 cursor-pointer rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-all"
               aria-label="返回原文"
             >
               <X className="size-4" />
@@ -149,85 +163,115 @@ export function FullscreenTtsView({
           </div>
         </header>
 
-        <main className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col justify-start">
-          <section className="tts-immersive-panel animate-reader-fade-up flex h-[min(64vh,620px)] min-h-0 flex-col rounded-[24px] p-5 text-left sm:h-[min(70vh,760px)] sm:rounded-[28px] sm:p-7">
-            <div className="relative flex min-h-0 flex-1 flex-col">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-white/66">
-                  {statusLabel}
-                </span>
-                <span className="text-[11px] uppercase tracking-[0.18em] text-white/42">
+        <main className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col justify-center">
+          <section className="relative flex h-[min(64vh,620px)] min-h-0 flex-col rounded-[32px] sm:h-[min(70vh,760px)]">
+            <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center p-8 sm:p-12">
+              <div className="absolute top-0 flex flex-wrap items-center justify-center gap-3 opacity-40">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 truncate max-w-[300px]">
                   {currentChapterTitle || "当前章节"}
                 </span>
               </div>
-              <div className="mt-5 flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto pr-1 [scrollbar-color:rgba(255,255,255,0.22)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border [&::-webkit-scrollbar-thumb]:border-transparent [&::-webkit-scrollbar-thumb]:bg-[linear-gradient(180deg,rgba(255,255,255,0.26),rgba(255,255,255,0.12))] [&::-webkit-scrollbar-thumb]:bg-clip-padding">
-                <div className="w-full text-center">
-                  {activeIsCodeBlock ? (
-                    <pre className="mx-auto max-w-full rounded-xl bg-white/5 p-4 text-left font-mono text-[13px] leading-relaxed tracking-[0.01em] text-white/90 [text-shadow:0_1px_14px_rgba(0,0,0,0.42)] sm:text-[14px] sm:leading-loose whitespace-pre-wrap break-words">
-                      {paragraphText || "正在准备朗读内容..."}
+              
+              <div 
+                key={paragraphText}
+                className="w-full text-center animate-reading-text-enter"
+              >
+                {activeIsCodeBlock ? (
+                  <div className="relative group">
+                    <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <pre className="relative mx-auto max-w-full rounded-2xl bg-white/5 p-6 text-left font-mono text-[13px] leading-relaxed tracking-normal text-white/80 border border-white/5 backdrop-blur-sm sm:text-[14px] sm:leading-loose whitespace-pre-wrap break-words">
+                      {paragraphText || "正在准备内容..."}
                     </pre>
-                  ) : (
-                    <p className="text-[20px] font-medium leading-relaxed tracking-[0.02em] text-white [text-shadow:0_2px_20px_rgba(0,0,0,0.5)] sm:text-[24px] sm:leading-relaxed lg:text-[28px]">
-                      {paragraphText || "正在准备朗读内容..."}
-                    </p>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <p className="relative text-[22px] font-medium leading-[1.6] tracking-tight text-white/95 [text-shadow:0_4px_24px_rgba(0,0,0,0.5)] sm:text-[28px] sm:leading-[1.55] lg:text-[34px] px-4 max-w-2xl mx-auto">
+                    {paragraphText || "正在准备朗读内容..."}
+                  </p>
+                )}
               </div>
             </div>
           </section>
         </main>
 
-        <footer className="tts-immersive-panel animate-reader-fade-up mx-auto w-full max-w-3xl rounded-[22px] p-3 sm:rounded-[26px] sm:p-4" style={{ animationDelay: "70ms" }}>
-          <div className="mb-3 flex items-center gap-3">
-            <div className="h-1 flex-1 overflow-hidden rounded-full bg-white/8">
-              <div
-                className="h-full rounded-full bg-[linear-gradient(90deg,rgba(191,219,254,0.95),rgba(125,173,226,0.72))] shadow-[0_0_18px_rgba(147,197,253,0.34)] transition-[width] duration-300 ease-out"
-                style={{ width: `${overallProgress * 100}%` }}
-              />
+        <footer className="animate-reader-fade-up mx-auto w-full max-w-3xl rounded-[32px] p-6 sm:p-10 bg-white/[0.03] border border-white/5 backdrop-blur-2xl shadow-2xl" style={{ animationDelay: "70ms" }}>
+          {/* Progress Row: Absolute side labels ensure the bar is perfectly centered */}
+          <div className="relative flex items-center justify-center mb-10 h-6">
+            <div className="absolute left-0 flex items-center">
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/25 whitespace-nowrap">
+                {statusLabel}
+              </span>
             </div>
-            <span className="w-12 shrink-0 text-right text-xs font-medium tabular-nums text-white/68">
-              {(overallProgress * 100).toFixed(1)}%
-            </span>
+            
+            <div className="w-full px-20 sm:px-24">
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/5 shadow-inner">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-blue-400 to-indigo-400 shadow-[0_0_15px_rgba(129,140,248,0.5)] transition-[width] duration-700 ease-out"
+                  style={{ width: `${overallProgress * 100}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="absolute right-0 flex items-center">
+              <span className="text-[11px] font-bold tabular-nums text-white/35 tracking-wider">
+                {(overallProgress * 100).toFixed(1)}%
+              </span>
+            </div>
           </div>
 
-          <div className="grid items-center gap-3 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:gap-4">
-            <div className="hidden sm:block" />
+          {/* Controls Row: Absolute side buttons ensure the playback group is mathematically centered */}
+          <div className="relative flex items-center justify-center min-h-[80px]">
+            {/* Left: Settings */}
+            <div className="absolute left-0">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setSettingsOpen(true)}
+                className="size-12 cursor-pointer rounded-full text-white/40 hover:text-white hover:bg-white/10 transition-all active:scale-90"
+                aria-label="朗读设置"
+              >
+                <Settings className="size-5" />
+              </Button>
+            </div>
 
-            <div className="flex items-center justify-center gap-2 sm:gap-2.5">
+            {/* Center: Playback Controls (Mathematically Centered) */}
+            <div className="flex items-center gap-6 sm:gap-14">
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
                 onClick={onPrev}
-                className="tts-immersive-control size-10 cursor-pointer rounded-full text-white/84 hover:text-white sm:size-11"
+                className="size-12 cursor-pointer rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-all active:scale-90"
                 aria-label="上一章"
               >
-                <SkipBack className="size-4" />
+                <SkipBack className="size-6" />
               </Button>
+
               <Button
                 type="button"
                 onClick={onToggle}
                 data-playing={isSpeaking && !isPaused ? "true" : "false"}
-                className="tts-record-button relative size-16 cursor-pointer overflow-visible rounded-full border border-sky-100/34 bg-slate-950 p-0 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_18px_42px_-16px_rgba(96,165,250,0.52),0_10px_28px_-14px_rgba(0,0,0,0.82)] transition-all hover:scale-[1.02] active:scale-[0.98] sm:size-[4.5rem]"
+                className="tts-record-button relative size-20 cursor-pointer overflow-visible rounded-full border border-white/10 bg-slate-950 p-0 text-white shadow-2xl transition-all hover:scale-105 active:scale-95 sm:size-24"
                 aria-label={isSpeaking && !isPaused ? "暂停朗读" : "开始朗读"}
               >
-                <span className="tts-record-disc absolute inset-[3px] rounded-full">
-                  <span className="tts-record-label absolute inset-[27%] overflow-hidden rounded-full border border-white/14 bg-slate-800">
+                <span className="tts-record-disc absolute inset-[4px] rounded-full">
+                  <span className="tts-record-label absolute inset-[26%] overflow-hidden rounded-full border border-white/10 bg-slate-900 shadow-inner">
                     {book.cover ? (
                       <BookCoverImage
                         bookId={book.id}
                         alt=""
-                        className="h-full w-full scale-110 object-cover"
+                        className="h-full w-full scale-110 object-cover opacity-80"
                       />
                     ) : (
-                      <span className="flex h-full w-full items-center justify-center bg-[linear-gradient(145deg,rgba(125,173,226,0.92),rgba(30,41,59,0.94))] text-[10px] font-bold text-white/82">
+                      <span className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-700 to-slate-900 text-[10px] font-bold text-white/40">
                         TTS
                       </span>
                     )}
                   </span>
-                  <span className="absolute left-1/2 top-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/26 bg-slate-950 shadow-[0_1px_0_rgba(255,255,255,0.18)_inset]" />
+                  <span className="absolute left-1/2 top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10 bg-slate-950 shadow-lg" />
                 </span>
-                <span className="pointer-events-none absolute inset-0 overflow-hidden rounded-full bg-[radial-gradient(circle_at_50%_38%,rgba(255,255,255,0.18),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.08),rgba(0,0,0,0.16))]" />
+                <span className="pointer-events-none absolute inset-0 overflow-hidden rounded-full bg-gradient-to-b from-white/10 to-transparent" />
+                
                 <svg
                   className="tts-record-tonearm pointer-events-none absolute inset-0 z-10 size-full overflow-visible"
                   viewBox="0 0 80 80"
@@ -235,94 +279,57 @@ export function FullscreenTtsView({
                 >
                   <defs>
                     <linearGradient id="tts-tonearm-metal" x1="66" x2="43" y1="12" y2="47">
-                      <stop offset="0" stopColor="rgba(255,255,255,0.98)" />
-                      <stop offset="0.34" stopColor="rgba(226,232,240,0.96)" />
-                      <stop offset="0.72" stopColor="rgba(148,163,184,0.94)" />
-                      <stop offset="1" stopColor="rgba(71,85,105,0.94)" />
-                    </linearGradient>
-                    <linearGradient id="tts-tonearm-head" x1="35" x2="48" y1="45" y2="57">
-                      <stop offset="0" stopColor="rgba(241,245,249,0.96)" />
-                      <stop offset="1" stopColor="rgba(100,116,139,0.92)" />
+                      <stop offset="0" stopColor="rgba(255,255,255,0.9)" />
+                      <stop offset="1" stopColor="rgba(148,163,184,0.9)" />
                     </linearGradient>
                     <filter id="tts-tonearm-shadow" x="-20%" y="-20%" width="140%" height="140%">
-                      <feDropShadow dx="0" dy="2.4" stdDeviation="2" floodColor="rgba(0,0,0,0.58)" />
+                      <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="rgba(0,0,0,0.6)" />
                     </filter>
                   </defs>
-                  <g filter="url(#tts-tonearm-shadow)">
-                    <circle cx="64" cy="13" r="7.2" fill="rgba(15,23,42,0.96)" stroke="rgba(226,232,240,0.58)" strokeWidth="1.4" />
-                    <circle cx="64" cy="13" r="4.4" fill="rgba(51,65,85,0.94)" stroke="rgba(255,255,255,0.34)" strokeWidth="1" />
-                    <circle cx="64" cy="13" r="1.8" fill="rgba(226,232,240,0.92)" />
-                  </g>
                   <g className="tts-record-tonearm-arm" filter="url(#tts-tonearm-shadow)">
+                    <circle cx="64" cy="13" r="6" fill="#1e293b" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
                     <path
-                      d="M61.2 18.4 C57.2 28.2 51.3 38.5 43.7 48.8"
+                      d="M61 18 C57 28 51 38 43 48"
                       fill="none"
                       stroke="url(#tts-tonearm-metal)"
                       strokeLinecap="round"
-                      strokeWidth="4.4"
+                      strokeWidth="4"
                     />
                     <path
-                      d="M62.4 19.2 C58.3 29 52.2 39.1 45.1 48.7"
-                      fill="none"
-                      stroke="rgba(255,255,255,0.52)"
-                      strokeLinecap="round"
-                      strokeWidth="1.2"
-                    />
-                    <path
-                      d="M39.8 46.4 L34.3 53 L40.3 57.1 L46.9 49.3 Z"
-                      fill="url(#tts-tonearm-head)"
-                      stroke="rgba(15,23,42,0.7)"
-                      strokeLinejoin="round"
-                      strokeWidth="1.2"
-                    />
-                    <path
-                      d="M37.2 54.5 L34.6 59.6"
-                      stroke="rgba(226,232,240,0.88)"
-                      strokeLinecap="round"
-                      strokeWidth="1.35"
-                    />
-                    <path
-                      d="M42.1 50.4 L38.1 55.5"
-                      stroke="rgba(255,255,255,0.28)"
-                      strokeLinecap="round"
+                      d="M38 46 L33 52 L39 56 L45 49 Z"
+                      fill="#f1f5f9"
+                      stroke="#0f172a"
                       strokeWidth="1"
                     />
                   </g>
                 </svg>
               </Button>
+
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
                 onClick={onNext}
-                className="tts-immersive-control size-10 cursor-pointer rounded-full text-white/84 hover:text-white sm:size-11"
+                className="size-12 cursor-pointer rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-all active:scale-90"
                 aria-label="下一章"
               >
-                <SkipForward className="size-4" />
+                <SkipForward className="size-6" />
               </Button>
+            </div>
+
+            {/* Right: Stop (Fixed position) */}
+            <div className="absolute right-0">
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
                 onClick={onStop}
-                className="size-10 cursor-pointer rounded-full border border-red-300/20 bg-[linear-gradient(180deg,rgba(255,120,120,0.2),rgba(255,120,120,0.08))] text-red-100/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] hover:bg-[linear-gradient(180deg,rgba(255,120,120,0.26),rgba(255,120,120,0.12))] hover:text-red-50 sm:size-11"
+                className="size-12 cursor-pointer rounded-full text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-all active:scale-90"
                 aria-label="停止朗读"
               >
-                <Square className="size-3.5" />
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => setSettingsOpen(true)}
-                className="tts-immersive-control size-10 cursor-pointer rounded-full text-white/84 hover:text-white sm:size-11"
-                aria-label="朗读设置"
-              >
-                <Settings className="size-4" />
+                <Square className="size-5" />
               </Button>
             </div>
-
-            <div className="hidden sm:block" />
           </div>
         </footer>
 
