@@ -38,6 +38,7 @@ interface UseEpubInitializerParams {
   setIsRenditionReady: (ready: boolean) => void;
   theme: "light" | "dark" | "sepia";
   viewerRef: RefObject<HTMLDivElement | null>;
+  isInitialDisplayRef: MutableRefObject<boolean>;
 }
 
 function applyTransparentShell(viewer: HTMLDivElement | null) {
@@ -127,8 +128,9 @@ function injectSupSubImageStyle(doc: Document) {
 }
 
 function restoreInitialScroll(viewer: HTMLDivElement | null, ratio: number) {
-  const epubContainer = viewer?.querySelector(".epub-container") as HTMLElement | null;
-  if (!epubContainer) return;
+  const containers = viewer?.querySelectorAll(".epub-container");
+  if (!containers || containers.length === 0) return;
+  const epubContainer = containers[containers.length - 1] as HTMLElement;
 
   const scrollRange = epubContainer.scrollHeight - epubContainer.clientHeight;
   if (scrollRange > 0) {
@@ -157,6 +159,7 @@ export function useEpubInitializer({
   setIsRenditionReady,
   theme,
   viewerRef,
+  isInitialDisplayRef,
 }: UseEpubInitializerParams) {
   const themeRef = useRef(theme);
 
@@ -232,9 +235,40 @@ export function useEpubInitializer({
           }
 
           if (initialScrollRatio !== null) {
-            setTimeout(() => {
-              restoreInitialScroll(viewerRef.current, initialScrollRatio);
-            }, 120);
+            // Wait for the content to settle and layout correctly.
+            // Scrolled-doc mode needs several attempts as images and fonts load,
+            // which changes the scrollHeight dynamically.
+            let attempts = 0;
+            const maxAttempts = 10;
+            
+            const restore = () => {
+              if (cancelled || !viewerRef.current || attempts >= maxAttempts) {
+                isInitialDisplayRef.current = false;
+                return;
+              }
+              
+              const container = epubContextRef.current.getScrollContainer();
+              if (container && container.scrollHeight > container.clientHeight) {
+                restoreInitialScroll(viewerRef.current, initialScrollRatio);
+                attempts++;
+                
+                // Continue checking for a short while as layout might still be shifting
+                if (attempts < maxAttempts) {
+                  setTimeout(restore, 200 * attempts);
+                } else {
+                  isInitialDisplayRef.current = false;
+                }
+              } else if (container) {
+                attempts++;
+                setTimeout(restore, 200);
+              } else {
+                isInitialDisplayRef.current = false;
+              }
+            };
+            
+            setTimeout(restore, 150);
+          } else {
+            isInitialDisplayRef.current = false;
           }
 
           // Step 1: Deferred Location Generation
@@ -277,15 +311,21 @@ export function useEpubInitializer({
         rendition.on("relocated", (location: EpubRelocatedLocation) => {
           const cfi = location.start.cfi;
           const href = location.start.href;
-          const epubContainer = viewerRef.current?.querySelector(
-            ".epub-container"
-          ) as HTMLElement | null;
+          const epubContainer = epubContextRef.current.getScrollContainer();
           const clampedProgress = calculateOverallProgress(bookRef.current, href, epubContainer);
 
           currentLocationRef.current = cfi;
           progressRef.current = clampedProgress;
 
           const scrollRatio = readEpubScrollRatio(epubContainer);
+
+          // If this is the initial display and we have a scroll ratio to restore,
+          // skip the first onLocationChange to avoid overwriting progress with 0
+          if (isInitialDisplayRef.current && initialScrollRatio !== null) {
+            logger.debug("epub-reader", "Skipping initial relocated event to preserve scroll restoration");
+            return;
+          }
+          isInitialDisplayRef.current = false;
 
           onLocationChange?.({
             cfi,

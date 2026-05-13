@@ -103,6 +103,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     const progressRef = useRef<number>(0);
     const [isRenditionReady, setIsRenditionReady] = useState(false);
     const justSelectedRef = useRef(false);
+    const isInitialDisplayRef = useRef(true);
 
     const epubContextRef = useRef<EpubContext>(new EpubContext());
 
@@ -236,6 +237,7 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       setIsRenditionReady,
       theme,
       viewerRef,
+      isInitialDisplayRef,
     });
 
     useEpubAppearance({
@@ -278,7 +280,8 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       isRenditionReady,
       onLocationChange,
       progressRef,
-      viewerRef,
+      epubContextRef,
+      isInitialDisplayRef,
     });
 
     return (

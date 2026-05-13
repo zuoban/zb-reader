@@ -5,7 +5,7 @@ import { logger } from "./logger";
 const DB_NAME = "zb-reader-progress";
 const DB_VERSION = 1;
 const PROGRESS_STORE = "progress";
-const SYNC_PROGRESS_DELTA_THRESHOLD = 0.005;
+const SYNC_PROGRESS_DELTA_THRESHOLD = 0.001; // 0.1% progress change
 
 export interface LocalProgress {
   bookId: string;
@@ -47,8 +47,11 @@ export class LocalProgressManager {
         });
 
         if (!response.ok) {
-          const error = await response.json().catch(() => ({ error: "同步失败" }));
-          throw new Error(error.error || "同步失败");
+          const errorData = await response.json().catch(() => ({ error: "同步失败" }));
+          const error = new Error(errorData.error || "同步失败");
+          // Include status for SyncQueue to handle 4xx errors correctly
+          (error as any).status = response.status;
+          throw error;
         }
       },
     });
@@ -171,8 +174,14 @@ export class LocalProgressManager {
         updatedBaseLocation !== currentBaseLocation;
 
       if (forceSync) {
+        logger.debug("local-progress", "Forcing sync for book:", bookId);
         await this.syncQueue.enqueue(syncItem, { autoSync: false });
       } else if (isSignificant) {
+        logger.debug("local-progress", "Significant progress change detected, enqueuing sync", {
+          bookId,
+          delta: Math.abs(updated.progress - current.progress),
+          locationChanged: updatedBaseLocation !== currentBaseLocation
+        });
         this.debouncedEnqueue(syncItem);
       }
     } catch (error) {
@@ -203,7 +212,7 @@ export class LocalProgressManager {
           this.pendingDebouncedItems.delete(item.bookId);
           this.syncQueue.enqueue(pendingItem);
         }
-      }, 30000);
+      }, 5000); // 5s max wait instead of 30s
       this.maxWaitTimers.set(item.bookId, maxTimer);
     }
 

@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { MutableRefObject, RefObject } from "react";
+import type { MutableRefObject } from "react";
 import { debounce } from "@/lib/utils";
 import type { DebouncedFunction } from "@/lib/utils";
+import { EpubContext } from "@/lib/epub-context";
+import { logger } from "@/lib/logger";
 
 interface UseEpubScrollProgressParams {
   currentLocationRef: MutableRefObject<string | null>;
@@ -17,7 +19,8 @@ interface UseEpubScrollProgressParams {
     scrollRatio?: number;
   }) => void;
   progressRef: MutableRefObject<number>;
-  viewerRef: RefObject<HTMLDivElement | null>;
+  epubContextRef: MutableRefObject<EpubContext>;
+  isInitialDisplayRef: MutableRefObject<boolean>;
 }
 
 export function useEpubScrollProgress({
@@ -25,18 +28,23 @@ export function useEpubScrollProgress({
   isRenditionReady,
   onLocationChange,
   progressRef,
-  viewerRef,
+  epubContextRef,
+  isInitialDisplayRef,
 }: UseEpubScrollProgressParams) {
   const handleScrollRef = useRef<DebouncedFunction<[HTMLElement]> | null>(null);
 
   // Initialize debounced handler once (refs are stable, so closures always read latest values)
   handleScrollRef.current ??= debounce((epubContainer: HTMLElement) => {
+    if (isInitialDisplayRef.current) return;
+
     const scrollRange = epubContainer.scrollHeight - epubContainer.clientHeight;
     if (scrollRange <= 0) return;
 
     const ratio = Math.min(1, Math.max(0, epubContainer.scrollTop / scrollRange));
 
     if (!currentLocationRef.current) return;
+
+    logger.debug("epub-reader", "Saving scroll progress", { ratio });
 
     onLocationChange?.({
       cfi: currentLocationRef.current,
@@ -49,9 +57,7 @@ export function useEpubScrollProgress({
   useEffect(() => {
     if (!isRenditionReady) return;
 
-    const epubContainer = viewerRef.current?.querySelector(
-      ".epub-container"
-    ) as HTMLElement | null;
+    const epubContainer = epubContextRef.current.getScrollContainer();
     if (!epubContainer) return;
 
     const scrollListener = () => handleScrollRef.current?.(epubContainer);
@@ -61,5 +67,5 @@ export function useEpubScrollProgress({
     return () => {
       epubContainer.removeEventListener("scroll", scrollListener);
     };
-  }, [isRenditionReady, viewerRef]);
+  }, [isRenditionReady, epubContextRef]);
 }

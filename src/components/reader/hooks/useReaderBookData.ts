@@ -69,14 +69,14 @@ export function useReaderBookData({
         
         let finalProgress = data.progress;
         
-        // If local progress exists and is "ahead" of server progress, use it
-        // We consider it ahead if the progress percentage is greater
-        if (localProgress && (!finalProgress || localProgress.progress > (finalProgress.progress || 0))) {
+        // If local progress exists and is not behind server progress, use it.
+        // Local progress usually has more precise location (with scroll ratio).
+        if (localProgress && (!finalProgress || localProgress.progress >= (finalProgress.progress || 0))) {
           finalProgress = {
             progress: localProgress.progress,
             location: localProgress.location,
           };
-          logger.debug("reader", "Using local progress as it is ahead of server", finalProgress);
+          logger.debug("reader", "Using local progress as it is equal or ahead of server", finalProgress);
         }
 
         if (finalProgress?.location) {

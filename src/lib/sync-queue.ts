@@ -29,17 +29,25 @@ export class SyncQueue {
   private syncing = false;
   private syncFn: (items: SyncItem[], options?: { keepalive?: boolean }) => Promise<void>;
   private onlineHandler: () => void;
+  private initPromise: Promise<void> | null = null;
   public static readonly SYNC_TAG = "sync-progress";
 
   constructor(options: {
     syncFn: (items: SyncItem[], options?: { keepalive?: boolean }) => Promise<void>;
   }) {
     this.syncFn = options.syncFn;
-    this.onlineHandler = () => this.sync();
+    this.onlineHandler = () => void this.sync();
 
     if (typeof window !== "undefined") {
-      this.loadFromStorage();
+      this.initPromise = this.loadFromStorage();
       window.addEventListener("online", this.onlineHandler);
+    }
+  }
+
+  /** Ensure the queue is loaded from storage before any operations */
+  private async ensureInitialized(): Promise<void> {
+    if (this.initPromise) {
+      await this.initPromise;
     }
   }
 
@@ -52,6 +60,7 @@ export class SyncQueue {
   }
 
   async enqueue(item: SyncItem, options?: { autoSync?: boolean }): Promise<void> {
+    await this.ensureInitialized();
     const existingIndex = this.queue.findIndex((i) => i.bookId === item.bookId);
 
     if (existingIndex !== -1) {
@@ -66,28 +75,50 @@ export class SyncQueue {
     await this.persistQueue();
 
     if (options?.autoSync !== false) {
-      if (typeof window !== "undefined" && "serviceWorker" in navigator && "SyncManager" in window) {
-        try {
-          const registration = await navigator.serviceWorker.ready as BackgroundSyncRegistration;
-          await registration.sync?.register(SyncQueue.SYNC_TAG);
-        } catch (error) {
-          logger.warn("sync-queue", "Background Sync registration failed, falling back to regular sync", error);
-          if (navigator.onLine && !this.syncing) {
-            void this.sync();
-          }
+      const isDev = process.env.NODE_ENV === "development";
+      const hasSW = typeof window !== "undefined" && "serviceWorker" in navigator;
+      const hasSync = hasSW && "SyncManager" in window;
+
+      // In development or if SW/Sync is not available, use regular sync immediately
+      if (isDev || !hasSync) {
+        if (navigator.onLine && !this.syncing) {
+          void this.sync();
         }
-      } else if (navigator.onLine && !this.syncing) {
-        void this.sync();
+        return;
+      }
+
+      try {
+        // Use a timeout for serviceWorker.ready to avoid hanging indefinitely
+        // if the service worker registration is failing or unregistering.
+        const registration = await Promise.race([
+          navigator.serviceWorker.ready,
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("Timeout waiting for ServiceWorker registration")), 1000)
+          ),
+        ]) as BackgroundSyncRegistration;
+
+        if (registration.sync) {
+          await registration.sync.register(SyncQueue.SYNC_TAG);
+        } else {
+          throw new Error("SyncManager not available on registration");
+        }
+      } catch (error) {
+        // Fallback to regular sync
+        if (navigator.onLine && !this.syncing) {
+          void this.sync();
+        }
       }
     }
   }
 
   async sync(options?: { keepalive?: boolean }): Promise<void> {
+    await this.ensureInitialized();
     if (this.syncing || this.queue.length === 0) {
       return;
     }
 
     if (!navigator.onLine && !options?.keepalive) {
+      logger.debug("sync-queue", "Skip sync: Navigator is offline");
       return;
     }
 
@@ -136,8 +167,8 @@ export class SyncQueue {
             // 对于 4xx 客户端错误（如 401/400），直接移除失败项目
             // 对于 404（书籍不存在），保留队列以便书籍上传后重试
             // 对于 5xx 服务器错误，保留队列以便下次重试
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            isClientError = errorMessage.includes("401") || errorMessage.includes("400");
+            const status = (error as any).status;
+            isClientError = status === 401 || status === 400;
 
             if (isClientError) {
               // 移除失败项目，避免阻塞队列
