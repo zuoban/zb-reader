@@ -1,5 +1,6 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import type { EpubReaderRef } from "@/components/reader/EpubReader";
 import { READER_ROUTE_EXIT_EVENT } from "@/components/layout/ReaderRouteTransition";
 import type { TocItem } from "@/types/reader";
@@ -166,44 +167,61 @@ export function useReaderNavigation({
     setSelectionMenu((prev) => ({ ...prev, visible: false }));
   }, [isSpeaking, setSelectionMenu, setToolbarVisible]);
 
-  const handleBack = useCallback(async () => {
-    const saveResult = await saveProgress();
-    if (!saveResult?.conflict) {
-      const shouldSkipTransition =
-        typeof window === "undefined" ||
-        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const isReturningRef = useRef(false);
 
-      if (!shouldSkipTransition && book) {
-        window.dispatchEvent(
-          new CustomEvent(READER_ROUTE_EXIT_EVENT, {
-            detail: {
-              href: "/bookshelf",
-              bookId: book.id,
-              title: book.title || "未命名书籍",
-              author: book.author || "未知作者",
-              coverUrl: book.cover ? `/api/books/${book.id}/cover` : undefined,
-              hasCover: Boolean(book.cover),
-              format: book.format,
-              initial: book.title?.charAt(0) || "书",
-              rect: {
-                left: window.innerWidth / 2 - 120,
-                top: window.innerHeight / 2 - 180,
-                width: 240,
-                height: 326,
-              },
+  const navigateBack = useCallback(() => {
+    const shouldSkipTransition =
+      typeof window === "undefined" ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (!shouldSkipTransition && book) {
+      window.dispatchEvent(
+        new CustomEvent(READER_ROUTE_EXIT_EVENT, {
+          detail: {
+            href: "/bookshelf",
+            bookId: book.id,
+            title: book.title || "未命名书籍",
+            author: book.author || "未知作者",
+            coverUrl: book.cover ? `/api/books/${book.id}/cover` : undefined,
+            hasCover: Boolean(book.cover),
+            format: book.format,
+            initial: book.title?.charAt(0) || "书",
+            rect: {
+              left: window.innerWidth / 2 - 120,
+              top: window.innerHeight / 2 - 180,
+              width: 240,
+              height: 326,
             },
-          })
-        );
-      }
-
-      window.setTimeout(
-        () => {
-          router.push("/bookshelf");
-        },
-        shouldSkipTransition ? 0 : 130
+          },
+        })
       );
     }
-  }, [saveProgress, router, book]);
+
+    window.setTimeout(
+      () => {
+        router.push("/bookshelf");
+      },
+      shouldSkipTransition ? 0 : 130
+    );
+  }, [router, book]);
+
+  const handleBack = useCallback(async () => {
+    if (isReturningRef.current) return;
+    isReturningRef.current = true;
+
+    try {
+      const saveResult = await saveProgress();
+
+      if (saveResult?.conflict) {
+        toast.info("进度存在冲突，已保留最新版本");
+      }
+
+      navigateBack();
+    } catch {
+      toast.error("进度保存失败，仍将返回书架");
+      navigateBack();
+    }
+  }, [saveProgress, navigateBack]);
 
   const handleTocItemClick = useCallback((href: string) => {
     epubReaderRef.current?.goToHref(href);
