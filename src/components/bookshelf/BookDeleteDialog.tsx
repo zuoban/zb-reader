@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Trash2, X } from "lucide-react";
+import { Trash2, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 interface BookDeleteDialogProps {
   bookTitle?: string;
@@ -71,7 +70,6 @@ export function BookDeleteDialog({
               disabled={deletingBook}
               onClick={onConfirm}
             >
-              <AlertTriangle className="mr-2 h-3.5 w-3.5 stroke-[3px]" />
               删除
             </Button>
           </div>

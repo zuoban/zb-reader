@@ -63,7 +63,15 @@ describe("BookCard", () => {
 
   it("should show progress when progress > 0", () => {
     renderBookCard({ progress: 0.5 });
-    expect(screen.getByText("50% READ")).toBeInTheDocument();
+    // Text might be broken up by multiple elements, use a function matcher
+    expect(screen.getByText((content, element) => {
+      const hasText = (node: Element | null) => node?.textContent === "50% READ";
+      const elementHasText = hasText(element);
+      const childrenDontHaveText = Array.from(element?.children || []).every(
+        child => !hasText(child as Element)
+      );
+      return elementHasText && childrenDontHaveText;
+    })).toBeInTheDocument();
   });
 
   it("should show completed status when progress is 1", () => {

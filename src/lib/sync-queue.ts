@@ -102,7 +102,7 @@ export class SyncQueue {
         } else {
           throw new Error("SyncManager not available on registration");
         }
-      } catch (error) {
+      } catch {
         // Fallback to regular sync
         if (navigator.onLine && !this.syncing) {
           void this.sync();
@@ -127,32 +127,29 @@ export class SyncQueue {
 
     while (this.queue.length > 0) {
       const batch = [...this.queue];
-      let retryCount = 0;
       let success = false;
       let isClientError = false;
 
       // 如果是 keepalive 模式（页面卸载时），不进行重试，只尝试发送一次
       const maxAttempts = options?.keepalive ? 1 : MAX_RETRY_COUNT;
 
-      while (retryCount < maxAttempts && !success) {
+      for (let attempt = 1; attempt <= maxAttempts && !success; attempt++) {
         try {
           await this.syncFn(batch, options);
           success = true;
           this.queue = this.queue.filter((i) => !batch.includes(i));
           await this.persistQueue();
         } catch (error) {
-          retryCount++;
-
           if (!options?.keepalive) {
-            logger.warn("sync-queue", `Sync failed (attempt ${retryCount}/${MAX_RETRY_COUNT})`, {
+            logger.warn("sync-queue", `Sync failed (attempt ${attempt}/${MAX_RETRY_COUNT})`, {
               error,
             });
           }
 
-          if (retryCount >= maxAttempts) {
+          if (attempt >= maxAttempts) {
             if (!options?.keepalive) {
               logger.error("sync-queue", "Sync failed after max retries", {
-                attempts: retryCount,
+                attempts: attempt,
                 queueSize: this.queue.length,
                 firstItem: this.queue[0] ?? null,
                 error,
@@ -167,9 +164,10 @@ export class SyncQueue {
             // 对于 4xx 客户端错误（如 401/400），直接移除失败项目
             // 对于 404（书籍不存在），保留队列以便书籍上传后重试
             // 对于 5xx 服务器错误，保留队列以便下次重试
-            const status = (error as any).status;
+            const status = error instanceof Error && 'status' in error 
+              ? (error as { status: number }).status 
+              : undefined;
             isClientError = status === 401 || status === 400;
-
             if (isClientError) {
               // 移除失败项目，避免阻塞队列
               this.queue = this.queue.filter((i) => !batch.includes(i));
@@ -179,7 +177,7 @@ export class SyncQueue {
             break;
           }
 
-          const delay = INITIAL_RETRY_DELAY * Math.pow(2, retryCount - 1);
+          const delay = INITIAL_RETRY_DELAY * Math.pow(2, attempt - 1);
           await this.sleep(delay);
         }
       }
@@ -220,10 +218,9 @@ export class SyncQueue {
         },
       });
       await db.put(STORE_NAME, this.queue, QUEUE_KEY);
-    } catch (error) {
-      logger.error('sync-queue', 'Failed to persist queue to IDB', error);
-    }
-  }
+    } catch {
+      logger.error('sync-queue', 'Failed to persist queue to IDB');
+    }  }
 
   private async persistSyncingState(state: boolean): Promise<void> {
     if (typeof window === 'undefined') return;
@@ -237,10 +234,9 @@ export class SyncQueue {
         },
       });
       await db.put(STORE_NAME, state, SYNCING_KEY);
-    } catch (error) {
-      logger.error('sync-queue', 'Failed to persist syncing state to IDB', error);
-    }
-  }
+    } catch {
+    logger.error('sync-queue', 'Failed to persist syncing state to IDB');
+    }  }
 
   private async loadFromStorage(): Promise<void> {
     if (typeof window === 'undefined') return;

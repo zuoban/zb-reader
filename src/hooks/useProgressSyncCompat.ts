@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useEffect, useMemo } from "react";
+import { useCallback, useRef, useEffect } from "react";
 import { logger } from "@/lib/logger";
 import { debounce } from "@/lib/utils";
 import { useProgressSync } from "./useProgressSync";
@@ -30,18 +30,40 @@ export function useProgressSyncCompat(
   const currentLocationRef = options?.currentLocationRef || internalLocationRef;
   const progressRef = options?.progressRef || internalProgressRef;
 
+  // Stable references for handler logic to avoid react-hooks/refs warnings
+  const stateRef = useRef({
+    currentLocationRef,
+    progressRef,
+    updateProgress,
+    forceSync
+  });
+
+  // Keep stateRef up to date after each render
+  useEffect(() => {
+    stateRef.current = {
+      currentLocationRef,
+      progressRef,
+      updateProgress,
+      forceSync
+    };
+  });
+
   // Compatible saveProgress function
   const saveProgress = useCallback(
     async (forceSave = false): Promise<{ conflict: boolean }> => {
-      if (!currentLocationRef.current) {
+      const { currentLocationRef: locRef, progressRef: progRef, updateProgress: update } = stateRef.current;
+      const location = locRef.current;
+      const progress = progRef.current;
+
+      if (!location) {
         return { conflict: false };
       }
 
       try {
-        await updateProgress(
+        await update(
           {
-            progress: progressRef.current,
-            location: currentLocationRef.current,
+            progress,
+            location,
           },
           forceSave
         );
@@ -52,57 +74,67 @@ export function useProgressSyncCompat(
         return { conflict: false };
       }
     },
-    [currentLocationRef, progressRef, updateProgress]
+    [] // Truly stable
   );
 
-  // Compatible name; properly debounced to avoid excessive DB writes during rapid navigation
-  const debouncedSaveProgress = useMemo(
-    () => debounce(() => void saveProgress(), 500),
-    [saveProgress]
-  );
+  // Create debounced save function using useCallback with stable reference
+  // Using a ref pattern that avoids render-time access by wrapping in effect
+  const debouncedSaveRef = useRef<ReturnType<typeof debounce> | null>(null);
 
-  // Cleanup debounced function
+  // Initialize the debounce function once using useEffect
   useEffect(() => {
+    if (debouncedSaveRef.current == null) {
+      debouncedSaveRef.current = debounce((force?: boolean) => {
+        void saveProgress(force);
+      }, 500);
+    }
     return () => {
-      debouncedSaveProgress.cancel();
+      debouncedSaveRef.current?.cancel();
     };
-  }, [debouncedSaveProgress]);
+  }, [saveProgress]);
 
-  // Force sync on unmount
+  // Wrapper function that uses the ref outside of render
+  const debouncedSaveProgress = useCallback((force?: boolean) => {
+    debouncedSaveRef.current?.(force);
+  }, []);
+
+  // Cleanup & Life cycle management
   useEffect(() => {
     const syncPending = () => {
       void (async () => {
-        debouncedSaveProgress.cancel(); // Cancel any pending debounced save
+        debouncedSaveRef.current?.cancel();
         await saveProgress(true);
-        await forceSync({ keepalive: true });
+        const { forceSync: sync } = stateRef.current;
+        await sync({ keepalive: true });
       })();
     };
+
     const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden") {
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") {
         syncPending();
       }
     };
 
-    window.addEventListener("pagehide", syncPending);
-    window.addEventListener("beforeunload", syncPending);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
+    const currentWindow = typeof window !== "undefined" ? window : null;
+    const currentDocument = typeof document !== "undefined" ? document : null;
+
+    currentWindow?.addEventListener("pagehide", syncPending);
+    currentWindow?.addEventListener("beforeunload", syncPending);
+    currentDocument?.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
-      window.removeEventListener("pagehide", syncPending);
-      window.removeEventListener("beforeunload", syncPending);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      debouncedSaveRef.current?.cancel();
+      currentWindow?.removeEventListener("pagehide", syncPending);
+      currentWindow?.removeEventListener("beforeunload", syncPending);
+      currentDocument?.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [forceSync, saveProgress]);
+  }, [saveProgress]);
 
   return {
-    // Refs (保持兼容)
     currentLocationRef,
     progressRef,
-
-    // 函数 (保持兼容)
     saveProgress,
     debouncedSaveProgress,
-
     forceSync,
   };
 }

@@ -50,7 +50,9 @@ export class LocalProgressManager {
           const errorData = await response.json().catch(() => ({ error: "同步失败" }));
           const error = new Error(errorData.error || "同步失败");
           // Include status for SyncQueue to handle 4xx errors correctly
-          (error as any).status = response.status;
+          if (response.status) {
+            (error as Error & { status: number }).status = response.status;
+          }
           throw error;
         }
       },
