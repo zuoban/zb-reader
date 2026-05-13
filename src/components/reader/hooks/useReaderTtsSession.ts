@@ -8,8 +8,8 @@ import { getTtsSentenceKey, paragraphsToSentences, type Sentence } from "@/lib/t
 import type { ReaderParagraph } from "@/types/reader";
 
 const MAX_TTS_RETRY_COUNT = 5;
-const TTS_RETRY_DELAY_MS = 450;
-const MAX_TTS_PRELOAD_CONCURRENCY = 2;
+const TTS_RETRY_DELAY_MS = 600;
+const MAX_TTS_PRELOAD_CONCURRENCY = 3;
 
 interface PlayAudioOptions {
   debugMeta?: { engine: "builtin"; sentenceIndex?: number; paragraph?: string };

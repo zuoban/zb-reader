@@ -17,32 +17,49 @@ interface BuiltinTtsPrepareResponse {
   details?: string;
 }
 
-async function prepareBuiltinTtsAudio(params: BuiltinTtsAudioParams, signal?: AbortSignal) {
-  const res = await fetch("/api/tts/builtin/prepare", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      text: params.text,
-      voiceName: params.voiceName,
-      rate: params.rate,
-      pitch: params.pitch,
-      volume: params.volume,
-    }),
-    signal,
-  });
+async function prepareBuiltinTtsAudioWithRetry(
+  params: BuiltinTtsAudioParams,
+  signal?: AbortSignal,
+  maxRetries = 3
+) {
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const res = await fetch("/api/tts/builtin/prepare", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: params.text,
+          voiceName: params.voiceName,
+          rate: params.rate,
+          pitch: params.pitch,
+          volume: params.volume,
+        }),
+        signal,
+      });
 
-  const data = (await res.json().catch(() => null)) as BuiltinTtsPrepareResponse | null;
-  if (!res.ok) {
-    const message = data?.error || "朗读失败";
-    const details = data?.details ? `: ${data.details}` : "";
-    throw new Error(`${message}${details}`);
+      const data = (await res.json().catch(() => null)) as BuiltinTtsPrepareResponse | null;
+      if (!res.ok) {
+        const message = data?.error || "朗读失败";
+        const details = data?.details ? `: ${data.details}` : "";
+        throw new Error(`${message}${details}`);
+      }
+
+      if (!data?.audioUrl) {
+        throw new Error("朗读失败: 音频地址为空");
+      }
+
+      return data.audioUrl;
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") throw err;
+      lastError = err as Error;
+      if (attempt < maxRetries) {
+        const delay = Math.pow(2, attempt) * 500;
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
   }
-
-  if (!data?.audioUrl) {
-    throw new Error("朗读失败: 音频地址为空");
-  }
-
-  return data.audioUrl;
+  throw lastError || new Error("朗读生成失败");
 }
 
 export function useBuiltinTtsSpeech(selectedVoiceId: string, ttsRate: number) {
@@ -63,7 +80,7 @@ export function useBuiltinTtsSpeech(selectedVoiceId: string, ttsRate: number) {
         return cached.audioUrl;
       }
 
-      const audioUrl = await prepareBuiltinTtsAudio(
+      const audioUrl = await prepareBuiltinTtsAudioWithRetry(
         {
           text,
           voiceName: selectedVoiceId,

@@ -33,6 +33,7 @@ export function useReaderTtsAudio({
   const ttsProgressRafRef = useRef<number | null>(null);
   const ttsResumeRef = useRef<(() => void) | null>(null);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+  const wakeLockCleanupRef = useRef<(() => void) | null>(null);
   const mediaSessionSetupRef = useRef(false);
 
   const setupMediaSession = useCallback(() => {
@@ -55,9 +56,21 @@ export function useReaderTtsAudio({
 
     try {
       if (wakeLockRef.current) {
-        await wakeLockRef.current.release();
+        return; // Already has wake lock
       }
       wakeLockRef.current = await navigator.wakeLock.request("screen");
+      
+      // Re-request wake lock when page becomes visible again
+      const handleVisibilityChange = async () => {
+        if (wakeLockRef.current !== null && document.visibilityState === "visible") {
+          wakeLockRef.current = await navigator.wakeLock.request("screen");
+        }
+      };
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+      
+      wakeLockCleanupRef.current = () => {
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+      };
     } catch {
       // ignore
     }
@@ -66,7 +79,9 @@ export function useReaderTtsAudio({
   const stopCurrentAudio = useCallback(() => {
     if (currentAudioRef.current) {
       currentAudioRef.current.pause();
-      currentAudioRef.current.currentTime = 0;
+      // Remove src to stop loading
+      currentAudioRef.current.removeAttribute("src");
+      currentAudioRef.current.load();
     }
     if (ttsProgressRafRef.current !== null) {
       cancelAnimationFrame(ttsProgressRafRef.current);
@@ -77,9 +92,12 @@ export function useReaderTtsAudio({
   const stopTransport = useCallback(() => {
     ttsResumeRef.current = null;
     stopCurrentAudio();
-    currentAudioRef.current = null;
 
     if (wakeLockRef.current) {
+      if (wakeLockCleanupRef.current) {
+        wakeLockCleanupRef.current();
+        wakeLockCleanupRef.current = null;
+      }
       wakeLockRef.current.release().catch((err) => {
         logger.warn("reader", "Failed to release wake lock", err);
       });
@@ -90,6 +108,8 @@ export function useReaderTtsAudio({
       navigator.mediaSession.playbackState = "none";
       mediaSessionSetupRef.current = false;
     }
+    
+    currentAudioRef.current = null;
   }, [stopCurrentAudio]);
 
   const playAudioSource = useCallback(
@@ -113,17 +133,17 @@ export function useReaderTtsAudio({
       }
 
       const audio = currentAudioRef.current;
+      let stallTimeout: NodeJS.Timeout | null = null;
 
       const dispose = () => {
-        audio.ontimeupdate = null;
         audio.onended = null;
         audio.onerror = null;
         audio.onpause = null;
         audio.onplay = null;
-        audio.onloadedmetadata = null;
-        audio.ondurationchange = null;
-        audio.onprogress = null;
-        audio.oncanplay = null;
+        audio.onwaiting = null;
+        audio.onplaying = null;
+        audio.onstalled = null;
+        if (stallTimeout) clearTimeout(stallTimeout);
         if (ttsProgressRafRef.current !== null) {
           cancelAnimationFrame(ttsProgressRafRef.current);
           ttsProgressRafRef.current = null;
@@ -131,8 +151,8 @@ export function useReaderTtsAudio({
       };
 
       await new Promise<void>((resolve, reject) => {
-        audio.pause();
-        audio.currentTime = 0;
+        dispose(); // Clean up previous listeners
+        
         audio.src = source;
 
         audio.onended = () => {
@@ -141,13 +161,36 @@ export function useReaderTtsAudio({
           resolve();
         };
 
+        audio.onwaiting = () => {
+          if (stallTimeout) clearTimeout(stallTimeout);
+          stallTimeout = setTimeout(() => {
+            if (ttsSessionRef.current === sessionId) {
+              logger.warn("tts", "Playback stalled for too long", options?.debugMeta);
+              reject(new Error("audio_play_error:Stalled"));
+            }
+          }, 15000); // 15s stall timeout
+        };
+
+        audio.onplaying = () => {
+          if (stallTimeout) clearTimeout(stallTimeout);
+        };
+
+        audio.onstalled = () => {
+          if (IS_DEV) logger.warn("tts", "audio element stalled", options?.debugMeta);
+        };
+
         audio.onerror = () => {
+          const error = audio.error;
           dispose();
           options?.onCleanup?.();
           if (IS_DEV) {
-            logger.warn("tts", "audio element onerror", options?.debugMeta);
+            logger.warn("tts", "audio element onerror", {
+              ...options?.debugMeta,
+              code: error?.code,
+              message: error?.message,
+            });
           }
-          reject(new Error("audio_play_error:MediaError"));
+          reject(new Error(`audio_play_error:MediaError:${error?.code || "unknown"}`));
         };
 
         audio.play().catch((error) => {

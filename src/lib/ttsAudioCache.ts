@@ -7,7 +7,7 @@
  * - 缓存 Legado 返回的 audioUrl（字符串）时，直接存储 URL
  */
 
-const MAX_CACHE_SIZE = 10;
+const MAX_CACHE_SIZE = 50;
 
 type CacheEntry =
   | { kind: "blob"; blob: Blob }

@@ -198,13 +198,35 @@ export async function synthesizeMicrosoftSpeech(params: {
     );
   };
 
-  let response = await attempt(false);
+  let response: Response;
+  let lastError: unknown;
+  
+  try {
+    response = await attempt(false);
+  } catch (err) {
+    lastError = err;
+    // On network error, try once more after a short delay
+    await new Promise(r => setTimeout(r, 500));
+    response = await attempt(true).catch(e => {
+      lastError = e;
+      return new Response(null, { status: 500 });
+    });
+  }
+
   if (response.ok) {
     return response;
   }
 
   if ([400, 401, 403].includes(response.status)) {
-    response = await attempt(true);
+    try {
+      response = await attempt(true);
+    } catch (err) {
+      lastError = err;
+    }
+  }
+
+  if (!response.ok && lastError) {
+    throw lastError;
   }
 
   return response;
