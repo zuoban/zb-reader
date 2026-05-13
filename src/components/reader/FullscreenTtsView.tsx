@@ -165,28 +165,30 @@ export function FullscreenTtsView({
 
         <main className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col justify-center">
           <section className="relative flex h-[min(64vh,620px)] min-h-0 flex-col rounded-[32px] sm:h-[min(70vh,760px)]">
-            <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center p-8 sm:p-12">
-              <div className="absolute top-0 flex flex-wrap items-center justify-center gap-3 opacity-40">
+            <div className="relative flex min-h-0 flex-1 flex-col items-center px-1 py-4 sm:px-2 sm:py-8">
+              <div className="mb-4 flex flex-none flex-wrap items-center justify-center gap-3 opacity-40">
                 <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 truncate max-w-[300px]">
                   {currentChapterTitle || "当前章节"}
                 </span>
               </div>
               
-              <div 
+              <div
                 key={paragraphText}
-                className="w-full text-center animate-reading-text-enter"
+                className="flex flex-1 w-full min-h-0 items-center justify-center text-center animate-reading-text-enter"
               >
                 {activeIsCodeBlock ? (
-                  <div className="relative group">
+                  <div className="relative group max-h-full">
                     <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <pre className="relative mx-auto max-w-full rounded-2xl bg-white/5 p-6 text-left font-mono text-[13px] leading-relaxed tracking-normal text-white/80 border border-white/5 backdrop-blur-sm sm:text-[14px] sm:leading-loose whitespace-pre-wrap break-words">
+                    <pre className="scrollbar-premium relative mx-auto w-full max-w-[96vw] sm:max-w-[92vw] lg:max-w-[88vw] rounded-2xl bg-white/5 p-6 text-left font-mono text-[13px] leading-relaxed tracking-normal text-white/80 border border-white/5 backdrop-blur-sm sm:text-[14px] sm:leading-loose overflow-x-auto overflow-y-auto max-h-[45vh] whitespace-pre">
                       {paragraphText || "正在准备内容..."}
                     </pre>
                   </div>
                 ) : (
-                  <p className="relative text-[22px] font-medium leading-[1.6] tracking-tight text-white/95 [text-shadow:0_4px_24px_rgba(0,0,0,0.5)] sm:text-[28px] sm:leading-[1.55] lg:text-[34px] px-4 max-w-2xl mx-auto">
-                    {paragraphText || "正在准备朗读内容..."}
-                  </p>
+                  <div className="scrollbar-premium relative w-full max-w-[96vw] sm:max-w-[92vw] lg:max-w-[88vw] overflow-y-auto max-h-full px-1">
+                    <p className="relative text-[22px] font-medium leading-[1.6] tracking-tight text-white/95 [text-shadow:0_4px_24px_rgba(0,0,0,0.5)] sm:text-[28px] sm:leading-[1.55] lg:text-[34px]">
+                      {paragraphText || "正在准备朗读内容..."}
+                    </p>
+                  </div>
                 )}
               </div>
             </div>

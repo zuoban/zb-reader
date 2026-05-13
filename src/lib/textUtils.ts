@@ -298,16 +298,57 @@ export function paragraphsToSentences(
     const text = paragraph.text.trim();
     if (text.length === 0 || punctuationOnlyRegex.test(text)) continue;
 
-    // 代码块不分段，整块作为一个朗读单元
+    // 代码块也需要分句，避免过长的 TTS 请求
     if (paragraph.isCodeBlock) {
-      sentences.push({
-        text,
-        html: paragraph.html,
-        paragraphId: paragraph.id,
-        sentenceIndexInParagraph: 0,
-        location: paragraph.location,
-        isCodeBlock: true,
-      });
+      // 对于超长代码块，按行分割
+      if (text.length > maxLength) {
+        const lines = text.split('\n');
+        let currentChunk = '';
+        let lineIndex = 0;
+
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (!trimmedLine) continue;
+
+          if (currentChunk.length + trimmedLine.length > maxLength && currentChunk.length > 0) {
+            // 当前块已满，添加为独立句子
+            sentences.push({
+              text: currentChunk.trim(),
+              html: paragraph.html,
+              paragraphId: paragraph.id,
+              sentenceIndexInParagraph: lineIndex,
+              location: paragraph.location,
+              isCodeBlock: true,
+            });
+            lineIndex++;
+            currentChunk = trimmedLine;
+          } else {
+            currentChunk = currentChunk ? currentChunk + ' ' + trimmedLine : trimmedLine;
+          }
+        }
+
+        // 添加最后一个块
+        if (currentChunk.trim()) {
+          sentences.push({
+            text: currentChunk.trim(),
+            html: paragraph.html,
+            paragraphId: paragraph.id,
+            sentenceIndexInParagraph: lineIndex,
+            location: paragraph.location,
+            isCodeBlock: true,
+          });
+        }
+      } else {
+        // 短代码块作为一个整体
+        sentences.push({
+          text,
+          html: paragraph.html,
+          paragraphId: paragraph.id,
+          sentenceIndexInParagraph: 0,
+          location: paragraph.location,
+          isCodeBlock: true,
+        });
+      }
       continue;
     }
 

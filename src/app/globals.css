@@ -1388,6 +1388,33 @@
   overscroll-behavior-y: contain;
 }
 
+.scrollbar-premium {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+.scrollbar-premium::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.scrollbar-premium::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-premium::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+
+.scrollbar-premium::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+
 /* Reading rhythm indicator */
 @keyframes reader-playing {
   from { height: 20%; }

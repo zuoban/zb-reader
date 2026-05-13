@@ -54,7 +54,8 @@ export function useEpubTtsHighlighting({
         return null;
       }
 
-      const needle = normalizeText(searchText).slice(0, 80);
+      // 增加匹配文本长度，提高长内容的匹配精度
+      const needle = normalizeText(searchText).slice(0, 200);
       if (!needle) return null;
 
       let bestLayout: ParagraphLayout | null = null;
@@ -73,6 +74,16 @@ export function useEpubTtsHighlighting({
           score = 8000 - Math.abs(content.length - needle.length);
         } else if (needle.includes(content) && content.length >= minLength) {
           score = 5000 + content.length;
+        } else {
+          // 对于长文本，使用更长的匹配片段进行评分
+          const matchLength = Math.min(needle.length, content.length);
+          if (matchLength >= minLength) {
+            const needlePart = needle.slice(0, matchLength);
+            const contentPart = content.slice(0, matchLength);
+            if (contentPart.includes(needlePart.slice(0, Math.floor(matchLength * 0.8)))) {
+              score = 3000 + matchLength;
+            }
+          }
         }
 
         if (score > bestScore) {
@@ -154,7 +165,8 @@ export function useEpubTtsHighlighting({
       }
 
       if (!matchedElement) {
-        const needle = normalizeText(activeTtsParagraph).slice(0, 80);
+        // 增加匹配文本长度，提高长内容的匹配精度
+        const needle = normalizeText(activeTtsParagraph).slice(0, 200);
         if (!needle) return;
 
         const getCommonPrefixLength = (a: string, b: string) => {

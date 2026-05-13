@@ -7,7 +7,14 @@ export function findTextRange(
   searchText: string,
   occurrenceIndex = 0
 ): Range | null {
-  const normalizedSearch = searchText.replace(/\s+/g, "").trim();
+  // 对于代码块或长文本，使用更精确的匹配策略
+  const isLikelyCodeBlock = searchText.includes('{') || searchText.includes('}') || searchText.includes('function') || searchText.includes('const ') || searchText.includes('let ') || searchText.includes('var ');
+
+  // 代码块使用保留空白的匹配策略
+  const normalizedSearch = isLikelyCodeBlock
+    ? searchText.trim()
+    : searchText.replace(/\s+/g, "").trim();
+
   if (!normalizedSearch) return null;
 
   const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null);
@@ -32,7 +39,10 @@ export function findTextRange(
     fullText += text;
   }
 
-  const normalizedFullText = fullText.replace(/\s+/g, "");
+  // 代码块使用保留空白的归一化
+  const normalizedFullText = isLikelyCodeBlock
+    ? fullText.trim()
+    : fullText.replace(/\s+/g, "");
 
   const indexes: number[] = [];
   let searchFrom = 0;
@@ -46,12 +56,14 @@ export function findTextRange(
   const index = indexes[occurrenceIndex] ?? indexes[0] ?? -1;
   if (index === -1) return null;
 
+  // 代码块使用保留空白的偏移计算
   let charCount = 0;
   let startOffset = -1;
   let endOffset = -1;
 
-  for (let i = 0; i < fullText.length; i++) {
-    if (fullText[i].trim()) {
+  if (isLikelyCodeBlock) {
+    // 代码块：直接按字符位置匹配
+    for (let i = 0; i < fullText.length; i++) {
       if (charCount === index && startOffset === -1) {
         startOffset = i;
       }
@@ -60,6 +72,20 @@ export function findTextRange(
         break;
       }
       charCount++;
+    }
+  } else {
+    // 非代码块：跳过空白字符匹配
+    for (let i = 0; i < fullText.length; i++) {
+      if (fullText[i].trim()) {
+        if (charCount === index && startOffset === -1) {
+          startOffset = i;
+        }
+        if (charCount === index + normalizedSearch.length - 1 && endOffset === -1) {
+          endOffset = i + 1;
+          break;
+        }
+        charCount++;
+      }
     }
   }
 

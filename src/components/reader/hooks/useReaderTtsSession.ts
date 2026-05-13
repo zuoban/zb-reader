@@ -238,10 +238,17 @@ export function useReaderTtsSession({
   const speakWithBrowserParagraphs = useCallback(
     async (sentences: Sentence[], sessionId: number, startIndex = 0) => {
       const punctuationOnlyRegex = /^[\s\p{P}\p{S}\p{Z}]*$/u;
-      const queue = sentences.filter(
-        (item) => item.text.trim().length > 0 && !punctuationOnlyRegex.test(item.text)
-      );
-      if (queue.length === 0) {
+
+      // 记录过滤后句子对应的原始索引，避免索引偏移问题
+      const filteredSentences: Array<{ sentence: Sentence; originalIndex: number }> = [];
+      for (let i = 0; i < sentences.length; i += 1) {
+        const item = sentences[i];
+        if (item.text.trim().length > 0 && !punctuationOnlyRegex.test(item.text)) {
+          filteredSentences.push({ sentence: item, originalIndex: i });
+        }
+      }
+
+      if (filteredSentences.length === 0) {
         toast.error("当前页面没有可朗读内容");
         return;
       }
@@ -274,7 +281,7 @@ export function useReaderTtsSession({
 
           activePreloadCount += 1;
           const requestSignal = createTtsRequestSignal();
-          const task = requestBuiltinSpeech(queue[index].text, {
+          const task = requestBuiltinSpeech(filteredSentences[index].sentence.text, {
             prefetch: true,
             signal: requestSignal.signal,
           }).finally(() => {
@@ -292,7 +299,7 @@ export function useReaderTtsSession({
       const ensurePreloadWindow = (windowStart: number) => {
         for (
           let cursor = windowStart;
-          cursor < Math.min(queue.length, windowStart + preloadWindowSize);
+          cursor < Math.min(filteredSentences.length, windowStart + preloadWindowSize);
           cursor += 1
         ) {
           if (!preparedTaskMap.has(cursor) && !queuedPreloadIndexes.has(cursor)) {
@@ -305,14 +312,15 @@ export function useReaderTtsSession({
 
       ensurePreloadWindow(0);
 
-      for (let i = 0; i < queue.length; i += 1) {
+      for (let i = 0; i < filteredSentences.length; i += 1) {
         if (ttsSessionRef.current !== sessionId) {
           return;
         }
 
-        currentParagraphIndexRef.current = startIndex + i;
-        ttsCurrentIndexRef.current = startIndex + i;
-        const sentence = queue[i];
+        const { sentence, originalIndex } = filteredSentences[i];
+        // 使用原始索引，而不是过滤后的索引
+        currentParagraphIndexRef.current = startIndex + originalIndex;
+        ttsCurrentIndexRef.current = startIndex + originalIndex;
         setActiveTtsParagraph(sentence.text);
         setActiveTtsParagraphId(sentence.paragraphId);
         setActiveTtsSentenceIndexInParagraph(sentence.sentenceIndexInParagraph);
@@ -320,7 +328,7 @@ export function useReaderTtsSession({
         setActiveTtsIsCodeBlock(!!sentence.isCodeBlock);
         setActiveTtsHtml(sentence.html || sentence.text);
 
-        const hash = getTtsSentenceKey(sentence, startIndex + i);
+        const hash = getTtsSentenceKey(sentence, startIndex + originalIndex);
         if (readSentencesHashRef.current.has(hash)) {
           ensurePreloadWindow(i + 1);
           continue;
@@ -358,7 +366,7 @@ export function useReaderTtsSession({
               void playAudioSource(objectUrl as string, sessionId, {
                 debugMeta: {
                   engine: "builtin",
-                  sentenceIndex: startIndex + i,
+                  sentenceIndex: startIndex + originalIndex,
                 },
               })
                 .then(resolve)
@@ -410,8 +418,10 @@ export function useReaderTtsSession({
         });
       }
 
-      currentParagraphIndexRef.current = startIndex + queue.length;
-      ttsCurrentIndexRef.current = startIndex + queue.length;
+      // 使用最后一个句子的原始索引
+      const lastOriginalIndex = filteredSentences[filteredSentences.length - 1].originalIndex;
+      currentParagraphIndexRef.current = startIndex + lastOriginalIndex + 1;
+      ttsCurrentIndexRef.current = startIndex + lastOriginalIndex + 1;
     },
     [
       currentParagraphIndexRef,
