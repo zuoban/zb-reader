@@ -116,13 +116,13 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
 
       <main className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-10 pt-8 sm:px-6 sm:pb-14 sm:pt-12">
         <div className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="category-filter-shell flex w-full max-w-full gap-1 overflow-x-auto rounded-full p-1 sm:w-fit [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="category-filter-shell flex w-full max-w-full gap-2 overflow-x-auto rounded-full p-1 sm:w-fit [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <Button
               type="button"
               variant="ghost"
               size="sm"
               className={cn(
-                "h-10 cursor-pointer rounded-full px-4 text-sm font-semibold transition-all duration-200",
+                "h-10 cursor-pointer rounded-full px-5 text-[14px] font-semibold transition-all duration-200",
                 selectedCategory === ALL_CATEGORY
                   ? "category-filter-button-active"
                   : "category-filter-button"
@@ -148,7 +148,7 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  "h-10 cursor-pointer rounded-full px-4 text-sm font-semibold transition-all duration-200",
+                  "h-10 cursor-pointer rounded-full px-5 text-[14px] font-semibold transition-all duration-200",
                   selectedCategory === category.name
                     ? "category-filter-button-active"
                     : "category-filter-button"

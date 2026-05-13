@@ -141,7 +141,7 @@ export const BookCard = memo(function BookCard({
     <Card
       ref={cardRef}
       className={cn(
-        "book-card-glass group relative overflow-hidden rounded-2xl p-0 transition-all duration-500 ease-out",
+        "book-card-glass group relative overflow-hidden rounded-2xl p-0",
         spotlight && "ring-2 ring-primary/30"
       )}
     >
@@ -152,7 +152,7 @@ export const BookCard = memo(function BookCard({
         onClick={handleOpenReader}
       >
         <div
-          className="relative aspect-[3/4] overflow-hidden"
+          className="relative m-1 aspect-[3/4] overflow-hidden rounded-xl bg-muted shadow-sm"
           data-reader-transition-cover
         >
           {/* Cover Image */}
@@ -161,42 +161,41 @@ export const BookCard = memo(function BookCard({
               <BookCoverImage
                 bookId={book.id}
                 alt={book.title || "书籍封面"}
-                className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+                className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                 onError={() => setCoverError(true)}
               />
               
               {/* Subtle Book spine effect */}
-              <div className="absolute inset-y-0 left-0 w-[4%] bg-black/10" />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-transparent" />
-              <div className="absolute inset-0 ring-1 ring-inset ring-black/5" />
+              <div className="absolute inset-y-0 left-0 w-[3%] bg-black/5" />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/10 via-transparent to-transparent opacity-40" />
               
               {/* Category Badge Overlay */}
               {book.category && (
-                <div className="absolute left-3 top-3 z-20">
-                  <div className="inline-flex items-center rounded-sm bg-primary/90 px-1.5 py-0.5 text-[9px] font-bold tracking-widest text-primary-foreground uppercase backdrop-blur-sm">
+                <div className="absolute left-2 top-2 z-20">
+                  <div className="inline-flex items-center rounded-sm bg-black/60 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-white backdrop-blur-md">
                     {book.category}
                   </div>
                 </div>
               )}
 
               {isCompleted && (
-                <div className="absolute top-3 right-3 z-20 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm">
+                <div className="absolute top-2 right-2 z-20 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm">
                   <Check className="h-3.5 w-3.5 stroke-[3px]" />
                 </div>
               )}
             </>
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-muted">
-              <div className="relative flex h-32 w-24 items-center justify-center rounded-sm border border-border bg-card shadow-sm transition-transform duration-500 group-hover:scale-105">
+            <div className="flex h-full w-full items-center justify-center bg-muted/50">
+              <div className="relative flex h-24 w-16 items-center justify-center rounded-sm border border-border/50 bg-background/50 shadow-sm transition-transform duration-500 group-hover:scale-105">
                 <div className="absolute inset-y-0 left-0 w-1 bg-primary/5" />
-                <span className="font-heading text-2xl font-bold italic">
+                <span className="font-heading text-xl font-bold italic opacity-40">
                   {book.title?.charAt(0) || "B"}
                 </span>
               </div>
               
               {book.category && (
-                <div className="absolute left-3 top-3 z-20">
-                  <div className="inline-flex items-center rounded-sm bg-primary/90 px-1.5 py-0.5 text-[9px] font-bold tracking-widest text-primary-foreground uppercase">
+                <div className="absolute left-2 top-2 z-20">
+                  <div className="inline-flex items-center rounded-sm bg-black/60 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-white backdrop-blur-md">
                     {book.category}
                   </div>
                 </div>
@@ -208,16 +207,16 @@ export const BookCard = memo(function BookCard({
       </Link>
 
       {/* Card Content */}
-      <div className="relative flex flex-col p-4">
-        <div className="flex items-start justify-between gap-2">
-          <Link href={readerHref} onClick={handleOpenReader} className="flex-1">
+      <div className="relative flex flex-col px-3 pb-3 pt-2">
+        <div className="flex items-start justify-between gap-1">
+          <Link href={readerHref} onClick={handleOpenReader} className="flex-1 min-w-0">
             <h3
-              className="line-clamp-1 font-heading text-[15px] font-bold leading-tight tracking-tight text-foreground transition-colors group-hover:text-primary sm:text-[16px]"
+              className="line-clamp-1 font-heading text-[14px] font-bold leading-snug tracking-tight text-foreground transition-colors group-hover:text-primary sm:text-[15px]"
               title={book.title}
             >
               {book.title || "未命名书籍"}
             </h3>
-            <p className="mt-1 line-clamp-1 text-[12px] font-medium text-muted-foreground sm:text-[13px]">
+            <p className="mt-0.5 line-clamp-1 text-[11px] font-medium text-muted-foreground/70 sm:text-[12px]">
               {book.author || "未知作者"}
             </p>
           </Link>
@@ -227,16 +226,16 @@ export const BookCard = memo(function BookCard({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 rounded-full text-muted-foreground/60 hover:bg-muted hover:text-foreground"
+                className="h-7 w-7 rounded-full text-muted-foreground/40 hover:bg-muted hover:text-foreground shrink-0"
               >
-                <MoreVertical className="h-4 w-4" />
+                <MoreVertical className="h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuContent align="end" className="w-44 rounded-xl shadow-xl">
               <DropdownMenuItem asChild className="cursor-pointer">
                 <Link href={readerHref} className="flex items-center gap-2">
                   <BookOpen className="h-4 w-4" />
-                  <span>开始阅读</span>
+                  <span className="font-medium">开始阅读</span>
                 </Link>
               </DropdownMenuItem>
               {onChangeCategory && (
@@ -245,39 +244,39 @@ export const BookCard = memo(function BookCard({
                   onClick={() => onChangeCategory(book)}
                 >
                   <Tags className="h-4 w-4" />
-                  <span>分类管理</span>
+                  <span className="font-medium">分类管理</span>
                 </DropdownMenuItem>
               )}
-              <div className="my-1 h-px bg-border" />
+              <div className="my-1 h-px bg-border/50" />
               <DropdownMenuItem
                 className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive"
                 onClick={() => onDelete(book.id)}
               >
                 <Trash2 className="h-4 w-4" />
-                <span>移除书籍</span>
+                <span className="font-medium">移除书籍</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
 
-        <div className="mt-4 flex items-center justify-between border-t border-border/50 pt-3">
+        <div className="mt-3 flex items-center justify-between border-t border-border/40 pt-2.5 px-0.5">
           <div className="flex items-center gap-1.5">
             {isCompleted ? (
-              <span className="text-[10px] font-bold tracking-widest text-primary uppercase">
+              <span className="text-[9px] font-extrabold tracking-wider text-primary uppercase">
                 COMPLETED
               </span>
             ) : hasProgress ? (
-              <span className="text-[10px] font-bold tracking-widest text-primary uppercase">
-                {Math.round(progress * 100)}% READ
+              <span className="text-[9px] font-extrabold tracking-wider text-foreground/80 uppercase">
+                <span className="text-foreground">{Math.round(progress * 100)}%</span> READ
               </span>
             ) : (
-              <span className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
+              <span className="text-[9px] font-extrabold tracking-wider text-muted-foreground/60 uppercase">
                 NEW
               </span>
             )}
           </div>
           {lastReadText && (
-            <span className="text-[10px] font-medium text-muted-foreground italic">
+            <span className="text-[9px] font-bold text-muted-foreground/50 italic">
               {lastReadText}
             </span>
           )}

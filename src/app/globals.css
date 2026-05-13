@@ -463,58 +463,32 @@
 }
 
 .book-card-glass {
-  border: 1px solid color-mix(in oklab, var(--glass-border) 78%, transparent);
-  background:
-    linear-gradient(150deg, color-mix(in oklab, white 64%, transparent), color-mix(in oklab, white 32%, transparent)),
-    linear-gradient(115deg, color-mix(in oklab, var(--cta) 7%, transparent), transparent 54%),
-    linear-gradient(300deg, color-mix(in oklab, var(--chart-3) 6%, transparent), transparent 58%);
-  box-shadow:
-    0 1px 0 color-mix(in oklab, white 72%, transparent) inset,
-    0 0 0 1px color-mix(in oklab, white 28%, transparent) inset,
-    0 -1px 0 color-mix(in oklab, var(--foreground) 7%, transparent) inset,
-    0 24px 58px -42px color-mix(in oklab, #0b1220 42%, transparent);
-  backdrop-filter: blur(24px) saturate(1.65) brightness(1.04);
-  -webkit-backdrop-filter: blur(24px) saturate(1.65) brightness(1.04);
+  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  background: color-mix(in oklab, var(--background) 95%, var(--foreground) 1%);
+  box-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.01),
+    0 12px 32px -24px color-mix(in oklab, var(--foreground) 12%, transparent);
+  transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .book-card-glass:hover {
-  border-color: color-mix(in oklab, var(--ring) 28%, var(--glass-border));
-  background:
-    linear-gradient(150deg, color-mix(in oklab, white 72%, transparent), color-mix(in oklab, white 40%, transparent)),
-    linear-gradient(115deg, color-mix(in oklab, var(--cta) 10%, transparent), transparent 56%),
-    linear-gradient(300deg, color-mix(in oklab, var(--chart-3) 8%, transparent), transparent 60%);
-  box-shadow:
-    0 1px 0 color-mix(in oklab, white 82%, transparent) inset,
-    0 0 0 1px color-mix(in oklab, white 34%, transparent) inset,
-    0 -1px 0 color-mix(in oklab, var(--foreground) 10%, transparent) inset,
-    0 28px 72px -44px color-mix(in oklab, #0b1220 54%, transparent),
-    -1.5px 0 3px rgba(0, 255, 255, 0.1),
-    1.5px 0 3px rgba(255, 0, 128, 0.1);
-  transform: translate3d(0, -3px, 0);
+  border-color: color-mix(in oklab, var(--foreground) 15%, var(--border));
+  background: var(--background);
+  box-shadow: 
+    0 20px 48px -28px color-mix(in oklab, var(--foreground) 18%, transparent);
+  transform: translate3d(0, -4px, 0);
 }
 
 .dark .book-card-glass {
-  background:
-    linear-gradient(150deg, color-mix(in oklab, #252320 85%, transparent), color-mix(in oklab, #1f1d19 55%, transparent)),
-    linear-gradient(115deg, color-mix(in oklab, var(--cta) 8%, transparent), transparent 60%);
-  box-shadow:
-    0 1px 0 color-mix(in oklab, white 8%, transparent) inset,
-    0 0 0 1px color-mix(in oklab, white 4%, transparent) inset,
-    0 -1px 0 color-mix(in oklab, black 15%, transparent) inset,
-    0 20px 50px -35px color-mix(in oklab, black 60%, transparent);
+  background: color-mix(in oklab, var(--background) 90%, white 4%);
+  border-color: color-mix(in oklab, white 8%, var(--border));
+  box-shadow: 0 12px 32px -24px black;
 }
 
 .dark .book-card-glass:hover {
-  background:
-    linear-gradient(150deg, color-mix(in oklab, #2a2824 90%, transparent), color-mix(in oklab, #23211d 60%, transparent)),
-    linear-gradient(115deg, color-mix(in oklab, var(--cta) 12%, transparent), transparent 62%);
-  box-shadow:
-    0 1px 0 color-mix(in oklab, white 10%, transparent) inset,
-    0 0 0 1px color-mix(in oklab, white 5%, transparent) inset,
-    0 -1px 0 color-mix(in oklab, black 18%, transparent) inset,
-    0 24px 56px -32px color-mix(in oklab, black 70%, transparent),
-    -1.5px 0 3px rgba(0, 255, 255, 0.12),
-    1.5px 0 3px rgba(255, 0, 128, 0.12);
+  background: color-mix(in oklab, var(--background) 85%, white 7%);
+  border-color: color-mix(in oklab, white 15%, var(--border));
+  box-shadow: 0 20px 48px -24px black;
 }
 
 .section-shell {
@@ -615,139 +589,102 @@
 }
 
 .category-filter-shell {
-  border: 1px solid color-mix(in oklab, var(--border) 82%, transparent);
-  background:
-    linear-gradient(180deg, color-mix(in oklab, white 58%, transparent), transparent 68%),
-    color-mix(in oklab, var(--background) 92%, var(--foreground) 4%);
-  box-shadow:
-    0 1px 0 color-mix(in oklab, white 74%, transparent) inset,
-    0 16px 42px -34px color-mix(in oklab, var(--foreground) 42%, transparent);
-  backdrop-filter: blur(18px) saturate(1.1);
-  -webkit-backdrop-filter: blur(18px) saturate(1.1);
+  border: 1px solid color-mix(in oklab, var(--border) 30%, transparent);
+  background: color-mix(in oklab, var(--background) 95%, var(--foreground) 1%);
+  box-shadow: none;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .dark .category-filter-shell {
-  border-color: color-mix(in oklab, white 8%, var(--border));
-  background:
-    linear-gradient(180deg, color-mix(in oklab, white 6%, transparent), transparent 62%),
-    color-mix(in oklab, var(--background) 88%, white 5%);
-  box-shadow:
-    0 1px 0 color-mix(in oklab, white 7%, transparent) inset,
-    0 18px 44px -32px color-mix(in oklab, black 72%, transparent);
+  border-color: color-mix(in oklab, white 5%, var(--border));
+  background: color-mix(in oklab, var(--background) 94%, white 2%);
 }
 
 .category-filter-button {
   border: 1px solid transparent;
   background: transparent;
-  color: color-mix(in oklab, var(--muted-foreground) 82%, var(--foreground) 18%);
+  color: var(--muted-foreground);
   box-shadow: none;
   min-width: max-content;
+  transition: all 0.2s ease;
+  font-weight: 500 !important;
 }
 
 .category-filter-button:hover {
-  border-color: color-mix(in oklab, var(--border) 70%, transparent);
-  background: color-mix(in oklab, var(--foreground) 5%, transparent);
   color: var(--foreground);
 }
 
 .category-filter-button-active {
-  position: relative;
-  border-color: color-mix(in oklab, var(--foreground) 18%, var(--border));
-  background:
-    linear-gradient(180deg, color-mix(in oklab, white 66%, transparent), transparent 58%),
-    color-mix(in oklab, var(--foreground) 8%, var(--background));
+  background: color-mix(in oklab, var(--foreground) 7%, var(--background)) !important;
   color: var(--foreground);
-  box-shadow:
-    0 1px 0 color-mix(in oklab, white 70%, transparent) inset,
-    0 10px 26px -20px color-mix(in oklab, var(--foreground) 36%, transparent);
+  font-weight: 700 !important;
+  box-shadow: 0 2px 10px -6px color-mix(in oklab, var(--foreground) 20%, transparent);
 }
 
 .dark .category-filter-button-active {
-  border-color: color-mix(in oklab, white 12%, transparent);
-  background:
-    linear-gradient(180deg, color-mix(in oklab, white 13%, transparent), transparent 62%),
-    color-mix(in oklab, white 9%, var(--background));
-  color: var(--foreground);
-  box-shadow:
-    0 1px 0 color-mix(in oklab, white 10%, transparent) inset,
-    0 10px 24px -20px color-mix(in oklab, black 80%, transparent);
+  background: color-mix(in oklab, white 12%, var(--background)) !important;
+  box-shadow: 0 4px 12px -8px black;
 }
 
 .category-filter-count {
-  min-width: 1.35rem;
+  min-width: 1.4rem;
   height: 1.25rem;
-  margin-left: 0.25rem;
-  border-color: transparent;
+  margin-left: 0.5rem;
+  border: none;
   border-radius: 999px;
-  background: color-mix(in oklab, var(--foreground) 6%, transparent);
-  color: color-mix(in oklab, var(--muted-foreground) 86%, var(--foreground) 14%);
-  padding: 0 0.35rem;
-  font-size: 0.6875rem;
+  background: color-mix(in oklab, var(--foreground) 4%, transparent);
+  color: color-mix(in oklab, var(--muted-foreground) 80%, var(--foreground) 20%);
+  padding: 0 0.4rem;
+  font-size: 0.7rem;
   font-weight: 800;
   line-height: 1.25rem;
   font-variant-numeric: tabular-nums;
-  transition:
-    background-color 200ms ease,
-    color 200ms ease;
+  transition: all 0.25s ease;
 }
 
 .category-filter-count-active {
-  background: color-mix(in oklab, var(--foreground) 11%, transparent);
-  color: var(--foreground);
+  background: var(--foreground);
+  color: var(--background);
 }
 
 .dark .category-filter-count {
-  background: color-mix(in oklab, white 7%, transparent);
-  color: color-mix(in oklab, var(--muted-foreground) 78%, white 22%);
+  background: color-mix(in oklab, white 6%, transparent);
+  color: color-mix(in oklab, white 40%, transparent);
 }
 
 .dark .category-filter-count-active {
-  background: color-mix(in oklab, white 14%, transparent);
-  color: var(--foreground);
+  background: var(--foreground);
+  color: var(--background);
 }
 
 .bookshelf-search-input {
-  border-color: color-mix(in oklab, var(--border) 82%, transparent);
-  background:
-    linear-gradient(180deg, color-mix(in oklab, white 58%, transparent), transparent 68%),
-    color-mix(in oklab, var(--background) 92%, var(--foreground) 4%);
-  box-shadow:
-    0 1px 0 color-mix(in oklab, white 74%, transparent) inset,
-    0 16px 42px -34px color-mix(in oklab, var(--foreground) 42%, transparent);
-  backdrop-filter: blur(18px) saturate(1.1);
-  -webkit-backdrop-filter: blur(18px) saturate(1.1);
+  border: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
+  background: color-mix(in oklab, var(--background) 96%, var(--foreground) 1%);
+  box-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.02),
+    0 8px 24px -12px color-mix(in oklab, var(--foreground) 10%, transparent);
+  backdrop-filter: blur(20px) saturate(1.1);
+  -webkit-backdrop-filter: blur(20px) saturate(1.1);
+  transition: all 0.3s ease;
 }
 
 .bookshelf-search-input:focus-visible {
-  border-color: color-mix(in oklab, var(--foreground) 22%, var(--border));
-  background:
-    linear-gradient(180deg, color-mix(in oklab, white 66%, transparent), transparent 62%),
-    color-mix(in oklab, var(--background) 96%, var(--foreground) 3%);
-  box-shadow:
-    0 1px 0 color-mix(in oklab, white 78%, transparent) inset,
-    0 0 0 3px color-mix(in oklab, var(--foreground) 5%, transparent),
-    0 16px 42px -34px color-mix(in oklab, var(--foreground) 42%, transparent);
+  border-color: color-mix(in oklab, var(--foreground) 20%, var(--border));
+  background: var(--background);
+  box-shadow: 
+    0 4px 20px -8px color-mix(in oklab, var(--foreground) 12%, transparent),
+    0 0 0 3px color-mix(in oklab, var(--foreground) 4%, transparent);
 }
 
 .dark .bookshelf-search-input {
-  border-color: color-mix(in oklab, white 8%, var(--border));
-  background:
-    linear-gradient(180deg, color-mix(in oklab, white 6%, transparent), transparent 62%),
-    color-mix(in oklab, var(--background) 88%, white 5%);
-  box-shadow:
-    0 1px 0 color-mix(in oklab, white 7%, transparent) inset,
-    0 18px 44px -32px color-mix(in oklab, black 72%, transparent);
+  border-color: color-mix(in oklab, white 10%, var(--border));
+  background: color-mix(in oklab, var(--background) 90%, white 4%);
 }
 
 .dark .bookshelf-search-input:focus-visible {
-  border-color: color-mix(in oklab, white 14%, var(--border));
-  background:
-    linear-gradient(180deg, color-mix(in oklab, white 9%, transparent), transparent 62%),
-    color-mix(in oklab, var(--background) 84%, white 7%);
-  box-shadow:
-    0 1px 0 color-mix(in oklab, white 9%, transparent) inset,
-    0 0 0 3px color-mix(in oklab, white 5%, transparent),
-    0 18px 44px -32px color-mix(in oklab, black 72%, transparent);
+  border-color: color-mix(in oklab, white 20%, var(--border));
+  background: color-mix(in oklab, var(--background) 85%, white 8%);
 }
 
 .liquid-hairline {

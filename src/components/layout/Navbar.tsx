@@ -59,26 +59,26 @@ export function Navbar({ onUploadComplete, className }: NavbarProps) {
             href="/bookshelf"
             className="group flex items-center gap-3 transition-opacity hover:opacity-80"
           >
-            <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
               <span className="font-heading text-xl font-bold italic">Z</span>
             </div>
             <div className="hidden flex-col sm:flex">
-              <span className="font-heading text-lg font-bold tracking-tight text-foreground">
+              <span className="font-heading text-base font-bold tracking-tight text-foreground leading-tight">
                 ZB Reader
               </span>
-              <span className="text-[10px] font-bold tracking-[0.2em] text-muted-foreground uppercase leading-none">
+              <span className="text-[9px] font-bold tracking-[0.2em] text-muted-foreground uppercase leading-none opacity-60">
                 Serene Reading
               </span>
             </div>
           </Link>
 
           {/* Right: Actions Area */}
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-1 sm:gap-2">
             {onUploadComplete && (
               <UploadButton
                 onUploadComplete={onUploadComplete}
                 variant="ghost"
-                className="h-10 rounded-full border border-border bg-background px-4 text-xs font-bold transition-all hover:bg-muted sm:px-6"
+                className="h-10 w-10 rounded-full bg-transparent p-0 text-foreground transition-all hover:bg-muted sm:h-10 sm:w-auto sm:px-4 sm:text-[13px] sm:font-bold"
               />
             )}
 
@@ -87,7 +87,7 @@ export function Navbar({ onUploadComplete, className }: NavbarProps) {
               size="icon"
               onClick={handleThemeToggle}
               aria-label="切换主题"
-              className="h-10 w-10 rounded-full border border-border bg-background transition-all hover:bg-muted"
+              className="h-10 w-10 rounded-full bg-transparent transition-all hover:bg-muted"
             >
               <Sun className="h-[18px] w-[18px] text-foreground dark:hidden" />
               <Moon className="hidden h-[18px] w-[18px] text-foreground dark:block" />
@@ -99,7 +99,7 @@ export function Navbar({ onUploadComplete, className }: NavbarProps) {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="relative h-10 w-10 rounded-full border border-border p-0.5 transition-all hover:ring-2 hover:ring-primary/20"
+                    className="relative h-10 w-10 rounded-full bg-transparent p-0.5 transition-all hover:ring-2 hover:ring-primary/10"
                   >
                     <Avatar className="h-full w-full">
                       <AvatarImage src={session.user.avatar || undefined} alt={session.user.username || "用户头像"} />
