@@ -31,7 +31,7 @@ export const BookCoverImage = memo(function BookCoverImage({
 
   return (
     <Image
-      src={`/api/books/${bookId}/cover`}
+      src={`/api/books/${bookId}/cover?w=400`}
       alt={alt}
       fill
       sizes="(max-width: 640px) 40vw, (max-width: 1024px) 25vw, 20vw"

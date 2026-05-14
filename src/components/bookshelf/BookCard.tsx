@@ -97,7 +97,7 @@ export const BookCard = memo(function BookCard({
               href: readerHref,
               title: book.title || "未命名书籍",
               author: book.author || "未知作者",
-              coverUrl: book.cover ? `/api/books/${book.id}/cover` : undefined,
+              coverUrl: book.cover ? `/api/books/${book.id}/cover?w=400` : undefined,
               hasCover: Boolean(book.cover),
               format: book.format,
               initial: book.title?.charAt(0) || "书",

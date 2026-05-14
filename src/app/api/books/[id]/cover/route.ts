@@ -6,7 +6,7 @@ import { logger } from "@/lib/logger";
 import { notFound, serverError, getAuthUserId } from "@/lib/api-utils";
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const authResult = await getAuthUserId();
@@ -14,6 +14,19 @@ export async function GET(
   const { userId } = authResult;
 
   const { id } = await params;
+  
+  const searchParams = req.nextUrl.searchParams;
+  const widthParam = searchParams.get('w');
+  const width = widthParam ? parseInt(widthParam, 10) : undefined;
+  
+  // Auto-detect format support from Accept header
+  const acceptHeader = req.headers.get('accept') || '';
+  let format: 'jpeg' | 'webp' | 'avif' = 'jpeg';
+  if (acceptHeader.includes('image/avif')) {
+    format = 'avif';
+  } else if (acceptHeader.includes('image/webp')) {
+    format = 'webp';
+  }
 
   try {
     const book = await findOwnedBook(id, userId);
@@ -26,18 +39,20 @@ export async function GET(
       return notFound("封面文件不存在");
     }
 
-    const coverBuffer = await getCachedCover(book.cover);
+    const coverData = await getCachedCover(book.cover, width, format);
 
-    if (!coverBuffer) {
+    if (!coverData) {
       return notFound("封面文件读取失败");
     }
 
-    const etag = `"${book.id}-${book.updatedAt}-${coverBuffer.length}"`;
-    if (_req.headers.get("if-none-match") === etag) {
+    const { buffer: coverBuffer, contentType } = coverData;
+
+    const etag = `"${book.id}-${book.updatedAt}-${coverBuffer.length}-${width || 'original'}-${format}"`;
+    if (req.headers.get("if-none-match") === etag) {
       return new NextResponse(null, {
         status: 304,
         headers: {
-          "Cache-Control": "private, max-age=31536000, immutable",
+          "Cache-Control": "public, max-age=31536000, immutable",
           ETag: etag,
         },
       });
@@ -45,8 +60,8 @@ export async function GET(
 
     return new NextResponse(new Uint8Array(coverBuffer), {
       headers: {
-        "Content-Type": "image/jpeg",
-        "Cache-Control": "private, max-age=31536000, immutable",
+        "Content-Type": contentType,
+        "Cache-Control": "public, max-age=31536000, immutable",
         ETag: etag,
       },
     });
