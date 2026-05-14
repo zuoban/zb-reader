@@ -1,8 +1,6 @@
 "use client";
 
-import { SessionProvider } from "next-auth/react";
 import { IdleCountdownWarning } from "@/components/reader/IdleCountdownWarning";
-import { ReaderErrorBoundary } from "@/components/reader/ReaderErrorBoundary";
 import { ReaderCanvas } from "@/components/reader/ReaderCanvas";
 import { ReaderToolbar } from "@/components/reader/ReaderToolbar";
 import { SidePanel } from "@/components/reader/SidePanel";
@@ -11,16 +9,9 @@ import { TextSelectionMenu } from "@/components/reader/TextSelectionMenu";
 import { NoteEditor } from "@/components/reader/NoteEditor";
 import { ReaderTtsLayer } from "@/components/reader/ReaderTtsLayer";
 import { Loader2 } from "lucide-react";
-import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
-import { ReaderProvider } from "@/components/reader/ReaderContext";
 import {
-  BookDataProvider,
-  TtsProvider,
-  AnnotationProvider,
-  ReaderUIProvider,
-  NavigationProvider,
-  ReaderSettingsProvider,
+  ReaderProviders,
   useBookData,
   useReaderUI,
   useReaderSettings,
@@ -82,31 +73,8 @@ function ReaderContent() {
 
 export default function ReaderPage() {
   return (
-    <SessionProvider>
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="system"
-        enableSystem
-        disableTransitionOnChange
-      >
-        <ReaderProvider>
-          <BookDataProvider>
-            <ReaderSettingsProvider>
-              <TtsProvider>
-                <AnnotationProvider>
-                  <ReaderUIProvider>
-                    <NavigationProvider>
-                      <ReaderErrorBoundary>
-                        <ReaderContent />
-                      </ReaderErrorBoundary>
-                    </NavigationProvider>
-                  </ReaderUIProvider>
-                </AnnotationProvider>
-              </TtsProvider>
-            </ReaderSettingsProvider>
-          </BookDataProvider>
-        </ReaderProvider>
-      </ThemeProvider>
-    </SessionProvider>
+    <ReaderProviders>
+      <ReaderContent />
+    </ReaderProviders>
   );
 }

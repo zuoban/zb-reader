@@ -93,12 +93,37 @@ export async function GET(req: NextRequest) {
     let whereClause = eq(books.uploaderId, userId);
 
     if (search) {
-      // Escape double quotes to prevent FTS match syntax errors
-      const escapedSearch = search.replace(/"/g, '""');
-      whereClause = and(
-        whereClause,
-        sql`books.rowid IN (SELECT rowid FROM books_fts WHERE books_fts MATCH ${`"${escapedSearch}"`})`
-      )!;
+      const terms = search.split(/\s+/).filter(Boolean);
+      if (terms.length > 0) {
+        // Trigram tokenizer needs at least 3 chars to match.
+        // We separate terms into FTS-compatible (3+) and LIKE-compatible (<3).
+        const ftsTerms = terms.filter(t => t.length >= 3);
+        const likeTerms = terms.filter(t => t.length < 3);
+
+        let searchClause;
+
+        if (ftsTerms.length > 0) {
+          const ftsQuery = ftsTerms
+            .map((t) => `"${t.replace(/"/g, '""')}"`)
+            .join(" AND ");
+          
+          searchClause = sql`${books}.rowid IN (SELECT rowid FROM books_fts WHERE books_fts MATCH ${ftsQuery})`;
+        }
+
+        if (likeTerms.length > 0) {
+          const likeClauses = likeTerms.map(t => {
+            const pattern = `%${t.replace(/[%_]/g, '\\$&')}%`;
+            return sql`(${books}.title LIKE ${pattern} ESCAPE '\\' OR ${books}.author LIKE ${pattern} ESCAPE '\\')`;
+          });
+          
+          const combinedLike = and(...likeClauses);
+          searchClause = searchClause ? and(searchClause, combinedLike) : combinedLike;
+        }
+
+        if (searchClause) {
+          whereClause = and(whereClause, searchClause)!;
+        }
+      }
     }
 
     if (category) {

@@ -160,21 +160,16 @@ export async function validateAndExtractMetadataFromFile(
   bookId: string
 ): Promise<ExtractedEpubMetadata> {
   return new Promise((resolve, reject) => {
-    yauzl.open(filePath, { lazyEntries: true }, async (err, zipfile) => {
+    yauzl.open(filePath, { lazyEntries: true }, (err, zipfile) => {
       if (err) return reject(err);
       if (!zipfile) return reject(new Error("Failed to open zip file"));
 
       let entryCount = 0;
       let totalUncompressedSize = 0;
-      let containerXmlPath = "";
-      let containerXmlContent = "";
-      let folderPrefix = "";
-      let opfContent = "";
-      let coverItemHref = "";
-      const metadata: Omit<ExtractedEpubMetadata, "needsNormalization"> = {};
-
+      const entriesMap = new Map<string, yauzl.Entry>();
+      
       zipfile.readEntry();
-      zipfile.on("entry", async (entry: yauzl.Entry) => {
+      zipfile.on("entry", (entry: yauzl.Entry) => {
         entryCount++;
         if (entryCount > MAX_EPUB_ENTRY_COUNT) {
           zipfile.close();
@@ -192,105 +187,79 @@ export async function validateAndExtractMetadataFromFile(
           return reject(new EpubValidationError("EPUB 包含不安全的文件路径"));
         }
 
-        if (entry.fileName === "META-INF/container.xml") {
-          containerXmlPath = entry.fileName;
-          try {
-            const buffer = await readZipEntry(zipfile, entry);
-            containerXmlContent = buffer.toString();
-          } catch {
-            zipfile.close();
-            return reject(new EpubValidationError("无法读取 container.xml"));
-          }
-        } else if (!containerXmlPath && entry.fileName.endsWith("/META-INF/container.xml")) {
-          // Nested folder structure: "BookName.epub/META-INF/container.xml"
-          folderPrefix = entry.fileName.split("/META-INF/")[0] + "/";
-          containerXmlPath = entry.fileName;
-          try {
-            const buffer = await readZipEntry(zipfile, entry);
-            containerXmlContent = buffer.toString();
-          } catch {
-            zipfile.close();
-            return reject(new EpubValidationError("无法读取 container.xml"));
-          }
-        }
-
+        entriesMap.set(entry.fileName, entry);
         zipfile.readEntry();
       });
 
       zipfile.on("end", async () => {
-        if (!containerXmlPath) {
-          zipfile.close();
-          return resolve({ needsNormalization: true });
-        }
+        try {
+          const metadata: ExtractedEpubMetadata = { needsNormalization: false };
 
-        const hasPrefix = folderPrefix.length > 0;
+          // 1. Find container.xml
+          let containerXmlPath = "META-INF/container.xml";
+          let folderPrefix = "";
+          
+          if (!entriesMap.has(containerXmlPath)) {
+            // Try to find nested container.xml
+            const nestedPath = Array.from(entriesMap.keys()).find(p => p.endsWith("/META-INF/container.xml"));
+            if (nestedPath) {
+              containerXmlPath = nestedPath;
+              folderPrefix = nestedPath.split("/META-INF/")[0] + "/";
+              metadata.needsNormalization = true;
+            } else {
+              zipfile.close();
+              return resolve({ needsNormalization: true }); // Might be a weird zip, let repackage try
+            }
+          }
 
-        const rootFilePath = parseEpubContainerRootfilePath(containerXmlContent);
-        if (!rootFilePath) {
-          zipfile.close();
-          return resolve({ ...metadata, needsNormalization: !hasPrefix });
-        }
+          const containerEntry = entriesMap.get(containerXmlPath)!;
+          const containerContent = (await readZipEntry(zipfile, containerEntry)).toString();
+          
+          // 2. Find OPF
+          const rootFilePath = parseEpubContainerRootfilePath(containerContent);
+          if (!rootFilePath) {
+            zipfile.close();
+            return resolve(metadata);
+          }
 
-        const prefixedOpfPath = hasPrefix
-          ? `${folderPrefix}${rootFilePath}`
-          : rootFilePath;
+          const opfPath = folderPrefix + rootFilePath;
+          const opfEntry = entriesMap.get(opfPath);
+          if (!opfEntry) {
+            zipfile.close();
+            return resolve(metadata);
+          }
 
-        // Re-scan for OPF and Cover
-        yauzl.open(filePath, { lazyEntries: true }, (err2, zipfile2) => {
-          if (err2 || !zipfile2) return reject(err2 || new Error("Failed to re-open zip"));
+          const opfContent = (await readZipEntry(zipfile, opfEntry)).toString();
+          const opfMeta = parseEpubOpfMetadata(opfContent);
+          metadata.title = opfMeta.title;
+          metadata.author = opfMeta.author;
 
-          zipfile2.readEntry();
-          zipfile2.on("entry", async (entry: yauzl.Entry) => {
-            if (entry.fileName === prefixedOpfPath) {
+          // 3. Find Cover
+          if (opfMeta.coverItemHref) {
+            const fullCoverPath = resolveEpubRelativePath(opfPath, opfMeta.coverItemHref);
+            const coverEntry = fullCoverPath ? entriesMap.get(fullCoverPath) : null;
+            
+            if (coverEntry) {
               try {
-                const buffer = await readZipEntry(zipfile2, entry);
-                opfContent = buffer.toString();
-                const opfMeta = parseEpubOpfMetadata(opfContent);
-                metadata.title = opfMeta.title;
-                metadata.author = opfMeta.author;
-                coverItemHref = opfMeta.coverItemHref || "";
-
-                if (!coverItemHref) {
-                  zipfile2.close();
-                  return resolve({ ...metadata, needsNormalization: hasPrefix });
-                }
-              } catch {
-                zipfile2.close();
-                return reject(new EpubValidationError("无法读取 OPF 文件"));
-              }
-            } else if (coverItemHref) {
-              // Resolve cover path relative to the OPF file's directory
-              const fullCoverPath = resolveEpubRelativePath(prefixedOpfPath, coverItemHref);
-              if (fullCoverPath && entry.fileName === fullCoverPath) {
-                try {
-                  const coverData = await readZipEntry(zipfile2, entry);
-                  metadata.coverFileName = await saveCoverImage(coverData, bookId);
-                  zipfile2.close();
-                  return resolve({ ...metadata, needsNormalization: hasPrefix });
-                } catch (_e) {
-                  logger.warn("books", "Failed to extract cover", _e);
-                  // Non-fatal, continue without cover
-                }
+                const coverData = await readZipEntry(zipfile, coverEntry);
+                metadata.coverFileName = await saveCoverImage(coverData, bookId);
+              } catch (e) {
+                logger.warn("books", "Failed to extract cover", e);
               }
             }
-            zipfile2.readEntry();
-          });
+          }
 
-          zipfile2.on("end", () => {
-            zipfile2.close();
-            resolve({ ...metadata, needsNormalization: hasPrefix });
-          });
-
-          zipfile2.on("error", (_e) => {
-            zipfile2.close();
-            reject(_e);
-          });
-        });
+          zipfile.close();
+          resolve(metadata);
+        } catch (e) {
+          zipfile.close();
+          reject(e);
+        }
       });
 
-      zipfile.on("error", (_e) => {
+      zipfile.on("error", (e) => {
         zipfile.close();
-        reject(_e);
+        reject(e);
       });
     });
   });
@@ -358,6 +327,7 @@ export async function processBookUpload(
 }> {
   let tempPath: string | null = null;
   let savedFileName: string | null = null;
+  let extractedCoverFileName: string | null = null;
 
   try {
     // 1. Stage to temp
@@ -375,6 +345,7 @@ export async function processBookUpload(
 
     // 3. Extract metadata & validate ZIP
     const metadata = await validateAndExtractMetadataFromFile(tempPath, bookId);
+    extractedCoverFileName = metadata.coverFileName || null;
 
     // 4. Repackage if EPUB entries are nested under a folder prefix
     if (metadata.needsNormalization) {
@@ -388,9 +359,23 @@ export async function processBookUpload(
 
     return { metadata, savedFileName };
   } catch (error) {
+    // Cleanup cover image if it was extracted
+    if (extractedCoverFileName) {
+      const { deleteCoverImage } = await import("@/lib/storage");
+      await deleteCoverImage(extractedCoverFileName).catch(() => {});
+    }
+
+    // Cleanup temp file
     if (tempPath) {
       await fsAsync.unlink(tempPath).catch(() => {});
     }
+
+    // Cleanup saved file if it was moved
+    if (savedFileName) {
+      const { deleteBookFile } = await import("@/lib/storage");
+      await deleteBookFile(savedFileName).catch(() => {});
+    }
+    
     throw error;
   }
 }
