@@ -50,8 +50,8 @@ async function runSmokeTest() {
       // but better-sqlite3 exec() can handle multiple statements.
       db.exec(sql);
       console.log(`✅ ${entry.tag} applied.`);
-    } catch (error: any) {
-      console.error(`❌ Failed to apply ${entry.tag}:`, error.message);
+    } catch (error: unknown) {
+      console.error(`❌ Failed to apply ${entry.tag}:`, (error as Error).message);
       process.exit(1);
     }
   }
@@ -81,8 +81,8 @@ async function runSmokeTest() {
       console.error("❌ FTS table 'books_fts' does NOT use trigram tokenizer!");
       process.exit(1);
     }
-  } catch (error: any) {
-    console.error("❌ Failed to verify FTS table:", error.message);
+  } catch (error: unknown) {
+    console.error("❌ Failed to verify FTS table:", (error as Error).message);
     process.exit(1);
   }
 
