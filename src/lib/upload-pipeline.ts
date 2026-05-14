@@ -160,7 +160,7 @@ export async function validateAndExtractMetadataFromFile(
   bookId: string
 ): Promise<ExtractedEpubMetadata> {
   return new Promise((resolve, reject) => {
-    yauzl.open(filePath, { lazyEntries: true }, (err, zipfile) => {
+    yauzl.open(filePath, { lazyEntries: true, autoClose: false }, (err, zipfile) => {
       if (err) return reject(err);
       if (!zipfile) return reject(new Error("Failed to open zip file"));
 
@@ -198,7 +198,7 @@ export async function validateAndExtractMetadataFromFile(
           // 1. Find container.xml
           let containerXmlPath = "META-INF/container.xml";
           let folderPrefix = "";
-          
+
           if (!entriesMap.has(containerXmlPath)) {
             // Try to find nested container.xml
             const nestedPath = Array.from(entriesMap.keys()).find(p => p.endsWith("/META-INF/container.xml"));
@@ -207,25 +207,23 @@ export async function validateAndExtractMetadataFromFile(
               folderPrefix = nestedPath.split("/META-INF/")[0] + "/";
               metadata.needsNormalization = true;
             } else {
-              zipfile.close();
-              return resolve({ needsNormalization: true }); // Might be a weird zip, let repackage try
+              // Might be a weird zip, let repackage try
+              return resolve({ needsNormalization: true });
             }
           }
 
           const containerEntry = entriesMap.get(containerXmlPath)!;
           const containerContent = (await readZipEntry(zipfile, containerEntry)).toString();
-          
+
           // 2. Find OPF
           const rootFilePath = parseEpubContainerRootfilePath(containerContent);
           if (!rootFilePath) {
-            zipfile.close();
             return resolve(metadata);
           }
 
           const opfPath = folderPrefix + rootFilePath;
           const opfEntry = entriesMap.get(opfPath);
           if (!opfEntry) {
-            zipfile.close();
             return resolve(metadata);
           }
 
@@ -238,7 +236,7 @@ export async function validateAndExtractMetadataFromFile(
           if (opfMeta.coverItemHref) {
             const fullCoverPath = resolveEpubRelativePath(opfPath, opfMeta.coverItemHref);
             const coverEntry = fullCoverPath ? entriesMap.get(fullCoverPath) : null;
-            
+
             if (coverEntry) {
               try {
                 const coverData = await readZipEntry(zipfile, coverEntry);
@@ -249,16 +247,15 @@ export async function validateAndExtractMetadataFromFile(
             }
           }
 
-          zipfile.close();
           resolve(metadata);
         } catch (e) {
-          zipfile.close();
           reject(e);
+        } finally {
+          zipfile.close();
         }
       });
 
       zipfile.on("error", (e) => {
-        zipfile.close();
         reject(e);
       });
     });
