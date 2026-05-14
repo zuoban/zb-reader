@@ -64,7 +64,10 @@ async function prepareBuiltinTtsAudioWithRetry(
 
 export function useBuiltinTtsSpeech(selectedVoiceId: string, ttsRate: number) {
   return useCallback(
-    async (text: string, options?: { prefetch?: boolean; signal?: AbortSignal }) => {
+    async (
+      text: string,
+      options?: { prefetch?: boolean; signal?: AbortSignal; bypassCache?: boolean }
+    ) => {
       const ratePercent = Math.round((ttsRate - 1) * 100);
 
       const cacheKey = TtsAudioLruCache.hashKey({
@@ -75,9 +78,12 @@ export function useBuiltinTtsSpeech(selectedVoiceId: string, ttsRate: number) {
         pitch: 0,
         volume: 100,
       });
-      const cached = ttsAudioCache.get(cacheKey);
-      if (cached?.kind === "url") {
-        return cached.audioUrl;
+
+      if (!options?.bypassCache) {
+        const cached = ttsAudioCache.get(cacheKey);
+        if (cached?.kind === "url") {
+          return cached.audioUrl;
+        }
       }
 
       const audioUrl = await prepareBuiltinTtsAudioWithRetry(

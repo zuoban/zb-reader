@@ -34,7 +34,7 @@ interface UseReaderTtsSessionParams {
   readSentencesHashRef: React.MutableRefObject<Set<string>>;
   requestBuiltinSpeech: (
     text: string,
-    options?: { prefetch?: boolean; signal?: AbortSignal }
+    options?: { prefetch?: boolean; signal?: AbortSignal; bypassCache?: boolean }
   ) => Promise<string>;
   resumePendingPlayback: () => boolean;
   setActiveTtsHtml: (html: string) => void;
@@ -354,6 +354,7 @@ export function useReaderTtsSession({
               const requestSignal = createTtsRequestSignal();
               objectUrl = await requestBuiltinSpeech(sentence.text, {
                 signal: requestSignal.signal,
+                bypassCache: attempt > 1,
               }).finally(requestSignal.cleanup);
             }
 
