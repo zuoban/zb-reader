@@ -79,10 +79,16 @@ NEXTAUTH_URL=http://localhost:3000
 4. **初始化数据库**
 
 ```bash
-pnpm exec drizzle-kit push
+pnpm db:migrate
 ```
 
-5. **启动开发服务器**
+5. **验证数据库（可选）**
+
+```bash
+pnpm db:smoke-test
+```
+
+6. **启动开发服务器**
 
 ```bash
 pnpm dev

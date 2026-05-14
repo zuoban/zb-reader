@@ -64,6 +64,9 @@ jobs:
       - name: Run tests
         run: pnpm run test:run
 
+      - name: Run Database Smoke Test
+        run: pnpm db:smoke-test
+
       - name: Generate coverage report
         run: pnpm run test:coverage
 

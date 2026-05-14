@@ -23,8 +23,11 @@ npm run test:run         # 运行所有测试
 npm run test:coverage    # 生成覆盖率报告
 
 # 数据库
-npx drizzle-kit push     # 推送 schema 到数据库
-npx drizzle-kit studio   # 打开数据库 GUI (Drizzle Studio)
+pnpm db:migrate          # 应用所有挂起的迁移 (生产推荐)
+pnpm db:generate         # 根据 schema.ts 生成新的迁移文件
+pnpm db:smoke-test       # 运行数据库烟雾测试，验证迁移完整性
+pnpm db:studio           # 打开数据库 GUI (Drizzle Studio)
+pnpm db:push             # 强制同步 schema (仅限本地快速原型)
 ```
 
 ## 架构概述
