@@ -46,10 +46,6 @@ function ReaderContent() {
         "--reader-destructive": currentTheme.destructive,
       } as React.CSSProperties}
     >
-      {/* Subtle Top & Bottom Fade */}
-      <div className="pointer-events-none fixed inset-x-0 top-0 z-10 h-24 bg-gradient-to-b from-[var(--reader-bg)] to-transparent opacity-80" />
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-10 h-24 bg-gradient-to-t from-[var(--reader-bg)] to-transparent opacity-80" />
-
       <ReaderCanvas />
 
       <ReaderToolbar />
