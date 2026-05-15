@@ -20,6 +20,7 @@ import { useEpubParagraphs } from "./hooks/useEpubParagraphs";
 import { useEpubResponsiveWidth } from "./hooks/useEpubResponsiveWidth";
 import { useEpubScrollProgress } from "./hooks/useEpubScrollProgress";
 import { useEpubTtsHighlighting } from "./hooks/useEpubTtsHighlighting";
+import { useEpubSwipeGesture } from "./hooks/useEpubSwipeGesture";
 
 interface EpubReaderProps {
   bookId: string;
@@ -47,6 +48,11 @@ interface EpubReaderProps {
   activeTtsSentenceIndexInParagraph?: number;
   activeTtsLocation?: string | null;
   ttsHighlightColor?: string;
+  onSwipeLeft?: () => void;
+  onSwipeRight?: () => void;
+  hasPrevChapter?: boolean;
+  hasNextChapter?: boolean;
+  swipeEnabled?: boolean;
 }
 
 export type { ReaderParagraph };
@@ -91,6 +97,11 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       activeTtsSentenceIndexInParagraph = 0,
       activeTtsLocation,
       ttsHighlightColor = "#3b82f6",
+      onSwipeLeft,
+      onSwipeRight,
+      hasPrevChapter = false,
+      hasNextChapter = false,
+      swipeEnabled = true,
     },
     ref
   ) => {
@@ -282,6 +293,16 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       progressRef,
       epubContextRef,
       isInitialDisplayRef,
+    });
+
+    useEpubSwipeGesture({
+      isRenditionReady,
+      renditionRef,
+      onSwipeLeft: onSwipeLeft ?? (() => {}),
+      onSwipeRight: onSwipeRight ?? (() => {}),
+      hasPrevChapter,
+      hasNextChapter,
+      enabled: swipeEnabled,
     });
 
     return (

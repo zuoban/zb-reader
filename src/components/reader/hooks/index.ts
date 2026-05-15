@@ -26,4 +26,5 @@ export { useEpubKeyboardScroll } from "./useEpubKeyboardScroll";
 export { useEpubParagraphs } from "./useEpubParagraphs";
 export { useEpubResponsiveWidth } from "./useEpubResponsiveWidth";
 export { useEpubScrollProgress } from "./useEpubScrollProgress";
+export { useEpubSwipeGesture } from "./useEpubSwipeGesture";
 export { useEpubTtsHighlighting } from "./useEpubTtsHighlighting";

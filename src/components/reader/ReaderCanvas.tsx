@@ -29,14 +29,18 @@ function ReaderCanvasInner() {
     activeTtsSentenceIndexInParagraph 
   } = useTts();
   const { toolbarVisible, currentChapterTitle } = useReaderUI();
-  const { 
-    progress, 
-    currentPage, 
-    totalPages, 
-    handleLocationChange, 
-    handleTextSelected, 
+  const {
+    progress,
+    currentPage,
+    totalPages,
+    handleLocationChange,
+    handleTextSelected,
     handleTocLoaded,
-    handleToggleToolbar
+    handleToggleToolbar,
+    handlePrevChapter,
+    handleNextChapter,
+    hasPrevChapter,
+    hasNextChapter,
   } = useNavigation();
   const { readerTheme } = useReaderSettings();
   const { epubReaderRef } = useReaderContext();
@@ -65,6 +69,11 @@ function ReaderCanvasInner() {
             onTocLoaded={handleTocLoaded}
             onTextSelected={handleTextSelected}
             onClick={isSpeaking ? undefined : handleToggleToolbar}
+            onSwipeLeft={handleNextChapter}
+            onSwipeRight={handlePrevChapter}
+            hasPrevChapter={hasPrevChapter}
+            hasNextChapter={hasNextChapter}
+            swipeEnabled={!isSpeaking}
             highlights={highlights}
             activeTtsParagraph={activeTtsParagraph}
             activeTtsParagraphId={activeTtsParagraphId}
