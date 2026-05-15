@@ -760,24 +760,24 @@
 }
 
 .reader-status-footer {
-  --reader-status-text: color-mix(in srgb, var(--reader-text, #111) 78%, black);
-
   border-top: 1px solid color-mix(in srgb, var(--reader-text, #111) 18%, var(--reader-bg, white));
   background: var(--reader-bg, white);
-  color: var(--reader-status-text);
+  color: var(--reader-text, #111);
   box-shadow:
     0 -1px 0 color-mix(in srgb, white 42%, var(--reader-bg, white)) inset,
     0 -16px 30px -22px color-mix(in srgb, var(--reader-text, #111) 36%, var(--reader-bg, white));
 }
 
 .reader-status-title {
-  color: var(--reader-status-text);
+  color: var(--reader-text, #111);
+  opacity: 0.84;
   text-shadow: 0 1px 0 color-mix(in srgb, var(--reader-bg, white) 72%, transparent);
 }
 
 .reader-status-meta {
-  color: var(--reader-status-text);
+  color: var(--reader-text, #111);
   letter-spacing: 0.03em;
+  opacity: 0.8;
 }
 
 .reader-status-divider {
@@ -848,8 +848,6 @@
 }
 
 [data-reader-theme="dark"] .reader-status-footer {
-  --reader-status-text: color-mix(in srgb, var(--reader-text, #fff) 88%, white);
-
   border-top-color: color-mix(in srgb, var(--reader-text, #fff) 18%, var(--reader-bg, #111));
   background: var(--reader-bg, #111);
   box-shadow:
@@ -858,12 +856,12 @@
 }
 
 [data-reader-theme="dark"] .reader-status-title {
-  color: var(--reader-status-text);
+  color: var(--reader-text, #fff);
   text-shadow: none;
 }
 
 [data-reader-theme="dark"] .reader-status-meta {
-  color: var(--reader-status-text);
+  color: var(--reader-text, #fff);
 }
 
 [data-reader-theme="dark"] .reader-status-divider {

@@ -10,10 +10,6 @@ import {
   List,
   Volume2,
   Pause,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
   Maximize,
   Minimize,
 } from "lucide-react";
@@ -90,14 +86,6 @@ export const ReaderToolbar = memo(function ReaderToolbar({
   } = useReaderUI();
   const {
     handleBack,
-    handlePrevPage,
-    handleNextPage,
-    handlePrevChapter,
-    handleNextChapter,
-    hasPrevChapter,
-    hasNextChapter,
-    handleProgressChange: _handleProgressChange,
-    progress,
   } = useNavigation();
   const { isCurrentBookmarked, handleToggleBookmark } = useAnnotation();
 
@@ -168,100 +156,6 @@ export const ReaderToolbar = memo(function ReaderToolbar({
         </div>
       </div>
 
-      {/* 底部进度与导航控制 */}
-      <div
-        className={cn(
-          "fixed bottom-0 left-0 right-0 z-50 transition-all duration-500 ease-in-out",
-          toolbarVisible && !isSpeaking && !isTtsViewOpen ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
-        )}
-      >
-        <div className="border-t border-[color-mix(in_srgb,var(--reader-text)_5%,transparent)] bg-[var(--reader-bg)]/95 px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-4 backdrop-blur-md">
-          <div className="mx-auto flex max-w-4xl items-center gap-3 sm:gap-6">
-            
-            {/* 导航：上一章 & 上一页 */}
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handlePrevChapter}
-                disabled={!hasPrevChapter}
-                className="h-9 w-9 rounded-full hover:bg-[var(--reader-text)]/5"
-                style={{ color: "var(--reader-text)" }}
-              >
-                <ChevronsLeft className="size-5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handlePrevPage}
-                className="h-9 w-9 rounded-full hover:bg-[var(--reader-text)]/5"
-                style={{ color: "var(--reader-text)" }}
-              >
-                <ChevronLeft className="size-5" />
-              </Button>
-            </div>
-
-            {/* 中间：进度展示 */}
-            <div className="flex flex-1 items-center gap-3 sm:gap-4 group">
-              <div className="relative h-8 flex flex-1 items-center cursor-pointer">
-                {/* Custom Track */}
-                <div className="absolute inset-x-0 h-1.5 overflow-hidden rounded-full bg-[var(--reader-text)]/10">
-                  <div 
-                    className="h-full bg-[var(--reader-text)] transition-all duration-300 ease-out"
-                    style={{ width: `${progress * 100}%` }}
-                  />
-                </div>
-                {/* Invisible native range for interaction */}
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.01"
-                  value={progress}
-                  onChange={(e) => {
-                    const newProgress = parseFloat(e.target.value);
-                    _handleProgressChange(newProgress);
-                  }}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  aria-label="阅读进度"
-                />
-                {/* Custom Thumb */}
-                <div
-                  className="absolute h-4 w-4 rounded-full bg-[var(--reader-bg)] border-2 border-[var(--reader-text)] shadow-sm transition-transform duration-200 group-hover:scale-110 pointer-events-none"
-                  style={{ left: `calc(${progress * 100}% - 8px)` }}
-                />
-              </div>
-              <span className="min-w-[2.5rem] text-center text-[11px] font-bold tabular-nums text-[var(--reader-text)] opacity-60">
-                {Math.round(progress * 100)}%
-              </span>
-            </div>
-
-            {/* 导航：下一页 & 下一章 */}
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleNextPage}
-                className="h-9 w-9 rounded-full hover:bg-[var(--reader-text)]/5"
-                style={{ color: "var(--reader-text)" }}
-              >
-                <ChevronRight className="size-5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleNextChapter}
-                disabled={!hasNextChapter}
-                className="h-9 w-9 rounded-full hover:bg-[var(--reader-text)]/5"
-                style={{ color: "var(--reader-text)" }}
-              >
-                <ChevronsRight className="size-5" />
-              </Button>
-            </div>
-
-          </div>
-        </div>
-      </div>
     </TooltipProvider>
   );
 });

@@ -75,13 +75,20 @@ function ReaderCanvasInner() {
         )}
       </div>
 
-      {/* Minimalist Footer Area - Dedicated Space */}
+      {/* Minimalist Footer Area */}
       {!isTtsViewOpen && (
         <div
-          className={cn(
-            "reader-status-footer relative grid shrink-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 overflow-hidden border-t border-[color-mix(in_srgb,var(--reader-text)_14%,transparent)] bg-[var(--reader-bg)] px-6 text-xs font-bold tracking-tight shadow-[0_-12px_32px_-28px_color-mix(in_srgb,var(--reader-text)_55%,transparent)] transition-all duration-500 ease-in-out sm:px-10",
-            toolbarVisible ? "h-0 opacity-0 pointer-events-none border-t-transparent" : "h-11 opacity-100"
-          )}
+          role="button"
+          tabIndex={0}
+          aria-label="显示或隐藏顶部菜单栏"
+          onClick={handleToggleToolbar}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              handleToggleToolbar();
+            }
+          }}
+          className="reader-status-footer absolute inset-x-0 bottom-0 z-20 grid h-11 cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 overflow-hidden border-t border-[color-mix(in_srgb,var(--reader-text)_14%,transparent)] bg-[var(--reader-bg)] px-6 text-xs font-bold tracking-tight shadow-[0_-12px_32px_-28px_color-mix(in_srgb,var(--reader-text)_55%,transparent)] transition-colors duration-200 hover:bg-[color-mix(in_srgb,var(--reader-text)_3%,var(--reader-bg))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--reader-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--reader-bg)] sm:px-10"
           style={{ color: "var(--reader-text)" }}
         >
           {/* Left: Progress */}
