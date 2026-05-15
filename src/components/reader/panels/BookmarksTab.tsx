@@ -36,25 +36,25 @@ export const BookmarksTab = memo(function BookmarksTab({
   const rowVirtualizer = useVirtualizer({
     count: bookmarks.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 110, // Average height of a bookmark card
+    estimateSize: () => 48,
     overscan: 5,
   });
 
   return (
     <div className="flex h-full flex-col">
       {/* Header Section */}
-      <div className="flex shrink-0 items-center gap-2 p-6 pb-4">
+      <div className="flex shrink-0 items-center gap-3 p-5 pb-3">
         <span
-          className="text-[10px] font-bold tracking-[0.2em] uppercase opacity-30"
-          style={{ color: "var(--reader-text)" }}
+          className="text-[10px] font-semibold tracking-[0.15em] uppercase"
+          style={{ color: "var(--reader-text)", opacity: 0.75 }}
         >
           我的书签 · Bookmarks
         </span>
       </div>
 
-      <div 
+      <div
         ref={parentRef}
-        className="flex-1 overflow-y-auto scrollbar-hide px-6 pb-12"
+        className="flex-1 overflow-y-auto scrollbar-hide px-4 pb-12"
       >
         {bookmarks.length === 0 ? (
           <EmptyState
@@ -82,11 +82,14 @@ export const BookmarksTab = memo(function BookmarksTab({
                     width: "100%",
                     height: `${virtualRow.size}px`,
                     transform: `translateY(${virtualRow.start}px)`,
-                    paddingBottom: "16px", // Gap between items
+                    paddingBottom: "4px",
                   }}
                 >
                   <div
-                    className="reader-liquid-surface group relative overflow-hidden rounded-[24px] p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl active:scale-[0.98] h-full"
+                    className="group relative overflow-hidden rounded-lg transition-all duration-200"
+                    style={{
+                      background: "color-mix(in srgb, var(--reader-text) 3%, transparent)",
+                    }}
                     onClick={() => {
                       if (editingId !== bookmark.id) {
                         onBookmarkClick(bookmark.location);
@@ -94,87 +97,82 @@ export const BookmarksTab = memo(function BookmarksTab({
                       }
                     }}
                   >
-                    {/* Accent Background Gradient */}
-                    <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.05),transparent)] pointer-events-none" />
-
                     {editingId === bookmark.id ? (
-                      <div className="relative flex flex-col gap-4">
-                        <div className="flex items-center gap-3">
-                          <div className="flex-1">
-                            <Input
-                              value={editingLabel}
-                              onChange={(e) => setEditingLabel(e.target.value)}
-                              className="reader-liquid-control h-11 w-full rounded-2xl border-0 px-4 text-sm font-semibold shadow-none focus:ring-2 focus:ring-[var(--reader-primary)]"
-                              style={{ 
-                                color: "var(--reader-text)",
-                                background: "color-mix(in srgb, var(--reader-text) 5%, transparent)"
-                              }}
-                              autoFocus
-                              onClick={(e) => e.stopPropagation()}
-                            />
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="reader-liquid-control rounded-full px-4 h-9 text-xs font-bold"
-                            style={{ color: "var(--reader-muted-text)" }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setEditingId(null);
-                            }}
-                          >
-                            取消
-                          </Button>
-                          <Button
-                            size="sm"
-                            className="rounded-full px-5 h-9 text-xs font-bold shadow-lg"
-                            style={{ 
-                              background: "var(--reader-primary)",
-                              color: "var(--reader-bg)"
-                            }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onBookmarkEdit(bookmark.id, editingLabel);
-                              setEditingId(null);
-                            }}
-                          >
-                            保存修改
-                          </Button>
-                        </div>
+                      <div className="relative flex items-center gap-2 px-3 py-2">
+                        <div
+                          className="h-4 w-0.5 shrink-0 rounded-full"
+                          style={{ background: "var(--reader-primary)" }}
+                        />
+                        <Input
+                          value={editingLabel}
+                          onChange={(e) => setEditingLabel(e.target.value)}
+                          className="h-6 flex-1 rounded px-2 text-[11px] font-medium shadow-none focus:ring-1 focus:ring-[var(--reader-primary)]"
+                          style={{
+                            color: "var(--reader-text)",
+                            background: "color-mix(in srgb, var(--reader-text) 5%, transparent)",
+                          }}
+                          autoFocus
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="rounded h-6 px-2 text-[10px] font-medium shrink-0"
+                          style={{ color: "var(--reader-muted-text)" }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingId(null);
+                          }}
+                        >
+                          取消
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="rounded h-6 px-3 text-[10px] font-medium shrink-0 shadow-none"
+                          style={{
+                            background: "var(--reader-primary)",
+                            color: "var(--reader-bg)",
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onBookmarkEdit(bookmark.id, editingLabel);
+                            setEditingId(null);
+                          }}
+                        >
+                          保存
+                        </Button>
                       </div>
                     ) : (
-                      <div className="relative flex items-start justify-between gap-4">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 mb-3">
-                            <span
-                              className="text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm"
-                              style={{
-                                color: "var(--reader-bg)",
-                                background: "var(--reader-primary)",
-                              }}
-                            >
-                              {(bookmark.progress * 100).toFixed(1)}%
-                            </span>
-                            <span className="text-[10px] font-bold tracking-widest opacity-30" style={{ color: "var(--reader-text)" }}>
-                              {formatDate(bookmark.createdAt)}
-                            </span>
-                          </div>
-                          <p 
-                            className="line-clamp-2 text-[15px] font-bold leading-relaxed tracking-tight" 
-                            style={{ color: "var(--reader-text)" }}
-                          >
-                            {bookmark.label}
-                          </p>
-                        </div>
-                        
-                        <div className="flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-4 group-hover:translate-x-0">
+                      <div className="relative flex items-center gap-2 px-3 py-2">
+                        <div
+                          className="h-4 w-0.5 shrink-0 rounded-full"
+                          style={{ background: "var(--reader-primary)" }}
+                        />
+                        <span
+                          className="text-[9px] font-medium px-1 py-px rounded shrink-0"
+                          style={{
+                            color: "var(--reader-primary)",
+                            background: "color-mix(in srgb, var(--reader-primary) 8%, transparent)",
+                          }}
+                        >
+                          {(bookmark.progress * 100).toFixed(1)}%
+                        </span>
+                        <p
+                          className="min-w-0 flex-1 truncate text-[12px] font-normal leading-none"
+                          style={{ color: "var(--reader-text)", opacity: 0.75 }}
+                        >
+                          {bookmark.label}
+                        </p>
+                        <span className="text-[9px] font-medium shrink-0 opacity-20" style={{ color: "var(--reader-text)" }}>
+                          {formatDate(bookmark.createdAt)}
+                        </span>
+
+                        <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity duration-200">
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="reader-liquid-control size-9 rounded-xl hover:scale-110 active:scale-90"
-                            style={{ color: "var(--reader-text)" }}
+                            className="size-5 rounded shrink-0"
+                            style={{ color: "var(--reader-text)", opacity: 0.35 }}
                             aria-label="编辑书签"
                             onClick={(e) => {
                               e.stopPropagation();
@@ -182,20 +180,20 @@ export const BookmarksTab = memo(function BookmarksTab({
                               setEditingLabel(bookmark.label);
                             }}
                           >
-                            <Pencil className="size-4.5" />
+                            <Pencil className="size-3" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="size-9 rounded-xl border border-red-300/18 bg-[linear-gradient(180deg,rgba(255,120,120,0.18),rgba(255,120,120,0.07))] hover:scale-110 active:scale-90"
-                            style={{ color: "var(--reader-destructive, #ef4444)" }}
+                            className="size-5 rounded shrink-0"
+                            style={{ color: "var(--reader-destructive, #ef4444)", opacity: 0.35 }}
                             aria-label="删除书签"
                             onClick={(e) => {
                               e.stopPropagation();
                               onBookmarkDelete(bookmark.id);
                             }}
                           >
-                            <Trash2 className="size-4.5" />
+                            <Trash2 className="size-3" />
                           </Button>
                         </div>
                       </div>

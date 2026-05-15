@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
         userId: authResult.userId,
         bookId,
         location: locationStr,
-        label: label || `书签 ${new Date().toLocaleString("zh-CN")}`,
+        label: label || "未命名书签",
         pageNumber,
         progress,
       });

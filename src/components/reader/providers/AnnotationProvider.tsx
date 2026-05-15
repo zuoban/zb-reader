@@ -36,7 +36,7 @@ const AnnotationContext = createContext<AnnotationContextValue | null>(null);
 
 export function AnnotationProvider({ children }: { children: React.ReactNode }) {
   const { book, bookmarks, setBookmarks, setNotes } = useBookData();
-  const { currentCfiRef, currentPage, progressRef } = useReaderContext();
+  const { epubReaderRef, currentCfiRef, currentPage, progressRef } = useReaderContext();
   const [isCurrentBookmarked, setIsCurrentBookmarked] = useState(false);
 
   const {
@@ -58,6 +58,7 @@ export function AnnotationProvider({ children }: { children: React.ReactNode }) 
     onBookmarkRemoved: (id) => setBookmarks((prev) => prev.filter((b) => b.id !== id)),
     onBookmarkUpdated: (id, updates) => setBookmarks((prev) => prev.map((b) => b.id === id ? { ...b, ...updates } : b)),
     setIsCurrentBookmarked,
+    getCurrentText: () => epubReaderRef.current?.getCurrentText() ?? null,
   });
 
   const noteActions = useNoteActions({

@@ -27,60 +27,54 @@ export const TocItemRow = memo(function TocItemRow({
   const isMatched =
     currentHref &&
     (item.href === currentHref || currentHref.startsWith(item.href?.split("#")[0]));
-  
-  const isActive = isMatched && !parentActive;
 
-  useEffect(() => {
-    if (isActive && itemRef.current) {
-      itemRef.current.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
-    }
-  }, [isActive]);
+  const isActive = isMatched && !parentActive;
 
   return (
     <div className="flex flex-col">
-      <div 
+      <div
         ref={itemRef}
         className={cn(
-          "group relative flex min-w-max items-center rounded-xl transition-all duration-300",
-          isActive 
-            ? "bg-[color-mix(in_srgb,var(--reader-primary)_8%,transparent)] shadow-[0_4px_12px_-8px_color-mix(in_srgb,var(--reader-primary)_40%,transparent)]" 
-            : "hover:bg-[color-mix(in_srgb,var(--reader-text)_4%,transparent)]"
+          "group relative flex min-w-max items-center rounded-lg transition-all duration-200",
+          isActive
+            ? "bg-[color-mix(in_srgb,var(--reader-primary)_6%,transparent)]"
+            : "hover:bg-[color-mix(in_srgb,var(--reader-text)_3%,transparent)]"
         )}
         style={{ marginLeft: `${level * 16}px` }}
       >
         {/* Active Indicator Bar */}
         {isActive && (
-          <div 
-            className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full"
+          <div
+            className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 rounded-full"
             style={{ background: "var(--reader-primary)" }}
           />
         )}
 
         {hasChildren ? (
           <button
-            className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-xl transition-all hover:scale-110 active:scale-90"
-            style={{ color: isActive ? "var(--reader-primary)" : "var(--reader-text)", opacity: isActive ? 1 : 0.4 }}
+            className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md transition-colors"
+            style={{ color: isActive ? "var(--reader-primary)" : "var(--reader-text)", opacity: isActive ? 0.7 : 0.3 }}
             onClick={(e) => {
               e.stopPropagation();
               setExpanded(!expanded);
             }}
           >
-            {expanded ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
+            {expanded ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
           </button>
         ) : (
-          <div className="size-9 shrink-0 flex items-center justify-center opacity-20">
-            <div className="size-1 rounded-full bg-[var(--reader-text)]" />
+          <div className="size-7 shrink-0 flex items-center justify-center">
+            <div className="size-1.5 rounded-full bg-[var(--reader-text)] opacity-20" />
           </div>
         )}
 
         <button
           className={cn(
-            "flex-1 min-w-max cursor-pointer whitespace-nowrap px-2 py-1.5 text-left transition-all duration-300",
-            isActive ? "font-bold text-[14px]" : "text-[13px] font-medium"
+            "flex-1 min-w-max cursor-pointer whitespace-nowrap px-2 py-1.5 text-left transition-all duration-200",
+            isActive ? "font-semibold text-[14px]" : "text-[13px] font-normal"
           )}
           style={{
             color: isActive ? "var(--reader-primary)" : "var(--reader-text)",
-            opacity: isActive ? 1 : 0.8,
+            opacity: isActive ? 1 : 0.75,
           }}
           onClick={() => {
             onTocItemClick(item.href);
@@ -92,13 +86,13 @@ export const TocItemRow = memo(function TocItemRow({
         </button>
 
         {isActive && (
-          <div className="px-4 flex items-center gap-1.5">
-            <div className="flex gap-0.5 items-end h-2.5">
-              <div className="w-0.5 bg-[var(--reader-primary)] animate-[reader-playing_0.6s_ease-in-out_infinite_alternate]" style={{ height: '40%' }} />
-              <div className="w-0.5 bg-[var(--reader-primary)] animate-[reader-playing_0.8s_ease-in-out_infinite_alternate]" style={{ height: '100%' }} />
-              <div className="w-0.5 bg-[var(--reader-primary)] animate-[reader-playing_0.5s_ease-in-out_infinite_alternate]" style={{ height: '60%' }} />
+          <div className="px-3 flex items-center gap-1.5 shrink-0">
+            <div className="flex gap-0.5 items-end h-3">
+              <div className="w-0.5 bg-[var(--reader-primary)] animate-[reader-playing_0.6s_ease-in-out_infinite_alternate] rounded-full" style={{ height: '40%' }} />
+              <div className="w-0.5 bg-[var(--reader-primary)] animate-[reader-playing_0.8s_ease-in-out_infinite_alternate] rounded-full" style={{ height: '100%' }} />
+              <div className="w-0.5 bg-[var(--reader-primary)] animate-[reader-playing_0.5s_ease-in-out_infinite_alternate] rounded-full" style={{ height: '60%' }} />
             </div>
-            <span className="text-[9px] font-bold tracking-widest opacity-40 uppercase italic" style={{ color: "var(--reader-primary)" }}>
+            <span className="text-[9px] font-semibold tracking-wider opacity-40 uppercase" style={{ color: "var(--reader-primary)" }}>
               Reading
             </span>
           </div>

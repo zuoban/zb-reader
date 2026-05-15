@@ -42,15 +42,26 @@ export const NotesTab = memo(function NotesTab({
   const rowVirtualizer = useVirtualizer({
     count: filteredNotes.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 140, // Notes can be tall
+    estimateSize: () => 120, // Notes can be tall
     overscan: 5,
   });
 
   return (
-    <div 
-      ref={parentRef}
-      className="flex-1 overflow-y-auto scrollbar-hide px-5 pb-12"
-    >
+    <div className="flex h-full flex-col">
+      {/* Header Section */}
+      <div className="flex shrink-0 items-center gap-3 p-5 pb-3">
+        <span
+          className="text-[10px] font-semibold tracking-[0.15em] uppercase"
+          style={{ color: "var(--reader-text)", opacity: 0.75 }}
+        >
+          我的笔记 · Notes
+        </span>
+      </div>
+
+      <div 
+        ref={parentRef}
+        className="flex-1 overflow-y-auto scrollbar-hide px-5 pb-12"
+      >
       {filteredNotes.length === 0 ? (
         <div className="pt-10">
           <EmptyState
@@ -83,7 +94,13 @@ export const NotesTab = memo(function NotesTab({
                 }}
               >
                 <div
-                  className="reader-liquid-surface group rounded-xl p-4 transition-all duration-200 hover:-translate-y-0.5 h-full"
+                  className="group rounded-lg transition-all duration-200 h-full"
+                  style={{
+                    background: "color-mix(in srgb, var(--reader-card-bg) 55%, transparent)",
+                    border: "1px solid color-mix(in srgb, var(--reader-border) 40%, transparent)",
+                    boxShadow: "0 1px 2px color-mix(in srgb, var(--reader-text) 4%, transparent)",
+                    padding: "14px",
+                  }}
                 >
                   {editingId === note.id ? (
                     <div className="space-y-3">
@@ -118,7 +135,7 @@ export const NotesTab = memo(function NotesTab({
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="reader-liquid-control rounded-lg text-xs"
+                          className="rounded-lg text-xs"
                           style={{ color: "var(--reader-muted-text)" }}
                           onClick={() => setEditingId(null)}
                         >
@@ -146,31 +163,33 @@ export const NotesTab = memo(function NotesTab({
                       }}
                     >
                       <div
-                        className="mb-3 rounded-lg border-l-[3px] py-2 pl-3 text-xs line-clamp-2 italic shrink-0"
+                        className="mb-2 rounded-r-lg border-l-[3px] py-1.5 pl-3 text-[11px] leading-relaxed line-clamp-2 shrink-0"
                         style={{
                           borderColor: note.color,
                           color: "var(--reader-muted-text)",
-                          background: "color-mix(in srgb, var(--reader-card-bg) 46%, transparent)",
+                          background: "color-mix(in srgb, var(--reader-text) 6%, transparent)",
                         }}
                       >
                         {note.selectedText}
                       </div>
-                      <p className="text-sm line-clamp-3 font-medium flex-1" style={{ color: "var(--reader-text)" }}>
-                        {note.content || ""}
-                      </p>
+                      {note.content && note.content.trim().length > 0 && (
+                        <p className="text-[13px] leading-relaxed mb-2" style={{ color: "var(--reader-text)" }}>
+                          {note.content}
+                        </p>
+                      )}
                       <div
-                        className="flex items-center justify-between mt-3 pt-3 border-t shrink-0"
-                        style={{ borderColor: "var(--reader-border)" }}
+                        className="flex items-center justify-between mt-auto pt-2 shrink-0"
                       >
-                        <span className="text-xs" style={{ color: "var(--reader-muted-text)" }}>
+                        <span className="text-[10px]" style={{ color: "var(--reader-text)", opacity: 0.5 }}>
                           {formatDate(note.createdAt)}
                         </span>
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity duration-200">
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="reader-liquid-control h-8 w-8 rounded-lg"
-                            style={{ color: "var(--reader-muted-text)" }}
+                            className="size-6 rounded-lg shrink-0"
+                            style={{ color: "var(--reader-text)", opacity: 0.35 }}
+                            aria-label="编辑笔记"
                             onClick={(e) => {
                               e.stopPropagation();
                               setEditingId(note.id);
@@ -178,19 +197,20 @@ export const NotesTab = memo(function NotesTab({
                               setEditingColor(note.color || "#facc15");
                             }}
                           >
-                            <Pencil className="size-4" />
+                            <Pencil className="size-3.5" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 rounded-lg border border-red-300/18 bg-[linear-gradient(180deg,rgba(255,120,120,0.18),rgba(255,120,120,0.07))] hover:bg-[linear-gradient(180deg,rgba(255,120,120,0.24),rgba(255,120,120,0.11))]"
-                            style={{ color: "var(--reader-destructive, #ef4444)" }}
+                            className="size-6 rounded-lg shrink-0"
+                            style={{ color: "var(--reader-destructive, #ef4444)", opacity: 0.35 }}
+                            aria-label="删除笔记"
                             onClick={(e) => {
                               e.stopPropagation();
                               onNoteDelete(note.id);
                             }}
                           >
-                            <Trash2 className="size-4" />
+                            <Trash2 className="size-3.5" />
                           </Button>
                         </div>
                       </div>
@@ -202,6 +222,7 @@ export const NotesTab = memo(function NotesTab({
           })}
         </div>
       )}
+      </div>
     </div>
   );
 });

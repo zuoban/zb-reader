@@ -12,6 +12,7 @@ interface UseBookmarkActionsParams {
   onBookmarkRemoved: (id: string) => void;
   onBookmarkUpdated: (id: string, updates: Partial<Bookmark>) => void;
   setIsCurrentBookmarked: (value: boolean) => void;
+  getCurrentText: () => string | null;
 }
 
 interface UseBookmarkActionsReturn {
@@ -20,19 +21,13 @@ interface UseBookmarkActionsReturn {
   handleBookmarkDelete: (id: string) => Promise<void>;
 }
 
-/**
- * Handles bookmark CRUD operations with optimistic UI updates.
- *
- * @param params.bookId - The current book's ID
- * @param params.currentCfiRef - Ref holding the current CFI location
- * @param params.currentPage - Current page number
- * @param params.bookmarks - Current list of bookmarks
- * @param params.progressRef - Ref holding the current reading progress
- * @param params.onBookmarkAdded - Called when a new bookmark is created
- * @param params.onBookmarkRemoved - Called when a bookmark is deleted
- * @param params.onBookmarkUpdated - Called when a bookmark label is updated
- * @param params.setIsCurrentBookmarked - Called to update whether current location is bookmarked
- */
+function truncateLabel(text: string | null, maxLength = 5): string {
+  if (!text) return "未命名书签";
+  const trimmed = text.trim();
+  if (!trimmed) return "未命名书签";
+  return trimmed.slice(0, maxLength);
+}
+
 export function useBookmarkActions({
   bookId,
   currentCfiRef,
@@ -43,6 +38,7 @@ export function useBookmarkActions({
   onBookmarkRemoved,
   onBookmarkUpdated,
   setIsCurrentBookmarked,
+  getCurrentText,
 }: UseBookmarkActionsParams): UseBookmarkActionsReturn {
   const handleToggleBookmark = useCallback(async () => {
     const currentCfi = currentCfiRef.current;
@@ -51,7 +47,6 @@ export function useBookmarkActions({
     const existing = bookmarks.find((b) => b.location === currentCfi);
 
     if (existing) {
-      // Remove bookmark
       try {
         await fetch(`/api/bookmarks/${existing.id}`, { method: "DELETE" });
         onBookmarkRemoved(existing.id);
@@ -61,8 +56,8 @@ export function useBookmarkActions({
         toast.error("操作失败");
       }
     } else {
-      // Add bookmark
       try {
+        const labelText = truncateLabel(getCurrentText());
         const res = await fetch("/api/bookmarks", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -71,6 +66,7 @@ export function useBookmarkActions({
             location: currentCfi,
             progress: progressRef.current,
             pageNumber: currentPage,
+            label: labelText,
           }),
         });
         const data = await res.json();
@@ -83,7 +79,7 @@ export function useBookmarkActions({
         toast.error("操作失败");
       }
     }
-  }, [bookId, currentCfiRef, bookmarks, currentPage, progressRef, onBookmarkAdded, onBookmarkRemoved, setIsCurrentBookmarked]);
+  }, [bookId, currentCfiRef, bookmarks, currentPage, progressRef, onBookmarkAdded, onBookmarkRemoved, setIsCurrentBookmarked, getCurrentText]);
 
   const handleBookmarkEdit = useCallback(async (id: string, label: string) => {
     try {

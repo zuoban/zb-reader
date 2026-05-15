@@ -1,4 +1,4 @@
-import { memo, useMemo, useRef } from "react";
+import { memo, useMemo, useRef, useEffect } from "react";
 import { List } from "lucide-react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import type { TocItem } from "@/types/reader";
@@ -43,24 +43,38 @@ export const TocTab = memo(function TocTab({
     overscan: 10,
   });
 
+  // Auto-scroll to current chapter
+  useEffect(() => {
+    if (!currentHref || flattenedToc.length === 0) return;
+
+    const activeIndex = flattenedToc.findIndex((item) => {
+      if (!item.href) return false;
+      const itemBase = item.href.split("#")[0];
+      const currentBase = currentHref.split("#")[0];
+      return itemBase === currentBase || currentBase.startsWith(itemBase);
+    });
+
+    if (activeIndex !== -1) {
+      // Delay to ensure virtualizer has calculated sizes and DOM is ready
+      const timer = setTimeout(() => {
+        rowVirtualizer.scrollToIndex(activeIndex, { align: "center", behavior: "auto" });
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [currentHref, flattenedToc, rowVirtualizer]);
+
   return (
     <div className="flex h-full flex-col">
       {/* Header Section */}
-      <div className="flex shrink-0 items-center justify-between gap-4 p-6 pb-4">
+      <div className="flex shrink-0 items-center justify-between gap-3 p-5 pb-3">
         <span
-          className="text-[10px] font-bold tracking-[0.2em] uppercase opacity-30"
-          style={{ color: "var(--reader-text)" }}
+          className="text-[10px] font-semibold tracking-[0.15em] uppercase"
+          style={{ color: "var(--reader-text)", opacity: 0.75 }}
         >
           书籍目录 · Contents
         </span>
-        <div
-          className="px-2.5 py-1 rounded-full shadow-sm"
-          style={{ 
-            background: "color-mix(in srgb, var(--reader-primary) 12%, transparent)",
-            border: "1px solid color-mix(in srgb, var(--reader-primary) 20%, transparent)"
-          }}
-        >
-          <p className="text-[10px] font-bold tracking-tight" style={{ color: "var(--reader-primary)" }}>
+        <div className="px-2 py-0.5 rounded-md" style={{ background: "color-mix(in srgb, var(--reader-primary) 8%, transparent)" }}>
+          <p className="text-[10px] font-semibold tracking-tight" style={{ color: "var(--reader-primary)" }}>
             {flattenedToc.length} 个章节
           </p>
         </div>
