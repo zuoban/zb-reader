@@ -38,7 +38,7 @@ interface EpubReaderProps {
     scrollRatio?: number;
   }) => void;
   onTocLoaded?: (toc: TocItem[]) => void;
-  onTextSelected?: (cfiRange: string, text: string) => void;
+  onTextSelected?: (cfiRange: string, text: string, position?: { x: number; y: number; bottom?: number }) => void;
   onReady?: () => void;
   onClick?: () => void;
   highlights?: Array<{ cfiRange: string; color: string; id: string }>;

@@ -21,7 +21,7 @@ interface NavigationContextValue {
     href?: string;
   }) => void;
   handleTocLoaded: (tocItems: TocItem[]) => void;
-  handleTextSelected: (cfiRange: string, text: string) => void;
+  handleTextSelected: (cfiRange: string, text: string, position?: { x: number; y: number; bottom?: number }) => void;
   handleToggleToolbar: () => void;
   handleBack: () => Promise<void>;
   handleTocItemClick: (href: string) => void;

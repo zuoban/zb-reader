@@ -31,7 +31,7 @@ interface UseEpubInitializerParams {
   onClick?: () => void;
   onLocationChange?: (location: ReaderLocationChange) => void;
   onReady?: () => void;
-  onTextSelected?: (cfiRange: string, text: string) => void;
+  onTextSelected?: (cfiRange: string, text: string, position?: { x: number; y: number; bottom?: number }) => void;
   onTocLoaded?: (toc: TocItem[]) => void;
   progressRef: MutableRefObject<number>;
   renditionRef: MutableRefObject<Rendition | null>;
@@ -73,6 +73,23 @@ function applyTransparentShell(viewer: HTMLDivElement | null) {
     iframeEl.style.background = "transparent";
     iframeEl.style.boxShadow = "none";
   }
+}
+
+function getSelectionMenuPosition(contentsWindow: Window) {
+  const selection = contentsWindow.getSelection();
+  const range = selection?.rangeCount ? selection.getRangeAt(0) : null;
+  const selectionRect = range?.getBoundingClientRect();
+  const frameRect = (contentsWindow.frameElement as HTMLIFrameElement | null)?.getBoundingClientRect();
+
+  if (!selectionRect || !frameRect) {
+    return undefined;
+  }
+
+  return {
+    x: frameRect.left + selectionRect.left + selectionRect.width / 2,
+    y: frameRect.top + selectionRect.top,
+    bottom: frameRect.top + selectionRect.bottom,
+  };
 }
 
 function applyDocumentTheme(doc: Document, theme: "light" | "dark" | "sepia") {
@@ -341,8 +358,9 @@ export function useEpubInitializer({
           if (!onTextSelected) return;
 
           const selectionText = contents.window.getSelection()?.toString().trim() || "";
+          const menuPosition = getSelectionMenuPosition(contents.window);
           if (selectionText.length > 0) {
-            onTextSelected(cfiRange, selectionText);
+            onTextSelected(cfiRange, selectionText, menuPosition);
             return;
           }
 
@@ -350,7 +368,7 @@ export function useEpubInitializer({
             .then((range: Range) => {
               const text = range.toString().trim();
               if (text.length > 0) {
-                onTextSelected(cfiRange, text);
+                onTextSelected(cfiRange, text, menuPosition);
               }
             })
             .catch((error) => {

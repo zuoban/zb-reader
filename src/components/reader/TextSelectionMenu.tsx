@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, memo, useCallback } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, memo, useCallback } from "react";
 import { Highlighter, StickyNote, Copy, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -81,7 +81,7 @@ export const TextSelectionMenu = memo(function TextSelectionMenu() {
 
 interface TextSelectionMenuInnerProps {
   menuRef: React.RefObject<HTMLDivElement | null>;
-  position: { x: number; y: number };
+  position: { x: number; y: number; bottom?: number };
   onHighlight: (color: string) => void;
   onAddNote: () => void;
   onCopy: () => void;
@@ -99,25 +99,52 @@ const TextSelectionMenuInner = memo(function TextSelectionMenuInner({
   handleAction,
 }: TextSelectionMenuInnerProps) {
   const [showColors, setShowColors] = useState(false);
+  const [menuPlacement, setMenuPlacement] = useState({
+    left: position.x,
+    top: position.y,
+    side: "top" as "top" | "bottom",
+    arrowLeft: 0,
+  });
+
+  useLayoutEffect(() => {
+    const menu = menuRef.current;
+    if (!menu) return;
+
+    const margin = 8;
+    const gap = 8;
+    const rect = menu.getBoundingClientRect();
+    const anchorX = Math.min(Math.max(position.x, margin), window.innerWidth - margin);
+    const idealLeft = anchorX - rect.width / 2;
+    const left = Math.min(Math.max(idealLeft, margin), window.innerWidth - rect.width - margin);
+    const topAbove = position.y - rect.height - gap;
+    const canPlaceAbove = topAbove >= margin;
+    const topBelow = (position.bottom ?? position.y) + gap;
+    const top = canPlaceAbove
+      ? topAbove
+      : Math.min(topBelow, window.innerHeight - rect.height - margin);
+
+    setMenuPlacement({
+      left,
+      top: Math.max(margin, top),
+      side: canPlaceAbove ? "top" : "bottom",
+      arrowLeft: anchorX - left,
+    });
+  }, [menuRef, position, showColors]);
 
   return (
     <div
       ref={menuRef}
       className="animate-reader-fade-up fixed z-[60]"
       style={{
-        left: position.x,
-        top: position.y,
-        transform: "translate(-50%, -100%)",
+        left: menuPlacement.left,
+        top: menuPlacement.top,
       }}
     >
       <div className="relative">
         <div
           className={cn(
-            "reader-liquid-surface flex items-center gap-1 rounded-[24px] p-1.5 sm:p-2"
+            "reader-selection-menu-surface flex items-center gap-1.5 rounded-[20px] p-2 sm:gap-2 sm:p-2"
           )}
-          style={{
-            boxShadow: "0 18px 36px -28px color-mix(in srgb, var(--reader-text) 42%, transparent)",
-          }}
         >
           {showColors ? (
             <div className="flex items-center gap-2 px-1.5">
@@ -131,12 +158,10 @@ const TextSelectionMenuInner = memo(function TextSelectionMenuInner({
                 <button
                   key={color.value}
                   className={cn(
-                    "flex items-center gap-1 rounded-full border border-transparent px-1.5 py-1 sm:px-2",
-                    "transition-all duration-200",
-                    "hover:scale-[1.04] hover:border-foreground/20",
+                    "reader-selection-menu-control flex items-center gap-1 rounded-full border px-1.5 py-1 sm:px-2",
+                    "transition-all duration-200 hover:scale-[1.04]",
                     "cursor-pointer"
                   )}
-                  style={{ background: "color-mix(in srgb, var(--reader-card-bg) 72%, transparent)" }}
                   onClick={() =>
                     handleAction(() => {
                       onHighlight(color.value);
@@ -162,7 +187,7 @@ const TextSelectionMenuInner = memo(function TextSelectionMenuInner({
                 size="icon"
                 aria-label="关闭"
                 className={cn(
-                  "ml-1 h-7.5 w-7.5 sm:h-8 sm:w-8 rounded-full cursor-pointer",
+                  "reader-selection-menu-control ml-1 h-7.5 w-7.5 rounded-full cursor-pointer sm:h-8 sm:w-8",
                   "transition-all duration-200"
                 )}
                 style={{ color: "var(--reader-muted-text)" }}
@@ -177,12 +202,11 @@ const TextSelectionMenuInner = memo(function TextSelectionMenuInner({
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  "gap-1.5 h-8 rounded-full px-3 sm:h-9 sm:px-3.5 cursor-pointer",
+                  "reader-selection-menu-control gap-1.5 h-8 rounded-full px-3 sm:h-9 sm:px-3.5 cursor-pointer",
                   "transition-all duration-200"
                 )}
                 style={{
                   color: "var(--reader-text)",
-                  background: "transparent",
                 }}
                 onClick={() => setShowColors(true)}
               >
@@ -193,12 +217,11 @@ const TextSelectionMenuInner = memo(function TextSelectionMenuInner({
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  "gap-1.5 h-8 rounded-full px-3 sm:h-9 sm:px-3.5 cursor-pointer",
+                  "reader-selection-menu-control gap-1.5 h-8 rounded-full px-3 sm:h-9 sm:px-3.5 cursor-pointer",
                   "transition-all duration-200"
                 )}
                 style={{
                   color: "var(--reader-text)",
-                  background: "transparent",
                 }}
                 onClick={() => handleAction(onAddNote)}
               >
@@ -209,12 +232,11 @@ const TextSelectionMenuInner = memo(function TextSelectionMenuInner({
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  "gap-1.5 h-8 rounded-full px-3 sm:h-9 sm:px-3.5 cursor-pointer",
+                  "reader-selection-menu-control gap-1.5 h-8 rounded-full px-3 sm:h-9 sm:px-3.5 cursor-pointer",
                   "transition-all duration-200"
                 )}
                 style={{
                   color: "var(--reader-text)",
-                  background: "transparent",
                 }}
                 onClick={() => handleAction(onCopy)}
               >
@@ -225,7 +247,7 @@ const TextSelectionMenuInner = memo(function TextSelectionMenuInner({
                 variant="ghost"
                 size="icon"
                 aria-label="关闭"
-                className="h-8 w-8 rounded-full cursor-pointer transition-all duration-200 sm:h-9 sm:w-9"
+                className="reader-selection-menu-control h-8 w-8 rounded-full cursor-pointer transition-all duration-200 sm:h-9 sm:w-9"
                 style={{ color: "var(--reader-muted-text)" }}
                 onClick={() =>
                   handleAction(() => {
@@ -239,12 +261,20 @@ const TextSelectionMenuInner = memo(function TextSelectionMenuInner({
           )}
         </div>
 
-        <div className="absolute left-1/2 -translate-x-1/2 top-full">
+        <div
+          className={cn(
+            "absolute -translate-x-1/2",
+            menuPlacement.side === "top" ? "top-full" : "bottom-full"
+          )}
+          style={{ left: menuPlacement.arrowLeft }}
+        >
           <div
-            className="size-2.5 rotate-45 -translate-y-1 border-b border-r"
+            className={cn(
+              "size-2.5 rotate-45 border-[color-mix(in_srgb,var(--reader-text)_10%,transparent)]",
+              menuPlacement.side === "top" ? "-translate-y-1 border-b border-r" : "translate-y-1 border-l border-t"
+            )}
             style={{
-              background: "color-mix(in srgb, var(--reader-card-bg) 72%, transparent)",
-              borderColor: "color-mix(in srgb, var(--reader-text) 10%, transparent)",
+              background: "var(--reader-bg, white)",
             }}
           />
         </div>

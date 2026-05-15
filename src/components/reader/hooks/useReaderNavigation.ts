@@ -6,6 +6,12 @@ import { READER_ROUTE_EXIT_EVENT } from "@/components/layout/ReaderRouteTransiti
 import type { TocItem } from "@/types/reader";
 import type { Book } from "@/lib/db/schema";
 
+interface SelectionMenuPosition {
+  x: number;
+  y: number;
+  bottom?: number;
+}
+
 interface UseReaderNavigationParams {
   bookId: string;
   book: Book | null;
@@ -18,10 +24,10 @@ interface UseReaderNavigationParams {
   setToolbarVisible: (value: boolean | ((prev: boolean) => boolean)) => void;
   setSelectionMenu: (
     value:
-      | { visible: boolean; position: { x: number; y: number }; cfiRange: string; text: string }
+      | { visible: boolean; position: SelectionMenuPosition; cfiRange: string; text: string }
       | ((
-          prev: { visible: boolean; position: { x: number; y: number }; cfiRange: string; text: string }
-        ) => { visible: boolean; position: { x: number; y: number }; cfiRange: string; text: string })
+          prev: { visible: boolean; position: SelectionMenuPosition; cfiRange: string; text: string }
+        ) => { visible: boolean; position: SelectionMenuPosition; cfiRange: string; text: string })
   ) => void;
   setToc: (items: TocItem[]) => void;
   setCurrentHref: (href: string | undefined) => void;
@@ -46,7 +52,7 @@ interface UseReaderNavigationReturn {
     scrollRatio?: number;
   }) => void;
   handleTocLoaded: (tocItems: TocItem[]) => void;
-  handleTextSelected: (cfiRange: string, text: string) => void;
+  handleTextSelected: (cfiRange: string, text: string, position?: SelectionMenuPosition) => void;
   handleToggleToolbar: () => void;
   handleBack: () => Promise<void>;
   handleTocItemClick: (href: string) => void;
@@ -149,11 +155,11 @@ export function useReaderNavigation({
     [setToc]
   );
 
-  const handleTextSelected = useCallback((cfiRange: string, text: string) => {
+  const handleTextSelected = useCallback((cfiRange: string, text: string, position?: SelectionMenuPosition) => {
     onTextSelectionOpened?.();
     setSelectionMenu({
       visible: true,
-      position: { x: window.innerWidth / 2, y: 80 },
+      position: position ?? { x: window.innerWidth / 2, y: 80, bottom: 120 },
       cfiRange,
       text,
     });

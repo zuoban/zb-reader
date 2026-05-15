@@ -4,7 +4,7 @@ import { useState } from "react";
 
 export interface ReaderSelectionMenuState {
   visible: boolean;
-  position: { x: number; y: number };
+  position: { x: number; y: number; bottom?: number };
   cfiRange: string;
   text: string;
 }

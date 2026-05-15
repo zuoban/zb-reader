@@ -740,6 +740,59 @@
     color-mix(in srgb, var(--reader-primary, #111) 8%, var(--reader-card-bg, white));
 }
 
+.reader-selection-menu-surface {
+  --reader-selection-menu-bg: var(--reader-bg, #fff);
+
+  border: 1px solid color-mix(in srgb, var(--reader-text, #111) 16%, var(--reader-selection-menu-bg));
+  background: var(--reader-selection-menu-bg) !important;
+  background-color: var(--reader-selection-menu-bg) !important;
+  box-shadow:
+    0 1px 0 color-mix(in srgb, white 42%, var(--reader-selection-menu-bg)) inset,
+    0 18px 40px -28px color-mix(in srgb, var(--reader-text, #111) 46%, var(--reader-selection-menu-bg));
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.reader-selection-menu-control {
+  border-color: transparent;
+  background: var(--reader-selection-menu-bg) !important;
+  background-color: var(--reader-selection-menu-bg) !important;
+}
+
+.reader-selection-menu-control:hover {
+  border-color: color-mix(in srgb, var(--reader-text, #111) 12%, var(--reader-selection-menu-bg));
+  background: color-mix(in srgb, var(--reader-text, #111) 5%, var(--reader-selection-menu-bg)) !important;
+}
+
+.reader-selection-menu-control:active {
+  background: color-mix(in srgb, var(--reader-text, #111) 8%, var(--reader-selection-menu-bg)) !important;
+}
+
+[data-reader-theme="dark"] .reader-selection-menu-surface {
+  --reader-selection-menu-bg: var(--reader-bg, #111);
+
+  border-color: color-mix(in srgb, var(--reader-text, #fff) 16%, var(--reader-selection-menu-bg));
+  background: var(--reader-selection-menu-bg) !important;
+  background-color: var(--reader-selection-menu-bg) !important;
+  box-shadow:
+    0 1px 0 color-mix(in srgb, white 7%, var(--reader-selection-menu-bg)) inset,
+    0 18px 40px -28px color-mix(in srgb, black 82%, var(--reader-selection-menu-bg));
+}
+
+[data-reader-theme="dark"] .reader-selection-menu-control {
+  background: var(--reader-selection-menu-bg) !important;
+  background-color: var(--reader-selection-menu-bg) !important;
+}
+
+[data-reader-theme="dark"] .reader-selection-menu-control:hover {
+  border-color: color-mix(in srgb, var(--reader-text, #fff) 14%, var(--reader-selection-menu-bg));
+  background: color-mix(in srgb, var(--reader-text, #fff) 8%, var(--reader-selection-menu-bg)) !important;
+}
+
+[data-reader-theme="dark"] .reader-selection-menu-control:active {
+  background: color-mix(in srgb, var(--reader-text, #fff) 12%, var(--reader-selection-menu-bg)) !important;
+}
+
 .reader-toolbar-surface {
   border: 1px solid color-mix(in srgb, var(--reader-border, #ddd) 60%, transparent);
   background: color-mix(in srgb, var(--reader-card-bg, white) 98%, transparent);
