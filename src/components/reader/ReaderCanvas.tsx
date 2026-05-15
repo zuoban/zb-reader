@@ -3,7 +3,6 @@
 import dynamic from "next/dynamic";
 import React from "react";
 import { Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 const EpubReader = dynamic(() => import("@/components/reader/EpubReader"), {
   ssr: false,
@@ -28,7 +27,7 @@ function ReaderCanvasInner() {
     activeTtsParagraphId, 
     activeTtsSentenceIndexInParagraph 
   } = useTts();
-  const { toolbarVisible, currentChapterTitle } = useReaderUI();
+  const { currentChapterTitle } = useReaderUI();
   const {
     progress,
     currentPage,
