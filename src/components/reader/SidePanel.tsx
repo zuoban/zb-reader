@@ -7,9 +7,35 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 import { TocTab, BookmarksTab, NotesTab } from "./panels";
 
 import { useBookData, useReaderUI, useNavigation, useAnnotation } from "./providers";
+
+const sidePanelTabClass = cn(
+  "group relative h-8 min-w-0 flex-none cursor-pointer gap-2 px-3 text-[13px] font-medium tracking-wide transition-all duration-300",
+  "text-[var(--reader-muted-text)] hover:text-[var(--reader-text)]",
+  "data-[state=active]:text-[var(--reader-primary)]",
+  "data-[state=active]:after:absolute data-[state=active]:after:bottom-0 data-[state=active]:after:left-2 data-[state=active]:after:right-2",
+  "data-[state=active]:after:h-[2px] data-[state=active]:after:bg-[var(--reader-primary)] data-[state=active]:after:rounded-full",
+  "after:hidden",
+  "focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-0"
+);
+
+function TabCount({ count }: { count: number }) {
+  const label = count > 999 ? "999+" : String(count);
+
+  return (
+    <span className="shrink-0 text-[10px] font-bold leading-none tabular-nums px-1.5 py-0.5 rounded-md transition-all duration-300"
+      style={{
+        color: "var(--reader-muted-text)",
+        opacity: 0.5,
+        background: "color-mix(in srgb, var(--reader-text) 5%, transparent)",
+      }}>
+      {label}
+    </span>
+  );
+}
 
 export const SidePanel = memo(function SidePanel() {
   const { bookmarks, notes } = useBookData();
@@ -57,27 +83,31 @@ export const SidePanel = memo(function SidePanel() {
           onValueChange={(v) => onTabChange(v as "toc" | "bookmarks" | "notes")}
           className="flex flex-1 min-h-0 flex-col"
         >
-          <div className="px-6 mt-2 shrink-0">
+          <div className="px-5 pt-3 pb-0 shrink-0">
             <TabsList
-              className="grid h-11 grid-cols-3 rounded-[18px] bg-[var(--reader-text)]/5 p-1 gap-1"
+              variant="line"
+              className="h-9 w-full justify-start gap-0 bg-transparent p-0 border-b border-[color-mix(in_srgb,var(--reader-text)_8%,transparent)]"
             >
               <TabsTrigger
                 value="toc"
-                className="rounded-[15px] text-[12px] font-bold tracking-tight transition-all duration-300 data-[state=active]:bg-[var(--reader-bg)] data-[state=active]:text-[var(--reader-primary)] data-[state=active]:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.15)] dark:data-[state=active]:shadow-[0_8px_25px_-6px_rgba(0,0,0,0.4)]"
+                className={sidePanelTabClass}
               >
-                目录
+                <span className="min-w-0 truncate">目录</span>
+                <TabCount count={toc.length} />
               </TabsTrigger>
               <TabsTrigger
                 value="bookmarks"
-                className="rounded-[15px] text-[12px] font-bold tracking-tight transition-all duration-300 data-[state=active]:bg-[var(--reader-bg)] data-[state=active]:text-[var(--reader-primary)] data-[state=active]:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.15)] dark:data-[state=active]:shadow-[0_8px_25px_-6px_rgba(0,0,0,0.4)]"
+                className={sidePanelTabClass}
               >
-                书签
+                <span className="min-w-0 truncate">书签</span>
+                <TabCount count={bookmarks.length} />
               </TabsTrigger>
               <TabsTrigger
                 value="notes"
-                className="rounded-[15px] text-[12px] font-bold tracking-tight transition-all duration-300 data-[state=active]:bg-[var(--reader-bg)] data-[state=active]:text-[var(--reader-primary)] data-[state=active]:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.15)] dark:data-[state=active]:shadow-[0_8px_25px_-6px_rgba(0,0,0,0.4)]"
+                className={sidePanelTabClass}
               >
-                笔记
+                <span className="min-w-0 truncate">笔记</span>
+                <TabCount count={notes.length} />
               </TabsTrigger>
             </TabsList>
           </div>

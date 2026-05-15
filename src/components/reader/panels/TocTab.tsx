@@ -39,7 +39,7 @@ export const TocTab = memo(function TocTab({
   const rowVirtualizer = useVirtualizer({
     count: flattenedToc.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 44, // Estimated height of TocItemRow
+    estimateSize: () => 36,
     overscan: 10,
   });
 
@@ -55,7 +55,6 @@ export const TocTab = memo(function TocTab({
     });
 
     if (activeIndex !== -1) {
-      // Delay to ensure virtualizer has calculated sizes and DOM is ready
       const timer = setTimeout(() => {
         rowVirtualizer.scrollToIndex(activeIndex, { align: "center", behavior: "auto" });
       }, 300);
@@ -65,27 +64,12 @@ export const TocTab = memo(function TocTab({
 
   return (
     <div className="flex h-full flex-col">
-      {/* Header Section */}
-      <div className="flex shrink-0 items-center justify-between gap-3 p-5 pb-3">
-        <span
-          className="text-[10px] font-semibold tracking-[0.15em] uppercase"
-          style={{ color: "var(--reader-text)", opacity: 0.75 }}
-        >
-          书籍目录 · Contents
-        </span>
-        <div className="px-2 py-0.5 rounded-md" style={{ background: "color-mix(in srgb, var(--reader-primary) 8%, transparent)" }}>
-          <p className="text-[10px] font-semibold tracking-tight" style={{ color: "var(--reader-primary)" }}>
-            {flattenedToc.length} 个章节
-          </p>
-        </div>
-      </div>
-
-      <div 
+      <div
         ref={parentRef}
-        className="flex-1 overflow-y-auto scrollbar-hide px-4 pb-12"
+        className="flex-1 overflow-y-auto scrollbar-hide px-5 pb-12"
       >
         {toc.length === 0 ? (
-          <div className="p-6">
+          <div className="pt-10">
             <EmptyState
               icon={List}
               title="暂无目录"
@@ -115,7 +99,7 @@ export const TocTab = memo(function TocTab({
                   }}
                 >
                   <TocItemRow
-                    item={{ ...item, subitems: [] }} // Pass empty subitems because we handle hierarchy via level
+                    item={{ ...item, subitems: [] }}
                     level={item.level}
                     currentHref={currentHref}
                     onTocItemClick={onTocItemClick}
