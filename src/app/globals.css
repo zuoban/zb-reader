@@ -760,24 +760,24 @@
 }
 
 .reader-status-footer {
-  border-top: 1px solid color-mix(in srgb, var(--reader-text, #111) 11%, transparent);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, white 18%, transparent), transparent 72%),
-    color-mix(in srgb, var(--reader-bg, white) 96%, var(--reader-card-bg, white) 4%);
-  color: var(--reader-text, #111);
+  --reader-status-text: color-mix(in srgb, var(--reader-text, #111) 78%, black);
+
+  border-top: 1px solid color-mix(in srgb, var(--reader-text, #111) 18%, var(--reader-bg, white));
+  background: var(--reader-bg, white);
+  color: var(--reader-status-text);
   box-shadow:
-    0 -1px 0 color-mix(in srgb, white 34%, transparent) inset,
-    0 -12px 26px -26px color-mix(in srgb, var(--reader-text, #111) 42%, transparent);
+    0 -1px 0 color-mix(in srgb, white 42%, var(--reader-bg, white)) inset,
+    0 -16px 30px -22px color-mix(in srgb, var(--reader-text, #111) 36%, var(--reader-bg, white));
 }
 
 .reader-status-title {
-  color: color-mix(in srgb, var(--reader-text, #111) 88%, transparent);
+  color: var(--reader-status-text);
   text-shadow: 0 1px 0 color-mix(in srgb, var(--reader-bg, white) 72%, transparent);
 }
 
 .reader-status-meta {
-  color: color-mix(in srgb, var(--reader-text, #111) 68%, transparent);
-  letter-spacing: 0.08em;
+  color: var(--reader-status-text);
+  letter-spacing: 0.03em;
 }
 
 .reader-status-divider {
@@ -848,22 +848,22 @@
 }
 
 [data-reader-theme="dark"] .reader-status-footer {
-  border-top-color: color-mix(in srgb, var(--reader-text, #fff) 12%, transparent);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, white 5%, transparent), transparent 74%),
-    color-mix(in srgb, var(--reader-bg, #111) 96%, var(--reader-card-bg, #111) 4%);
+  --reader-status-text: color-mix(in srgb, var(--reader-text, #fff) 88%, white);
+
+  border-top-color: color-mix(in srgb, var(--reader-text, #fff) 18%, var(--reader-bg, #111));
+  background: var(--reader-bg, #111);
   box-shadow:
-    0 -1px 0 color-mix(in srgb, white 5%, transparent) inset,
-    0 -12px 26px -26px color-mix(in srgb, black 80%, transparent);
+    0 -1px 0 color-mix(in srgb, white 7%, var(--reader-bg, #111)) inset,
+    0 -16px 30px -22px color-mix(in srgb, black 80%, var(--reader-bg, #111));
 }
 
 [data-reader-theme="dark"] .reader-status-title {
-  color: color-mix(in srgb, var(--reader-text, #fff) 90%, transparent);
+  color: var(--reader-status-text);
   text-shadow: none;
 }
 
 [data-reader-theme="dark"] .reader-status-meta {
-  color: color-mix(in srgb, var(--reader-text, #fff) 72%, transparent);
+  color: var(--reader-status-text);
 }
 
 [data-reader-theme="dark"] .reader-status-divider {

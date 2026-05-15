@@ -79,10 +79,10 @@ function ReaderCanvasInner() {
       {!isTtsViewOpen && (
         <div
           className={cn(
-            "reader-status-footer relative flex shrink-0 items-center justify-between overflow-hidden px-6 text-[10px] font-medium tracking-wide transition-all duration-500 ease-in-out sm:px-10",
-            toolbarVisible ? "h-0 opacity-0 pointer-events-none border-t-transparent" : "h-10 opacity-100"
+            "reader-status-footer relative grid shrink-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 overflow-hidden border-t border-[color-mix(in_srgb,var(--reader-text)_14%,transparent)] bg-[var(--reader-bg)] px-6 text-xs font-bold tracking-tight shadow-[0_-12px_32px_-28px_color-mix(in_srgb,var(--reader-text)_55%,transparent)] transition-all duration-500 ease-in-out sm:px-10",
+            toolbarVisible ? "h-0 opacity-0 pointer-events-none border-t-transparent" : "h-11 opacity-100"
           )}
-          style={{ color: "var(--reader-text)", opacity: 0.4 }}
+          style={{ color: "var(--reader-text)" }}
         >
           {/* Left: Progress */}
           <div className="flex min-w-[3rem] shrink-0 items-center">
@@ -91,9 +91,12 @@ function ReaderCanvasInner() {
             </span>
           </div>
 
-          {/* Center: Title (Absolute Centered) */}
-          <div className="absolute left-1/2 top-1/2 w-full max-w-[60vw] -translate-x-1/2 -translate-y-1/2 text-center sm:max-w-xl">
-            <span className="reader-status-title block truncate font-heading text-[10px] font-medium tracking-tight">
+          {/* Center: Title */}
+          <div className="min-w-0 text-center">
+            <span
+              className="reader-status-title block truncate font-heading text-xs font-bold tracking-tight"
+              title={currentChapterTitle || book.title}
+            >
               {currentChapterTitle || book.title}
             </span>
           </div>
@@ -103,7 +106,7 @@ function ReaderCanvasInner() {
             {currentPage != null && totalPages != null && (
               <>
                 <span>{currentPage}</span>
-                <span className="mx-0.5 opacity-30">/</span>
+                <span className="mx-0.5 opacity-60">/</span>
                 <span>{totalPages}</span>
               </>
             )}

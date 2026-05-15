@@ -110,7 +110,7 @@ export const ReaderToolbar = memo(function ReaderToolbar({
           toolbarVisible && !isSpeaking && !isTtsViewOpen ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
         )}
       >
-        <div className="flex h-14 items-center justify-between border-b border-[color-mix(in_srgb,var(--reader-text)_5%,transparent)] bg-[var(--reader-bg)]/95 px-4 backdrop-blur-md">
+        <div className="grid h-14 grid-cols-[auto_minmax(0,1fr)_auto] items-center border-b border-[color-mix(in_srgb,var(--reader-text)_5%,transparent)] bg-[var(--reader-bg)]/95 px-4 backdrop-blur-md">
           {/* 左侧：返回 */}
           <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
             <ToolbarButton onClick={handleBack} tooltip="返回书架">
@@ -130,8 +130,11 @@ export const ReaderToolbar = memo(function ReaderToolbar({
           </div>
 
           {/* 中间：书名 */}
-          <div className="absolute left-1/2 -translate-x-1/2 max-w-[40%] sm:max-w-[50%] text-center">
-            <h1 className="truncate font-heading text-[13px] sm:text-sm font-bold tracking-tight text-[var(--reader-text)]">
+          <div className="min-w-0 px-2 text-center sm:px-4">
+            <h1
+              className="truncate font-heading text-[13px] font-bold tracking-tight text-[var(--reader-text)] sm:text-sm"
+              title={book?.title}
+            >
               {book?.title}
             </h1>
           </div>

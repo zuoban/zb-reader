@@ -201,7 +201,7 @@ export function useEpubInitializer({
           height: "100%",
           spread: "none",
           flow: "scrolled-doc",
-          allowScriptedContent: true,
+          allowScriptedContent: false,
         });
         renditionRef.current = rendition;
         epubContextRef.current.setRendition(rendition);
