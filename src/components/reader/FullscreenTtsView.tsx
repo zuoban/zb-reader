@@ -31,6 +31,7 @@ interface FullscreenTtsViewProps {
   ttsRate: number;
   selectedTtsVoiceId: string;
   ttsVoices: BrowserVoiceOption[];
+  onLoadTtsVoices: () => Promise<void>;
   isFullscreen: boolean;
   onBackToReader: () => void;
   onToggle: () => void;
@@ -59,6 +60,7 @@ export function FullscreenTtsView({
   ttsRate,
   selectedTtsVoiceId,
   ttsVoices,
+  onLoadTtsVoices,
   isFullscreen,
   onBackToReader,
   onToggle,
@@ -73,7 +75,10 @@ export function FullscreenTtsView({
 
   const handleSettingsOpenChange = useCallback((open: boolean) => {
     setSettingsOpen(open);
-  }, []);
+    if (open) {
+      void onLoadTtsVoices();
+    }
+  }, [onLoadTtsVoices]);
 
   const overallProgress = clampProgress(progress);
   const paragraphText = activeParagraph?.trim();

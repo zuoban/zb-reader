@@ -32,6 +32,7 @@ interface TtsContextValue {
   handleTtsPrevChapter: () => void;
   stopSpeaking: () => void;
   ttsVoices: BrowserVoiceOption[];
+  loadTtsVoices: () => Promise<void>;
   ttsRate: number;
   setTtsRate: (rate: number) => void;
 }
@@ -40,7 +41,7 @@ const TtsContext = createContext<TtsContextValue | null>(null);
 
 export function TtsProvider({ children }: { children: React.ReactNode }) {
   const { book } = useBookData();
-  const { ttsVoices } = useReaderSettings();
+  const { ttsVoices, loadTtsVoices } = useReaderSettings();
   const { epubReaderRef, currentCfiRef, setToolbarVisible } = useReaderContext();
   
   const {
@@ -160,6 +161,7 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
     handleTtsPrevChapter,
     stopSpeaking,
     ttsVoices,
+    loadTtsVoices,
     ttsRate,
     setTtsRate,
   };

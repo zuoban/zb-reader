@@ -14,6 +14,7 @@ interface ReaderSettingsContextValue {
   ttsVoices: BrowserVoiceOption[];
   currentTheme: ReaderThemeStyle;
   readerTheme: string;
+  loadTtsVoices: () => Promise<void>;
 }
 
 const ReaderSettingsContext = createContext<ReaderSettingsContextValue | null>(null);
@@ -23,7 +24,7 @@ export function ReaderSettingsProvider({ children }: { children: React.ReactNode
   const debouncedSaveSettings = useDebouncedSettingsSave();
   const { theme } = useReaderSettingsValues();
 
-  const { ttsVoices, currentTheme } = useReaderSettingsLifecycle(
+  const { ttsVoices, currentTheme, loadTtsVoices } = useReaderSettingsLifecycle(
     settingsLifecycleState,
     debouncedSaveSettings
   );
@@ -32,6 +33,7 @@ export function ReaderSettingsProvider({ children }: { children: React.ReactNode
     ttsVoices,
     currentTheme,
     readerTheme: theme,
+    loadTtsVoices,
   };
 
   return (

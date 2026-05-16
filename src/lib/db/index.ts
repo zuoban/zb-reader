@@ -14,9 +14,7 @@ if (!fs.existsSync(DATA_DIR)) {
 
 // Global persistence for HMR in development
 declare global {
-  // eslint-disable-next-line no-var
   var _sqlite: Database.Database | undefined;
-  // eslint-disable-next-line no-var
   var _db: ReturnType<typeof drizzle<typeof schema>> | undefined;
 }
 

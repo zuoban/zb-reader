@@ -76,9 +76,9 @@ export const ReaderToolbar = memo(function ReaderToolbar({
   rightContent,
 }: ReaderToolbarProps) {
   const { book } = useBookData();
-  const { isSpeaking, isTtsViewOpen, handleToggleTts } = useTts();
+  const { isSpeaking, isTtsViewOpen: _isTtsViewOpen, handleToggleTts } = useTts();
   const { 
-    toolbarVisible, 
+    toolbarVisible: _toolbarVisible, 
     isFullscreen, 
     toggleFullscreen, 
     openToc, 

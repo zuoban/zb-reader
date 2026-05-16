@@ -1,13 +1,11 @@
 "use client";
 
+import dynamic from "next/dynamic";
+import { useParams } from "next/navigation";
+import { useEffect } from "react";
 import { IdleCountdownWarning } from "@/components/reader/IdleCountdownWarning";
 import { ReaderCanvas } from "@/components/reader/ReaderCanvas";
-import { ReaderToolbar } from "@/components/reader/ReaderToolbar";
-import { SidePanel } from "@/components/reader/SidePanel";
-import { ReadingSettings } from "@/components/reader/ReadingSettings";
-import { TextSelectionMenu } from "@/components/reader/TextSelectionMenu";
-import { NoteEditor } from "@/components/reader/NoteEditor";
-import { ReaderTtsLayer } from "@/components/reader/ReaderTtsLayer";
+
 import { Loader2 } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import {
@@ -16,6 +14,78 @@ import {
   useReaderUI,
   useReaderSettings,
 } from "@/components/reader/providers";
+
+const SidePanel = dynamic(
+  () => import("@/components/reader/SidePanel").then((m) => m.SidePanel),
+  { ssr: false }
+);
+
+const ReadingSettings = dynamic(
+  () => import("@/components/reader/ReadingSettings").then((m) => m.ReadingSettings),
+  { ssr: false }
+);
+
+const TextSelectionMenu = dynamic(
+  () => import("@/components/reader/TextSelectionMenu").then((m) => m.TextSelectionMenu),
+  { ssr: false }
+);
+
+const NoteEditor = dynamic(
+  () => import("@/components/reader/NoteEditor").then((m) => m.NoteEditor),
+  { ssr: false }
+);
+
+const ReaderTtsLayer = dynamic(
+  () => import("@/components/reader/ReaderTtsLayer").then((m) => m.ReaderTtsLayer),
+  { ssr: false }
+);
+
+/**
+ * Preconnect and prefetch lightweight resources for reader loading.
+ *
+ * Note: EPUB file prefetch is intentionally excluded here because:
+ * 1. It would trigger a separate download that bypasses IndexedDB cache
+ * 2. The actual EPUB download and caching is handled in useReaderBookData hook
+ * 3. We only preconnect to warm up the TCP connection, not download the file
+ */
+function ResourcePreloader() {
+  const params = useParams();
+  const bookId = params.bookId as string;
+
+  useEffect(() => {
+    // Preconnect to origin for faster subsequent requests
+    const preconnect = document.createElement("link");
+    preconnect.rel = "preconnect";
+    preconnect.href = window.location.origin;
+    document.head.appendChild(preconnect);
+
+    // Prefetch lightweight bootstrap API (returns JSON, not binary)
+    const prefetchBootstrap = document.createElement("link");
+    prefetchBootstrap.rel = "prefetch";
+    prefetchBootstrap.as = "fetch";
+    prefetchBootstrap.href = `/api/reader/bootstrap?bookId=${bookId}`;
+    prefetchBootstrap.crossOrigin = "anonymous";
+    document.head.appendChild(prefetchBootstrap);
+
+    // Prefetch reader-settings API
+    const prefetchSettings = document.createElement("link");
+    prefetchSettings.rel = "prefetch";
+    prefetchSettings.as = "fetch";
+    prefetchSettings.href = "/api/reader-settings";
+    prefetchSettings.crossOrigin = "anonymous";
+    document.head.appendChild(prefetchSettings);
+
+    return () => {
+      // Removing <link> elements doesn't cancel in-flight requests,
+      // but keeps the DOM clean for subsequent mounts (e.g. bookId change).
+      document.head.removeChild(preconnect);
+      document.head.removeChild(prefetchBootstrap);
+      document.head.removeChild(prefetchSettings);
+    };
+  }, [bookId]);
+
+  return null;
+}
 
 function ReaderContent() {
   const { book, loading, bookData, bookUrl } = useBookData();
@@ -68,6 +138,7 @@ function ReaderContent() {
 export default function ReaderPage() {
   return (
     <ReaderProviders>
+      <ResourcePreloader />
       <ReaderContent />
     </ReaderProviders>
   );

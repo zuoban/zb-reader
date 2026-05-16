@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { READER_THEME_STYLES } from "@/lib/reader-theme";
 import type { BrowserVoiceOption } from "@/lib/tts";
 import type { FontFamily, TtsHighlightStyle } from "@/stores/reader-settings";
@@ -29,6 +29,12 @@ export function useReaderSettingsLifecycle(
   debouncedSaveSettings: () => void
 ) {
   const [ttsVoices, setTtsVoices] = useState<BrowserVoiceOption[]>([]);
+  const ttsVoicesLoadedRef = useRef(false);
+  const {
+    loaded,
+    setTtsVoiceId,
+    ttsVoiceId,
+  } = settings;
   const currentTheme =
     READER_THEME_STYLES[settings.theme] || READER_THEME_STYLES.light;
 
@@ -57,31 +63,28 @@ export function useReaderSettingsLifecycle(
     settings.ttsHighlightStyle,
   ]);
 
-  useEffect(() => {
-    if (!settings.loaded) return;
+  const loadTtsVoices = useCallback(async () => {
+    if (!loaded) return;
+    if (ttsVoicesLoadedRef.current) return;
 
-    const loadVoices = async () => {
-      try {
-        const res = await fetch("/api/tts/microsoft/voices");
-        if (!res.ok) return;
-        const data = (await res.json()) as { voices?: BrowserVoiceOption[] };
-        const mapped = data.voices || [];
-        setTtsVoices(mapped);
-        const currentVoiceId = settings.ttsVoiceId;
-        if (mapped.length > 0) {
-          if (currentVoiceId && mapped.some((voice) => voice.id === currentVoiceId)) {
-            return;
-          }
-          settings.setTtsVoiceId(mapped[0].id);
+    try {
+      const res = await fetch("/api/tts/microsoft/voices");
+      if (!res.ok) return;
+      const data = (await res.json()) as { voices?: BrowserVoiceOption[] };
+      const mapped = data.voices || [];
+      ttsVoicesLoadedRef.current = true;
+      setTtsVoices(mapped);
+      const currentVoiceId = ttsVoiceId;
+      if (mapped.length > 0) {
+        if (currentVoiceId && mapped.some((voice) => voice.id === currentVoiceId)) {
+          return;
         }
-      } catch {
-        // ignore
+        setTtsVoiceId(mapped[0].id);
       }
-    };
-
-    loadVoices();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings.loaded]);
+    } catch {
+      // ignore
+    }
+  }, [loaded, setTtsVoiceId, ttsVoiceId]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -99,5 +102,6 @@ export function useReaderSettingsLifecycle(
   return {
     ttsVoices,
     currentTheme,
+    loadTtsVoices,
   };
 }

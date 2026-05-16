@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { BookOpen, Sparkles, Upload } from "lucide-react";
 import { BookCard } from "./BookCard";
 import type { Book } from "@/lib/db/schema";

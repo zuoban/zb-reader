@@ -47,7 +47,6 @@ vi.mock("@/lib/logger", () => ({
 import { DELETE } from "./route";
 import * as apiUtils from "@/lib/api-utils";
 import * as db from "@/lib/db";
-import { books } from "@/lib/db/schema";
 
 describe("Batch Delete API", () => {
   beforeEach(() => {
@@ -58,10 +57,10 @@ describe("Batch Delete API", () => {
     const userId = "user-1";
     const bookIds = ["book-1", "book-2"];
 
-    (apiUtils.getAuthUserId as any).mockResolvedValue({ userId });
-    (apiUtils.validateJson as any).mockResolvedValue({ data: { bookIds } });
+    vi.mocked(apiUtils.getAuthUserId).mockResolvedValue({ userId });
+    vi.mocked(apiUtils.validateJson).mockResolvedValue({ data: { bookIds } });
 
-    (db.db.query.books.findMany as any).mockResolvedValue([
+    vi.mocked(db.db.query.books.findMany).mockResolvedValue([
       { id: "book-1", filePath: "file-1.epub", cover: "cover-1.jpg" },
       { id: "book-2", filePath: "file-2.epub", cover: null },
     ]);
@@ -80,7 +79,7 @@ describe("Batch Delete API", () => {
 
   it("should return 401 when user is not authenticated", async () => {
     const authError = { json: () => ({ message: "未登录" }), status: 401 };
-    (apiUtils.getAuthUserId as any).mockResolvedValue({ error: authError });
+    vi.mocked(apiUtils.getAuthUserId).mockResolvedValue({ error: authError });
 
     const req = new NextRequest("http://localhost/api/books/batch-delete", {
       method: "DELETE",
@@ -92,8 +91,8 @@ describe("Batch Delete API", () => {
 
   it("should return 400 if validation fails", async () => {
     const userId = "user-1";
-    (apiUtils.getAuthUserId as any).mockResolvedValue({ userId });
-    (apiUtils.validateJson as any).mockResolvedValue({ error: { status: 400, json: () => ({}) } });
+    vi.mocked(apiUtils.getAuthUserId).mockResolvedValue({ userId });
+    vi.mocked(apiUtils.validateJson).mockResolvedValue({ error: { status: 400, json: () => ({}) } });
 
     const req = new NextRequest("http://localhost/api/books/batch-delete", {
       method: "DELETE",
@@ -107,9 +106,9 @@ describe("Batch Delete API", () => {
     const userId = "user-1";
     const duplicatedIds = ["book-1", "book-2", "book-1"];
 
-    (apiUtils.getAuthUserId as any).mockResolvedValue({ userId });
-    (apiUtils.validateJson as any).mockResolvedValue({ data: { bookIds: duplicatedIds } });
-    (db.db.query.books.findMany as any).mockResolvedValue([
+    vi.mocked(apiUtils.getAuthUserId).mockResolvedValue({ userId });
+    vi.mocked(apiUtils.validateJson).mockResolvedValue({ data: { bookIds: duplicatedIds } });
+    vi.mocked(db.db.query.books.findMany).mockResolvedValue([
       { id: "book-1", filePath: "file-1.epub", cover: "cover-1.jpg" },
       { id: "book-2", filePath: "file-2.epub", cover: null },
     ]);
@@ -129,9 +128,9 @@ describe("Batch Delete API", () => {
     const userId = "user-1";
     const bookIds = ["book-1", "book-2"];
 
-    (apiUtils.getAuthUserId as any).mockResolvedValue({ userId });
-    (apiUtils.validateJson as any).mockResolvedValue({ data: { bookIds } });
-    (db.db.query.books.findMany as any).mockResolvedValue([]);
+    vi.mocked(apiUtils.getAuthUserId).mockResolvedValue({ userId });
+    vi.mocked(apiUtils.validateJson).mockResolvedValue({ data: { bookIds } });
+    vi.mocked(db.db.query.books.findMany).mockResolvedValue([]);
 
     const req = new NextRequest("http://localhost/api/books/batch-delete", {
       method: "DELETE",

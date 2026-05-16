@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import React, { useEffect } from "react";
+import React from "react";
 import { Loader2 } from "lucide-react";
 
 const EpubReader = dynamic(() => import("@/components/reader/EpubReader"), {
@@ -13,9 +13,19 @@ const EpubReader = dynamic(() => import("@/components/reader/EpubReader"), {
   ),
 });
 
+// Lazy load ReaderToolbar to reduce initial bundle size
+const ReaderToolbar = dynamic(
+  () => import("@/components/reader/ReaderToolbar").then((m) => m.ReaderToolbar),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-11 w-full" aria-hidden="true" />
+    ),
+  }
+);
+
 import { useBookData, useTts, useReaderUI, useNavigation, useReaderSettings } from "./providers";
 import { useReaderContext } from "./ReaderContext";
-import { ReaderToolbar } from "@/components/reader/ReaderToolbar";
 import { useReaderSettingsStore } from "@/stores/reader-settings";
 import { cn } from "@/lib/utils";
 

@@ -22,6 +22,7 @@ export function ReaderTtsLayer() {
     handleTtsPrevChapter: onPrev,
     stopSpeaking: onStop,
     ttsVoices,
+    loadTtsVoices,
     ttsRate,
     setTtsRate: onTtsRateChange,
     setIsTtsViewOpen,
@@ -56,6 +57,7 @@ export function ReaderTtsLayer() {
         ttsRate={ttsRate}
         selectedTtsVoiceId={selectedTtsVoiceId}
         ttsVoices={ttsVoices}
+        onLoadTtsVoices={loadTtsVoices}
         isFullscreen={isFullscreen}
         onBackToReader={onBackToReader}
         onToggle={onToggle}
