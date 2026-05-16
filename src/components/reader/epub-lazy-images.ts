@@ -17,7 +17,7 @@ export function rewriteImagesForLazyLoading(output: string) {
 
   const parser = new DOMParser();
   let doc = parser.parseFromString(output, "application/xhtml+xml");
-  let isXmlDocument = !doc.querySelector("parsererror");
+  const isXmlDocument = !doc.querySelector("parsererror");
   if (!isXmlDocument) {
     doc = parser.parseFromString(output, "text/html");
   }

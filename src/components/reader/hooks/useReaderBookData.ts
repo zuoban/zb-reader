@@ -26,7 +26,7 @@ export function useReaderBookData({
 }: UseReaderBookDataParams) {
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(true);
-  const [bookData, setBookData] = useState<ArrayBuffer | null>(null);
+  const [bookData, _setBookData] = useState<ArrayBuffer | null>(null);
   const [bookUrl, setBookUrl] = useState<string | null>(null);
   const [initialLocation, setInitialLocation] = useState<string | undefined>();
   const [initialProgress, setInitialProgress] = useState<ServerProgressSnapshot | null>();
