@@ -50,6 +50,8 @@ interface EpubReaderProps {
   ttsHighlightColor?: string;
   onSwipeLeft?: () => void;
   onSwipeRight?: () => void;
+  onPrevChapter?: () => void;
+  onNextChapter?: () => void;
   hasPrevChapter?: boolean;
   hasNextChapter?: boolean;
   swipeEnabled?: boolean;
@@ -99,6 +101,8 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       ttsHighlightColor = "#3b82f6",
       onSwipeLeft,
       onSwipeRight,
+      onPrevChapter,
+      onNextChapter,
       hasPrevChapter = false,
       hasNextChapter = false,
       swipeEnabled = true,
@@ -172,12 +176,16 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       nextPage() {
         const rendition = renditionRef.current;
         if (!rendition) return;
-        rendition.next();
+        void rendition.next().then(() => {
+          epubContextRef.current.getScrollContainer()?.scrollTo(0, 0);
+        });
       },
       prevPage() {
         const rendition = renditionRef.current;
         if (!rendition) return;
-        rendition.prev();
+        void rendition.prev().then(() => {
+          epubContextRef.current.getScrollContainer()?.scrollTo(0, 0);
+        });
       },
       scrollDown(amount = 300) {
         const container = epubContextRef.current.getScrollContainer();
@@ -284,6 +292,8 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       epubContextRef,
       isRenditionReady,
       renditionRef,
+      onPrevChapter,
+      onNextChapter,
     });
 
     useEpubScrollProgress({

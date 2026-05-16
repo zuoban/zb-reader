@@ -48,32 +48,6 @@ function ReaderCanvasInner() {
   const fontFamily = useReaderSettingsStore((s) => s.fontFamily);
   const ttsHighlightColor = useReaderSettingsStore((s) => s.ttsHighlightColor);
 
-  // 键盘快捷键：左右方向键切换章节
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // 忽略输入框、文本区域等元素中的按键
-      const target = event.target as HTMLElement;
-      if (
-        target.tagName === "INPUT" ||
-        target.tagName === "TEXTAREA" ||
-        target.isContentEditable
-      ) {
-        return;
-      }
-
-      if (event.key === "ArrowLeft") {
-        event.preventDefault();
-        handlePrevChapter();
-      } else if (event.key === "ArrowRight") {
-        event.preventDefault();
-        handleNextChapter();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handlePrevChapter, handleNextChapter]);
-
   if (!book) return null;
 
   return (
@@ -96,6 +70,8 @@ function ReaderCanvasInner() {
             onClick={isSpeaking ? undefined : handleToggleToolbar}
             onSwipeLeft={handleNextChapter}
             onSwipeRight={handlePrevChapter}
+            onPrevChapter={handlePrevChapter}
+            onNextChapter={handleNextChapter}
             hasPrevChapter={hasPrevChapter}
             hasNextChapter={hasNextChapter}
             swipeEnabled={!isSpeaking}

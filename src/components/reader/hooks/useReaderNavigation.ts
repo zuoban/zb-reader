@@ -6,6 +6,16 @@ import { READER_ROUTE_EXIT_EVENT } from "@/components/layout/ReaderRouteTransiti
 import type { TocItem } from "@/types/reader";
 import type { Book } from "@/lib/db/schema";
 
+function flattenToc(items: TocItem[]): TocItem[] {
+  return items.reduce((acc, item) => {
+    acc.push(item);
+    if (item.subitems && item.subitems.length > 0) {
+      acc.push(...flattenToc(item.subitems));
+    }
+    return acc;
+  }, [] as TocItem[]);
+}
+
 interface SelectionMenuPosition {
   x: number;
   y: number;
@@ -97,6 +107,8 @@ export function useReaderNavigation({
   onTextSelectionOpened,
 }: UseReaderNavigationParams): UseReaderNavigationReturn {
   const router = useRouter();
+
+  const flatToc = useMemo(() => flattenToc(toc), [toc]);
 
   const handleLocationChange = useCallback(
     (location: {
@@ -260,72 +272,67 @@ export function useReaderNavigation({
   const handlePrevChapter = useCallback(() => {
     if (book?.format !== "epub") return;
 
-    // Method 1: Use rendition.prev() - scrolled-doc mode
-    const epubInstance = epubReaderRef.current;
-    if (epubInstance) {
-      epubInstance.prevPage();
+    if (flatToc.length === 0) {
+      // Fallback if TOC is not loaded
+      epubReaderRef.current?.prevPage();
       return;
     }
 
-    // Method 2: Use TOC navigation (fallback)
-    if (toc.length === 0) return;
-
     let currentIndex = -1;
     if (currentHref) {
-      currentIndex = toc.findIndex(
-        (item) => item.href === currentHref || item.href.includes(currentHref)
+      // Try to find exact match or href containing currentHref
+      currentIndex = flatToc.findIndex(
+        (item) => item.href === currentHref || item.href.includes(currentHref) || currentHref.includes(item.href)
       );
     }
 
     if (currentIndex === -1) {
       const currentProgress = progressRef.current;
-      currentIndex = Math.floor((currentProgress ?? 0) * toc.length) - 1;
-      currentIndex = Math.max(0, currentIndex);
+      currentIndex = Math.floor((currentProgress ?? 0) * flatToc.length);
     }
 
     if (currentIndex > 0) {
-      const prevChapter = toc[currentIndex - 1];
+      const prevChapter = flatToc[currentIndex - 1];
       epubReaderRef.current?.goToHref(prevChapter.href);
+    } else {
+      // Already at first chapter, just scroll to top
+      epubReaderRef.current?.goToPercentage(0);
     }
-  }, [book?.format, currentHref, toc, epubReaderRef, progressRef]);
+  }, [book?.format, currentHref, flatToc, epubReaderRef, progressRef]);
 
   const handleNextChapter = useCallback(() => {
     if (book?.format !== "epub") return;
 
-    // Method 1: Use rendition.next() - scrolled-doc mode
-    const epubInstance = epubReaderRef.current;
-    if (epubInstance) {
-      epubInstance.nextPage();
+    if (flatToc.length === 0) {
+      // Fallback if TOC is not loaded
+      epubReaderRef.current?.nextPage();
       return;
     }
 
-    // Method 2: Use TOC navigation (fallback)
-    if (toc.length === 0) return;
-
     let currentIndex = -1;
     if (currentHref) {
-      currentIndex = toc.findIndex(
-        (item) => item.href === currentHref || item.href.includes(currentHref)
+      currentIndex = flatToc.findIndex(
+        (item) => item.href === currentHref || item.href.includes(currentHref) || currentHref.includes(item.href)
       );
     }
 
     if (currentIndex === -1) {
       const currentProgress = progressRef.current;
-      currentIndex = Math.floor((currentProgress ?? 0) * toc.length);
+      currentIndex = Math.floor((currentProgress ?? 0) * flatToc.length);
     }
 
-    if (currentIndex !== -1 && currentIndex < toc.length - 1) {
-      const nextChapter = toc[currentIndex + 1];
+    if (currentIndex !== -1 && currentIndex < flatToc.length - 1) {
+      const nextChapter = flatToc[currentIndex + 1];
       epubReaderRef.current?.goToHref(nextChapter.href);
     }
-  }, [book?.format, currentHref, toc, epubReaderRef, progressRef]);
+  }, [book?.format, currentHref, flatToc, epubReaderRef, progressRef]);
 
   const { hasPrevChapter, hasNextChapter } = useMemo(() => {
     let prev = false;
     let next = false;
 
-    if (book?.format === "epub" && toc.length > 0) {
-      const currentIdx = toc.findIndex(
+    if (book?.format === "epub" && flatToc.length > 0) {
+      const currentIdx = flatToc.findIndex(
         (item) =>
           item.href === currentHref ||
           currentHref?.includes(item.href) ||
@@ -334,7 +341,7 @@ export function useReaderNavigation({
 
       if (currentIdx !== -1) {
         prev = currentIdx > 0;
-        next = currentIdx < toc.length - 1;
+        next = currentIdx < flatToc.length - 1;
       } else if (currentHref) {
         prev = true;
         next = true;
@@ -345,7 +352,7 @@ export function useReaderNavigation({
       hasPrevChapter: prev,
       hasNextChapter: next,
     };
-  }, [book?.format, currentHref, toc]);
+  }, [book?.format, currentHref, flatToc]);
 
   return {
     handleLocationChange,
