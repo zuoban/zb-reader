@@ -14,7 +14,7 @@ interface BookFacetsCacheEntry {
 }
 
 const facetsCache = new Map<string, BookFacetsCacheEntry>();
-const FACETS_CACHE_TTL_MS = 1000 * 30;
+const FACETS_CACHE_TTL_MS = 1000 * 60 * 10; // 10 分钟
 const MAX_FACETS_CACHE_SIZE = 500;
 
 export async function getBookFacets(userId: string): Promise<{

@@ -6,6 +6,7 @@ import type { EpubReaderRef } from "@/components/reader/EpubReader";
 import type { Book } from "@/lib/db/schema";
 import { getTtsSentenceKey, paragraphsToSentences, type Sentence } from "@/lib/textUtils";
 import type { ReaderParagraph } from "@/types/reader";
+import { useTtsChapterNavigation } from "./useTtsChapterNavigation";
 
 const MAX_TTS_RETRY_COUNT = 5;
 const TTS_RETRY_DELAY_MS = 600;

@@ -3,6 +3,14 @@ import { auth } from "@/lib/auth";
 import type { z } from "zod";
 
 /**
+ * 将当前时间格式化为数据库兼容的字符串格式
+ * @returns 格式化的时间字符串,如 "2024-01-01 12:00:00"
+ */
+export function formatDbTimestamp(): string {
+  return new Date().toISOString().replace("T", " ").replace("Z", "");
+}
+
+/**
  * 创建未认证错误响应
  */
 export function unauthorized(message = "未登录"): NextResponse {
@@ -39,7 +47,7 @@ export function forbidden(message = "无权访问"): NextResponse {
 
 /**
  * 检查用户是否已认证
- * @returns 如果未认证返回 NextResponse，否则返回 null
+ * @returns 如果未认证返回 NextResponse,否则返回 null
  */
 export async function requireAuth(): Promise<NextResponse | null> {
   const session = await auth();
@@ -50,7 +58,7 @@ export async function requireAuth(): Promise<NextResponse | null> {
 }
 
 /**
- * 获取当前认证用户 ID，失败时返回未登录响应
+ * 获取当前认证用户 ID,失败时返回未登录响应
  */
 export async function getAuthUserId(): Promise<
   | { userId: string; error?: undefined }
@@ -78,7 +86,7 @@ export async function getUserId(): Promise<string> {
 
 /**
  * 使用 Zod schema 校验请求体
- * @returns 校验成功返回 { data }，失败返回 NextResponse 错误响应
+ * @returns 校验成功返回 { data },失败返回 NextResponse 错误响应
  */
 export async function validateJson<T extends z.ZodType>(
   req: Request,

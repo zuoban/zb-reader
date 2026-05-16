@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { bookmarks } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
-import { getAuthUserId, notFound, serverError, validateJson } from "@/lib/api-utils";
+import { formatDbTimestamp, getAuthUserId, notFound, serverError, validateJson } from "@/lib/api-utils";
 import { bookmarkUpdateSchema } from "@/lib/validations";
 
 export async function PUT(
@@ -31,16 +31,19 @@ export async function PUT(
       return notFound("书签不存在");
     }
 
-    const now = new Date().toISOString().replace("T", " ").replace("Z", "");
+    const now = formatDbTimestamp();
 
     await db
       .update(bookmarks)
       .set({ label, updatedAt: now })
       .where(eq(bookmarks.id, id));
 
-    const updated = await db.query.bookmarks.findFirst({
-      where: eq(bookmarks.id, id),
-    });
+    // 直接构造返回对象,避免再次查询数据库
+    const updated = {
+      ...bookmark,
+      label,
+      updatedAt: now,
+    };
 
     return NextResponse.json({ bookmark: updated });
   } catch (error) {

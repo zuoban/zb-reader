@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { notes } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
-import { getAuthUserId, notFound, serverError, validateJson } from "@/lib/api-utils";
+import { formatDbTimestamp, getAuthUserId, notFound, serverError, validateJson } from "@/lib/api-utils";
 import { noteUpdateSchema } from "@/lib/validations";
 
 export async function PUT(
@@ -28,7 +28,7 @@ export async function PUT(
       return notFound("笔记不存在");
     }
 
-    const now = new Date().toISOString().replace("T", " ").replace("Z", "");
+    const now = formatDbTimestamp();
 
     await db
       .update(notes)
@@ -39,9 +39,13 @@ export async function PUT(
       })
       .where(eq(notes.id, id));
 
-    const updated = await db.query.notes.findFirst({
-      where: eq(notes.id, id),
-    });
+    // 直接构造返回对象,避免再次查询数据库
+    const updated = {
+      ...note,
+      ...(content !== undefined && { content }),
+      ...(color !== undefined && { color }),
+      updatedAt: now,
+    };
 
     return NextResponse.json({ note: updated });
   } catch (error) {
