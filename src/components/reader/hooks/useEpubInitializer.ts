@@ -144,15 +144,55 @@ function injectSupSubImageStyle(doc: Document) {
   doc.head.appendChild(style);
 }
 
-function restoreInitialScroll(viewer: HTMLDivElement | null, ratio: number) {
+export function restoreInitialScroll(
+  viewer: HTMLDivElement | null,
+  ratio: number,
+  shouldSkip?: () => boolean
+) {
+  if (shouldSkip?.()) return false;
+
   const containers = viewer?.querySelectorAll(".epub-container");
-  if (!containers || containers.length === 0) return;
+  if (!containers || containers.length === 0) return false;
   const epubContainer = containers[containers.length - 1] as HTMLElement;
 
   const scrollRange = epubContainer.scrollHeight - epubContainer.clientHeight;
   if (scrollRange > 0) {
     epubContainer.scrollTop = Math.round(ratio * scrollRange);
+    return true;
   }
+
+  return false;
+}
+
+function watchUserScrollIntent(
+  viewer: HTMLDivElement | null,
+  onIntent: () => void
+) {
+  if (!viewer) return () => {};
+
+  const options: AddEventListenerOptions = { capture: true, passive: true };
+  const targets: EventTarget[] = [viewer, window];
+  const iframeDoc = (viewer.querySelector("iframe") as HTMLIFrameElement | null)?.contentDocument;
+
+  if (iframeDoc) {
+    targets.push(iframeDoc);
+  }
+
+  for (const target of targets) {
+    target.addEventListener("wheel", onIntent, options);
+    target.addEventListener("touchstart", onIntent, options);
+    target.addEventListener("pointerdown", onIntent, options);
+    target.addEventListener("keydown", onIntent, options);
+  }
+
+  return () => {
+    for (const target of targets) {
+      target.removeEventListener("wheel", onIntent, options);
+      target.removeEventListener("touchstart", onIntent, options);
+      target.removeEventListener("pointerdown", onIntent, options);
+      target.removeEventListener("keydown", onIntent, options);
+    }
+  };
 }
 
 export function useEpubInitializer({
@@ -257,16 +297,27 @@ export function useEpubInitializer({
             // which changes the scrollHeight dynamically.
             let attempts = 0;
             const maxAttempts = 10;
+            let userInterruptedRestore = false;
+            const cleanupUserIntentWatcher = watchUserScrollIntent(viewerRef.current, () => {
+              userInterruptedRestore = true;
+              isInitialDisplayRef.current = false;
+              cleanupUserIntentWatcher();
+            });
             
             const restore = () => {
-              if (cancelled || !viewerRef.current || attempts >= maxAttempts) {
+              if (cancelled || !viewerRef.current || attempts >= maxAttempts || userInterruptedRestore) {
                 isInitialDisplayRef.current = false;
+                cleanupUserIntentWatcher();
                 return;
               }
               
               const container = epubContextRef.current.getScrollContainer();
               if (container && container.scrollHeight > container.clientHeight) {
-                restoreInitialScroll(viewerRef.current, initialScrollRatio);
+                restoreInitialScroll(
+                  viewerRef.current,
+                  initialScrollRatio,
+                  () => userInterruptedRestore
+                );
                 attempts++;
                 
                 // Continue checking for a short while as layout might still be shifting
@@ -274,12 +325,14 @@ export function useEpubInitializer({
                   setTimeout(restore, 200 * attempts);
                 } else {
                   isInitialDisplayRef.current = false;
+                  cleanupUserIntentWatcher();
                 }
               } else if (container) {
                 attempts++;
                 setTimeout(restore, 200);
               } else {
                 isInitialDisplayRef.current = false;
+                cleanupUserIntentWatcher();
               }
             };
             
