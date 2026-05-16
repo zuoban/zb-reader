@@ -4,6 +4,8 @@ import { useState, useCallback } from "react";
 import {
   Maximize,
   Minimize,
+  Pause,
+  Play,
   Settings,
   SkipBack,
   SkipForward,
@@ -11,7 +13,6 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { BookCoverImage } from "@/components/ui/book-cover-image";
 import { TtsSettingsDialog } from "@/components/reader/TtsSettingsDialog";
 import { cn } from "@/lib/utils";
 import type { Book } from "@/lib/db/schema";
@@ -76,7 +77,6 @@ export function FullscreenTtsView({
 
   const overallProgress = clampProgress(progress);
   const paragraphText = activeParagraph?.trim();
-  const statusLabel = isSpeaking && !isPaused ? "朗读中" : isPaused ? "已暂停" : "准备朗读";
 
   return (
     <div
@@ -111,35 +111,20 @@ export function FullscreenTtsView({
       <div className="relative flex h-full flex-col gap-4 px-4 pb-[calc(env(safe-area-inset-bottom)+16px)] pt-[calc(env(safe-area-inset-top)+12px)] text-white sm:gap-6 sm:px-6">
         <header className="mx-auto grid w-full max-w-3xl grid-cols-[auto_1fr_auto] items-center gap-4">
           <div className="flex items-center">
-            {onToggleFullscreen && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={onToggleFullscreen}
-                className="tts-immersive-control size-10 cursor-pointer rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-all"
-                aria-label={isFullscreen ? "退出全屏" : "进入全屏"}
-              >
-                {isFullscreen ? <Minimize className="size-4" /> : <Maximize className="size-4" />}
-              </Button>
-            )}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setSettingsOpen(true)}
+              className="size-11 cursor-pointer rounded-xl text-white/50 hover:text-white hover:bg-white/[0.08] transition-all"
+              aria-label="朗读设置"
+            >
+              <Settings className="size-5" />
+            </Button>
           </div>
 
-          <div className="flex min-w-0 items-center justify-center gap-3.5">
-            <div className="tts-immersive-control relative hidden h-12 w-9 shrink-0 overflow-hidden rounded-lg sm:flex border-white/10 shadow-lg">
-              {book.cover ? (
-                <BookCoverImage
-                  bookId={book.id}
-                  alt={book.title}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <span className="flex h-full w-full items-center justify-center bg-white/5 text-[9px] font-bold text-white/40">
-                  ZB
-                </span>
-              )}
-            </div>
-            <div className="min-w-0 text-center sm:text-left">
+          <div className="flex min-w-0 flex-1 items-center justify-center">
+            <div className="min-w-0 text-center">
               <h1 className="truncate text-base font-semibold tracking-tight text-white/95 sm:text-lg font-heading">
                 {book.title}
               </h1>
@@ -155,187 +140,125 @@ export function FullscreenTtsView({
               variant="ghost"
               size="icon"
               onClick={onBackToReader}
-              className="tts-immersive-control size-10 cursor-pointer rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-all"
+              className="size-11 cursor-pointer rounded-xl text-white/50 hover:text-white hover:bg-white/[0.08] transition-all"
               aria-label="返回原文"
             >
-              <X className="size-4" />
+              <X className="size-5" />
             </Button>
           </div>
         </header>
 
-        <main className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col justify-center">
-          <section className="relative flex h-[min(64vh,620px)] min-h-0 flex-col rounded-[32px] sm:h-[min(70vh,760px)]">
-            <div className="relative flex min-h-0 flex-1 flex-col items-center px-1 py-4 sm:px-2 sm:py-8">
-              <div className="mb-4 flex flex-none flex-wrap items-center justify-center gap-3 opacity-40">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 truncate max-w-[300px]">
-                  {currentChapterTitle || "当前章节"}
-                </span>
-              </div>
-              
+        <main className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col overflow-hidden">
+          <section className="relative flex min-h-0 flex-1 flex-col overflow-hidden px-4 sm:px-6">
+            <div className="relative flex min-h-0 flex-1 flex-col justify-center overflow-hidden">
               <div
                 key={paragraphText}
-                className="flex flex-1 w-full min-h-0 items-center justify-center text-center animate-reading-text-enter"
+                className="w-full overflow-y-auto scrollbar-premium text-left animate-reading-text-enter"
               >
                 {activeIsCodeBlock ? (
-                  <div className="relative group max-h-full">
+                  <div className="relative group">
                     <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <pre className="scrollbar-premium relative mx-auto w-full max-w-[96vw] sm:max-w-[92vw] lg:max-w-[88vw] rounded-2xl bg-white/5 p-6 text-left font-mono text-[13px] leading-relaxed tracking-normal text-white/80 border border-white/5 backdrop-blur-sm sm:text-[14px] sm:leading-loose overflow-x-auto overflow-y-auto max-h-[45vh] whitespace-pre">
+                    <pre className="relative w-full rounded-2xl bg-white/5 p-4 sm:p-6 text-left font-mono text-[13px] leading-relaxed tracking-normal text-white/80 border border-white/5 backdrop-blur-sm sm:text-[14px] sm:leading-loose overflow-x-auto whitespace-pre">
                       {paragraphText || "正在准备内容..."}
                     </pre>
                   </div>
                 ) : (
-                  <div className="scrollbar-premium relative w-full max-w-[96vw] sm:max-w-[92vw] lg:max-w-[88vw] overflow-y-auto max-h-full px-1">
-                    <p className="relative text-[22px] font-medium leading-[1.6] tracking-tight text-white/95 [text-shadow:0_4px_24px_rgba(0,0,0,0.5)] sm:text-[28px] sm:leading-[1.55] lg:text-[34px]">
-                      {paragraphText || "正在准备朗读内容..."}
-                    </p>
-                  </div>
+                  <p className="text-lg sm:text-xl lg:text-2xl font-medium leading-relaxed tracking-normal text-white/90 sm:leading-[1.7] lg:leading-[1.65]">
+                    {paragraphText || "正在准备朗读内容..."}
+                  </p>
                 )}
               </div>
             </div>
           </section>
         </main>
 
-        <footer className="animate-reader-fade-up mx-auto w-full max-w-3xl rounded-[32px] p-6 sm:p-8 bg-white/[0.03] border border-white/5 backdrop-blur-2xl shadow-2xl" style={{ animationDelay: "70ms" }}>
-          {/* Progress Row: Balanced 5-column grid */}
-          <div className="grid grid-cols-5 items-center gap-4 mb-8">
-            <div className="flex justify-start">
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/25 whitespace-nowrap">
-                {statusLabel}
-              </span>
-            </div>
-            
-            <div className="col-span-3 flex items-center justify-center">
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/5 shadow-inner">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-blue-400 to-indigo-400 shadow-[0_0_15px_rgba(129,140,248,0.5)] transition-[width] duration-700 ease-out"
-                  style={{ width: `${overallProgress * 100}%` }}
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end">
-              <span className="text-[11px] font-bold tabular-nums text-white/35 tracking-wider">
-                {(overallProgress * 100).toFixed(1)}%
-              </span>
-            </div>
+        <footer className="animate-reader-fade-up mx-auto w-full max-w-3xl rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 bg-[#0a0f1a]/80 border border-white/[0.08] backdrop-blur-2xl shadow-2xl" style={{ animationDelay: "100ms" }}>
+          {/* Info Row: Chapter + Progress */}
+          <div className="flex items-center justify-between gap-3 mb-8 sm:mb-10">
+            <span className="flex-1 text-sm font-medium text-white/40 truncate font-heading text-center">
+              {currentChapterTitle || "当前章节"}
+            </span>
+            <span className="shrink-0 text-sm font-semibold tabular-nums text-white/30">
+              {(overallProgress * 100).toFixed(0)}<span className="text-xs ml-0.5">%</span>
+            </span>
           </div>
 
-          {/* Controls Row: Balanced 5-column grid ensuring mathematical centering */}
-          <div className="grid grid-cols-5 items-center gap-2">
-            {/* Col 1: Settings + Prev */}
-            <div className="flex items-center gap-1">
+          {/* Controls Row */}
+          <div className="flex items-center justify-center gap-8 sm:gap-12">
+            {onToggleFullscreen && (
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                onClick={() => setSettingsOpen(true)}
-                className="size-11 cursor-pointer rounded-full text-white/40 hover:text-white hover:bg-white/10 transition-all active:scale-90"
-                aria-label="朗读设置"
+                onClick={onToggleFullscreen}
+                className="size-10 cursor-pointer rounded-full text-white/25 hover:text-white/60 transition-all active:scale-90"
+                aria-label={isFullscreen ? "退出全屏" : "进入全屏"}
               >
-                <Settings className="size-5" />
+                {isFullscreen ? <Minimize className="size-5" /> : <Maximize className="size-5" />}
               </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={onPrev}
-                className="size-11 cursor-pointer rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-all active:scale-90"
-                aria-label="上一章"
-              >
-                <SkipBack className="size-5" />
-              </Button>
-            </div>
+            )}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={onPrev}
+              className="size-10 cursor-pointer rounded-full text-white/35 hover:text-white/70 transition-all active:scale-90"
+              aria-label="上一章"
+            >
+              <SkipBack className="size-5" />
+            </Button>
 
-            {/* Col 2: Spacer */}
-            <div />
-
-            {/* Col 3: Play/Pause (Absolute Center) */}
-            <div className="flex justify-center">
+            {/* Central Playback */}
+            <div className="relative">
               <Button
                 type="button"
                 onClick={onToggle}
-                data-playing={isSpeaking && !isPaused ? "true" : "false"}
-                className="tts-record-button relative size-20 cursor-pointer overflow-visible rounded-full border border-white/10 bg-slate-950 p-0 text-white shadow-2xl transition-all hover:scale-105 active:scale-95 sm:size-24"
+                className="relative size-14 sm:size-16 cursor-pointer flex items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.1] text-white transition-all hover:bg-white/[0.1] hover:border-white/[0.15] active:scale-95"
                 aria-label={isSpeaking && !isPaused ? "暂停朗读" : "开始朗读"}
               >
-                <span className="tts-record-disc absolute inset-[4px] rounded-full">
-                  <span className="tts-record-label absolute inset-[26%] overflow-hidden rounded-full border border-white/10 bg-slate-900 shadow-inner">
-                    {book.cover ? (
-                      <BookCoverImage
-                        bookId={book.id}
-                        alt=""
-                        className="h-full w-full scale-110 object-cover opacity-80"
-                      />
-                    ) : (
-                      <span className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-700 to-slate-900 text-[10px] font-bold text-white/40">
-                        TTS
-                      </span>
-                    )}
-                  </span>
-                  <span className="absolute left-1/2 top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10 bg-slate-950 shadow-lg" />
-                </span>
-                <span className="pointer-events-none absolute inset-0 overflow-hidden rounded-full bg-gradient-to-b from-white/10 to-transparent" />
-
-                <svg
-                  className="tts-record-tonearm pointer-events-none absolute inset-0 z-10 size-full overflow-visible"
-                  viewBox="0 0 80 80"
-                  aria-hidden="true"
-                >
-                  <defs>
-                    <linearGradient id="tts-tonearm-metal" x1="66" x2="43" y1="12" y2="47">
-                      <stop offset="0" stopColor="rgba(255,255,255,0.9)" />
-                      <stop offset="1" stopColor="rgba(148,163,184,0.9)" />
-                    </linearGradient>
-                    <filter id="tts-tonearm-shadow" x="-20%" y="-20%" width="140%" height="140%">
-                      <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="rgba(0,0,0,0.6)" />
-                    </filter>
-                  </defs>
-                  <g className="tts-record-tonearm-arm" filter="url(#tts-tonearm-shadow)">
-                    <circle cx="64" cy="13" r="6" fill="#1e293b" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
-                    <path
-                      d="M61 18 C57 28 51 38 43 48"
-                      fill="none"
-                      stroke="url(#tts-tonearm-metal)"
-                      strokeLinecap="round"
-                      strokeWidth="4"
-                    />
-                    <path
-                      d="M38 46 L33 52 L39 56 L45 49 Z"
-                      fill="#f1f5f9"
-                      stroke="#0f172a"
-                      strokeWidth="1"
-                    />
-                  </g>
+                {isSpeaking && !isPaused ? (
+                  <Pause className="size-6 sm:size-7 fill-current" />
+                ) : (
+                  <Play className="size-6 sm:size-7 fill-current ml-0.5" />
+                )}
+                
+                {/* Progress Ring */}
+                <svg className="absolute inset-0 size-full -rotate-90 pointer-events-none">
+                  <circle
+                    cx="50%"
+                    cy="50%"
+                    r="46%"
+                    fill="none"
+                    stroke="white"
+                    strokeWidth="1.5"
+                    strokeDasharray="289%"
+                    strokeDashoffset={`${289 - overallProgress * 289}%`}
+                    className="opacity-15 transition-all duration-700 ease-out"
+                  />
                 </svg>
               </Button>
             </div>
 
-            {/* Col 4: Spacer */}
-            <div />
-
-            {/* Col 5: Next + Stop */}
-            <div className="flex items-center justify-end gap-1">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={onNext}
-                className="size-11 cursor-pointer rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-all active:scale-90"
-                aria-label="下一章"
-              >
-                <SkipForward className="size-5" />
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={onStop}
-                className="size-11 cursor-pointer rounded-full text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-all active:scale-90"
-                aria-label="停止朗读"
-              >
-                <Square className="size-5" />
-              </Button>
-            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={onNext}
+              className="size-10 cursor-pointer rounded-full text-white/35 hover:text-white/70 transition-all active:scale-90"
+              aria-label="下一章"
+            >
+              <SkipForward className="size-5" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={onStop}
+              className="size-10 cursor-pointer rounded-full text-white/25 hover:text-white/50 transition-all active:scale-90"
+              aria-label="停止朗读"
+            >
+              <Square className="size-5" />
+            </Button>
           </div>
         </footer>
 
