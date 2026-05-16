@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 // Mock dependencies before importing the route
 vi.mock("@/lib/api-utils", () => ({
   getAuthUserId: vi.fn(),
   validateJson: vi.fn(),
-  serverError: vi.fn((msg) => ({ json: () => ({ message: msg }), status: 500 })),
-  notFound: vi.fn((msg) => ({ json: () => ({ message: msg }), status: 404 })),
+  serverError: vi.fn((msg: string) => NextResponse.json({ message: msg }, { status: 500 })),
+  notFound: vi.fn((msg: string) => NextResponse.json({ message: msg }, { status: 404 })),
 }));
 
 vi.mock("@/lib/db", () => ({
@@ -63,7 +63,7 @@ describe("Batch Delete API", () => {
     vi.mocked(db.db.query.books.findMany).mockResolvedValue([
       { id: "book-1", filePath: "file-1.epub", cover: "cover-1.jpg" },
       { id: "book-2", filePath: "file-2.epub", cover: null },
-    ]);
+    ] as unknown as Awaited<ReturnType<typeof db.db.query.books.findMany>>);
 
     const req = new NextRequest("http://localhost/api/books/batch-delete", {
       method: "DELETE",
@@ -78,7 +78,7 @@ describe("Batch Delete API", () => {
   });
 
   it("should return 401 when user is not authenticated", async () => {
-    const authError = { json: () => ({ message: "未登录" }), status: 401 };
+    const authError = NextResponse.json({ message: "未登录" }, { status: 401 });
     vi.mocked(apiUtils.getAuthUserId).mockResolvedValue({ error: authError });
 
     const req = new NextRequest("http://localhost/api/books/batch-delete", {
@@ -92,7 +92,12 @@ describe("Batch Delete API", () => {
   it("should return 400 if validation fails", async () => {
     const userId = "user-1";
     vi.mocked(apiUtils.getAuthUserId).mockResolvedValue({ userId });
-    vi.mocked(apiUtils.validateJson).mockResolvedValue({ error: { status: 400, json: () => ({}) } });
+    vi.mocked(apiUtils.validateJson).mockResolvedValue({
+      error: {
+        status: 400,
+        json: async () => ({ message: "validation failed" }),
+      } as NextResponse,
+    });
 
     const req = new NextRequest("http://localhost/api/books/batch-delete", {
       method: "DELETE",
@@ -111,7 +116,7 @@ describe("Batch Delete API", () => {
     vi.mocked(db.db.query.books.findMany).mockResolvedValue([
       { id: "book-1", filePath: "file-1.epub", cover: "cover-1.jpg" },
       { id: "book-2", filePath: "file-2.epub", cover: null },
-    ]);
+    ] as unknown as Awaited<ReturnType<typeof db.db.query.books.findMany>>);
 
     const req = new NextRequest("http://localhost/api/books/batch-delete", {
       method: "DELETE",
