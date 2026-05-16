@@ -50,10 +50,12 @@ export const BookGrid = memo(function BookGrid({
   }, []);
 
   const rowCount = Math.ceil(books.length / columns);
+
+  const rowHeightMap: Record<number, number> = { 2: 300, 3: 280, 4: 300, 5: 300, 6: 300 };
   
   const virtualizer = useWindowVirtualizer({
     count: rowCount,
-    estimateSize: () => 380,
+    estimateSize: () => rowHeightMap[columns] ?? 300,
     overscan: 2,
   });
 
@@ -108,7 +110,7 @@ export const BookGrid = memo(function BookGrid({
                 width: "100%",
                 transform: `translateY(${virtualRow.start}px)`,
               }}
-              className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-3.5 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 pb-3 sm:pb-3.5"
+              className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 pb-3"
             >
               {rowBooks.map((book) => (
                 <BookCard

@@ -22,9 +22,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { UNCATEGORIZED_CATEGORY, UNCATEGORIZED_CATEGORY_LABEL } from "@/lib/book-category";
+import { getColumnsFromWidth } from "@/lib/utils";
 import type { BookshelfInitialData } from "@/components/bookshelf/hooks/useBookshelfData";
-
-const SKELETON_COUNT = 8;
 
 const BookCategoryDialog = dynamic(
   () => import("@/components/bookshelf/BookCategoryDialog").then((mod) => mod.BookCategoryDialog),
@@ -155,6 +154,17 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
     setSelectedBookIds(new Set());
   }, []);
 
+  const [skeletonColumns, setSkeletonColumns] = useState(2);
+
+  useEffect(() => {
+    const calc = () => setSkeletonColumns(getColumnsFromWidth(window.innerWidth));
+    calc();
+    window.addEventListener("resize", calc);
+    return () => window.removeEventListener("resize", calc);
+  }, []);
+
+  const skeletonCount = skeletonColumns * 3;
+
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -186,9 +196,9 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
       <BackgroundDecoration />
       <Navbar onUploadComplete={handleUploadComplete} />
 
-      <main className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-10 pt-8 sm:px-6 sm:pb-14 sm:pt-12">
-        <div className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="w-full sm:w-auto">
+      <main className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-12 pt-6 sm:px-6 sm:pb-16 sm:pt-10">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+          <div className="w-full sm:w-auto sm:min-w-[220px]">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <BookshelfActionButton
@@ -270,7 +280,7 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
             </DropdownMenu>
           </div>
 
-          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+          <div className="flex w-full flex-col gap-3 sm:flex-1 sm:flex-row sm:items-center sm:justify-end">
             <BookshelfActionButton
               type="button"
               actionVariant="glass"
@@ -286,7 +296,7 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
             </BookshelfActionButton>
             <SearchBar
               onSearch={setSearchQuery}
-              className="w-full sm:w-80"
+              className="w-full sm:min-w-[200px] sm:max-w-sm"
             />
           </div>
         </div>
@@ -330,8 +340,8 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
 
         {/* Book Grid */}
         {loading && page === 1 ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
-            {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+            {Array.from({ length: skeletonCount }).map((_, i) => (
               <BookCardSkeleton key={i} />
             ))}
           </div>
@@ -354,7 +364,7 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
             {/* Load More Trigger & Indicator */}
             <div 
               ref={loadMoreRef} 
-              className="mt-16 flex flex-col items-center justify-center gap-4 py-8"
+              className="mt-12 flex flex-col items-center justify-center gap-3 py-6"
             >
               {hasMore ? (
                 <BookshelfActionButton

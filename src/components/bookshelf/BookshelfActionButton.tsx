@@ -12,11 +12,11 @@ interface BookshelfActionButtonProps extends Omit<ComponentProps<typeof Button>,
 }
 
 const actionButtonClasses: Record<BookshelfActionButtonVariant, string> = {
-  glass: "liquid-control h-10 rounded-full px-4 text-[13px] font-bold",
-  filter: "category-filter-shell h-11 w-full justify-between rounded-full px-4 text-[14px] font-semibold sm:w-56 sm:min-w-56",
-  panelGhost: "h-9 rounded-full px-4 text-xs font-bold",
-  panelPrimary: "h-9 rounded-full px-4 text-xs font-bold",
-  loadMore: "liquid-control h-12 min-w-[160px] rounded-full px-8 text-sm font-medium shadow-sm",
+  glass: "liquid-control h-10 rounded-lg px-3.5 text-sm font-medium",
+  filter: "category-filter-shell h-10 w-full justify-between rounded-lg px-3.5 text-sm font-medium sm:w-52 sm:min-w-52",
+  panelGhost: "h-8 rounded-lg px-3 text-xs font-medium hover:bg-muted",
+  panelPrimary: "h-8 rounded-lg px-3 text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90",
+  loadMore: "liquid-control h-10 min-w-[140px] rounded-lg px-6 text-sm font-medium",
 };
 
 const actionButtonVariants: Record<BookshelfActionButtonVariant, ComponentProps<typeof Button>["variant"]> = {

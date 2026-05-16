@@ -118,3 +118,14 @@ const ALLOWED_FONT_FAMILIES = ["system", "serif", "sans", "kaiti"] as const;
 export function isValidFontFamily(value: string): value is (typeof ALLOWED_FONT_FAMILIES)[number] {
   return (ALLOWED_FONT_FAMILIES as readonly string[]).includes(value);
 }
+
+/**
+ * 根据窗口宽度计算网格列数
+ */
+export function getColumnsFromWidth(width: number): number {
+  if (width >= 1536) return 6;
+  if (width >= 1280) return 5;
+  if (width >= 1024) return 4;
+  if (width >= 640) return 3;
+  return 2;
+}

@@ -77,17 +77,17 @@ export function Navbar({ onUploadComplete, className }: NavbarProps) {
             {onUploadComplete && (
               <UploadButton
                 onUploadComplete={onUploadComplete}
-                variant="ghost"
-                className="h-10 w-10 rounded-full bg-transparent p-0 text-foreground transition-all hover:bg-muted sm:h-10 sm:w-auto sm:px-4 sm:text-[13px] sm:font-bold"
+                variant="outline"
+                className="h-9 rounded-lg px-3 text-sm font-medium sm:text-[13px]"
               />
             )}
 
             <Button
               variant="ghost"
-              size="icon"
+              size="icon-sm"
               onClick={handleThemeToggle}
               aria-label="切换主题"
-              className="h-10 w-10 rounded-full bg-transparent transition-all hover:bg-muted"
+              className="rounded-lg transition-colors"
             >
               <Sun className="h-[18px] w-[18px] text-foreground dark:hidden" />
               <Moon className="hidden h-[18px] w-[18px] text-foreground dark:block" />
@@ -99,7 +99,7 @@ export function Navbar({ onUploadComplete, className }: NavbarProps) {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="relative h-10 w-10 rounded-full bg-transparent p-0.5 transition-all hover:ring-2 hover:ring-primary/10"
+                    className="relative h-9 w-9 rounded-lg p-0.5 transition-colors hover:bg-muted"
                   >
                     <Avatar className="h-full w-full">
                       <AvatarImage src={session.user.avatar || undefined} alt={session.user.username || "用户头像"} />
