@@ -9,6 +9,7 @@ const mockSetSearchQuery = vi.fn();
 const mockSetSelectedCategory = vi.fn();
 const mockHandleLoadMore = vi.fn();
 const mockRemoveBook = vi.fn();
+let mockCategories: Array<{ name: string; count: number }> = [];
 
 vi.mock("@/components/layout/Navbar", () => ({
   Navbar: () => <div data-testid="navbar" />,
@@ -40,7 +41,7 @@ vi.mock("@/components/bookshelf/hooks/useBookshelfData", async () => {
     useBookshelfData: () => ({
       activeCategoryName: "",
       books: [],
-      categories: [],
+      categories: mockCategories,
       handleLoadMore: mockHandleLoadMore,
       hasMore: false,
       lastReadAtMap: {},
@@ -62,6 +63,7 @@ vi.mock("@/components/bookshelf/hooks/useBookshelfData", async () => {
 describe("BookshelfClient", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockCategories = [];
   });
 
   it("keeps the active batch management button in the liquid control family", () => {
@@ -79,10 +81,28 @@ describe("BookshelfClient", () => {
   it("shows the uncategorized filter option in batch mode", () => {
     render(<BookshelfClient initialData={createBookshelfInitialData({ books: [], total: 0, allTotal: 0 })} />);
 
-    expect(screen.queryByRole("button", { name: /未分类/ })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /批量管理/ }));
-    fireEvent.click(screen.getByRole("button", { name: /未分类/ }));
+    expect(screen.queryByRole("menuitem", { name: /未分类/ })).not.toBeInTheDocument();
+    fireEvent.keyDown(screen.getByRole("button", { name: /分类.*全部/ }), { key: "Enter" });
+    fireEvent.click(screen.getByRole("menuitem", { name: /未分类/ }));
 
     expect(mockSetSelectedCategory).toHaveBeenCalledWith("__uncategorized__");
+  });
+
+  it("renders category filters inside a dropdown menu", () => {
+    mockCategories = [
+      { name: "小说", count: 3 },
+      { name: "技术", count: 2 },
+      { name: "历史", count: 1 },
+    ];
+
+    render(<BookshelfClient initialData={createBookshelfInitialData({ books: [], total: 6, allTotal: 6 })} />);
+
+    expect(screen.queryByRole("button", { name: /小说/ })).not.toBeInTheDocument();
+    const categoryMenuButton = screen.getByRole("button", { name: /分类.*全部/ });
+    fireEvent.keyDown(categoryMenuButton, { key: "Enter" });
+    fireEvent.click(screen.getByRole("menuitem", { name: /技术.*2/ }));
+
+    expect(mockSetSelectedCategory).toHaveBeenCalledWith("技术");
   });
 });

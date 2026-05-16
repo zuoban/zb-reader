@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { CheckSquare, Tags, X } from "lucide-react";
+import { Check, CheckSquare, ChevronDown, Tags, X } from "lucide-react";
 import { SearchBar } from "@/components/bookshelf/SearchBar";
 import { BackgroundDecoration } from "@/components/bookshelf/BackgroundDecoration";
 import { BookCardSkeleton } from "@/components/bookshelf/BookCardSkeleton";
@@ -15,6 +15,12 @@ import { Navbar } from "@/components/layout/Navbar";
 import { useTheme } from "@/components/layout/ThemeProvider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { UNCATEGORIZED_CATEGORY, UNCATEGORIZED_CATEGORY_LABEL } from "@/lib/book-category";
 import { cn } from "@/lib/utils";
 import type { BookshelfInitialData } from "@/components/bookshelf/hooks/useBookshelfData";
@@ -112,6 +118,18 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
     totalBooks - categories.reduce((sum, category) => sum + category.count, 0),
     0
   );
+  const selectedCategorySummary = useMemo(() => {
+    if (selectedCategory === ALL_CATEGORY) {
+      return { name: "全部", count: totalBooks };
+    }
+
+    if (selectedCategory === UNCATEGORIZED_CATEGORY) {
+      return { name: UNCATEGORIZED_CATEGORY_LABEL, count: uncategorizedCount };
+    }
+
+    const category = categories.find((item) => item.name === selectedCategory);
+    return { name: selectedCategory, count: category?.count ?? 0 };
+  }, [categories, selectedCategory, totalBooks, uncategorizedCount]);
 
   const handleBatchModeToggle = useCallback(() => {
     setBatchMode((current) => {
@@ -171,84 +189,90 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
 
       <main className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-10 pt-8 sm:px-6 sm:pb-14 sm:pt-12">
         <div className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="category-filter-shell flex w-full max-w-full gap-2 overflow-x-auto rounded-full p-1 sm:w-fit [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className={cn(
-                "h-10 cursor-pointer rounded-full px-5 text-[14px] font-semibold transition-all duration-200",
-                selectedCategory === ALL_CATEGORY
-                  ? "category-filter-button-active"
-                  : "category-filter-button"
-              )}
-              aria-pressed={selectedCategory === ALL_CATEGORY}
-              onClick={() => setSelectedCategory(ALL_CATEGORY)}
-            >
-              全部
-              <Badge
-                variant="ghost"
-                className={cn(
-                  "category-filter-count",
-                  selectedCategory === ALL_CATEGORY && "category-filter-count-active"
-                )}
-              >
-                {totalBooks}
-              </Badge>
-            </Button>
-            {categories.map((category) => (
-              <Button
-                key={category.name}
-                type="button"
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  "h-10 cursor-pointer rounded-full px-5 text-[14px] font-semibold transition-all duration-200",
-                  selectedCategory === category.name
-                    ? "category-filter-button-active"
-                    : "category-filter-button"
-                )}
-                aria-pressed={selectedCategory === category.name}
-                onClick={() => setSelectedCategory(category.name)}
-              >
-                <span className="max-w-32 truncate">{category.name}</span>
-                <Badge
-                  variant="ghost"
-                  className={cn(
-                    "category-filter-count",
-                    selectedCategory === category.name && "category-filter-count-active"
-                  )}
+          <div className="w-full sm:w-auto">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="category-filter-shell h-11 w-full cursor-pointer justify-between rounded-full px-4 text-[14px] font-semibold sm:min-w-56 sm:w-56"
+                  aria-label={`分类：${selectedCategorySummary.name}`}
                 >
-                  {category.count}
-                </Badge>
-              </Button>
-            ))}
-            {batchMode ? (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  "h-10 cursor-pointer rounded-full px-5 text-[14px] font-semibold transition-all duration-200",
-                  selectedCategory === UNCATEGORIZED_CATEGORY
-                    ? "category-filter-button-active"
-                    : "category-filter-button"
-                )}
-                aria-pressed={selectedCategory === UNCATEGORIZED_CATEGORY}
-                onClick={() => setSelectedCategory(UNCATEGORIZED_CATEGORY)}
-              >
-                <span className="max-w-32 truncate">{UNCATEGORIZED_CATEGORY_LABEL}</span>
-                <Badge
-                  variant="ghost"
-                  className={cn(
-                    "category-filter-count",
-                    selectedCategory === UNCATEGORIZED_CATEGORY && "category-filter-count-active"
-                  )}
+                  <span className="flex min-w-0 items-center gap-2">
+                    <Tags className="h-4 w-4 shrink-0 text-primary/70" />
+                    <span className="text-muted-foreground">分类：</span>
+                    <span className="truncate text-foreground">{selectedCategorySummary.name}</span>
+                  </span>
+                  <span className="flex shrink-0 items-center gap-2">
+                    <Badge
+                      variant="ghost"
+                      className={cn(
+                        "category-filter-count",
+                        selectedCategory !== ALL_CATEGORY && "category-filter-count-active"
+                      )}
+                    >
+                      {selectedCategorySummary.count}
+                    </Badge>
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-64 rounded-2xl p-1.5">
+                <DropdownMenuItem
+                  className="cursor-pointer justify-between"
+                  onClick={() => setSelectedCategory(ALL_CATEGORY)}
                 >
-                  {uncategorizedCount}
-                </Badge>
-              </Button>
-            ) : null}
+                  <span className="flex items-center gap-2">
+                    {selectedCategory === ALL_CATEGORY ? (
+                      <Check className="h-4 w-4 text-primary" />
+                    ) : (
+                      <span className="h-4 w-4" />
+                    )}
+                    全部
+                  </span>
+                  <span className="rounded-md bg-muted px-2 py-0.5 text-[11px] font-bold text-muted-foreground">
+                    {totalBooks}
+                  </span>
+                </DropdownMenuItem>
+                {categories.map((category) => (
+                  <DropdownMenuItem
+                    key={category.name}
+                    className="cursor-pointer justify-between"
+                    onClick={() => setSelectedCategory(category.name)}
+                  >
+                    <span className="flex min-w-0 items-center gap-2">
+                      {selectedCategory === category.name ? (
+                        <Check className="h-4 w-4 shrink-0 text-primary" />
+                      ) : (
+                        <span className="h-4 w-4 shrink-0" />
+                      )}
+                      <span className="truncate">{category.name}</span>
+                    </span>
+                    <span className="rounded-md bg-muted px-2 py-0.5 text-[11px] font-bold text-muted-foreground">
+                      {category.count}
+                    </span>
+                  </DropdownMenuItem>
+                ))}
+                {batchMode ? (
+                  <DropdownMenuItem
+                    className="cursor-pointer justify-between"
+                    onClick={() => setSelectedCategory(UNCATEGORIZED_CATEGORY)}
+                  >
+                    <span className="flex min-w-0 items-center gap-2">
+                      {selectedCategory === UNCATEGORIZED_CATEGORY ? (
+                        <Check className="h-4 w-4 shrink-0 text-primary" />
+                      ) : (
+                        <span className="h-4 w-4 shrink-0" />
+                      )}
+                      <span className="truncate">{UNCATEGORIZED_CATEGORY_LABEL}</span>
+                    </span>
+                    <span className="rounded-md bg-muted px-2 py-0.5 text-[11px] font-bold text-muted-foreground">
+                      {uncategorizedCount}
+                    </span>
+                  </DropdownMenuItem>
+                ) : null}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
