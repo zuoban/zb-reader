@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { Check, CheckSquare, ChevronDown, Tags, X } from "lucide-react";
+import { Check, CheckSquare, ChevronDown, Tags, Trash2, X } from "lucide-react";
 import { SearchBar } from "@/components/bookshelf/SearchBar";
 import { BookshelfActionButton } from "@/components/bookshelf/BookshelfActionButton";
 import { BackgroundDecoration } from "@/components/bookshelf/BackgroundDecoration";
 import { BookCardSkeleton } from "@/components/bookshelf/BookCardSkeleton";
 import { BookGrid } from "@/components/bookshelf/BookGrid";
 import { useBatchBookCategoryAction } from "@/components/bookshelf/hooks/useBatchBookCategoryAction";
+import { useBatchBookDeleteAction } from "@/components/bookshelf/hooks/useBatchBookDeleteAction";
 import { useBookCategoryAction } from "@/components/bookshelf/hooks/useBookCategoryAction";
 import { useBookDeleteAction } from "@/components/bookshelf/hooks/useBookDeleteAction";
 import { ALL_CATEGORY, useBookshelfData } from "@/components/bookshelf/hooks/useBookshelfData";
@@ -37,6 +38,10 @@ const BatchBookCategoryDialog = dynamic(
   () => import("@/components/bookshelf/BatchBookCategoryDialog").then((mod) => mod.BatchBookCategoryDialog),
   { ssr: false }
 );
+const BatchBookDeleteDialog = dynamic(
+  () => import("@/components/bookshelf/BatchBookDeleteDialog").then((mod) => mod.BatchBookDeleteDialog),
+  { ssr: false }
+);
 
 export type { BookshelfInitialData };
 
@@ -58,6 +63,7 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
     progressMap,
     refreshBooks,
     removeBook,
+    removeBooks,
     selectedCategory,
     setSearchQuery,
     setSelectedCategory,
@@ -90,6 +96,23 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
     savingBatchCategory,
     setBatchCategoryInput,
   } = useBatchBookCategoryAction({ onSaved: handleBatchSaved });
+
+  const handleBatchDeleted = useCallback(async (bookIds: string[]) => {
+    removeBooks(bookIds);
+    setSelectedBookIds(new Set());
+    setBatchMode(false);
+    // Refresh to get accurate category counts and total
+    await refreshBooks();
+  }, [refreshBooks, removeBooks]);
+
+  const {
+    batchDeleteDialogOpen,
+    confirmBatchDelete,
+    deletingBooks,
+    handleBatchDeleteDialogOpenChange,
+    openBatchDeleteDialog: handleOpenBatchDeleteDialog,
+  } = useBatchBookDeleteAction({ onDeleted: handleBatchDeleted });
+
   const {
     confirmDelete: handleConfirmDelete,
     deleteDialogBook,
@@ -327,6 +350,16 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
               </BookshelfActionButton>
               <BookshelfActionButton
                 type="button"
+                actionVariant="panelGhost"
+                disabled={selectedBookCount === 0}
+                className="text-red-500 hover:bg-red-500/10 hover:text-red-600"
+                onClick={() => handleOpenBatchDeleteDialog(selectedBookIdList)}
+              >
+                <Trash2 className="mr-2 h-3.5 w-3.5" />
+                批量删除
+              </BookshelfActionButton>
+              <BookshelfActionButton
+                type="button"
                 actionVariant="panelPrimary"
                 disabled={selectedBookCount === 0}
                 onClick={() => handleOpenBatchCategoryDialog(selectedBookIdList)}
@@ -426,6 +459,16 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
           onCategoryInputChange={setBatchCategoryInput}
           onOpenChange={handleBatchCategoryDialogOpenChange}
           onSave={handleSaveBatchCategory}
+        />
+      ) : null}
+
+      {batchDeleteDialogOpen ? (
+        <BatchBookDeleteDialog
+          open={batchDeleteDialogOpen}
+          selectedCount={selectedBookCount}
+          deletingBooks={deletingBooks}
+          onConfirm={confirmBatchDelete}
+          onOpenChange={handleBatchDeleteDialogOpenChange}
         />
       ) : null}
     </div>

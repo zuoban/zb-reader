@@ -172,6 +172,21 @@ export function useBookshelfData(initialData: BookshelfInitialData) {
     });
   }, []);
 
+  const removeBooks = useCallback((bookIds: string[]) => {
+    const idSet = new Set(bookIds);
+    setBooks((prev) => prev.filter((book) => !idSet.has(book.id)));
+    setProgressMap((prev) => {
+      const next = { ...prev };
+      bookIds.forEach((id) => delete next[id]);
+      return next;
+    });
+    setLastReadAtMap((prev) => {
+      const next = { ...prev };
+      bookIds.forEach((id) => delete next[id]);
+      return next;
+    });
+  }, []);
+
   return {
     activeCategoryName,
     books,
@@ -185,6 +200,7 @@ export function useBookshelfData(initialData: BookshelfInitialData) {
     progressMap,
     refreshBooks,
     removeBook,
+    removeBooks,
     searchQuery,
     selectedCategory,
     setSearchQuery,

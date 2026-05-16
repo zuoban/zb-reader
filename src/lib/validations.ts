@@ -152,6 +152,14 @@ export const batchBookCategorySchema = z.object({
   category: z.string().trim().max(40, "分类名称不能超过 40 个字符").optional(),
 });
 
+/** 书籍批量删除校验 */
+export const batchBookDeleteSchema = z.object({
+  bookIds: z
+    .array(z.string().min(1, "无效的书籍 ID"))
+    .min(1, "请选择要删除的书籍")
+    .max(500, "一次最多只能删除 500 本书"),
+});
+
 /** 书籍分类重命名校验 */
 export const categoryRenameSchema = z.object({
   oldName: z.string().trim().min(1, "原分类名称不能为空").max(40, "分类名称不能超过 40 个字符"),
