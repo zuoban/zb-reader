@@ -212,7 +212,9 @@ export class LocalProgressManager {
           this.debounceTimers.delete(item.bookId);
           this.maxWaitTimers.delete(item.bookId);
           this.pendingDebouncedItems.delete(item.bookId);
-          this.syncQueue.enqueue(pendingItem);
+          void this.syncQueue.enqueue(pendingItem).catch((error) => {
+            logger.error("local-progress", "Failed to enqueue pending progress", error);
+          });
         }
       }, 5000); // 5s max wait instead of 30s
       this.maxWaitTimers.set(item.bookId, maxTimer);
@@ -228,7 +230,9 @@ export class LocalProgressManager {
       }
       
       this.pendingDebouncedItems.delete(item.bookId);
-      this.syncQueue.enqueue(item);
+      void this.syncQueue.enqueue(item).catch((error) => {
+        logger.error("local-progress", "Failed to enqueue debounced progress", error);
+      });
     }, 500);
 
     this.debounceTimers.set(item.bookId, timer);

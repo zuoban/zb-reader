@@ -40,6 +40,7 @@ async function requestWithFallback(
   const secondResponse = await fetch(url, {
     method: "GET",
     headers: init.headers,
+    redirect: "error",
     signal: createServerFetchSignal(),
   });
   return { response: secondResponse, retried: true };
@@ -101,6 +102,7 @@ export async function POST(req: NextRequest) {
     const init: RequestInit = {
       method,
       headers,
+      redirect: "error",
       signal: createServerFetchSignal(),
     };
 

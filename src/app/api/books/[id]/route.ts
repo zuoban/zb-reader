@@ -54,14 +54,18 @@ export async function DELETE(
       return notFound("书籍不存在");
     }
 
-    await deleteBookFile(book.filePath);
-    if (book.cover) {
-      await deleteCoverImage(book.cover);
-      invalidateCoverCache(book.cover);
-    }
-
     await db.delete(books).where(eq(books.id, id));
     invalidateBookFacets(userId);
+
+    try {
+      await deleteBookFile(book.filePath);
+      if (book.cover) {
+        await deleteCoverImage(book.cover);
+        invalidateCoverCache(book.cover);
+      }
+    } catch (cleanupError) {
+      logger.warn("book", "Book deleted from database but file cleanup failed", cleanupError);
+    }
 
     return NextResponse.json({ message: "删除成功" });
   } catch (error) {

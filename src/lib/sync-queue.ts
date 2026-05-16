@@ -203,7 +203,7 @@ export class SyncQueue {
 
   clear(): void {
     this.queue = [];
-    this.persistQueue();
+    void this.persistQueue();
   }
 
   private async persistQueue(): Promise<void> {
@@ -263,7 +263,7 @@ export class SyncQueue {
       if (stored && Array.isArray(stored)) {
         this.queue = stored;
         if (navigator.onLine) {
-          this.sync();
+          void this.sync();
         }
       }
     } catch (error) {

@@ -1,5 +1,3 @@
-import { openDB } from "idb";
-
 const CACHE_VERSION = "v4";
 const STATIC_CACHE = `zb-reader-static-${CACHE_VERSION}`;
 const ASSET_CACHE = `zb-reader-assets-${CACHE_VERSION}`;
@@ -127,8 +125,8 @@ self.addEventListener("sync", (event) => {
 
 async function syncProgress() {
   try {
-    const db = await openDB(DB_NAME, DB_VERSION);
-    const queue = await db.get(STORE_NAME, QUEUE_KEY);
+    const db = await openSyncDB();
+    const queue = await idbGet(db, QUEUE_KEY);
 
     if (!queue || !Array.isArray(queue) || queue.length === 0) {
       return;
@@ -146,7 +144,7 @@ async function syncProgress() {
 
     if (response.ok) {
       // Clear queue on success
-      await db.put(STORE_NAME, [], QUEUE_KEY);
+      await idbPut(db, QUEUE_KEY, []);
       console.log("[SW] Progress synced via Background Sync");
     } else {
       throw new Error(`Sync failed with status: ${response.status}`);
@@ -155,4 +153,41 @@ async function syncProgress() {
     console.error("[SW] Background Sync failed:", error);
     throw error; // Let the browser retry later
   }
+}
+
+function openSyncDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME);
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function idbGet(db, key) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(STORE_NAME, "readonly");
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.get(key);
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function idbPut(db, key, value) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(STORE_NAME, "readwrite");
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.put(value, key);
+
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
 }

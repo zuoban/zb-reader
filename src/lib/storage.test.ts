@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import path from "path";
+import { EventEmitter } from "events";
 const mockFs = {
   existsSync: vi.fn(),
+  createWriteStream: vi.fn(),
 };
 
 const mockFsAsync = {
@@ -14,6 +16,7 @@ const mockFsAsync = {
 vi.mock("fs", () => ({
   default: mockFs,
   existsSync: mockFs.existsSync,
+  createWriteStream: mockFs.createWriteStream,
 }));
 
 vi.mock("fs/promises", () => ({
@@ -36,6 +39,17 @@ describe("Storage utilities", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockFs.existsSync.mockReturnValue(true);
+    mockFs.createWriteStream.mockImplementation(() => {
+      const stream = new EventEmitter() as EventEmitter & {
+        write: ReturnType<typeof vi.fn>;
+        end: ReturnType<typeof vi.fn>;
+      };
+      stream.write = vi.fn(() => true);
+      stream.end = vi.fn(() => {
+        queueMicrotask(() => stream.emit("finish"));
+      });
+      return stream;
+    });
     mockFsAsync.access.mockResolvedValue(undefined);
     mockFsAsync.mkdir.mockResolvedValue(undefined);
     mockFsAsync.writeFile.mockResolvedValue(undefined);
@@ -71,6 +85,41 @@ describe("Storage utilities", () => {
         const result = await saveBookFile(buffer, `book-${format}`, format);
         expect(result).toBe(`book-${format}.${format}`);
       }
+    });
+  });
+
+  describe("saveBookToTemp", () => {
+    it("waits for the write stream to finish before resolving web streams", async () => {
+      const stream = new EventEmitter() as EventEmitter & {
+        write: ReturnType<typeof vi.fn>;
+        end: ReturnType<typeof vi.fn>;
+      };
+      stream.write = vi.fn(() => true);
+      stream.end = vi.fn();
+      mockFs.createWriteStream.mockReturnValue(stream);
+
+      const { saveBookToTemp } = await import("./storage");
+      const input = new ReadableStream({
+        start(controller) {
+          controller.enqueue(new Uint8Array([1, 2, 3]));
+          controller.close();
+        },
+      });
+
+      let resolved = false;
+      const promise = saveBookToTemp(input, "book-id", "epub").then(() => {
+        resolved = true;
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(stream.end).toHaveBeenCalled();
+      expect(resolved).toBe(false);
+
+      stream.emit("finish");
+      await promise;
+
+      expect(resolved).toBe(true);
     });
   });
 

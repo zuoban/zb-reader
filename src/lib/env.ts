@@ -6,10 +6,8 @@ const envSchema = z.object({
     .default("development"),
 
   // Authentication
-  NEXTAUTH_SECRET: z
-    .string()
-    .min(32, "NEXTAUTH_SECRET must be at least 32 characters")
-    .default("your-secret-key-change-this"),
+  NEXTAUTH_SECRET: z.string().min(32, "NEXTAUTH_SECRET must be at least 32 characters").optional(),
+  AUTH_SECRET: z.string().min(32, "AUTH_SECRET must be at least 32 characters").optional(),
   NEXTAUTH_URL: z.string().url().default("http://localhost:3000"),
 
   // TTS
@@ -25,7 +23,21 @@ const envSchema = z.object({
 
   // Database (optional, defaults to data/db.sqlite)
   DATABASE_URL: z.string().optional(),
-});
+}).superRefine((env, ctx) => {
+  if (env.NODE_ENV === "production" && !env.NEXTAUTH_SECRET && !env.AUTH_SECRET) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["NEXTAUTH_SECRET"],
+      message: "NEXTAUTH_SECRET or AUTH_SECRET is required in production",
+    });
+  }
+}).transform((env) => ({
+  ...env,
+  NEXTAUTH_SECRET:
+    env.NEXTAUTH_SECRET ??
+    env.AUTH_SECRET ??
+    "development-secret-change-this-32chars",
+}));
 
 export type EnvConfig = z.infer<typeof envSchema>;
 

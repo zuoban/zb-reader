@@ -1,6 +1,7 @@
 import * as fsAsync from "fs/promises";
 import path from "path";
 import fsSync from "fs";
+import { once } from "events";
 
 const DATA_DIR = path.join(/*turbopackIgnore: true*/ process.cwd(), "data");
 const BOOKS_DIR = path.join(/*turbopackIgnore: true*/ process.cwd(), "data/books");
@@ -71,14 +72,7 @@ export async function saveBookFileFromStream(
   const writeStream = fsSync.createWriteStream(filePath);
 
   if ("getReader" in stream) {
-    // Web ReadableStream
-    const reader = stream.getReader();
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      writeStream.write(Buffer.from(value));
-    }
-    writeStream.end();
+    await writeWebStreamToFile(stream, writeStream);
   } else {
     // NodeJS ReadableStream
     await new Promise<void>((resolve, reject) => {
@@ -104,13 +98,7 @@ export async function saveBookToTemp(
   const writeStream = fsSync.createWriteStream(filePath);
 
   if ("getReader" in stream) {
-    const reader = stream.getReader();
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      writeStream.write(Buffer.from(value));
-    }
-    writeStream.end();
+    await writeWebStreamToFile(stream, writeStream);
   } else {
     await new Promise<void>((resolve, reject) => {
       stream.pipe(writeStream);
@@ -185,3 +173,41 @@ export async function coverExists(fileName: string): Promise<boolean> {
 }
 
 export { BOOKS_DIR, COVERS_DIR, DATA_DIR };
+
+async function writeWebStreamToFile(
+  stream: ReadableStream,
+  writeStream: fsSync.WriteStream
+): Promise<void> {
+  const reader = stream.getReader();
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      if (!writeStream.write(Buffer.from(value))) {
+        await waitForWriteStreamEvent(writeStream, "drain");
+      }
+    }
+
+    writeStream.end();
+    await waitForWriteStreamEvent(writeStream, "finish");
+  } catch (error) {
+    writeStream.destroy(error instanceof Error ? error : undefined);
+    throw error;
+  } finally {
+    reader.releaseLock();
+  }
+}
+
+async function waitForWriteStreamEvent(
+  writeStream: fsSync.WriteStream,
+  eventName: "drain" | "finish"
+): Promise<void> {
+  await Promise.race([
+    once(writeStream, eventName),
+    once(writeStream, "error").then(([error]) => {
+      throw error;
+    }),
+  ]);
+}

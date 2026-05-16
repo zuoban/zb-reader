@@ -170,7 +170,7 @@ export async function checkRateLimit(
   const entry = await getRateLimitEntry(identifier, window);
 
   // 检查是否超过限制
-  if (entry.count >= limit) {
+  if (entry.count > limit) {
     const resetSeconds = Math.ceil((entry.resetTime - Date.now()) / 1000);
     return NextResponse.json(
       {
