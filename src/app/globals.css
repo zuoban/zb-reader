@@ -818,10 +818,8 @@
 }
 
 .reader-status-footer {
-  border-top: 1px solid color-mix(in srgb, var(--reader-text, #111) 18%, var(--reader-bg, white));
   background: var(--reader-bg, white);
   color: var(--reader-text, #111);
-  box-shadow: 0 -1px 0 color-mix(in srgb, white 42%, var(--reader-bg, white)) inset;
 }
 
 .reader-status-title {
@@ -904,9 +902,7 @@
 }
 
 [data-reader-theme="dark"] .reader-status-footer {
-  border-top-color: color-mix(in srgb, var(--reader-text, #fff) 18%, var(--reader-bg, #111));
   background: var(--reader-bg, #111);
-  box-shadow: 0 -1px 0 color-mix(in srgb, white 7%, var(--reader-bg, #111)) inset;
 }
 
 [data-reader-theme="dark"] .reader-status-title {

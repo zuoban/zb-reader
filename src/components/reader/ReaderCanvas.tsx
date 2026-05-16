@@ -51,8 +51,8 @@ function ReaderCanvasInner() {
   if (!book) return null;
 
   return (
-    <div className="relative h-full w-full flex flex-col overflow-hidden bg-[var(--reader-bg)]">
-      <div className="relative flex-1 min-h-0 w-full">
+    <div className="relative h-full w-full flex flex-col gap-0 overflow-hidden bg-[var(--reader-bg)] border-none shadow-none">
+      <div className="relative flex-1 min-h-0 w-full border-none shadow-none">
         {book.format === "epub" && (bookData || bookUrl) && (
           <EpubReader
             key={book.id}
@@ -87,46 +87,48 @@ function ReaderCanvasInner() {
 
       {/* Minimalist Footer Area */}
       {!isTtsViewOpen && (
-        <div
-          role="button"
-          tabIndex={0}
-          aria-label="显示或隐藏顶部菜单栏"
-          onClick={handleToggleToolbar}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault();
-              handleToggleToolbar();
-            }
-          }}
-          className="reader-status-footer absolute inset-x-0 bottom-0 z-20 grid h-11 cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 overflow-hidden border-t border-[color-mix(in_srgb,var(--reader-text)_14%,transparent)] bg-[var(--reader-bg)] px-6 text-xs font-bold tracking-tight shadow-[0_-12px_32px_-28px_color-mix(in_srgb,var(--reader-text)_55%,transparent)] transition-colors duration-200 hover:bg-[color-mix(in_srgb,var(--reader-text)_3%,var(--reader-bg))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--reader-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--reader-bg)] sm:px-10"
-          style={{ color: "var(--reader-text)" }}
-        >
-          {/* Left: Progress */}
-          <div className="flex min-w-[3rem] shrink-0 items-center">
-            <span className="reader-status-meta tabular-nums">
-              {(progress * 100).toFixed(0)}%
-            </span>
-          </div>
+        <div className="relative shrink-0 bg-[var(--reader-bg)] !border-0 !shadow-none outline-none">
+          <div
+            role="button"
+            tabIndex={0}
+            aria-label="显示或隐藏顶部菜单栏"
+            onClick={handleToggleToolbar}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                handleToggleToolbar();
+              }
+            }}
+            className="relative z-20 grid h-7 cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-6 text-[10px] font-medium tracking-wide focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--reader-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--reader-bg)] sm:px-10 !border-0 !shadow-none outline-none"
+            style={{ color: "var(--reader-text)" }}
+          >
+            {/* Left: Progress */}
+            <div className="flex min-w-[2.5rem] shrink-0 items-center opacity-60">
+              <span className="tabular-nums">
+                {(progress * 100).toFixed(0)}%
+              </span>
+            </div>
 
-          {/* Center: Title */}
-          <div className="min-w-0 text-center">
-            <span
-              className="reader-status-title block truncate font-heading text-xs font-bold tracking-tight"
-              title={currentChapterTitle || book.title}
-            >
-              {currentChapterTitle || book.title}
-            </span>
-          </div>
+            {/* Center: Title */}
+            <div className="min-w-0 text-center opacity-50">
+              <span
+                className="block truncate font-heading"
+                title={currentChapterTitle || book.title}
+              >
+                {currentChapterTitle || book.title}
+              </span>
+            </div>
 
-          {/* Right: Page Count */}
-          <div className="reader-status-meta flex min-w-[3rem] shrink-0 items-center justify-end gap-1 tabular-nums">
-            {currentPage != null && totalPages != null && (
-              <>
-                <span>{currentPage}</span>
-                <span className="mx-0.5 opacity-60">/</span>
-                <span>{totalPages}</span>
-              </>
-            )}
+            {/* Right: Page Count */}
+            <div className="flex min-w-[2.5rem] shrink-0 items-center justify-end gap-1 tabular-nums opacity-60">
+              {currentPage != null && totalPages != null && (
+                <>
+                  <span>{currentPage}</span>
+                  <span className="opacity-40">/</span>
+                  <span>{totalPages}</span>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
