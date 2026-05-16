@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-const publicPaths = ["/login", "/register", "/api/auth"];
+const publicPaths = ["/", "/login", "/register", "/api/auth"];
 
 // Static assets that can be cached for 1 year
 const STATIC_ASSET_PATTERNS = [
@@ -13,7 +13,7 @@ const STATIC_ASSET_PATTERNS = [
   /^\/favicon\.ico$/,
 ];
 
-export async function proxy(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Handle public paths (login, register, auth)
