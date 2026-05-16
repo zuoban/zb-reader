@@ -85,29 +85,6 @@ export function useTtsChapterNavigation(deps: ChapterNavigationDeps) {
     setIsPaused,
   } = deps;
 
-  const chapterNavDeps = [
-    abortPendingTtsRequests,
-    epubReaderRef,
-    getPageIdentity,
-    getReadableParagraphs,
-    isPaused,
-    isSpeaking,
-    readSentencesHashRef,
-    setActiveTtsHtml,
-    setActiveTtsIsCodeBlock,
-    setActiveTtsLocation,
-    setActiveTtsParagraph,
-    setActiveTtsParagraphId,
-    setActiveTtsSentenceIndexInParagraph,
-    setIsPaused,
-    setIsSpeaking,
-    startTtsLoop,
-    stopCurrentAudio,
-    ttsSessionRef,
-    waitForPageChange,
-    allSentencesRef,
-  ] as const;
-
   const handleTtsChapter = useCallback(
     async (direction: "prev" | "next") => {
       const wasPaused = isPaused || !isSpeaking;
@@ -154,7 +131,28 @@ export function useTtsChapterNavigation(deps: ChapterNavigationDeps) {
         await startTtsLoop(sessionId, 0);
       }
     },
-    chapterNavDeps
+    [
+      allSentencesRef,
+      abortPendingTtsRequests,
+      epubReaderRef,
+      getPageIdentity,
+      getReadableParagraphs,
+      isPaused,
+      isSpeaking,
+      readSentencesHashRef,
+      setActiveTtsHtml,
+      setActiveTtsIsCodeBlock,
+      setActiveTtsLocation,
+      setActiveTtsParagraph,
+      setActiveTtsParagraphId,
+      setActiveTtsSentenceIndexInParagraph,
+      setIsPaused,
+      setIsSpeaking,
+      startTtsLoop,
+      stopCurrentAudio,
+      ttsSessionRef,
+      waitForPageChange,
+    ]
   );
 
   const handleTtsPrevChapter = useCallback(

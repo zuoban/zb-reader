@@ -581,143 +581,28 @@ export function useReaderTtsSession({
     ttsSessionRef,
   ]);
 
-  const handleTtsPrevChapter = useCallback(async () => {
-    const wasPaused = isPaused || !isSpeaking;
-    
-    ttsSessionRef.current += 1;
-    abortPendingTtsRequests();
-    const sessionId = ttsSessionRef.current;
-    stopCurrentAudio();
-    readSentencesHashRef.current.clear();
-
-    const previousIdentity = getPageIdentity();
-    epubReaderRef.current?.prevPage();
-
-    const moved = await waitForPageChange(previousIdentity, sessionId);
-    if (!moved || ttsSessionRef.current !== sessionId) {
-      if (ttsSessionRef.current === sessionId) setIsSpeaking(false);
-      return;
-    }
-
-    allSentencesRef.current = [];
-    setIsSpeaking(true);
-    
-    if (wasPaused) {
-      setIsPaused(true);
-      // Update UI with first sentence of new chapter
-      let paragraphs = getReadableParagraphs();
-      if (paragraphs.length === 0) {
-        await wait(220);
-        paragraphs = getReadableParagraphs();
-      }
-      if (paragraphs.length > 0) {
-        const sentences = paragraphsToSentences(paragraphs);
-        allSentencesRef.current = sentences;
-        const first = sentences[0];
-        if (first) {
-          setActiveTtsParagraph(first.text);
-          setActiveTtsParagraphId(first.paragraphId);
-          setActiveTtsSentenceIndexInParagraph(first.sentenceIndexInParagraph);
-          setActiveTtsLocation(first.location ?? null);
-          setActiveTtsIsCodeBlock(!!first.isCodeBlock);
-          setActiveTtsHtml(first.html || first.text);
-        }
-      }
-    } else {
-      setIsPaused(false);
-      await startTtsLoop(sessionId, 0);
-    }
-  }, [
-    abortPendingTtsRequests,
+  const { handleTtsPrevChapter, handleTtsNextChapter } = useTtsChapterNavigation({
+    allSentencesRef,
     epubReaderRef,
-    getPageIdentity,
     getReadableParagraphs,
-    isPaused,
-    isSpeaking,
+    getPageIdentity,
+    waitForPageChange,
+    startTtsLoop,
+    abortPendingTtsRequests,
+    stopCurrentAudio,
     readSentencesHashRef,
-    setActiveTtsHtml,
-    setActiveTtsIsCodeBlock,
-    setActiveTtsLocation,
+    ttsSessionRef,
+    isSpeaking,
+    isPaused,
     setActiveTtsParagraph,
     setActiveTtsParagraphId,
     setActiveTtsSentenceIndexInParagraph,
-    setIsPaused,
-    setIsSpeaking,
-    startTtsLoop,
-    stopCurrentAudio,
-    ttsSessionRef,
-    waitForPageChange,
-    allSentencesRef,
-  ]);
-
-  const handleTtsNextChapter = useCallback(async () => {
-    const wasPaused = isPaused || !isSpeaking;
-    
-    ttsSessionRef.current += 1;
-    abortPendingTtsRequests();
-    const sessionId = ttsSessionRef.current;
-    stopCurrentAudio();
-    readSentencesHashRef.current.clear();
-
-    const previousIdentity = getPageIdentity();
-    epubReaderRef.current?.nextPage();
-
-    const moved = await waitForPageChange(previousIdentity, sessionId);
-    if (!moved || ttsSessionRef.current !== sessionId) {
-      if (ttsSessionRef.current === sessionId) setIsSpeaking(false);
-      return;
-    }
-
-    allSentencesRef.current = [];
-    setIsSpeaking(true);
-
-    if (wasPaused) {
-      setIsPaused(true);
-      // Update UI with first sentence of new chapter
-      let paragraphs = getReadableParagraphs();
-      if (paragraphs.length === 0) {
-        await wait(220);
-        paragraphs = getReadableParagraphs();
-      }
-      if (paragraphs.length > 0) {
-        const sentences = paragraphsToSentences(paragraphs);
-        allSentencesRef.current = sentences;
-        const first = sentences[0];
-        if (first) {
-          setActiveTtsParagraph(first.text);
-          setActiveTtsParagraphId(first.paragraphId);
-          setActiveTtsSentenceIndexInParagraph(first.sentenceIndexInParagraph);
-          setActiveTtsLocation(first.location ?? null);
-          setActiveTtsIsCodeBlock(!!first.isCodeBlock);
-          setActiveTtsHtml(first.html || first.text);
-        }
-      }
-    } else {
-      setIsPaused(false);
-      await startTtsLoop(sessionId, 0);
-    }
-  }, [
-    abortPendingTtsRequests,
-    epubReaderRef,
-    getPageIdentity,
-    getReadableParagraphs,
-    isPaused,
-    isSpeaking,
-    readSentencesHashRef,
-    setActiveTtsHtml,
-    setActiveTtsIsCodeBlock,
     setActiveTtsLocation,
-    setActiveTtsParagraph,
-    setActiveTtsParagraphId,
-    setActiveTtsSentenceIndexInParagraph,
-    setIsPaused,
+    setActiveTtsIsCodeBlock,
+    setActiveTtsHtml,
     setIsSpeaking,
-    startTtsLoop,
-    stopCurrentAudio,
-    ttsSessionRef,
-    waitForPageChange,
-    allSentencesRef,
-  ]);
+    setIsPaused,
+  });
 
   return {
     handleToggleTts,

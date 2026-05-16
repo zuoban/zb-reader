@@ -13,6 +13,7 @@ export { useReaderSidePanelState } from "./useReaderSidePanelState";
 export { useReaderTtsAudio } from "./useReaderTtsAudio";
 export { useReaderTtsSession } from "./useReaderTtsSession";
 export { useReaderTtsState } from "./useReaderTtsState";
+export { useTtsChapterNavigation } from "./useTtsChapterNavigation";
 export { useBookmarkActions } from "./useBookmarkActions";
 export { useNoteActions } from "./useNoteActions";
 export { useReaderNavigation } from "./useReaderNavigation";
