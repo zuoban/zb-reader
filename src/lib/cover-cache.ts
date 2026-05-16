@@ -2,6 +2,12 @@ import fs from "fs";
 import sharp from "sharp";
 import { getCoverFilePath, coverExists } from "@/lib/storage";
 
+// Global sharp configuration to limit memory usage
+sharp.cache({ items: 50, files: 20, memory: 50 }); // 50MB memory limit for sharp's internal cache
+if (process.env.NODE_ENV === "development") {
+  sharp.concurrency(1); // Reduce memory spikes in dev
+}
+
 interface CacheEntry {
   buffer: Buffer;
   timestamp: number;

@@ -12,40 +12,48 @@ if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-let _sqlite: Database.Database | null = null;
-let _db: ReturnType<typeof drizzle<typeof schema>> | null = null;
+// Global persistence for HMR in development
+declare global {
+  // eslint-disable-next-line no-var
+  var _sqlite: Database.Database | undefined;
+  // eslint-disable-next-line no-var
+  var _db: ReturnType<typeof drizzle<typeof schema>> | undefined;
+}
+
 let _initializing = false;
 
-// Database initialization:
-// - Tables are created via drizzle-kit migrate (see drizzle.config.ts)
-// - For fresh installs, run: npx drizzle-kit generate && npx drizzle-kit migrate
-// - Legacy migration for old databases: see scripts/migrate-legacy-db.ts
-
-
-
 function getConnection() {
-  if (_sqlite && _db) return { sqlite: _sqlite, db: _db };
+  if (globalThis._sqlite && globalThis._db) {
+    return { sqlite: globalThis._sqlite, db: globalThis._db };
+  }
 
   if (_initializing) {
     throw new Error("Database is still initializing");
   }
   _initializing = true;
 
-  const sqlite = new Database(DB_PATH);
+  try {
+    const sqlite = new Database(DB_PATH);
 
-  // Enable WAL mode for better concurrent performance
-  sqlite.pragma("journal_mode = WAL");
-  sqlite.pragma("foreign_keys = ON");
-  sqlite.pragma("busy_timeout = 5000");
-  sqlite.pragma("cache_size = -2000"); // 2MB cache
-  sqlite.pragma("temp_store = MEMORY");
-  sqlite.pragma("synchronous = NORMAL");
+    // Enable WAL mode for better concurrent performance
+    sqlite.pragma("journal_mode = WAL");
+    sqlite.pragma("foreign_keys = ON");
+    sqlite.pragma("busy_timeout = 5000");
+    sqlite.pragma("cache_size = -2000"); // 2MB cache
+    sqlite.pragma("temp_store = MEMORY");
+    sqlite.pragma("synchronous = NORMAL");
 
-  _sqlite = sqlite;
-  _db = drizzle(sqlite, { schema });
-  _initializing = false;
+    const dbInstance = drizzle(sqlite, { schema });
 
-  return { sqlite: _sqlite, db: _db };
+    // Cache connection on globalThis to survive HMR in development
+    // In production, module-level singleton would suffice, but globalThis ensures consistency
+    globalThis._sqlite ??= sqlite;
+    globalThis._db ??= dbInstance;
+
+    return { sqlite, db: dbInstance };
+  } finally {
+    _initializing = false;
+  }
 }
 
 // Lazy-initialized exports with initialization guard
