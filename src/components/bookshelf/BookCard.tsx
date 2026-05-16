@@ -151,7 +151,7 @@ export const BookCard = memo(function BookCard({
     <Card
       ref={cardRef}
       className={cn(
-        "book-card-glass group relative overflow-hidden rounded-2xl p-0",
+        "book-card-refined group relative overflow-hidden rounded-2xl p-0",
         spotlight && "ring-2 ring-primary/30",
         selectionMode && "transition-all",
         selected && "ring-2 ring-primary/70"
@@ -164,16 +164,16 @@ export const BookCard = memo(function BookCard({
         onClick={handleOpenReader}
       >
         <div
-          className="relative m-1 aspect-[3/4] overflow-hidden rounded-xl bg-muted shadow-sm"
+          className="book-card-cover m-1 aspect-[3/4]"
           data-reader-transition-cover
         >
           {/* Cover Image */}
           {book.cover && !coverError ? (
-            <>
+            <div className="book-card-cover-zoom">
               <BookCoverImage
                 bookId={book.id}
                 alt={book.title || "书籍封面"}
-                className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                className="h-full w-full object-cover"
                 onError={() => setCoverError(true)}
               />
               
@@ -181,10 +181,13 @@ export const BookCard = memo(function BookCard({
               <div className="absolute inset-y-0 left-0 w-[3%] bg-black/5" />
               <div className="absolute inset-0 bg-gradient-to-r from-black/10 via-transparent to-transparent opacity-40" />
               
+              {/* Gloss Effect */}
+              <div className="book-card-gloss" aria-hidden="true" />
+              
               {/* Category Badge Overlay */}
               {book.category && (
                 <div className="absolute left-2 top-2 z-20">
-                  <div className="inline-flex items-center rounded-sm bg-black/60 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-white backdrop-blur-md">
+                  <div className="book-card-badge book-card-badge--overlay">
                     {book.category}
                   </div>
                 </div>
@@ -195,19 +198,19 @@ export const BookCard = memo(function BookCard({
                   <Check className="h-3.5 w-3.5 stroke-[3px]" />
                 </div>
               )}
-            </>
+            </div>
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-muted/50">
-              <div className="relative flex h-24 w-16 items-center justify-center rounded-sm border border-border/50 bg-background/50 shadow-sm transition-transform duration-500 group-hover:scale-105">
+            <div className="book-card-cover-zoom flex h-full w-full items-center justify-center bg-muted/50">
+              <div className="relative flex h-24 w-16 items-center justify-center rounded-sm border border-border/50 bg-background/50 shadow-sm">
                 <div className="absolute inset-y-0 left-0 w-1 bg-primary/5" />
                 <span className="font-heading text-xl font-bold italic opacity-40">
-                  {book.title?.charAt(0) || "B"}
+                  {book.title?.charAt(0) || "书"}
                 </span>
               </div>
               
               {book.category && (
                 <div className="absolute left-2 top-2 z-20">
-                  <div className="inline-flex items-center rounded-sm bg-black/60 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-white backdrop-blur-md">
+                  <div className="book-card-badge book-card-badge--overlay">
                     {book.category}
                   </div>
                 </div>
@@ -242,16 +245,16 @@ export const BookCard = memo(function BookCard({
       ) : null}
 
       {/* Card Content */}
-      <div className="relative flex flex-col px-3 pb-3 pt-2">
+      <div className="relative flex flex-col px-3.5 pb-3.5 pt-2.5">
         <div className="flex items-start justify-between gap-1">
           <Link href={readerHref} onClick={handleOpenReader} className="flex-1 min-w-0">
             <h3
-              className="line-clamp-1 font-heading text-[14px] font-bold leading-snug tracking-tight text-foreground transition-colors group-hover:text-primary sm:text-[15px]"
+              className="line-clamp-1 font-heading text-[14px] font-semibold leading-snug tracking-tight text-foreground transition-colors group-hover:text-primary sm:text-[15px]"
               title={book.title}
             >
               {book.title || "未命名书籍"}
             </h3>
-            <p className="mt-0.5 line-clamp-1 text-[11px] font-medium text-muted-foreground/70 sm:text-[12px]">
+            <p className="mt-1 line-clamp-1 book-card-info-fade text-[11px] font-normal text-muted-foreground/60 sm:text-[12px]">
               {book.author || "未知作者"}
             </p>
           </Link>
@@ -296,24 +299,25 @@ export const BookCard = memo(function BookCard({
           ) : null}
         </div>
 
-        <div className="mt-3 flex items-center justify-between border-t border-border/40 pt-2.5 px-0.5">
+        <div className="book-card-footer-hairline" />
+        <div className="mt-3.5 flex items-center justify-between pt-3 px-0.5">
           <div className="flex items-center gap-1.5">
             {isCompleted ? (
-              <span className="text-[9px] font-extrabold tracking-wider text-primary uppercase">
+              <span className="book-card-status book-card-status--completed">
                 COMPLETED
               </span>
             ) : hasProgress ? (
-              <span className="text-[9px] font-extrabold tracking-wider text-foreground/80 uppercase">
+              <span className="book-card-status book-card-status--reading">
                 <span className="text-foreground">{Math.round(progress * 100)}%</span> READ
               </span>
             ) : (
-              <span className="text-[9px] font-extrabold tracking-wider text-muted-foreground/60 uppercase">
+              <span className="book-card-status book-card-status--new">
                 NEW
               </span>
             )}
           </div>
           {lastReadText && (
-            <span className="text-[9px] font-bold text-muted-foreground/50 italic">
+            <span className="text-[9px] font-medium text-muted-foreground/40 italic">
               {lastReadText}
             </span>
           )}

@@ -1501,3 +1501,224 @@
 .reading-rhythm-indicator.active {
   opacity: 1;
 }
+
+/* ============================================
+   BookCard Refined - Minimalist Modern Style
+   ============================================ */
+
+/* Card Surface - Refined Minimalist Style */
+.book-card-refined {
+  border: 1px solid color-mix(in oklab, var(--border) 30%, transparent);
+  background: color-mix(in oklab, var(--background) 98%, var(--foreground) 0.5%);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.02),
+    0 4px 12px -8px color-mix(in oklab, var(--foreground) 6%, transparent);
+  transition:
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.3s ease;
+}
+
+/* Hover state using direct :hover for better performance */
+.book-card-refined:hover {
+  border-color: color-mix(in oklab, var(--foreground) 10%, var(--border));
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.04),
+    0 12px 32px -16px color-mix(in oklab, var(--foreground) 12%, transparent);
+  transform: translate3d(0, -3px, 0);
+}
+
+.dark .book-card-refined {
+  background: color-mix(in oklab, var(--background) 94%, white 2%);
+  border-color: color-mix(in oklab, white 4%, var(--border));
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.15),
+    0 4px 12px -8px rgba(0, 0, 0, 0.3);
+}
+
+.dark .book-card-refined:hover {
+  border-color: color-mix(in oklab, white 8%, var(--border));
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.25),
+    0 12px 32px -16px rgba(0, 0, 0, 0.4);
+}
+
+/* Cover Container */
+.book-card-cover {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  background: color-mix(in oklab, var(--muted) 60%, var(--background) 40%);
+}
+
+.dark .book-card-cover {
+  background: color-mix(in oklab, var(--muted) 70%, var(--background) 30%);
+}
+
+/* Cover Zoom Wrapper - needs relative for Next.js Image fill */
+.book-card-cover-zoom {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.book-card-cover-zoom:hover {
+  transform: scale(1.04);
+}
+
+/* Light Sweep Gloss Effect */
+.book-card-gloss {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(
+    115deg,
+    transparent 0%,
+    transparent 35%,
+    color-mix(in oklab, white 25%, transparent) 45%,
+    color-mix(in oklab, white 35%, transparent) 50%,
+    color-mix(in oklab, white 25%, transparent) 55%,
+    transparent 65%,
+    transparent 100%
+  );
+}
+
+/* Trigger gloss animation when hovering the cover zoom wrapper */
+.book-card-cover-zoom:hover .book-card-gloss {
+  opacity: 1;
+  animation: book-card-gloss-sweep 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes book-card-gloss-sweep {
+  0% {
+    transform: translateX(-100%) skewX(-15deg);
+  }
+  100% {
+    transform: translateX(200%) skewX(-15deg);
+  }
+}
+
+.dark .book-card-gloss {
+  background: linear-gradient(
+    115deg,
+    transparent 0%,
+    transparent 35%,
+    color-mix(in oklab, white 15%, transparent) 45%,
+    color-mix(in oklab, white 20%, transparent) 50%,
+    color-mix(in oklab, white 15%, transparent) 55%,
+    transparent 65%,
+    transparent 100%
+  );
+}
+
+/* Info Fade-in Effect */
+.book-card-info-fade {
+  opacity: 0.85;
+  transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  transform: translateY(2px);
+}
+
+.book-card-refined:hover .book-card-info-fade {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Category Badge */
+.book-card-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 0.375rem;
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 0.125rem 0.375rem;
+  text-transform: uppercase;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.book-card-badge--overlay {
+  /* Dark semi-transparent background for readability on any cover */
+  background: color-mix(in oklab, #000000 75%, transparent);
+  backdrop-filter: blur(8px) saturate(1.2);
+  -webkit-backdrop-filter: blur(8px) saturate(1.2);
+  border: 1px solid color-mix(in oklab, white 10%, transparent);
+  color: #ffffff;
+}
+
+.dark .book-card-badge--overlay {
+  background: color-mix(in oklab, #000000 70%, transparent);
+  border-color: color-mix(in oklab, white 8%, transparent);
+}
+
+/* Progress Status */
+.book-card-status {
+  font-size: 0.5625rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.book-card-status--new {
+  color: color-mix(in oklab, var(--muted-foreground) 50%, transparent);
+}
+
+.book-card-status--reading {
+  color: var(--foreground);
+}
+
+.book-card-status--completed {
+  color: var(--primary);
+}
+
+/* Footer Hairline Divider */
+.book-card-footer-hairline {
+  height: 1px;
+  margin: 0 0.25rem;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in oklab, var(--border) 60%, transparent) 15%,
+    color-mix(in oklab, var(--border) 60%, transparent) 85%,
+    transparent 100%
+  );
+}
+
+.dark .book-card-footer-hairline {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in oklab, white 8%, transparent) 15%,
+    color-mix(in oklab, white 8%, transparent) 85%,
+    transparent 100%
+  );
+}
+
+/* Reduced Motion Overrides */
+@media (prefers-reduced-motion: reduce) {
+  .book-card-gloss {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+
+  .book-card-cover-zoom {
+    transition: none !important;
+  }
+
+  .group:hover .book-card-cover-zoom {
+    transform: none !important;
+  }
+
+  .group:hover .book-card-refined {
+    transform: none !important;
+  }
+
+  .book-card-info-fade {
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
