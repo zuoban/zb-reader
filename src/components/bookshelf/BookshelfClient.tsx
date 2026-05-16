@@ -1,11 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import { CheckSquare, Tags, X } from "lucide-react";
 import { SearchBar } from "@/components/bookshelf/SearchBar";
 import { BackgroundDecoration } from "@/components/bookshelf/BackgroundDecoration";
 import { BookCardSkeleton } from "@/components/bookshelf/BookCardSkeleton";
 import { BookGrid } from "@/components/bookshelf/BookGrid";
+import { useBatchBookCategoryAction } from "@/components/bookshelf/hooks/useBatchBookCategoryAction";
 import { useBookCategoryAction } from "@/components/bookshelf/hooks/useBookCategoryAction";
 import { useBookDeleteAction } from "@/components/bookshelf/hooks/useBookDeleteAction";
 import { ALL_CATEGORY, useBookshelfData } from "@/components/bookshelf/hooks/useBookshelfData";
@@ -13,6 +15,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { useTheme } from "@/components/layout/ThemeProvider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { UNCATEGORIZED_CATEGORY, UNCATEGORIZED_CATEGORY_LABEL } from "@/lib/book-category";
 import { cn } from "@/lib/utils";
 import type { BookshelfInitialData } from "@/components/bookshelf/hooks/useBookshelfData";
 
@@ -24,6 +27,10 @@ const BookCategoryDialog = dynamic(
 );
 const BookDeleteDialog = dynamic(
   () => import("@/components/bookshelf/BookDeleteDialog").then((mod) => mod.BookDeleteDialog),
+  { ssr: false }
+);
+const BatchBookCategoryDialog = dynamic(
+  () => import("@/components/bookshelf/BatchBookCategoryDialog").then((mod) => mod.BatchBookCategoryDialog),
   { ssr: false }
 );
 
@@ -53,6 +60,8 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
     totalBooks,
   } = useBookshelfData(initialData);
   const [spotlightBookId, _setSpotlightBookId] = useState<string | null>(null);
+  const [batchMode, setBatchMode] = useState(false);
+  const [selectedBookIds, setSelectedBookIds] = useState<Set<string>>(() => new Set());
   const { setTheme } = useTheme();
   const {
     categoryDialogBook,
@@ -63,6 +72,20 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
     savingCategory,
     setCategoryInput,
   } = useBookCategoryAction({ onSaved: refreshBooks });
+  const handleBatchSaved = useCallback(async () => {
+    await refreshBooks();
+    setSelectedBookIds(new Set());
+    setBatchMode(false);
+  }, [refreshBooks]);
+  const {
+    batchCategoryDialogOpen,
+    batchCategoryInput,
+    handleBatchCategoryDialogOpenChange,
+    openBatchCategoryDialog: handleOpenBatchCategoryDialog,
+    saveBatchCategory: handleSaveBatchCategory,
+    savingBatchCategory,
+    setBatchCategoryInput,
+  } = useBatchBookCategoryAction({ onSaved: handleBatchSaved });
   const {
     confirmDelete: handleConfirmDelete,
     deleteDialogBook,
@@ -82,6 +105,38 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
   const handleUploadComplete = useCallback(() => {
     void refreshBooks();
   }, [refreshBooks]);
+
+  const selectedBookCount = selectedBookIds.size;
+  const selectedBookIdList = useMemo(() => Array.from(selectedBookIds), [selectedBookIds]);
+  const uncategorizedCount = Math.max(
+    totalBooks - categories.reduce((sum, category) => sum + category.count, 0),
+    0
+  );
+
+  const handleBatchModeToggle = useCallback(() => {
+    setBatchMode((current) => {
+      if (current) {
+        setSelectedBookIds(new Set());
+      }
+      return !current;
+    });
+  }, []);
+
+  const handleToggleBookSelect = useCallback((bookId: string) => {
+    setSelectedBookIds((current) => {
+      const next = new Set(current);
+      if (next.has(bookId)) {
+        next.delete(bookId);
+      } else {
+        next.add(bookId);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleClearSelectedBooks = useCallback(() => {
+    setSelectedBookIds(new Set());
+  }, []);
 
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
@@ -168,13 +223,95 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
                 </Badge>
               </Button>
             ))}
+            {batchMode ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  "h-10 cursor-pointer rounded-full px-5 text-[14px] font-semibold transition-all duration-200",
+                  selectedCategory === UNCATEGORIZED_CATEGORY
+                    ? "category-filter-button-active"
+                    : "category-filter-button"
+                )}
+                aria-pressed={selectedCategory === UNCATEGORIZED_CATEGORY}
+                onClick={() => setSelectedCategory(UNCATEGORIZED_CATEGORY)}
+              >
+                <span className="max-w-32 truncate">{UNCATEGORIZED_CATEGORY_LABEL}</span>
+                <Badge
+                  variant="ghost"
+                  className={cn(
+                    "category-filter-count",
+                    selectedCategory === UNCATEGORIZED_CATEGORY && "category-filter-count-active"
+                  )}
+                >
+                  {uncategorizedCount}
+                </Badge>
+              </Button>
+            ) : null}
           </div>
 
-          <SearchBar 
-            onSearch={setSearchQuery} 
-            className="w-full sm:w-80" 
-          />
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+            <Button
+              type="button"
+              variant="outline"
+              className={cn(
+                "liquid-control h-10 cursor-pointer rounded-full px-4 text-[13px] font-bold",
+                batchMode && "batch-mode-toggle-active"
+              )}
+              onClick={handleBatchModeToggle}
+            >
+              {batchMode ? (
+                <X className="mr-2 h-4 w-4" />
+              ) : (
+                <CheckSquare className="mr-2 h-4 w-4" />
+              )}
+              {batchMode ? "完成" : "批量管理"}
+            </Button>
+            <SearchBar
+              onSearch={setSearchQuery}
+              className="w-full sm:w-80"
+            />
+          </div>
         </div>
+
+        {batchMode ? (
+          <div className="surface-glass surface-elevated mb-6 flex flex-col gap-3 rounded-2xl px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                <Tags className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-foreground">
+                  已选择 {selectedBookCount} 本书
+                </p>
+                <p className="text-[11px] font-medium text-muted-foreground">
+                  点击书籍封面或选择按钮切换选中状态
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                className="h-9 cursor-pointer rounded-full px-4 text-xs font-bold"
+                disabled={selectedBookCount === 0}
+                onClick={handleClearSelectedBooks}
+              >
+                清空选择
+              </Button>
+              <Button
+                type="button"
+                className="h-9 cursor-pointer rounded-full px-4 text-xs font-bold"
+                disabled={selectedBookCount === 0}
+                onClick={() => handleOpenBatchCategoryDialog(selectedBookIdList)}
+              >
+                <Tags className="mr-2 h-3.5 w-3.5" />
+                设置分类
+              </Button>
+            </div>
+          </div>
+        ) : null}
 
         {/* Book Grid */}
         {loading && page === 1 ? (
@@ -190,10 +327,13 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
               progressMap={progressMap}
               lastReadAtMap={lastReadAtMap}
               spotlightBookId={spotlightBookId}
+              selectionMode={batchMode}
+              selectedBookIds={selectedBookIds}
               emptyTitle={activeCategoryName ? "这个分类还没有书" : undefined}
               emptyDescription={activeCategoryName ? "可以从其他图书的菜单中设置分类，或切回全部书籍继续浏览。" : undefined}
               onDelete={handleRequestDelete}
               onChangeCategory={handleOpenCategoryDialog}
+              onToggleSelect={handleToggleBookSelect}
             />
             
             {/* Load More Trigger & Indicator */}
@@ -249,6 +389,19 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
           onCategoryInputChange={setCategoryInput}
           onOpenChange={handleCategoryDialogOpenChange}
           onSave={handleSaveCategory}
+        />
+      ) : null}
+
+      {batchCategoryDialogOpen ? (
+        <BatchBookCategoryDialog
+          open={batchCategoryDialogOpen}
+          selectedCount={selectedBookCount}
+          categories={categories}
+          categoryInput={batchCategoryInput}
+          savingCategory={savingBatchCategory}
+          onCategoryInputChange={setBatchCategoryInput}
+          onOpenChange={handleBatchCategoryDialogOpenChange}
+          onSave={handleSaveBatchCategory}
         />
       ) : null}
     </div>

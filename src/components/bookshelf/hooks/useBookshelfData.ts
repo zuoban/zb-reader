@@ -2,9 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { UNCATEGORIZED_CATEGORY, UNCATEGORIZED_CATEGORY_LABEL } from "@/lib/book-category";
 import type { Book } from "@/lib/db/schema";
 
 export const ALL_CATEGORY = "__all__";
+export { UNCATEGORIZED_CATEGORY };
 
 export interface CategorySummary {
   name: string;
@@ -35,7 +37,13 @@ export function useBookshelfData(initialData: BookshelfInitialData) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [page, setPage] = useState(initialData.page);
   const [hasMore, setHasMore] = useState(initialData.books.length < initialData.total);
-  const activeCategoryName = selectedCategory === ALL_CATEGORY ? "" : selectedCategory;
+  const categoryFilterValue = selectedCategory === ALL_CATEGORY ? "" : selectedCategory;
+  const activeCategoryName =
+    selectedCategory === ALL_CATEGORY
+      ? ""
+      : selectedCategory === UNCATEGORIZED_CATEGORY
+        ? UNCATEGORIZED_CATEGORY_LABEL
+        : selectedCategory;
   const fetchAbortRef = useRef<AbortController | null>(null);
 
   const fetchBooks = useCallback(async (currentPage = 1) => {
@@ -51,8 +59,8 @@ export function useBookshelfData(initialData: BookshelfInitialData) {
       params.set("page", currentPage.toString());
       params.set("limit", "20");
       params.set("includeFacets", currentPage === 1 ? "true" : "false");
-      if (activeCategoryName) {
-        params.set("category", activeCategoryName);
+      if (categoryFilterValue) {
+        params.set("category", categoryFilterValue);
       }
       if (searchQuery) {
         params.set("search", searchQuery);
@@ -92,7 +100,7 @@ export function useBookshelfData(initialData: BookshelfInitialData) {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [activeCategoryName, searchQuery]);
+  }, [categoryFilterValue, searchQuery]);
 
   useEffect(() => {
     return () => {
@@ -118,7 +126,7 @@ export function useBookshelfData(initialData: BookshelfInitialData) {
     void fetchBooks(1).finally(() => {
       queryResetRef.current = false;
     });
-  }, [activeCategoryName, fetchBooks, searchQuery]);
+  }, [categoryFilterValue, fetchBooks, searchQuery]);
 
   useEffect(() => {
     if (page === 1) return;

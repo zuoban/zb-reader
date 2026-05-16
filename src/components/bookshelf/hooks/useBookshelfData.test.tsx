@@ -1,6 +1,6 @@
 import { act, render, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ALL_CATEGORY, useBookshelfData } from "./useBookshelfData";
+import { ALL_CATEGORY, UNCATEGORIZED_CATEGORY, useBookshelfData } from "./useBookshelfData";
 import { createBookshelfInitialData, createMockBook } from "@/components/bookshelf/test-utils";
 
 type HookValue = ReturnType<typeof useBookshelfData>;
@@ -80,6 +80,30 @@ describe("useBookshelfData", () => {
     expect(url.searchParams.get("category")).toBe("技术");
     expect(url.searchParams.get("search")).toBe("React");
     await waitFor(() => expect(values.current?.books[0]?.id).toBe("book-2"));
+  });
+
+  it("requests the uncategorized category token and exposes a readable active name", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      mockBooksResponse({
+        books: [createMockBook({ id: "book-2", category: null })],
+        categories: [{ name: "技术", count: 1 }],
+        progressMap: {},
+        lastReadAtMap: {},
+        total: 1,
+        allTotal: 2,
+      }) as never
+    );
+    const { values } = renderHookHarness();
+
+    act(() => {
+      values.current?.setSelectedCategory(UNCATEGORIZED_CATEGORY);
+    });
+
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
+    const url = getRequestUrl();
+
+    expect(values.current?.activeCategoryName).toBe("未分类");
+    expect(url.searchParams.get("category")).toBe(UNCATEGORIZED_CATEGORY);
   });
 
   it("appends books and maps when loading more", async () => {

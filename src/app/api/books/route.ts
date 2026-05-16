@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { and, count, desc, eq, sql } from "drizzle-orm";
+import { and, count, desc, eq, isNull, or, sql } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { db } from "@/lib/db";
 import { books, readingProgress } from "@/lib/db/schema";
@@ -10,6 +10,7 @@ import {
 import { logger } from "@/lib/logger";
 import { getBookFacets, invalidateBookFacets } from "@/lib/book-facets-cache";
 import { badRequest, serverError, getAuthUserId } from "@/lib/api-utils";
+import { UNCATEGORIZED_CATEGORY } from "@/lib/book-category";
 import { formatBytes } from "@/lib/utils";
 import { MAX_EPUB_FILE_SIZE_BYTES } from "@/lib/upload-limits";
 import { 
@@ -126,7 +127,12 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    if (category) {
+    if (category === UNCATEGORIZED_CATEGORY) {
+      whereClause = and(
+        whereClause,
+        or(isNull(books.category), eq(books.category, ""))
+      )!;
+    } else if (category) {
       whereClause = and(whereClause, eq(books.category, category))!;
     }
 

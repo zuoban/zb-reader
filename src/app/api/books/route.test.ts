@@ -298,6 +298,18 @@ describe("Books API list", () => {
     expect(res.status).toBe(200);
     expect(mockSelect).toHaveBeenCalledTimes(2);
   });
+
+  it("accepts the uncategorized category token", async () => {
+    mockSelectResults.push([], [{ count: 0 }]);
+
+    const { GET } = await import("./route");
+    const res = await GET(
+      createBooksGetRequest("http://localhost:3000/api/books?category=__uncategorized__&includeFacets=false")
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockSelect).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe("normalizeBooksPagination", () => {
