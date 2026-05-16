@@ -91,6 +91,16 @@ const nextConfig: NextConfig = {
         },
       ],
     },
+    // Books API: allow stale-while-revalidate for faster bookshelf loading
+    {
+      source: "/api/books",
+      headers: [
+        {
+          key: "Cache-Control",
+          value: "public, max-age=10, stale-while-revalidate=300",
+        },
+      ],
+    },
     {
       source: "/books/:path*",
       headers: [

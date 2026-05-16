@@ -1,10 +1,33 @@
 "use client";
 
-import { memo, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BookOpen, Sparkles, Upload } from "lucide-react";
 import { BookCard } from "./BookCard";
 import type { Book } from "@/lib/db/schema";
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
+
+// Preload cover images that are about to enter the viewport
+function preloadCovers(books: Book[], startIndex: number, endIndex: number) {
+  const slice = books.slice(startIndex, Math.min(endIndex + 1, books.length));
+  for (const book of slice) {
+    if (book.cover) {
+      const link = document.createElement("link");
+      link.rel = "prefetch";
+      link.as = "image";
+      link.href = `/api/books/${book.id}/cover?w=400`;
+      document.head.appendChild(link);
+    }
+  }
+}
+
+// Debounce utility for resize handler
+function debounce<T extends (...args: unknown[]) => void>(fn: T, delay: number): T {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  return ((...args: Parameters<T>) => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
+  }) as T;
+}
 
 interface BookGridProps {
   books: Book[];
@@ -28,36 +51,61 @@ export const BookGrid = memo(function BookGrid({
   selectionMode = false,
   selectedBookIds = new Set(),
   emptyTitle = "书架还是空的",
-  emptyDescription = "点击上方的“上传书籍”按钮，添加你的第一本书，开始打造一个安静又有温度的个人阅读空间。",
+  emptyDescription = "点击上方的'上传书籍'按钮，添加你的第一本书，开始打造一个安静又有温度的个人阅读空间。",
   onDelete,
   onChangeCategory,
   onToggleSelect,
 }: BookGridProps) {
   const [columns, setColumns] = useState(2);
+  const prevBooksRef = useRef<Book[]>([]);
 
-  useEffect(() => {
-    const updateColumns = () => {
-      const width = window.innerWidth;
-      if (width >= 1536) setColumns(6);
-      else if (width >= 1280) setColumns(5);
-      else if (width >= 1024) setColumns(4);
-      else if (width >= 640) setColumns(3);
-      else setColumns(2);
-    };
-    updateColumns();
-    window.addEventListener("resize", updateColumns);
-    return () => window.removeEventListener("resize", updateColumns);
+  const updateColumns = useCallback(() => {
+    const width = window.innerWidth;
+    if (width >= 1536) setColumns(6);
+    else if (width >= 1280) setColumns(5);
+    else if (width >= 1024) setColumns(4);
+    else if (width >= 640) setColumns(3);
+    else setColumns(2);
   }, []);
+
+  // Debounced resize handler to avoid excessive re-renders
+  useEffect(() => {
+    const debouncedUpdate = debounce(updateColumns, 150);
+    updateColumns();
+    window.addEventListener("resize", debouncedUpdate);
+    return () => window.removeEventListener("resize", debouncedUpdate);
+  }, [updateColumns]);
 
   const rowCount = Math.ceil(books.length / columns);
 
   const rowHeightMap: Record<number, number> = { 2: 300, 3: 280, 4: 300, 5: 300, 6: 300 };
-  
+
   const virtualizer = useWindowVirtualizer({
     count: rowCount,
     estimateSize: () => rowHeightMap[columns] ?? 300,
     overscan: 2,
   });
+
+  // Preload covers for first screen on initial load
+  useEffect(() => {
+    if (books.length > 0 && books !== prevBooksRef.current) {
+      preloadCovers(books, 0, columns * 4);
+      prevBooksRef.current = books;
+    }
+  }, [books, columns]);
+
+  // Preload covers for books about to enter viewport during scroll
+  useEffect(() => {
+    const virtualItems = virtualizer.getVirtualItems();
+    if (virtualItems.length > 0) {
+      const firstVisible = virtualItems[0].index;
+      const lastVisible = virtualItems[virtualItems.length - 1].index;
+      // Preload next 2 rows worth of covers ahead
+      const preloadStart = firstVisible * columns;
+      const preloadEnd = (lastVisible + 3) * columns;
+      preloadCovers(books, preloadStart, preloadEnd);
+    }
+  }, [books, columns, virtualizer]);
 
   if (books.length === 0) {
     return (
@@ -97,7 +145,7 @@ export const BookGrid = memo(function BookGrid({
         {virtualizer.getVirtualItems().map((virtualRow) => {
           const startIndex = virtualRow.index * columns;
           const rowBooks = books.slice(startIndex, startIndex + columns);
-          
+
           return (
             <div
               key={virtualRow.key}
@@ -121,6 +169,7 @@ export const BookGrid = memo(function BookGrid({
                   spotlight={spotlightBookId === book.id}
                   selectionMode={selectionMode}
                   selected={selectedBookIds.has(book.id)}
+                  coverPriority={virtualRow.index === 0}
                   onDelete={onDelete}
                   onChangeCategory={onChangeCategory}
                   onToggleSelect={onToggleSelect}

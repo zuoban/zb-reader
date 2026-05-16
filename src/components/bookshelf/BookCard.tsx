@@ -44,6 +44,7 @@ interface BookCardProps {
   spotlight?: boolean;
   selectionMode?: boolean;
   selected?: boolean;
+  coverPriority?: boolean;
   onDelete: (id: string) => void;
   onChangeCategory?: (book: Book) => void;
   onToggleSelect?: (id: string) => void;
@@ -56,6 +57,7 @@ export const BookCard = memo(function BookCard({
   spotlight = false,
   selectionMode = false,
   selected = false,
+  coverPriority = false,
   onDelete,
   onChangeCategory,
   onToggleSelect,
@@ -175,6 +177,7 @@ export const BookCard = memo(function BookCard({
                 alt={book.title || "书籍封面"}
                 className="h-full w-full object-cover"
                 onError={() => setCoverError(true)}
+                priority={coverPriority}
               />
               
               {/* Subtle Book spine effect */}
