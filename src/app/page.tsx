@@ -23,12 +23,6 @@ export default function LandingPage() {
             <span className="text-xl font-bold tracking-tight">ZB Reader</span>
           </div>
           <nav className="flex items-center gap-4">
-            <Link href="/login">
-              <Button variant="ghost" size="sm">登录</Button>
-            </Link>
-            <Link href="/register">
-              <Button size="sm">立即体验</Button>
-            </Link>
           </nav>
         </div>
       </header>
@@ -51,7 +45,7 @@ export default function LandingPage() {
                 支持智能语音朗读与多端进度同步，让您的阅读体验更加纯粹、高效。
               </p>
               <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-                <Link href="/register">
+                <Link href="/login">
                   <Button size="lg" className="h-14 px-8 text-lg font-semibold shadow-lg shadow-primary/20">
                     开始阅读
                     <ChevronRight className="ml-1 size-5" />
@@ -166,15 +160,8 @@ export default function LandingPage() {
             <div className="relative overflow-hidden rounded-[2.5rem] bg-primary px-6 py-20 text-center text-primary-foreground sm:px-12 sm:py-32">
               <h2 className="text-3xl font-bold tracking-tight sm:text-6xl">开启您的私人书架</h2>
               <p className="mx-auto mt-6 max-w-xl text-lg opacity-80 sm:text-xl">
-                立即注册，开始管理您的电子书收藏，享受多端无缝阅读的乐趣。
+                立即开始管理您的电子书收藏，享受多端无缝阅读的乐趣。
               </p>
-              <div className="mt-12 flex flex-col justify-center gap-4 sm:flex-row">
-                <Link href="/register">
-                  <Button size="lg" variant="secondary" className="h-14 px-10 text-lg font-semibold">
-                    免费注册
-                  </Button>
-                </Link>
-              </div>
               {/* Decorative elements */}
               <div className="absolute top-0 right-0 -mr-20 -mt-20 size-96 rounded-full bg-white/5 blur-3xl" />
               <div className="absolute bottom-0 left-0 -ml-20 -mb-20 size-96 rounded-full bg-white/5 blur-3xl" />
@@ -184,28 +171,21 @@ export default function LandingPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border/40 py-16">
+      <footer className="border-t border-border/40 py-12">
         <div className="container mx-auto px-4 sm:px-6">
-          <div className="flex flex-col items-center justify-between gap-8 sm:flex-row">
-            <div className="flex items-center gap-2">
-              <div className="size-6 rounded bg-primary flex items-center justify-center">
-                <BookOpen className="size-3.5 text-primary-foreground" />
-              </div>
-              <span className="font-bold tracking-tight">ZB Reader</span>
-            </div>
-            <nav className="flex gap-8 text-sm font-medium text-muted-foreground">
-              <Link href="/login" className="hover:text-foreground">登录</Link>
-              <Link href="/register" className="hover:text-foreground">注册</Link>
-              <Link href="https://github.com/zuoban/zb-reader" className="hover:text-foreground">开源代码</Link>
-            </nav>
-            <div className="flex items-center gap-4">
-              <Link href="https://github.com/zuoban/zb-reader" className="text-muted-foreground hover:text-foreground transition-colors">
-                <Github className="size-5" />
+          <div className="flex flex-col items-center justify-center gap-4 text-center text-xs text-muted-foreground">
+            <div className="flex items-center gap-6">
+              <span>© {new Date().getFullYear()} ZB Reader</span>
+              <Link 
+                href="https://github.com/zuoban/zb-reader" 
+                target="_blank"
+                className="flex items-center gap-1.5 hover:text-foreground transition-colors"
+              >
+                <Github className="size-3.5" />
+                GitHub
               </Link>
             </div>
-          </div>
-          <div className="mt-12 text-center text-xs text-muted-foreground border-t border-border/10 pt-8">
-            © {new Date().getFullYear()} ZB Reader. 使用 Next.js & Tailwind CSS 构建。
+            <p className="opacity-50">使用 Next.js & Tailwind CSS 构建</p>
           </div>
         </div>
       </footer>
