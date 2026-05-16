@@ -524,6 +524,25 @@
   transform: translate3d(0, -1px, 0);
 }
 
+.batch-mode-toggle-active {
+  color: var(--primary) !important;
+  border-color: color-mix(in oklab, var(--primary) 42%, var(--glass-border));
+  background:
+    linear-gradient(180deg, color-mix(in oklab, white 24%, transparent), transparent 70%),
+    color-mix(in oklab, var(--primary) 16%, var(--glass-strong)) !important;
+  box-shadow:
+    0 1px 0 var(--glass-highlight) inset,
+    0 10px 24px -14px color-mix(in oklab, var(--primary) 42%, transparent);
+}
+
+.batch-mode-toggle-active:hover {
+  color: var(--primary) !important;
+  border-color: color-mix(in oklab, var(--primary) 52%, var(--glass-border));
+  background:
+    linear-gradient(180deg, color-mix(in oklab, white 28%, transparent), transparent 70%),
+    color-mix(in oklab, var(--primary) 22%, var(--glass-strong)) !important;
+}
+
 .top-action-group {
   border: 1px solid color-mix(in oklab, var(--glass-border) 78%, transparent);
   background:

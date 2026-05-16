@@ -5,10 +5,11 @@ import { createMockBook } from "@/components/bookshelf/test-utils";
 import type { ComponentProps } from "react";
 
 const mockPrefetch = vi.fn();
+const mockPush = vi.fn();
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
-    push: vi.fn(),
+    push: mockPush,
     replace: vi.fn(),
     back: vi.fn(),
     forward: vi.fn(),
@@ -122,5 +123,33 @@ describe("BookCard", () => {
       });
       expect(handleDelete).toHaveBeenCalledWith("book-1");
     }
+  });
+
+  it("should toggle selection instead of opening the reader in selection mode", () => {
+    const handleToggleSelect = vi.fn();
+    renderBookCard({
+      selectionMode: true,
+      selected: false,
+      onToggleSelect: handleToggleSelect,
+    });
+
+    const coverLink = screen.getAllByRole("link")[0];
+    act(() => {
+      fireEvent.click(coverLink);
+    });
+
+    expect(handleToggleSelect).toHaveBeenCalledWith("book-1");
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it("should expose selected state in selection mode", () => {
+    renderBookCard({
+      selectionMode: true,
+      selected: true,
+      onToggleSelect: vi.fn(),
+    });
+
+    const selectButton = screen.getByRole("button", { name: "取消选择 Test Book" });
+    expect(selectButton).toHaveAttribute("aria-pressed", "true");
   });
 });

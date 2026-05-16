@@ -42,8 +42,11 @@ interface BookCardProps {
   progress?: number;
   lastReadAt?: string;
   spotlight?: boolean;
+  selectionMode?: boolean;
+  selected?: boolean;
   onDelete: (id: string) => void;
   onChangeCategory?: (book: Book) => void;
+  onToggleSelect?: (id: string) => void;
 }
 
 export const BookCard = memo(function BookCard({
@@ -51,8 +54,11 @@ export const BookCard = memo(function BookCard({
   progress = 0,
   lastReadAt,
   spotlight = false,
+  selectionMode = false,
+  selected = false,
   onDelete,
   onChangeCategory,
+  onToggleSelect,
 }: BookCardProps) {
   const router = useRouter();
   const readerHref = `/reader/${book.id}`;
@@ -67,6 +73,12 @@ export const BookCard = memo(function BookCard({
   };
 
   const handleOpenReader = (event: ReactMouseEvent<HTMLAnchorElement>) => {
+    if (selectionMode) {
+      event.preventDefault();
+      onToggleSelect?.(book.id);
+      return;
+    }
+
     if (
       event.defaultPrevented ||
       event.button !== 0 ||
@@ -140,7 +152,9 @@ export const BookCard = memo(function BookCard({
       ref={cardRef}
       className={cn(
         "book-card-glass group relative overflow-hidden rounded-2xl p-0",
-        spotlight && "ring-2 ring-primary/30"
+        spotlight && "ring-2 ring-primary/30",
+        selectionMode && "transition-all",
+        selected && "ring-2 ring-primary/70"
       )}
     >
       <Link
@@ -204,6 +218,29 @@ export const BookCard = memo(function BookCard({
         </div>
       </Link>
 
+      {selectionMode ? (
+        <Button
+          type="button"
+          size="icon"
+          variant="ghost"
+          aria-label={`${selected ? "取消选择" : "选择"} ${book.title || "未命名书籍"}`}
+          aria-pressed={selected}
+          className={cn(
+            "absolute right-3 top-3 z-30 h-8 w-8 cursor-pointer rounded-full border shadow-sm backdrop-blur-md transition-all",
+            selected
+              ? "border-primary bg-primary text-primary-foreground hover:bg-primary/90"
+              : "border-white/40 bg-black/45 text-white hover:bg-black/60"
+          )}
+          onClick={() => onToggleSelect?.(book.id)}
+        >
+          {selected ? (
+            <Check className="h-4 w-4 stroke-[3px]" />
+          ) : (
+            <span className="h-3.5 w-3.5 rounded-full border-2 border-current" />
+          )}
+        </Button>
+      ) : null}
+
       {/* Card Content */}
       <div className="relative flex flex-col px-3 pb-3 pt-2">
         <div className="flex items-start justify-between gap-1">
@@ -219,6 +256,7 @@ export const BookCard = memo(function BookCard({
             </p>
           </Link>
 
+          {!selectionMode ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -255,6 +293,7 @@ export const BookCard = memo(function BookCard({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          ) : null}
         </div>
 
         <div className="mt-3 flex items-center justify-between border-t border-border/40 pt-2.5 px-0.5">

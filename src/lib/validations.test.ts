@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  batchBookCategorySchema,
   bookmarkUpdateSchema,
   bookCategorySchema,
   categoryDeleteSchema,
@@ -107,6 +108,43 @@ describe("book category schemas", () => {
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.name).toBe("技术");
+    }
+  });
+
+  it("trims batch category values and keeps selected book ids", () => {
+    const result = batchBookCategorySchema.safeParse({
+      bookIds: ["book-1", "book-2", "book-1"],
+      category: " 技术 ",
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.bookIds).toEqual(["book-1", "book-2", "book-1"]);
+      expect(result.data.category).toBe("技术");
+    }
+  });
+
+  it("rejects an empty batch book list", () => {
+    const result = batchBookCategorySchema.safeParse({
+      bookIds: [],
+      category: "技术",
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe("请选择要设置分类的书籍");
+    }
+  });
+
+  it("rejects batch categories over 40 characters after trimming", () => {
+    const result = batchBookCategorySchema.safeParse({
+      bookIds: ["book-1"],
+      category: ` ${"a".repeat(41)} `,
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe("分类名称不能超过 40 个字符");
     }
   });
 });

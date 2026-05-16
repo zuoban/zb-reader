@@ -11,10 +11,13 @@ interface BookGridProps {
   progressMap: Record<string, number>;
   lastReadAtMap: Record<string, string>;
   spotlightBookId?: string | null;
+  selectionMode?: boolean;
+  selectedBookIds?: Set<string>;
   emptyTitle?: string;
   emptyDescription?: string;
   onDelete: (id: string) => void;
   onChangeCategory?: (book: Book) => void;
+  onToggleSelect?: (id: string) => void;
 }
 
 export const BookGrid = memo(function BookGrid({
@@ -22,10 +25,13 @@ export const BookGrid = memo(function BookGrid({
   progressMap,
   lastReadAtMap,
   spotlightBookId,
+  selectionMode = false,
+  selectedBookIds = new Set(),
   emptyTitle = "书架还是空的",
   emptyDescription = "点击上方的“上传书籍”按钮，添加你的第一本书，开始打造一个安静又有温度的个人阅读空间。",
   onDelete,
   onChangeCategory,
+  onToggleSelect,
 }: BookGridProps) {
   const [columns, setColumns] = useState(2);
 
@@ -111,8 +117,11 @@ export const BookGrid = memo(function BookGrid({
                   progress={progressMap[book.id] || 0}
                   lastReadAt={lastReadAtMap[book.id]}
                   spotlight={spotlightBookId === book.id}
+                  selectionMode={selectionMode}
+                  selected={selectedBookIds.has(book.id)}
                   onDelete={onDelete}
                   onChangeCategory={onChangeCategory}
+                  onToggleSelect={onToggleSelect}
                 />
               ))}
             </div>
