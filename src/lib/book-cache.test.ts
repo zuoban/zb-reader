@@ -1,9 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import {
   cacheBook,
-  cacheBookLocations,
   getCachedBook,
-  getCachedLocations,
   hasCachedBook,
   clearBookCache,
   getAllCachedBooks,
@@ -94,25 +92,6 @@ describe("Book Cache (IndexedDB)", () => {
     const cached = await getCachedBook(TEST_BOOK_ID);
     expect(cached).not.toBeNull();
     expect(cached?.byteLength).toBe(200);
-  });
-
-  it("caches locations even when the book file is not cached", async () => {
-    const locationsData = new TextEncoder().encode(JSON.stringify(["loc-1"])).buffer;
-
-    await cacheBookLocations(TEST_BOOK_ID, locationsData);
-
-    const cachedLocations = await getCachedLocations(TEST_BOOK_ID);
-    expect(cachedLocations).not.toBeNull();
-    expect(cachedLocations?.byteLength).toBe(locationsData.byteLength);
-  });
-
-  it("does not list location-only entries as cached books", async () => {
-    const locationsData = new TextEncoder().encode(JSON.stringify(["loc-1"])).buffer;
-
-    await cacheBookLocations(TEST_BOOK_ID, locationsData);
-
-    const books = await getAllCachedBooks();
-    expect(books).toHaveLength(0);
   });
 });
 

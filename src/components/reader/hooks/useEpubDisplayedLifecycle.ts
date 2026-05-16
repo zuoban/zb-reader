@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import type { MutableRefObject } from "react";
 import type { Rendition } from "epubjs";
 import { EpubContext } from "@/lib/epub-context";
+import { installEpubLazyImageLoader } from "@/components/reader/epub-lazy-images";
 import { highlightEpubCodeBlocks } from "@/components/reader/epub-code-highlight";
 
 interface EpubContents {
@@ -46,6 +47,7 @@ export function useEpubDisplayedLifecycle({
     const rendition = renditionRef.current;
     if (!rendition) return;
     const timers = new Set<ReturnType<typeof setTimeout>>();
+    let cleanupLazyImages: (() => void) | null = null;
 
     const runDisplayedWork = () => {
       epubContextRef.current.applyTransparentBackground();
@@ -77,6 +79,11 @@ export function useEpubDisplayedLifecycle({
     const handleContent = (contents: EpubContents) => {
       if (contents.document?.body) {
         highlightEpubCodeBlocks(contents.document);
+        cleanupLazyImages?.();
+        cleanupLazyImages = installEpubLazyImageLoader(
+          contents.document,
+          () => epubContextRef.current.getScrollContainer()
+        );
       }
     };
 
@@ -93,6 +100,7 @@ export function useEpubDisplayedLifecycle({
     return () => {
       timers.forEach((timer) => clearTimeout(timer));
       timers.clear();
+      cleanupLazyImages?.();
       hookableRendition.hooks?.content?.deregister?.(handleContent);
       rendition.off("displayed", handleDisplayed);
       rendition.off("rendered", handleDisplayed);

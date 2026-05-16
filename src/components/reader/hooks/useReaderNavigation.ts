@@ -84,7 +84,6 @@ interface UseReaderNavigationReturn {
   handleTocItemClick: (href: string) => void;
   handleBookmarkClick: (location: string) => void;
   handleNoteClick: (location: string) => void;
-  handleProgressChange: (newProgress: number) => void;
   handlePrevPage: () => void;
   handleNextPage: () => void;
   handlePrevChapter: () => void;
@@ -270,10 +269,6 @@ export function useReaderNavigation({
     epubReaderRef.current?.goToLocation(location);
   }, [epubReaderRef]);
 
-  const handleProgressChange = useCallback((newProgress: number) => {
-    epubReaderRef.current?.goToPercentage(newProgress);
-  }, [epubReaderRef]);
-
   const handlePrevPage = useCallback(() => {
     if (book?.format === "epub") {
       epubReaderRef.current?.scrollUp();
@@ -310,8 +305,8 @@ export function useReaderNavigation({
       const prevChapter = chapterToc[currentIndex - 1];
       epubReaderRef.current?.goToHref(prevChapter.href);
     } else {
-      // Already at first chapter, just scroll to top
-      epubReaderRef.current?.goToPercentage(0);
+      // Already at first chapter, scroll to top
+      epubReaderRef.current?.scrollUp(99999);
     }
   }, [book?.format, currentHref, chapterToc, epubReaderRef, progressRef]);
 
@@ -373,7 +368,6 @@ export function useReaderNavigation({
     handleTocItemClick,
     handleBookmarkClick,
     handleNoteClick,
-    handleProgressChange,
     handlePrevPage,
     handleNextPage,
     handlePrevChapter,

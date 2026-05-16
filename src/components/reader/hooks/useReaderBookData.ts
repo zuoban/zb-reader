@@ -2,17 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { cacheBook, getCachedBook } from "@/lib/book-cache";
 import { logger } from "@/lib/logger";
 import { getLocalProgressManager } from "@/lib/local-progress";
 import type { ServerProgressSnapshot } from "@/lib/local-progress";
 import type { Book, Bookmark, Note } from "@/lib/db/schema";
-
-/**
- * Tracks ongoing background downloads by bookId to prevent duplicate
- * fetches when bookId changes rapidly while a previous download is in flight.
- */
-const ongoingDownloads = new Map<string, Promise<void>>();
 
 export interface ReaderHighlight {
   cfiRange: string;
@@ -67,9 +60,6 @@ export function useReaderBookData({
         if (cancelled) return;
         setBook(data.book ?? null);
 
-        const cached = await getCachedBook(bookId);
-        if (cancelled) return;
-
         // Compare server progress with local progress
         const localProgress = await getLocalProgressManager().getLocalProgress(bookId);
         
@@ -92,36 +82,8 @@ export function useReaderBookData({
         setInitialProgress(finalProgress ?? null);
         setBookmarks(Array.isArray(data.bookmarks) ? data.bookmarks : []);
         setNotes(Array.isArray(data.notes) ? data.notes.filter(Boolean) : []);
-
-        if (cached) {
-          setBookData(cached);
-          setLoading(false);
-        } else {
-          // 首开优先使用代理 URL，让 epubjs 按需读取；整本下载只做后台缓存。
-          setBookUrl(`/api/books/${bookId}/proxy/`);
-          setLoading(false);
-
-          // Deduplicate: skip if a download for this bookId is already in flight.
-          if (!ongoingDownloads.has(bookId)) {
-            const downloadTask = (async () => {
-              try {
-                const downloadRes = await fetch(`/api/books/${bookId}/file`);
-                if (!downloadRes.ok) {
-                  logger.error("reader", "Failed to download book file for caching");
-                  return;
-                }
-
-                const fileData = await downloadRes.arrayBuffer();
-                await cacheBook(bookId, fileData);
-              } catch (error) {
-                logger.error("reader", "Failed to cache book in background", error);
-              } finally {
-                ongoingDownloads.delete(bookId);
-              }
-            })();
-            ongoingDownloads.set(bookId, downloadTask);
-          }
-        }
+        setBookUrl(`/api/books/${bookId}/proxy/`);
+        setLoading(false);
       } catch (error) {
         logger.error("reader", "加载书籍失败", error);
         toast.error("加载失败");

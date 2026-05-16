@@ -9,13 +9,16 @@ import { THEME_STYLES } from "@/components/reader/epub-styles";
 import { getEpubFontFamily } from "@/components/reader/epub-fonts";
 import { parseEpubToc, type RawTocItem } from "@/components/reader/epub-toc";
 import {
+  installEpubLazyImageLoader,
+  rewriteImagesForLazyLoading,
+} from "@/components/reader/epub-lazy-images";
+import {
   calculateOverallProgress,
   readEpubScrollRatio,
   type EpubRelocatedLocation,
   type ReaderLocationChange,
 } from "@/components/reader/epub-location";
 import type { TocItem } from "@/types/reader";
-import { cacheBookLocations, getCachedLocations } from "@/lib/book-cache";
 
 interface UseEpubInitializerParams {
   bookId: string;
@@ -30,7 +33,6 @@ interface UseEpubInitializerParams {
   justSelectedRef: MutableRefObject<boolean>;
   onClick?: () => void;
   onLocationChange?: (location: ReaderLocationChange) => void;
-  onReady?: () => void;
   onTextSelected?: (cfiRange: string, text: string, position?: { x: number; y: number; bottom?: number }) => void;
   onTocLoaded?: (toc: TocItem[]) => void;
   progressRef: MutableRefObject<number>;
@@ -208,7 +210,6 @@ export function useEpubInitializer({
   justSelectedRef,
   onClick,
   onLocationChange,
-  onReady,
   onTextSelected,
   onTocLoaded,
   progressRef,
@@ -231,6 +232,7 @@ export function useEpubInitializer({
 
     let cancelled = false;
     let book: Book | null = null;
+    let cleanupLazyImages: (() => void) | null = null;
 
     async function init() {
       try {
@@ -246,10 +248,11 @@ export function useEpubInitializer({
 
         book.spine.hooks.serialize.register(
           (output: string, section: { output: string }) => {
-            section.output = output.replace(
+            const sanitizedOutput = output.replace(
               /url\s*\(\s*["']?file:\/\/[^)"']+["']?\s*\)/gi,
               'url("data:application/x-empty,")'
             );
+            section.output = rewriteImagesForLazyLoading(sanitizedOutput);
           }
         );
 
@@ -289,6 +292,11 @@ export function useEpubInitializer({
           if (doc) {
             applyDocumentTheme(doc, themeRef.current);
             injectSupSubImageStyle(doc);
+            cleanupLazyImages?.();
+            cleanupLazyImages = installEpubLazyImageLoader(
+              doc,
+              () => epubContextRef.current.getScrollContainer()
+            );
           }
 
           if (initialScrollRatio !== null) {
@@ -339,42 +347,6 @@ export function useEpubInitializer({
             setTimeout(restore, 150);
           } else {
             isInitialDisplayRef.current = false;
-          }
-
-          // Step 1: Deferred Location Generation
-          const generateLocations = async () => {
-            if (cancelled || !bookRef.current) return;
-            
-            const cachedLocations = await getCachedLocations(bookId);
-            if (cachedLocations && !cancelled) {
-              try {
-                const locationsJson = new TextDecoder().decode(cachedLocations);
-                const locationsArray = JSON.parse(locationsJson);
-                bookRef.current.locations.load(locationsArray);
-                onReady?.();
-                return;
-              } catch (e) {
-                logger.warn("epub-reader", "加载缓存 locations 失败", e);
-              }
-            }
-
-            // If no cache, generate with a delay to ensure UI is interactive
-            if (!cancelled) {
-              bookRef.current.locations.generate(1024).then((locations) => {
-                if (!cancelled) {
-                  const locationsJson = JSON.stringify(locations);
-                  const locationsBuffer = new TextEncoder().encode(locationsJson).buffer;
-                  cacheBookLocations(bookId, locationsBuffer);
-                }
-                onReady?.();
-              });
-            }
-          };
-
-          if ("requestIdleCallback" in window) {
-            window.requestIdleCallback(() => generateLocations(), { timeout: 2000 });
-          } else {
-            setTimeout(generateLocations, 1000);
           }
         });
 
@@ -453,6 +425,7 @@ export function useEpubInitializer({
 
     return () => {
       cancelled = true;
+      cleanupLazyImages?.();
       setIsRenditionReady(false);
       renditionRef.current = null;
       bookRef.current = null;

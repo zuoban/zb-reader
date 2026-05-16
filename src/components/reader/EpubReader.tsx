@@ -40,7 +40,6 @@ interface EpubReaderProps {
   }) => void;
   onTocLoaded?: (toc: TocItem[]) => void;
   onTextSelected?: (cfiRange: string, text: string, position?: { x: number; y: number; bottom?: number }) => void;
-  onReady?: () => void;
   onClick?: () => void;
   highlights?: Array<{ cfiRange: string; color: string; id: string }>;
   activeTtsParagraph?: string;
@@ -62,7 +61,6 @@ export type { ReaderParagraph };
 export interface EpubReaderRef {
   goToLocation: (cfi: string) => void;
   goToHref: (href: string) => void;
-  goToPercentage: (percentage: number) => void;
   nextPage: () => void;
   prevPage: () => void;
   scrollDown: (amount?: number) => void;
@@ -91,7 +89,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       onLocationChange,
       onTocLoaded,
       onTextSelected,
-      onReady,
       onClick,
       highlights,
       activeTtsParagraph,
@@ -164,14 +161,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       },
       goToHref(href: string) {
         renditionRef.current?.display(href);
-      },
-      goToPercentage(percentage: number) {
-        const book = bookRef.current;
-        if (!book || !renditionRef.current) return;
-        const cfi = book.locations.cfiFromPercentage(percentage);
-        if (cfi) {
-          renditionRef.current.display(cfi);
-        }
       },
       nextPage() {
         const rendition = renditionRef.current;
@@ -248,7 +237,6 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
       justSelectedRef,
       onClick,
       onLocationChange,
-      onReady,
       onTextSelected,
       onTocLoaded,
       progressRef,

@@ -27,7 +27,6 @@ interface NavigationContextValue {
   handleTocItemClick: (href: string) => void;
   handleBookmarkClick: (location: string) => void;
   handleNoteClick: (location: string) => void;
-  handleProgressChange: (newProgress: number) => void;
   handlePrevPage: () => void;
   handleNextPage: () => void;
   handlePrevChapter: () => void;

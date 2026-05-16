@@ -10,7 +10,6 @@ function createEpubReaderRef(overrides: Partial<EpubReaderRef> = {}) {
     current: {
       goToHref: vi.fn(),
       goToLocation: vi.fn(),
-      goToPercentage: vi.fn(),
       nextPage: vi.fn(),
       prevPage: vi.fn(),
       scrollDown: vi.fn(),
