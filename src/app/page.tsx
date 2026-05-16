@@ -45,7 +45,7 @@ export default function LandingPage() {
                 支持智能语音朗读与多端进度同步，让您的阅读体验更加纯粹、高效。
               </p>
               <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-                <Link href="/login">
+                <Link href="/bookshelf">
                   <Button size="lg" className="h-14 px-8 text-lg font-semibold shadow-lg shadow-primary/20">
                     开始阅读
                     <ChevronRight className="ml-1 size-5" />
