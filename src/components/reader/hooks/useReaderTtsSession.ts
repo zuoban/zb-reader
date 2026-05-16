@@ -385,7 +385,10 @@ export function useReaderTtsSession({
 
             if (attempt < MAX_TTS_RETRY_COUNT && canRetry) {
               if (ttsSessionRef.current === sessionId) {
-                toast(`朗读失败，正在重试（${attempt + 1}/${MAX_TTS_RETRY_COUNT}）`);
+                // 只有在重试次数较多时才显示提示，减少干扰
+                if (attempt >= 3) {
+                  toast(`朗读失败，正在重试（${attempt + 1}/${MAX_TTS_RETRY_COUNT}）`);
+                }
               }
               await wait(TTS_RETRY_DELAY_MS);
               continue;

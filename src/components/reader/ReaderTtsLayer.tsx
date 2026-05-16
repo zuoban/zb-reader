@@ -73,11 +73,7 @@ export function ReaderTtsLayer() {
         isPaused={isPaused}
         onToggle={onToggle}
         onStop={onStop}
-        onPrev={onPrev}
-        onNext={onNext}
         onOpenImmersiveView={onOpenImmersiveView}
-        isFullscreen={isFullscreen}
-        onToggleFullscreen={onToggleFullscreen}
       />
     </>
   );

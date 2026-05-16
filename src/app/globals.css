@@ -1261,110 +1261,80 @@
 
 /* TTS floating control - glassmorphism style */
 .tts-panel {
-  background: color-mix(in srgb, var(--reader-bg, #f5f7fb) 92%, transparent);
-  border: 1px solid color-mix(in srgb, var(--reader-text, #09090b) 8%, transparent);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.4) inset,
-    0 0 0 1px rgba(255, 255, 255, 0.1) inset,
-    0 8px 32px -8px rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(20px) saturate(1.8);
-  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  background: color-mix(in srgb, var(--reader-bg, #ffffff) 84%, transparent);
+  border: 1px solid color-mix(in srgb, var(--reader-text, #000) 6%, transparent);
+  box-shadow: 
+    0 8px 32px -12px color-mix(in srgb, var(--reader-text, #000) 20%, transparent),
+    0 0 0 1px color-mix(in srgb, white 20%, transparent) inset;
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
 }
 
 [data-reader-theme="dark"] .tts-panel {
-  background: color-mix(in srgb, var(--reader-bg, #101419) 88%, transparent);
-  border-color: color-mix(in srgb, var(--reader-text, #d8dee7) 10%, transparent);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.08) inset,
-    0 0 0 1px rgba(255, 255, 255, 0.03) inset,
-    0 8px 32px -8px rgba(0, 0, 0, 0.5);
+  background: color-mix(in srgb, var(--reader-bg, #000) 80%, transparent);
+  border-color: color-mix(in srgb, var(--reader-text, #fff) 8%, transparent);
+  box-shadow: 
+    0 8px 32px -12px rgba(0, 0, 0, 0.6),
+    0 0 0 1px color-mix(in srgb, white 4%, transparent) inset;
 }
 
 .tts-trigger {
-  background: linear-gradient(145deg,
-    color-mix(in srgb, var(--reader-primary, #18181b) 12%, var(--reader-bg, #f5f7fb)),
-    color-mix(in srgb, var(--reader-primary, #18181b) 6%, var(--reader-bg, #f5f7fb))
-  );
-  color: var(--reader-text, #09090b);
-  border: 1px solid color-mix(in srgb, var(--reader-text, #09090b) 12%, transparent);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.5) inset,
-    0 4px 20px -4px rgba(0, 0, 0, 0.25);
-  backdrop-filter: blur(16px) saturate(1.5);
-  -webkit-backdrop-filter: blur(16px) saturate(1.5);
-}
-
-.tts-trigger:hover {
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.6) inset,
-    0 6px 28px -6px rgba(0, 0, 0, 0.35);
+  background: var(--reader-bg, #ffffff);
+  color: var(--reader-text, #000);
+  border: 1px solid color-mix(in srgb, var(--reader-text, #000) 10%, transparent);
+  box-shadow: 
+    0 4px 16px -4px color-mix(in srgb, var(--reader-text, #000) 15%, transparent),
+    0 0 0 1px color-mix(in srgb, white 40%, transparent) inset;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 [data-reader-theme="dark"] .tts-trigger {
-  background: linear-gradient(145deg,
-    color-mix(in srgb, var(--reader-primary, #c9d7e8) 15%, var(--reader-bg, #101419)),
-    color-mix(in srgb, var(--reader-primary, #c9d7e8) 8%, var(--reader-bg, #101419))
-  );
-  color: var(--reader-text, #d8dee7);
-  border-color: color-mix(in srgb, var(--reader-text, #d8dee7) 12%, transparent);
+  background: var(--reader-bg, #000);
+  color: var(--reader-text, #fff);
+  border-color: color-mix(in srgb, var(--reader-text, #fff) 12%, transparent);
 }
 
 .tts-btn--secondary {
   background: transparent;
-  color: var(--reader-text, #09090b);
-  border: 1px solid transparent;
+  color: var(--reader-text, #000);
 }
 
 .tts-btn--secondary:hover {
-  background: color-mix(in srgb, var(--reader-text, #09090b) 5%, transparent);
-  border-color: color-mix(in srgb, var(--reader-text, #09090b) 8%, transparent);
+  background: color-mix(in srgb, var(--reader-text, #000) 4%, transparent);
 }
 
 .tts-btn--primary {
-  background: linear-gradient(145deg,
-    color-mix(in srgb, var(--reader-primary, #18181b) 15%, var(--reader-bg, #f5f7fb)),
-    color-mix(in srgb, var(--reader-primary, #18181b) 8%, var(--reader-bg, #f5f7fb))
-  );
-  color: var(--reader-text, #09090b);
-  border: 1px solid color-mix(in srgb, var(--reader-primary, #18181b) 20%, var(--reader-border, #d4d4d8));
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.4) inset,
-    0 2px 8px -2px rgba(0, 0, 0, 0.15);
+  background: color-mix(in srgb, var(--reader-primary, #000) 8%, var(--reader-bg, #fff));
+  color: var(--reader-text, #000);
+  border: 1px solid color-mix(in srgb, var(--reader-primary, #000) 15%, transparent);
 }
 
 .tts-btn--primary:hover {
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.5) inset,
-    0 3px 12px -3px rgba(0, 0, 0, 0.2);
+  background: color-mix(in srgb, var(--reader-primary, #000) 12%, var(--reader-bg, #fff));
 }
 
 .tts-btn--destructive {
   background: transparent;
   color: var(--reader-destructive, #ef4444);
-  border: 1px solid transparent;
 }
 
 .tts-btn--destructive:hover {
-  background: color-mix(in srgb, var(--reader-destructive, #ef4444) 10%, transparent);
-  border-color: color-mix(in srgb, var(--reader-destructive, #ef4444) 25%, transparent);
+  background: color-mix(in srgb, var(--reader-destructive, #ef4444) 8%, transparent);
 }
 
 [data-reader-theme="dark"] .tts-btn--secondary {
-  color: var(--reader-text, #d8dee7);
+  color: var(--reader-text, #fff);
 }
 
 [data-reader-theme="dark"] .tts-btn--secondary:hover {
-  background: color-mix(in srgb, var(--reader-text, #d8dee7) 6%, transparent);
-  border-color: color-mix(in srgb, var(--reader-text, #d8dee7) 10%, transparent);
+  background: color-mix(in srgb, var(--reader-text, #fff) 6%, transparent);
 }
 
 [data-reader-theme="dark"] .tts-btn--primary {
-  background: linear-gradient(145deg,
-    color-mix(in srgb, var(--reader-primary, #c9d7e8) 18%, var(--reader-bg, #101419)),
-    color-mix(in srgb, var(--reader-primary, #c9d7e8) 10%, var(--reader-bg, #101419))
-  );
-  color: var(--reader-text, #d8dee7);
-  border-color: color-mix(in srgb, var(--reader-primary, #c9d7e8) 25%, var(--reader-border, #333));
+  background: color-mix(in srgb, var(--reader-primary, #fff) 12%, var(--reader-bg, #000));
+  color: var(--reader-text, #fff);
+  border-color: color-mix(in srgb, var(--reader-primary, #fff) 20%, transparent);
 }
 
 [data-reader-theme="dark"] .tts-btn--destructive {
@@ -1372,8 +1342,7 @@
 }
 
 [data-reader-theme="dark"] .tts-btn--destructive:hover {
-  background: color-mix(in srgb, var(--reader-destructive, #f87171) 12%, transparent);
-  border-color: color-mix(in srgb, var(--reader-destructive, #f87171) 30%, transparent);
+  background: color-mix(in srgb, var(--reader-destructive, #f87171) 10%, transparent);
 }
 
 /* Reading content enhancement styles */

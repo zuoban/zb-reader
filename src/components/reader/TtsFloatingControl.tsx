@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { BookOpen, Pause, Play, Square, SkipBack, SkipForward, Maximize, Minimize, X } from "lucide-react";
+import { BookOpen, Pause, Play, Square, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TtsFloatingControlProps {
@@ -10,12 +10,8 @@ interface TtsFloatingControlProps {
   isPaused?: boolean;
   onToggle: () => void;
   onStop: () => void;
-  onPrev?: () => void;
-  onNext?: () => void;
   onJumpToPosition?: () => void;
   onOpenImmersiveView?: () => void;
-  isFullscreen?: boolean;
-  onToggleFullscreen?: () => void;
 }
 
 function AudioWaveIndicator({ isPaused }: { isPaused?: boolean }) {
@@ -49,12 +45,8 @@ export function TtsFloatingControl({
   isPaused = false,
   onToggle,
   onStop,
-  onPrev,
-  onNext,
   onJumpToPosition: _onJumpToPosition,
   onOpenImmersiveView,
-  isFullscreen = false,
-  onToggleFullscreen,
 }: TtsFloatingControlProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -78,14 +70,6 @@ export function TtsFloatingControl({
     >
       {isExpanded && (
         <div className="tts-panel flex items-center gap-1 rounded-2xl px-2 py-1.5 shadow-lg">
-          {onPrev && (
-            <TtsBtn variant="secondary" onClick={onPrev} ariaLabel="上一章">
-              <TtsIcon>
-                <SkipBack className="size-4" />
-              </TtsIcon>
-            </TtsBtn>
-          )}
-
           <TtsBtn variant="primary" onClick={onToggle} ariaLabel={isPaused ? "播放" : "暂停"}>
             <TtsIcon>
               {isPaused ? <Play className="size-4 ml-0.5" /> : <Pause className="size-4" />}
@@ -98,32 +82,15 @@ export function TtsFloatingControl({
             </TtsIcon>
           </TtsBtn>
 
-          {onNext && (
-            <TtsBtn variant="secondary" onClick={onNext} ariaLabel="下一章">
-              <TtsIcon>
-                <SkipForward className="size-4" />
-              </TtsIcon>
-            </TtsBtn>
-          )}
-
-          {(onOpenImmersiveView || onToggleFullscreen) && (
-            <div className="w-px h-5 mx-0.5 bg-foreground/10" />
-          )}
-
           {onOpenImmersiveView && (
-            <TtsBtn variant="secondary" onClick={handleOpenImmersiveView} ariaLabel="沉浸朗读">
-              <TtsIcon>
-                <BookOpen className="size-4" />
-              </TtsIcon>
-            </TtsBtn>
-          )}
-
-          {onToggleFullscreen && (
-            <TtsBtn variant="secondary" onClick={onToggleFullscreen} ariaLabel={isFullscreen ? "退出全屏" : "全屏"}>
-              <TtsIcon>
-                {isFullscreen ? <Minimize className="size-4" /> : <Maximize className="size-4" />}
-              </TtsIcon>
-            </TtsBtn>
+            <>
+              <div className="w-px h-5 mx-0.5 bg-foreground/10" />
+              <TtsBtn variant="secondary" onClick={handleOpenImmersiveView} ariaLabel="沉浸朗读">
+                <TtsIcon>
+                  <BookOpen className="size-4" />
+                </TtsIcon>
+              </TtsBtn>
+            </>
           )}
         </div>
       )}
