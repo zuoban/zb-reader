@@ -13,7 +13,7 @@ const STATIC_ASSET_PATTERNS = [
   /^\/favicon\.ico$/,
 ];
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Handle public paths (login, register, auth)

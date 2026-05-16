@@ -45,7 +45,7 @@ src/
 ├── lib/             # Utilities (auth.ts, db/, book-cache.ts, logger.ts, storage.ts, utils.ts)
 ├── stores/          # Zustand stores (reader-settings.ts, tts-floating.ts)
 ├── test/            # Test setup (setup.ts, utils.tsx)
-└── middleware.ts    # Auth middleware
+└── proxy.ts         # Auth proxy (Edge Runtime)
 ```
 
 Data: `./data/` (SQLite DB, books, covers). Schema: `src/lib/db/schema.ts`. Gitignored.
