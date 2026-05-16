@@ -12,7 +12,7 @@ function getLogLevel(): LogLevel {
   if (envLevel && envLevel in LOG_LEVELS) {
     return envLevel as LogLevel;
   }
-  return process.env.NODE_ENV === "production" ? "warn" : "debug";
+  return process.env.NODE_ENV === "production" ? "warn" : "info";
 }
 
 function shouldLog(level: LogLevel): boolean {

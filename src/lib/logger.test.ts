@@ -24,7 +24,15 @@ describe("Logger", () => {
       vi.stubEnv("NODE_ENV", "development");
     });
 
-    it("should log debug messages", async () => {
+    it("should NOT log debug messages by default", async () => {
+      const { logger } = await import("./logger");
+      logger.debug("test-context", "test message", { extra: "data" });
+
+      expect(consoleDebug).not.toHaveBeenCalled();
+    });
+
+    it("should log debug messages when ZB_READER_LOG_LEVEL=debug", async () => {
+      vi.stubEnv("ZB_READER_LOG_LEVEL", "debug");
       const { logger } = await import("./logger");
       logger.debug("test-context", "test message", { extra: "data" });
 
@@ -128,6 +136,7 @@ describe("Logger", () => {
   describe("with multiple arguments", () => {
     beforeEach(() => {
       vi.stubEnv("NODE_ENV", "development");
+      vi.stubEnv("ZB_READER_LOG_LEVEL", "debug");
     });
 
     it("should pass through all arguments", async () => {
