@@ -105,4 +105,29 @@ describe("BookshelfClient", () => {
 
     expect(mockSetSelectedCategory).toHaveBeenCalledWith("技术");
   });
+
+  it("uses the same count capsule style in the category trigger", () => {
+    render(<BookshelfClient initialData={createBookshelfInitialData({ books: [], total: 10, allTotal: 10 })} />);
+
+    const categoryMenuButton = screen.getByRole("button", { name: /分类.*全部/ });
+    const countCapsule = categoryMenuButton.querySelector("[data-slot='badge']");
+
+    expect(countCapsule).toHaveClass("bookshelf-category-count");
+    expect(countCapsule).not.toHaveClass("category-filter-count-active");
+  });
+
+  it("uses the shared bookshelf action button foundation", () => {
+    render(<BookshelfClient initialData={createBookshelfInitialData({ books: [], total: 0, allTotal: 0 })} />);
+
+    const categoryMenuButton = screen.getByRole("button", { name: /分类.*全部/ });
+    const batchButton = screen.getByRole("button", { name: /批量管理/ });
+    expect(categoryMenuButton).toHaveClass("bookshelf-action-button");
+    expect(batchButton).toHaveClass("bookshelf-action-button");
+
+    fireEvent.click(batchButton);
+
+    expect(screen.getByRole("button", { name: /完成/ })).toHaveClass("bookshelf-action-button");
+    expect(screen.getByRole("button", { name: "清空选择" })).toHaveClass("bookshelf-action-button");
+    expect(screen.getByRole("button", { name: /设置分类/ })).toHaveClass("bookshelf-action-button");
+  });
 });

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { Check, CheckSquare, ChevronDown, Tags, X } from "lucide-react";
 import { SearchBar } from "@/components/bookshelf/SearchBar";
+import { BookshelfActionButton } from "@/components/bookshelf/BookshelfActionButton";
 import { BackgroundDecoration } from "@/components/bookshelf/BackgroundDecoration";
 import { BookCardSkeleton } from "@/components/bookshelf/BookCardSkeleton";
 import { BookGrid } from "@/components/bookshelf/BookGrid";
@@ -14,7 +15,6 @@ import { ALL_CATEGORY, useBookshelfData } from "@/components/bookshelf/hooks/use
 import { Navbar } from "@/components/layout/Navbar";
 import { useTheme } from "@/components/layout/ThemeProvider";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,7 +22,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { UNCATEGORIZED_CATEGORY, UNCATEGORIZED_CATEGORY_LABEL } from "@/lib/book-category";
-import { cn } from "@/lib/utils";
 import type { BookshelfInitialData } from "@/components/bookshelf/hooks/useBookshelfData";
 
 const SKELETON_COUNT = 8;
@@ -192,10 +191,9 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
           <div className="w-full sm:w-auto">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
+                <BookshelfActionButton
                   type="button"
-                  variant="outline"
-                  className="category-filter-shell h-11 w-full cursor-pointer justify-between rounded-full px-4 text-[14px] font-semibold sm:min-w-56 sm:w-56"
+                  actionVariant="filter"
                   aria-label={`分类：${selectedCategorySummary.name}`}
                 >
                   <span className="flex min-w-0 items-center gap-2">
@@ -206,16 +204,13 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
                   <span className="flex shrink-0 items-center gap-2">
                     <Badge
                       variant="ghost"
-                      className={cn(
-                        "category-filter-count",
-                        selectedCategory !== ALL_CATEGORY && "category-filter-count-active"
-                      )}
+                      className="bookshelf-category-count rounded-md bg-muted px-2 py-0.5 text-[11px] font-bold text-muted-foreground"
                     >
                       {selectedCategorySummary.count}
                     </Badge>
                     <ChevronDown className="h-4 w-4 text-muted-foreground" />
                   </span>
-                </Button>
+                </BookshelfActionButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-64 rounded-2xl p-1.5">
                 <DropdownMenuItem
@@ -276,13 +271,10 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
           </div>
 
           <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
-            <Button
+            <BookshelfActionButton
               type="button"
-              variant="outline"
-              className={cn(
-                "liquid-control h-10 cursor-pointer rounded-full px-4 text-[13px] font-bold",
-                batchMode && "batch-mode-toggle-active"
-              )}
+              actionVariant="glass"
+              active={batchMode}
               onClick={handleBatchModeToggle}
             >
               {batchMode ? (
@@ -291,7 +283,7 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
                 <CheckSquare className="mr-2 h-4 w-4" />
               )}
               {batchMode ? "完成" : "批量管理"}
-            </Button>
+            </BookshelfActionButton>
             <SearchBar
               onSearch={setSearchQuery}
               className="w-full sm:w-80"
@@ -315,24 +307,23 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button
+              <BookshelfActionButton
                 type="button"
-                variant="ghost"
-                className="h-9 cursor-pointer rounded-full px-4 text-xs font-bold"
+                actionVariant="panelGhost"
                 disabled={selectedBookCount === 0}
                 onClick={handleClearSelectedBooks}
               >
                 清空选择
-              </Button>
-              <Button
+              </BookshelfActionButton>
+              <BookshelfActionButton
                 type="button"
-                className="h-9 cursor-pointer rounded-full px-4 text-xs font-bold"
+                actionVariant="panelPrimary"
                 disabled={selectedBookCount === 0}
                 onClick={() => handleOpenBatchCategoryDialog(selectedBookIdList)}
               >
                 <Tags className="mr-2 h-3.5 w-3.5" />
                 设置分类
-              </Button>
+              </BookshelfActionButton>
             </div>
           </div>
         ) : null}
@@ -366,11 +357,10 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
               className="mt-16 flex flex-col items-center justify-center gap-4 py-8"
             >
               {hasMore ? (
-                <Button
-                  variant="outline"
+                <BookshelfActionButton
+                  actionVariant="loadMore"
                   onClick={handleLoadMore}
                   disabled={loadingMore}
-                  className="liquid-control h-12 min-w-[160px] cursor-pointer rounded-full px-8 text-sm font-medium shadow-sm"
                 >
                   {loadingMore ? (
                     <div className="flex items-center gap-2">
@@ -380,7 +370,7 @@ export function BookshelfClient({ initialData }: BookshelfClientProps) {
                   ) : (
                     "加载更多"
                   )}
-                </Button>
+                </BookshelfActionButton>
               ) : books.length > 0 ? (
                 <div className="flex flex-col items-center gap-2 opacity-30">
                   <div className="h-px w-16 bg-muted-foreground" />
