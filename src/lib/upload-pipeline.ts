@@ -161,7 +161,19 @@ export async function validateAndExtractMetadataFromFile(
 ): Promise<ExtractedEpubMetadata> {
   return new Promise((resolve, reject) => {
     yauzl.open(filePath, { lazyEntries: true, autoClose: false }, (err, zipfile) => {
-      if (err) return reject(err);
+      if (err) {
+        // 将 yauzl 的原始错误转换为用户友好的错误信息
+        const errorMessage = err.message || "";
+        if (
+          errorMessage.includes("End of central directory record") ||
+          errorMessage.includes("signature not found") ||
+          errorMessage.includes("not a zip file") ||
+          errorMessage.includes("file is truncated")
+        ) {
+          return reject(new EpubValidationError("EPUB 文件已损坏或不完整，请重新下载或选择其他文件"));
+        }
+        return reject(err);
+      }
       if (!zipfile) return reject(new Error("Failed to open zip file"));
 
       let entryCount = 0;
@@ -256,6 +268,16 @@ export async function validateAndExtractMetadataFromFile(
       });
 
       zipfile.on("error", (e) => {
+        // 将运行时错误也转换为用户友好的错误
+        const errorMessage = e.message || "";
+        if (
+          errorMessage.includes("End of central directory record") ||
+          errorMessage.includes("signature not found") ||
+          errorMessage.includes("not a zip file") ||
+          errorMessage.includes("file is truncated")
+        ) {
+          return reject(new EpubValidationError("EPUB 文件已损坏或不完整，请重新下载或选择其他文件"));
+        }
         reject(e);
       });
     });

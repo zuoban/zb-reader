@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { uploadWithProgress } from "@/lib/upload-with-progress";
 
 interface UploadDialogProps {
   open: boolean;
@@ -67,17 +68,19 @@ export function UploadDialog({
       );
 
       try {
-        const formData = new FormData();
-        formData.append("file", files[i].file);
-
-        const res = await fetch("/api/books", {
-          method: "POST",
-          body: formData,
+        const result = await uploadWithProgress({
+          file: files[i].file,
+          onProgress: (percent) => {
+            setFiles((prev) =>
+              prev.map((f, idx) =>
+                idx === i ? { ...f, progress: Math.round(percent) } : f
+              )
+            );
+          },
         });
 
-        if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error || "上传失败");
+        if (!result.ok) {
+          throw new Error(result.error || "上传失败");
         }
 
         setFiles((prev) =>
@@ -195,17 +198,22 @@ export function UploadDialog({
                         <p className="truncate text-sm font-bold text-foreground">
                           {formatFileName(f.file.name)}
                         </p>
-                        <div className="mt-1 flex items-center gap-2">
+                        <div className="mt-1 flex items-center justify-between gap-2">
                           <span className="text-[10px] font-bold text-muted-foreground/70 uppercase">
                             {formatSize(f.file.size)}
                           </span>
                           {f.status === "uploading" && (
-                            <span className="flex h-1 w-1 rounded-full bg-[color:var(--cta)] animate-pulse" />
+                            <span className="text-[10px] font-bold text-[color:var(--cta)]">
+                              {f.progress}%
+                            </span>
                           )}
                         </div>
                         {f.status === "uploading" && (
-                          <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-foreground/5">
-                            <div className="h-full bg-[color:var(--cta)] transition-all duration-500" style={{ width: `${f.progress}%` }} />
+                          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-foreground/5">
+                            <div
+                              className="h-full rounded-full bg-[color:var(--cta)] transition-all duration-300 ease-out"
+                              style={{ width: `${f.progress}%` }}
+                            />
                           </div>
                         )}
                         {f.status === "error" && (

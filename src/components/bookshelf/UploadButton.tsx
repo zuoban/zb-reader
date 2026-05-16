@@ -4,7 +4,9 @@ import { useId, useState } from "react";
 import { Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { MAX_EPUB_FILE_SIZE_BYTES } from "@/lib/upload-limits";
+import { uploadWithProgress } from "@/lib/upload-with-progress";
 import { cn } from "@/lib/utils";
 import type { ChangeEvent } from "react";
 
@@ -16,6 +18,7 @@ interface UploadButtonProps {
 
 export function UploadButton({ onUploadComplete, className, variant = "outline" }: UploadButtonProps) {
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const inputId = useId();
 
   const createUploadFile = async (file: File) => {
@@ -54,21 +57,22 @@ export function UploadButton({ onUploadComplete, className, variant = "outline" 
     }
 
     setUploading(true);
+    setUploadProgress(0);
 
     for (const file of files) {
       try {
         const uploadFile = await createUploadFile(file);
-        const formData = new FormData();
-        formData.append("file", uploadFile);
+        setUploadProgress(0);
 
-        const res = await fetch("/api/books", {
-          method: "POST",
-          body: formData,
+        const result = await uploadWithProgress({
+          file: uploadFile,
+          onProgress: (percent) => {
+            setUploadProgress(percent);
+          },
         });
 
-        if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error || "上传失败");
+        if (!result.ok) {
+          throw new Error(result.error || "上传失败");
         }
 
         toast.success(`《${file.name}》上传成功`);
@@ -79,6 +83,7 @@ export function UploadButton({ onUploadComplete, className, variant = "outline" 
     }
 
     setUploading(false);
+    setUploadProgress(0);
     onUploadComplete();
     input.value = "";
   };
@@ -93,27 +98,37 @@ export function UploadButton({ onUploadComplete, className, variant = "outline" 
         className="sr-only"
         disabled={uploading}
         onChange={handleFileChange}
+        suppressHydrationWarning
       />
-      <Button
-        asChild
-        variant={variant}
-        size="sm"
-        className={cn(className, uploading && "pointer-events-none opacity-50")}
-      >
-        <label htmlFor={inputId} aria-disabled={uploading}>
-          {uploading ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span className="hidden sm:inline">上传中...</span>
-            </>
-          ) : (
-            <>
-              <Upload className="h-4 w-4" />
-              <span className="hidden sm:inline">上传书籍</span>
-            </>
-          )}
-        </label>
-      </Button>
+      <div className="flex flex-col gap-1">
+        <Button
+          asChild
+          variant={variant}
+          size="sm"
+          className={cn(className, uploading && "pointer-events-none opacity-50")}
+        >
+          <label htmlFor={inputId} aria-disabled={uploading}>
+            {uploading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="ml-1">
+                  {uploadProgress > 0 ? `${uploadProgress}%` : "上传中..."}
+                </span>
+              </>
+            ) : (
+              <>
+                <Upload className="h-4 w-4" />
+                <span className="ml-1 hidden sm:inline">上传书籍</span>
+              </>
+            )}
+          </label>
+        </Button>
+        {uploading && (
+          <div className="w-24 sm:w-32">
+            <Progress value={uploadProgress} className="h-1" />
+          </div>
+        )}
+      </div>
     </>
   );
 }
