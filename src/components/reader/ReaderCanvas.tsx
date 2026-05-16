@@ -15,7 +15,9 @@ const EpubReader = dynamic(() => import("@/components/reader/EpubReader"), {
 
 import { useBookData, useTts, useReaderUI, useNavigation, useReaderSettings } from "./providers";
 import { useReaderContext } from "./ReaderContext";
+import { ReaderToolbar } from "@/components/reader/ReaderToolbar";
 import { useReaderSettingsStore } from "@/stores/reader-settings";
+import { cn } from "@/lib/utils";
 
 function ReaderCanvasInner() {
   const { book, bookData, bookUrl, highlights, initialLocation } = useBookData();
@@ -27,7 +29,7 @@ function ReaderCanvasInner() {
     activeTtsParagraphId, 
     activeTtsSentenceIndexInParagraph 
   } = useTts();
-  const { currentChapterTitle } = useReaderUI();
+  const { currentChapterTitle, toolbarVisible } = useReaderUI();
   const {
     progress,
     currentPage,
@@ -50,8 +52,20 @@ function ReaderCanvasInner() {
 
   if (!book) return null;
 
+  const showToolbar = toolbarVisible && !isSpeaking && !isTtsViewOpen;
+
   return (
     <div className="relative h-full w-full flex flex-col gap-0 overflow-hidden bg-[var(--reader-bg)] border-none shadow-none">
+      {/* Top Toolbar Area - Part of the flow with fixed height to prevent layout shift */}
+      <div 
+        className={cn(
+          "shrink-0 transition-opacity duration-300 ease-in-out h-11",
+          showToolbar ? "opacity-100" : "opacity-0 pointer-events-none"
+        )}
+      >
+        <ReaderToolbar />
+      </div>
+
       <div className="relative flex-1 min-h-0 w-full border-none shadow-none">
         {book.format === "epub" && (bookData || bookUrl) && (
           <EpubReader

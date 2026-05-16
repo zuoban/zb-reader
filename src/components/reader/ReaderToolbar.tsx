@@ -91,36 +91,31 @@ export const ReaderToolbar = memo(function ReaderToolbar({
 
   return (
     <TooltipProvider>
-      {/* 顶部导航栏 */}
-      <div
-        className={cn(
-          "fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-in-out",
-          toolbarVisible && !isSpeaking && !isTtsViewOpen ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
-        )}
-      >
-        <div className="grid h-14 grid-cols-[auto_minmax(0,1fr)_auto] items-center border-b border-[color-mix(in_srgb,var(--reader-text)_5%,transparent)] bg-[var(--reader-bg)]/95 px-4 backdrop-blur-md">
+      {/* 顶部导航栏 - 不再使用 fixed 定位，改为自然流布局 */}
+      <div className="relative w-full overflow-hidden transition-all duration-300">
+        <div className="grid h-11 grid-cols-[auto_minmax(0,1fr)_auto] items-center bg-[var(--reader-bg)]/80 px-4 backdrop-blur-xl">
           {/* 左侧：返回 */}
-          <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
+          <div className="flex items-center gap-0.5 sm:gap-1 shrink-0 opacity-70 hover:opacity-100 transition-opacity">
             <ToolbarButton onClick={handleBack} tooltip="返回书架">
-              <ArrowLeft className="size-5" />
+              <ArrowLeft className="size-4.5" />
             </ToolbarButton>
-            <div className="h-5 w-px bg-[var(--reader-text)]/10 mx-1 sm:mx-2" />
+            <div className="h-4 w-px bg-[var(--reader-text)]/10 mx-1 sm:mx-1.5" />
             <ToolbarButton onClick={openToc} tooltip="目录">
-              <List className="size-5" />
+              <List className="size-4.5" />
             </ToolbarButton>
             <ToolbarButton
               onClick={handleToggleBookmark}
               tooltip={isCurrentBookmarked ? "取消书签" : "添加书签"}
               isActive={isCurrentBookmarked}
             >
-              {isCurrentBookmarked ? <BookmarkCheck className="size-5" /> : <Bookmark className="size-5" />}
+              {isCurrentBookmarked ? <BookmarkCheck className="size-4.5" /> : <Bookmark className="size-4.5" />}
             </ToolbarButton>
           </div>
 
           {/* 中间：书名 */}
-          <div className="min-w-0 px-2 text-center sm:px-4">
+          <div className="min-w-0 px-2 text-center sm:px-4 opacity-50">
             <h1
-              className="truncate font-heading text-[13px] font-bold tracking-tight text-[var(--reader-text)] sm:text-sm"
+              className="truncate font-heading text-[12px] font-bold tracking-tight text-[var(--reader-text)]"
               title={book?.title}
             >
               {book?.title}
@@ -128,13 +123,13 @@ export const ReaderToolbar = memo(function ReaderToolbar({
           </div>
 
           {/* 右侧：功能 */}
-          <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
+          <div className="flex items-center gap-0.5 sm:gap-1 shrink-0 opacity-70 hover:opacity-100 transition-opacity">
             <ToolbarButton
               onClick={handleToggleTts}
               tooltip={isSpeaking ? "停止" : "朗读"}
               isActive={isSpeaking}
             >
-              {isSpeaking ? <Pause className="size-5" /> : <Volume2 className="size-5" />}
+              {isSpeaking ? <Pause className="size-4.5" /> : <Volume2 className="size-4.5" />}
             </ToolbarButton>
 
             <ToolbarButton
@@ -142,20 +137,19 @@ export const ReaderToolbar = memo(function ReaderToolbar({
               tooltip={isFullscreen ? "退出全屏" : "全屏"}
               isActive={isFullscreen}
             >
-              {isFullscreen ? <Minimize className="size-5" /> : <Maximize className="size-5" />}
+              {isFullscreen ? <Minimize className="size-4.5" /> : <Maximize className="size-4.5" />}
             </ToolbarButton>
 
-            <div className="h-5 w-px bg-[var(--reader-text)]/10 mx-1 sm:mx-2" />
+            <div className="h-4 w-px bg-[var(--reader-text)]/10 mx-1 sm:mx-1.5" />
 
             <ToolbarButton onClick={() => setSettingsOpen(true)} tooltip="阅读设置">
-              <Settings className="size-5" />
+              <Settings className="size-4.5" />
             </ToolbarButton>
 
             {rightContent}
           </div>
         </div>
       </div>
-
     </TooltipProvider>
   );
 });

@@ -48,8 +48,6 @@ function ReaderContent() {
     >
       <ReaderCanvas />
 
-      <ReaderToolbar />
-
       <SidePanel />
 
       <ReadingSettings />
