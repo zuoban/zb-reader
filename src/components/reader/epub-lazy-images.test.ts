@@ -31,6 +31,48 @@ describe("rewriteImagesForLazyLoading", () => {
 });
 
 describe("installEpubLazyImageLoader", () => {
+  it("uses the manual loader for iframe documents when IntersectionObserver exists", () => {
+    const observe = vi.fn();
+    const disconnect = vi.fn();
+    const OriginalIntersectionObserver = window.IntersectionObserver;
+    class TestIntersectionObserver {
+      observe = observe;
+      unobserve = vi.fn();
+      disconnect = disconnect;
+    }
+    vi.stubGlobal("IntersectionObserver", TestIntersectionObserver);
+
+    const doc = document.implementation.createHTMLDocument();
+    doc.body.innerHTML = `<img id="near" data-reader-lazy-src="/near.jpg" />`;
+
+    const root = document.createElement("div");
+    document.body.appendChild(root);
+
+    Object.defineProperty(root, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({ top: 0, bottom: 500, left: 0, right: 400, width: 400, height: 500 }),
+    });
+
+    const near = doc.getElementById("near") as HTMLImageElement;
+    Object.defineProperty(near, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({ top: 100, bottom: 200, left: 0, right: 100, width: 100, height: 100 }),
+    });
+
+    const cleanup = installEpubLazyImageLoader(doc, () => root, { rootMargin: 300 });
+
+    try {
+      expect(near.getAttribute("src")).toBe("/near.jpg");
+      expect(observe).not.toHaveBeenCalled();
+    } finally {
+      cleanup();
+      vi.unstubAllGlobals();
+      if (OriginalIntersectionObserver) {
+        vi.stubGlobal("IntersectionObserver", OriginalIntersectionObserver);
+      }
+    }
+  });
+
   it("loads only images near the scroll viewport", () => {
     const doc = document.implementation.createHTMLDocument();
     doc.body.innerHTML = `

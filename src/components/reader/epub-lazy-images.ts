@@ -70,6 +70,10 @@ function loadImage(image: HTMLImageElement) {
   image.removeAttribute(LAZY_SRC_ATTR);
 }
 
+function canUseIntersectionObserver(root: HTMLElement | null, doc: Document) {
+  return Boolean(root && root.ownerDocument === doc && "IntersectionObserver" in window);
+}
+
 export function installEpubLazyImageLoader(
   doc: Document,
   getScrollRoot: ScrollRootProvider,
@@ -82,7 +86,7 @@ export function installEpubLazyImageLoader(
   // containers that haven't been created yet.
   const root = getScrollRoot();
 
-  if (root && "IntersectionObserver" in window) {
+  if (canUseIntersectionObserver(root, doc)) {
     const pendingImages = new Set(
       Array.from(doc.querySelectorAll<HTMLImageElement>(`img[${LAZY_SRC_ATTR}]`))
     );
