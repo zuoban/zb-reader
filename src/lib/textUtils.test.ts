@@ -2,8 +2,43 @@ import { describe, expect, it } from "vitest";
 import {
   getTtsSentenceKey,
   paragraphsToSentences,
+  splitIntoSentences,
   type ReaderParagraph,
 } from "@/lib/textUtils";
+
+describe("splitIntoSentences", () => {
+  it("does not split inside URLs", () => {
+    expect(
+      splitIntoSentences(
+        "项目地址是 https://reader.example.com/books/123?rate=1.25。也可以打开 www.example.org/docs/page.html 查看。"
+      )
+    ).toEqual([
+      "项目地址是 https://reader.example.com/books/123?rate=1.25。",
+      "也可以打开 www.example.org/docs/page.html 查看。",
+    ]);
+  });
+
+  it("does not split inside decimal numbers", () => {
+    expect(splitIntoSentences("音量设为 0.75，语速是 1.25。下一句。")).toEqual([
+      "音量设为 0.75，语速是 1.25。",
+      "下一句。",
+    ]);
+  });
+
+  it("does not split inside email addresses", () => {
+    expect(splitIntoSentences("请发到 reader.support@example.co.uk。收到后回复。")).toEqual([
+      "请发到 reader.support@example.co.uk。",
+      "收到后回复。",
+    ]);
+  });
+
+  it("does not split inside personal name initials", () => {
+    expect(splitIntoSentences("Alan J. Perlis 说过这句话。下一句。")).toEqual([
+      "Alan J. Perlis 说过这句话。",
+      "下一句。",
+    ]);
+  });
+});
 
 describe("paragraphsToSentences", () => {
   it("assigns sentence indexes within each paragraph", () => {

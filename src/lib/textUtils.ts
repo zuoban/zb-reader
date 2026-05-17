@@ -72,6 +72,10 @@ const ABBREVIATIONS = new Set([
 // 引号字符
 const QUOTES = ['"', "'", "'", "'", '"', '"', "「", "」", "『", "』", "【", "】"];
 
+function trimProtectedUrlEnd(url: string): string {
+  return url.replace(/[。！？!?，,；;：:、]+$/u, "").replace(/\.$/, "");
+}
+
 /**
  * 智能句子分割
  *
@@ -90,11 +94,30 @@ export function splitIntoSentences(text: string, maxLength = 500): string[] {
   // 预处理：保护特殊内容
   const protectedRanges: Array<{ start: number; end: number; type: string }> = [];
 
-  // 保护 URL
-  const urlRegex = /https?:\/\/[^\s]+/g;
+  // 保护邮箱地址
+  const emailRegex =
+    /[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+/g;
   let match;
+  while ((match = emailRegex.exec(text)) !== null) {
+    protectedRanges.push({
+      start: match.index,
+      end: match.index + match[0].length,
+      type: "email",
+    });
+  }
+
+  // 保护 URL（含裸域名），避免域名、路径、查询参数中的点号被当作句末。
+  const urlRegex =
+    /(?:https?:\/\/|www\.)[^\s<>"'「」『』【】。！？]+|(?<!@)\b[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+(?:\/[^\s<>"'「」『』【】。！？]*)?/g;
   while ((match = urlRegex.exec(text)) !== null) {
-    protectedRanges.push({ start: match.index, end: match.index + match[0].length, type: "url" });
+    const protectedUrl = trimProtectedUrlEnd(match[0]);
+    if (protectedUrl.length > 0) {
+      protectedRanges.push({
+        start: match.index,
+        end: match.index + protectedUrl.length,
+        type: "url",
+      });
+    }
   }
 
   // 保护数字（包括版本号如 v1.0, 2.5x）
@@ -109,6 +132,22 @@ export function splitIntoSentences(text: string, maxLength = 500): string[] {
         start: match.index,
         end: match.index + match[0].length,
         type: "number",
+      });
+    }
+  }
+
+  // 保护英文人名中的首字母缩写，如 Alan J. Perlis、J. R. R. Tolkien。
+  const nameInitialRegex = /\b[A-Z]\.(?=\s+[A-Z])/g;
+  while ((match = nameInitialRegex.exec(text)) !== null) {
+    const dotIndex = match.index + 1;
+    const isOverlapping = protectedRanges.some(
+      (r) => r.start <= dotIndex && r.end > dotIndex
+    );
+    if (!isOverlapping) {
+      protectedRanges.push({
+        start: dotIndex,
+        end: dotIndex + 1,
+        type: "initial",
       });
     }
   }
@@ -161,7 +200,7 @@ export function splitIntoSentences(text: string, maxLength = 500): string[] {
     const endPos = match.index + match[0].length;
     // 检查是否在保护区域内
     const isProtected = protectedRanges.some(
-      (r) => r.start < endPos && r.end >= match!.index
+      (r) => r.start <= match!.index && r.end > match!.index
     );
     if (!isProtected) {
       sentenceEndPositions.push(endPos);
