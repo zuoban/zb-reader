@@ -3,6 +3,8 @@
 import { useCallback } from "react";
 import { ttsAudioCache, TtsAudioLruCache } from "@/lib/ttsAudioCache";
 
+const BROWSER_TTS_CACHE_NAME = "zb-reader-builtin-tts-v1";
+
 interface BuiltinTtsAudioParams {
   text: string;
   voiceName: string;
@@ -11,14 +13,57 @@ interface BuiltinTtsAudioParams {
   volume: number;
 }
 
-interface BuiltinTtsPrepareResponse {
-  audioUrl?: string;
+interface BuiltinTtsErrorResponse {
   error?: string;
   details?: string;
 }
 
-async function prepareBuiltinTtsAudioWithRetry(
+function createAudioObjectUrl(blob: Blob) {
+  return URL.createObjectURL(blob);
+}
+
+function createBrowserCacheRequest(cacheKey: string) {
+  const baseUrl =
+    typeof window !== "undefined" && window.location?.origin
+      ? window.location.origin
+      : "http://localhost";
+  return new Request(`${baseUrl}/api/tts/builtin/prepare?cacheKey=${encodeURIComponent(cacheKey)}`);
+}
+
+async function getBrowserCachedBuiltinTtsBlob(cacheKey: string) {
+  if (typeof caches === "undefined") return null;
+
+  try {
+    const cache = await caches.open(BROWSER_TTS_CACHE_NAME);
+    const response = await cache.match(createBrowserCacheRequest(cacheKey));
+    if (!response?.ok) return null;
+    return response.blob();
+  } catch {
+    return null;
+  }
+}
+
+async function setBrowserCachedBuiltinTtsBlob(cacheKey: string, response: Response) {
+  if (typeof caches === "undefined") return;
+
+  try {
+    const cache = await caches.open(BROWSER_TTS_CACHE_NAME);
+    await cache.put(createBrowserCacheRequest(cacheKey), response.clone());
+  } catch {
+    // Cache API can fail in private browsing or storage pressure; memory cache still covers this session.
+  }
+}
+
+async function parseBuiltinTtsError(res: Response) {
+  const data = (await res.json().catch(() => null)) as BuiltinTtsErrorResponse | null;
+  const message = data?.error || "朗读失败";
+  const details = data?.details ? `: ${data.details}` : "";
+  return `${message}${details}`;
+}
+
+async function fetchBuiltinTtsAudioWithRetry(
   params: BuiltinTtsAudioParams,
+  cacheKey: string,
   signal?: AbortSignal,
   maxRetries = 3
 ) {
@@ -38,18 +83,24 @@ async function prepareBuiltinTtsAudioWithRetry(
         signal,
       });
 
-      const data = (await res.json().catch(() => null)) as BuiltinTtsPrepareResponse | null;
       if (!res.ok) {
-        const message = data?.error || "朗读失败";
-        const details = data?.details ? `: ${data.details}` : "";
-        throw new Error(`${message}${details}`);
+        throw new Error(await parseBuiltinTtsError(res));
       }
 
-      if (!data?.audioUrl) {
-        throw new Error("朗读失败: 音频地址为空");
+      const contentType = res.headers.get("content-type") || "";
+      if (!contentType.startsWith("audio/") && !contentType.includes("application/octet-stream")) {
+        throw new Error("朗读失败: 返回内容不是音频");
       }
 
-      return data.audioUrl;
+      const cacheResponse = res.clone();
+      const blob = await res.blob();
+      if (blob.size === 0) {
+        throw new Error("朗读失败: 音频为空");
+      }
+
+      await setBrowserCachedBuiltinTtsBlob(cacheKey, cacheResponse);
+      ttsAudioCache.set(cacheKey, { kind: "blob", blob });
+      return createAudioObjectUrl(blob);
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") throw err;
       lastError = err as Error;
@@ -84,9 +135,18 @@ export function useBuiltinTtsSpeech(selectedVoiceId: string, ttsRate: number) {
         if (cached?.kind === "url") {
           return cached.audioUrl;
         }
+        if (cached?.kind === "blob") {
+          return createAudioObjectUrl(cached.blob);
+        }
+
+        const browserCachedBlob = await getBrowserCachedBuiltinTtsBlob(cacheKey);
+        if (browserCachedBlob) {
+          ttsAudioCache.set(cacheKey, { kind: "blob", blob: browserCachedBlob });
+          return createAudioObjectUrl(browserCachedBlob);
+        }
       }
 
-      const audioUrl = await prepareBuiltinTtsAudioWithRetry(
+      return fetchBuiltinTtsAudioWithRetry(
         {
           text,
           voiceName: selectedVoiceId,
@@ -94,13 +154,9 @@ export function useBuiltinTtsSpeech(selectedVoiceId: string, ttsRate: number) {
           pitch: 0,
           volume: 100,
         },
+        cacheKey,
         options?.signal
       );
-
-      // 使用服务端短 URL，避免完整朗读文本出现在音频 URL 中。
-      ttsAudioCache.set(cacheKey, { kind: "url", audioUrl });
-
-      return audioUrl;
     },
     [selectedVoiceId, ttsRate]
   );

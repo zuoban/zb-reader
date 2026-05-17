@@ -45,7 +45,7 @@ describe("builtin TTS API", () => {
     );
   });
 
-  it("prepares audio and returns a short audio URL", async () => {
+  it("prepares audio and returns the audio stream directly", async () => {
     const { POST } = await import("./prepare/route");
 
     const res = await POST(
@@ -57,10 +57,11 @@ describe("builtin TTS API", () => {
         volume: 100,
       })
     );
-    const data = (await res.json()) as { audioUrl: string };
 
     expect(res.status).toBe(200);
-    expect(data.audioUrl).toMatch(/^\/api\/tts\/builtin\/audio\/[A-Za-z0-9_-]{43}$/);
+    expect(res.headers.get("content-type")).toBe("audio/mpeg");
+    expect(res.headers.get("cache-control")).toBe("private, max-age=1800");
+    expect(await res.text()).toBe("audio");
     expect(synthesizeMicrosoftSpeech).toHaveBeenCalledWith({
       text: "你好",
       voiceName: "zh-CN-XiaoxiaoMultilingualNeural",
@@ -72,12 +73,10 @@ describe("builtin TTS API", () => {
   });
 
   it("serves prepared audio by cache key", async () => {
-    const { POST } = await import("./prepare/route");
     const { GET } = await import("./audio/[key]/route");
+    const { prepareBuiltinTtsAudio } = await import("@/lib/builtinTtsAudio");
 
-    const prepareRes = await POST(createPostRequest({ text: "缓存音频" }));
-    const { audioUrl } = (await prepareRes.json()) as { audioUrl: string };
-    const key = audioUrl.split("/").pop()!;
+    const { cacheKey: key } = await prepareBuiltinTtsAudio({ text: "缓存音频" });
 
     const audioRes = await GET(createGetRequest(key), { params: Promise.resolve({ key }) });
 

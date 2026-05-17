@@ -4,6 +4,16 @@ import { BuiltinTtsSynthesisError, prepareBuiltinTtsAudio } from "@/lib/builtinT
 import { logger } from "@/lib/logger";
 import { microsoftTtsSpeakSchema } from "@/lib/validations";
 
+function createAudioResponse(body: Buffer, contentType: string) {
+  return new NextResponse(Buffer.from(body), {
+    status: 200,
+    headers: {
+      "Content-Type": contentType,
+      "Cache-Control": "private, max-age=1800",
+    },
+  });
+}
+
 export async function POST(req: NextRequest) {
   const authResult = await getAuthUserId();
   if (authResult.error) {
@@ -31,9 +41,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "生成语音为空" }, { status: 502 });
     }
 
-    return NextResponse.json({
-      audioUrl: `/api/tts/builtin/audio/${result.cacheKey}`,
-    });
+    return createAudioResponse(result.audio.body, result.audio.contentType);
   } catch (error) {
     if (error instanceof BuiltinTtsSynthesisError) {
       return NextResponse.json(
