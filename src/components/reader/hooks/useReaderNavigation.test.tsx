@@ -5,6 +5,12 @@ import type { EpubReaderRef } from "@/components/reader/EpubReader";
 import type { Book } from "@/lib/db/schema";
 import type { TocItem } from "@/types/reader";
 
+interface SelectionMenuPosition {
+  x: number;
+  y: number;
+  bottom?: number;
+}
+
 function createEpubReaderRef(overrides: Partial<EpubReaderRef> = {}) {
   return {
     current: {
@@ -36,8 +42,14 @@ function renderHookHarness({
 }: {
   toc: TocItem[];
   currentHref?: string;
-  setToolbarVisible?: ReturnType<typeof vi.fn>;
-  setSelectionMenu?: ReturnType<typeof vi.fn>;
+  setToolbarVisible?: (value: boolean | ((prev: boolean) => boolean)) => void;
+  setSelectionMenu?: (
+    value:
+      | { visible: boolean; position: SelectionMenuPosition; cfiRange: string; text: string }
+      | ((
+          prev: { visible: boolean; position: SelectionMenuPosition; cfiRange: string; text: string }
+        ) => { visible: boolean; position: SelectionMenuPosition; cfiRange: string; text: string })
+  ) => void;
 }) {
   const epubReaderRef = createEpubReaderRef();
   const values: { current: HookValue | null } = { current: null };

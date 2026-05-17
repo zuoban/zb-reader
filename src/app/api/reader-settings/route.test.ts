@@ -6,6 +6,7 @@ import {
   clampTtsPitch,
   clampTtsVolume,
   clampLegadoRate,
+  clampReaderSettingNumber,
   normalizeMicrosoftPreloadCount,
   isValidFontFamily,
 } from "@/lib/utils";
@@ -27,22 +28,16 @@ vi.mock("@/lib/logger", () => ({
 }));
 
 describe("clampReaderSettingNumber", () => {
-  it("clamps values to the configured range", async () => {
-    const { clampReaderSettingNumber } = await import("./route");
-
+  it("clamps values to the configured range", () => {
     expect(clampReaderSettingNumber(8, 12, 28, 16)).toBe(12);
     expect(clampReaderSettingNumber(40, 12, 28, 16)).toBe(28);
   });
 
-  it("accepts numeric strings", async () => {
-    const { clampReaderSettingNumber } = await import("./route");
-
+  it("accepts numeric strings", () => {
     expect(clampReaderSettingNumber("18", 12, 28, 16)).toBe(18);
   });
 
-  it("falls back for non-finite values", async () => {
-    const { clampReaderSettingNumber } = await import("./route");
-
+  it("falls back for non-finite values", () => {
     expect(clampReaderSettingNumber("abc", 12, 28, 16)).toBe(16);
     expect(clampReaderSettingNumber(Number.POSITIVE_INFINITY, 12, 28, 16)).toBe(16);
   });

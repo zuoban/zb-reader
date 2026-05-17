@@ -13,6 +13,7 @@ import {
   clampTtsPitch,
   clampTtsVolume,
   clampLegadoRate,
+  clampReaderSettingNumber,
   normalizeMicrosoftPreloadCount,
   isValidFontFamily,
 } from "@/lib/utils";
@@ -37,20 +38,6 @@ const DEFAULTS = {
   ttsImmersiveMode: false,
   ttsHighlightStyle: "indicator" as const,
 };
-
-export function clampReaderSettingNumber(
-  value: unknown,
-  min: number,
-  max: number,
-  fallback: number
-): number {
-  const numericValue = Number(value ?? fallback);
-  if (!Number.isFinite(numericValue)) {
-    return fallback;
-  }
-
-  return Math.min(max, Math.max(min, numericValue));
-}
 
 function toResponseShape(settings: typeof readerSettings.$inferSelect | null | undefined) {
   if (!settings) {

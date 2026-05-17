@@ -85,7 +85,7 @@ async function getCachedBookProxyInfo(bookId: string, userId: string): Promise<B
   return entry;
 }
 
-export function normalizeProxyPath(pathSegments?: string[]): string | null {
+function normalizeProxyPath(pathSegments?: string[]): string | null {
   if (!pathSegments || pathSegments.length === 0) {
     return "";
   }

@@ -103,6 +103,19 @@ export function clampLegadoRate(value: number): number {
   return Math.min(200, Math.max(10, value));
 }
 
+export function clampReaderSettingNumber(
+  value: unknown,
+  min: number,
+  max: number,
+  fallback: number
+): number {
+  const numericValue = Number(value ?? fallback);
+  if (!Number.isFinite(numericValue)) {
+    return fallback;
+  }
+  return Math.min(max, Math.max(min, numericValue));
+}
+
 const ALLOWED_TTS_PRELOAD_COUNTS = [1, 2, 3, 5, 8] as const;
 export function normalizeTtsPreloadCount(value: number): number {
   return ALLOWED_TTS_PRELOAD_COUNTS.includes(
