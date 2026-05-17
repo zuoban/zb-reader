@@ -9,7 +9,6 @@ import {
   Settings,
   List,
   Volume2,
-  Pause,
   Maximize,
   Minimize,
 } from "lucide-react";
@@ -76,7 +75,7 @@ export const ReaderToolbar = memo(function ReaderToolbar({
   rightContent,
 }: ReaderToolbarProps) {
   const { book } = useBookData();
-  const { isSpeaking, isTtsViewOpen: _isTtsViewOpen, handleToggleTts } = useTts();
+  const { isSpeaking, openTtsPlayer } = useTts();
   const { 
     toolbarVisible: _toolbarVisible, 
     isFullscreen, 
@@ -125,11 +124,12 @@ export const ReaderToolbar = memo(function ReaderToolbar({
           {/* 右侧：功能 */}
           <div className="flex items-center gap-0.5 sm:gap-1 shrink-0 opacity-70 hover:opacity-100 transition-opacity">
             <ToolbarButton
-              onClick={handleToggleTts}
-              tooltip={isSpeaking ? "停止" : "朗读"}
-              isActive={isSpeaking}
+              onClick={() => {
+                void openTtsPlayer();
+              }}
+              tooltip={isSpeaking ? "打开播放器" : "朗读"}
             >
-              {isSpeaking ? <Pause className="size-4.5" /> : <Volume2 className="size-4.5" />}
+              <Volume2 className="size-4.5" />
             </ToolbarButton>
 
             <ToolbarButton

@@ -109,4 +109,77 @@ describe("useReaderTtsSession", () => {
     );
     expect(setIsSpeaking).toHaveBeenLastCalledWith(false);
   });
+
+  it("opens the TTS player with a current sentence preview without starting playback", async () => {
+    const paragraph = {
+      id: "preview",
+      text: "这是第一句。这里是第二句。",
+      location: "epubcfi(/6/preview)",
+    };
+    const epubReader = {
+      getCurrentParagraphs: vi.fn(() => [paragraph]),
+    } as unknown as EpubReaderRef;
+
+    const playAudioSource = vi.fn(async () => {});
+    const requestBuiltinSpeech = vi.fn(async (text: string) => `audio:${text}`);
+    const setActiveTtsParagraph = vi.fn();
+    const setActiveTtsParagraphId = vi.fn();
+    const setActiveTtsSentenceIndexInParagraph = vi.fn();
+    const setActiveTtsLocation = vi.fn();
+    const setActiveTtsIsCodeBlock = vi.fn();
+    const setActiveTtsHtml = vi.fn();
+    const setIsSpeaking = vi.fn();
+    const setIsTtsViewOpen = vi.fn();
+    const setToolbarVisible = vi.fn();
+
+    const { result } = renderHook(() =>
+      useReaderTtsSession({
+        allSentencesRef: createRef([]),
+        book: { format: "epub" } as Book,
+        currentCfiRef: createRef("epubcfi(/6/preview)"),
+        currentParagraphIndexRef: createRef(0),
+        epubReaderRef: createRef(epubReader),
+        handlePauseTts: vi.fn(),
+        handleResumeTts: vi.fn(),
+        hasPendingResume: vi.fn(() => false),
+        isPaused: false,
+        isSpeaking: false,
+        playAudioSource,
+        readSentencesHashRef: createRef(new Set<string>()),
+        requestBuiltinSpeech,
+        resumePendingPlayback: vi.fn(() => false),
+        setActiveTtsHtml,
+        setActiveTtsIsCodeBlock,
+        setActiveTtsLocation,
+        setActiveTtsParagraph,
+        setActiveTtsParagraphId,
+        setActiveTtsSentenceIndexInParagraph,
+        setIsPaused: vi.fn(),
+        setIsSpeaking,
+        setIsTtsViewOpen,
+        setToolbarVisible,
+        stopCurrentAudio: vi.fn(),
+        ttsCurrentIndexRef: createRef(0),
+        ttsPreloadWindowSize: 1,
+        ttsSessionRef: createRef(0),
+        ttsTotalSentencesRef: createRef(0),
+      } as unknown as Parameters<typeof useReaderTtsSession>[0])
+    );
+
+    await act(async () => {
+      await result.current.openTtsPlayer();
+    });
+
+    expect(setIsTtsViewOpen).toHaveBeenCalledWith(true);
+    expect(setActiveTtsParagraph).toHaveBeenCalledWith("这是第一句。");
+    expect(setActiveTtsHtml).toHaveBeenCalledWith("这是第一句。");
+    expect(setActiveTtsParagraphId).toHaveBeenCalledWith("preview");
+    expect(setActiveTtsSentenceIndexInParagraph).toHaveBeenCalledWith(0);
+    expect(setActiveTtsLocation).toHaveBeenCalledWith("epubcfi(/6/preview)");
+    expect(setActiveTtsIsCodeBlock).toHaveBeenCalledWith(false);
+    expect(requestBuiltinSpeech).not.toHaveBeenCalled();
+    expect(playAudioSource).not.toHaveBeenCalled();
+    expect(setIsSpeaking).not.toHaveBeenCalledWith(true);
+    expect(setToolbarVisible).not.toHaveBeenCalled();
+  });
 });

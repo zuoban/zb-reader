@@ -6,7 +6,6 @@ import { useReaderNavigation } from "@/components/reader/hooks/useReaderNavigati
 import { useReaderContext } from "@/components/reader/ReaderContext";
 import { useProgressSyncCompat } from "@/hooks/useProgressSyncCompat";
 import { useBookData } from "./BookDataProvider";
-import { useTts } from "./TtsProvider";
 import { useReaderUI } from "./ReaderUIProvider";
 import { useAnnotation } from "./AnnotationProvider";
 
@@ -46,7 +45,6 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
   const params = useParams();
   const bookId = params.bookId as string;
   const { book, initialProgress, bookmarks } = useBookData();
-  const { isSpeaking } = useTts();
   const { setToolbarVisible, setToc, setCurrentHref, toc, currentHref } = useReaderUI();
   const { setSelectionMenu, setSelectionMenuKey, setIsCurrentBookmarked } = useAnnotation();
 
@@ -79,7 +77,6 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
     toc,
     currentHref,
     progressRef,
-    isSpeaking,
     setToolbarVisible,
     setSelectionMenu,
     setToc,

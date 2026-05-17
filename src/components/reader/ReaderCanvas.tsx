@@ -62,7 +62,7 @@ function ReaderCanvasInner() {
 
   if (!book) return null;
 
-  const showToolbar = toolbarVisible && !isSpeaking && !isTtsViewOpen;
+  const showToolbar = toolbarVisible && !isTtsViewOpen;
 
   return (
     <div className="relative h-full w-full flex flex-col gap-0 overflow-hidden bg-[var(--reader-bg)] border-none shadow-none">
@@ -91,7 +91,7 @@ function ReaderCanvasInner() {
             onLocationChange={handleLocationChange}
             onTocLoaded={handleTocLoaded}
             onTextSelected={handleTextSelected}
-            onClick={isSpeaking ? undefined : handleToggleToolbar}
+            onClick={handleToggleToolbar}
             onSwipeLeft={handleNextChapter}
             onSwipeRight={handlePrevChapter}
             onPrevChapter={handlePrevChapter}

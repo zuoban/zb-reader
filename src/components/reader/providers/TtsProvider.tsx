@@ -26,6 +26,7 @@ interface TtsContextValue {
   activeTtsParagraphId: string | null;
   activeTtsSentenceIndexInParagraph: number;
   handleToggleTts: () => void;
+  openTtsPlayer: () => Promise<void>;
   handlePauseTts: () => void;
   handleResumeTts: () => void;
   handleTtsNextChapter: () => void;
@@ -100,7 +101,7 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
     }
   }, [book?.format, epubReaderRef, resetTtsState, stopTransport]);
 
-  const { handleToggleTts, handleTtsNextChapter, handleTtsPrevChapter } =
+  const { handleToggleTts, handleTtsNextChapter, handleTtsPrevChapter, openTtsPlayer } =
     useReaderTtsSession({
       allSentencesRef,
       book,
@@ -153,6 +154,7 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
   const value = {
     ...ttsState,
     handleToggleTts,
+    openTtsPlayer,
     handlePauseTts,
     handleResumeTts,
     handleTtsNextChapter,

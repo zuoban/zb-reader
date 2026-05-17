@@ -46,7 +46,6 @@ interface UseReaderNavigationParams {
   toc: TocItem[];
   currentHref: string | undefined;
   progressRef: React.MutableRefObject<number | null>;
-  isSpeaking: boolean;
   setToolbarVisible: (value: boolean | ((prev: boolean) => boolean)) => void;
   setSelectionMenu: (
     value:
@@ -106,7 +105,6 @@ export function useReaderNavigation({
   toc,
   currentHref,
   progressRef,
-  isSpeaking,
   setToolbarVisible,
   setSelectionMenu,
   setToc,
@@ -194,12 +192,9 @@ export function useReaderNavigation({
   }, [onTextSelectionOpened, setSelectionMenu]);
 
   const handleToggleToolbar = useCallback(() => {
-    if (isSpeaking) {
-      return;
-    }
     setToolbarVisible((prev: boolean) => !prev);
     setSelectionMenu((prev) => ({ ...prev, visible: false }));
-  }, [isSpeaking, setSelectionMenu, setToolbarVisible]);
+  }, [setSelectionMenu, setToolbarVisible]);
 
   const isReturningRef = useRef(false);
 

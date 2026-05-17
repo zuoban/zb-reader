@@ -538,6 +538,63 @@ export function useReaderTtsSession({
     ttsTotalSentencesRef,
   ]);
 
+  const openTtsPlayer = useCallback(async () => {
+    setIsTtsViewOpen(true);
+
+    if (isSpeaking) {
+      return;
+    }
+
+    let paragraphs = getReadableParagraphs();
+    if (paragraphs.length === 0) {
+      await wait(220);
+      paragraphs = getReadableParagraphs();
+    }
+
+    if (paragraphs.length === 0) {
+      toast.error("当前页面没有可朗读内容");
+      return;
+    }
+
+    const sentences = paragraphsToSentences(paragraphs);
+    allSentencesRef.current = sentences;
+    ttsTotalSentencesRef.current = sentences.length;
+    currentParagraphIndexRef.current = 0;
+    ttsCurrentIndexRef.current = 0;
+
+    const punctuationOnlyRegex = /^[\s\p{P}\p{S}\p{Z}]*$/u;
+    const firstReadableSentence = sentences.find(
+      (sentence) =>
+        sentence.text.trim().length > 0 && !punctuationOnlyRegex.test(sentence.text)
+    );
+
+    if (!firstReadableSentence) {
+      toast.error("当前页面没有可朗读内容");
+      return;
+    }
+
+    setActiveTtsParagraph(firstReadableSentence.text);
+    setActiveTtsParagraphId(firstReadableSentence.paragraphId);
+    setActiveTtsSentenceIndexInParagraph(firstReadableSentence.sentenceIndexInParagraph);
+    setActiveTtsLocation(firstReadableSentence.location ?? null);
+    setActiveTtsIsCodeBlock(!!firstReadableSentence.isCodeBlock);
+    setActiveTtsHtml(firstReadableSentence.html || firstReadableSentence.text);
+  }, [
+    allSentencesRef,
+    currentParagraphIndexRef,
+    getReadableParagraphs,
+    isSpeaking,
+    setActiveTtsHtml,
+    setActiveTtsIsCodeBlock,
+    setActiveTtsLocation,
+    setActiveTtsParagraph,
+    setActiveTtsParagraphId,
+    setActiveTtsSentenceIndexInParagraph,
+    setIsTtsViewOpen,
+    ttsCurrentIndexRef,
+    ttsTotalSentencesRef,
+  ]);
+
   const handleToggleTts = useCallback(async () => {
     if (isSpeaking) {
       if (isPaused) {
@@ -609,5 +666,6 @@ export function useReaderTtsSession({
     handleToggleTts,
     handleTtsNextChapter,
     handleTtsPrevChapter,
+    openTtsPlayer,
   };
 }

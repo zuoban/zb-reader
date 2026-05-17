@@ -1,7 +1,6 @@
 "use client";
 
 import { FullscreenTtsView } from "@/components/reader/FullscreenTtsView";
-import { TtsFloatingControl } from "@/components/reader/TtsFloatingControl";
 
 import { useBookData, useTts, useReaderUI, useNavigation } from "./providers";
 import { useReaderSettingsStore } from "@/stores/reader-settings";
@@ -28,17 +27,13 @@ export function ReaderTtsLayer() {
     setIsTtsViewOpen,
   } = useTts();
   
-  const { isFullscreen, toggleFullscreen: onToggleFullscreen, setToolbarVisible, currentChapterTitle } = useReaderUI();
+  const { isFullscreen, toggleFullscreen: onToggleFullscreen, currentChapterTitle } = useReaderUI();
   const { progress } = useNavigation();
   
   const selectedTtsVoiceId = useReaderSettingsStore((s) => s.ttsVoiceId);
   const setTtsVoiceId = useReaderSettingsStore((s) => s.setTtsVoiceId);
 
   const onBackToReader = () => setIsTtsViewOpen(false);
-  const onOpenImmersiveView = () => {
-    setIsTtsViewOpen(true);
-    setToolbarVisible(false);
-  };
 
   if (!book) return null;
 
@@ -67,15 +62,6 @@ export function ReaderTtsLayer() {
         onSelectedTtsVoiceIdChange={setTtsVoiceId}
         onTtsRateChange={onTtsRateChange}
         onToggleFullscreen={onToggleFullscreen}
-      />
-
-      <TtsFloatingControl
-        hidden={isTtsViewOpen}
-        isSpeaking={isSpeaking}
-        isPaused={isPaused}
-        onToggle={onToggle}
-        onStop={onStop}
-        onOpenImmersiveView={onOpenImmersiveView}
       />
     </>
   );

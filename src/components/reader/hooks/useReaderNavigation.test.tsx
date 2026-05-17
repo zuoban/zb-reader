@@ -31,9 +31,13 @@ type HookValue = ReturnType<typeof useReaderNavigation>;
 function renderHookHarness({
   toc,
   currentHref,
+  setToolbarVisible = vi.fn(),
+  setSelectionMenu = vi.fn(),
 }: {
   toc: TocItem[];
   currentHref?: string;
+  setToolbarVisible?: ReturnType<typeof vi.fn>;
+  setSelectionMenu?: ReturnType<typeof vi.fn>;
 }) {
   const epubReaderRef = createEpubReaderRef();
   const values: { current: HookValue | null } = { current: null };
@@ -47,9 +51,8 @@ function renderHookHarness({
       toc,
       currentHref,
       progressRef: { current: 0 },
-      isSpeaking: false,
-      setToolbarVisible: vi.fn(),
-      setSelectionMenu: vi.fn(),
+      setToolbarVisible,
+      setSelectionMenu,
       setToc: vi.fn(),
       setCurrentHref: vi.fn(),
       setProgress: vi.fn(),
@@ -115,5 +118,22 @@ describe("useReaderNavigation", () => {
     });
 
     expect(epubReaderRef.current.goToHref).toHaveBeenCalledWith("chapter1.xhtml");
+  });
+
+  it("allows toggling the toolbar while TTS is speaking", () => {
+    const setToolbarVisible = vi.fn();
+    const setSelectionMenu = vi.fn();
+    const { values } = renderHookHarness({
+      toc: [],
+      setToolbarVisible,
+      setSelectionMenu,
+    });
+
+    act(() => {
+      values.current?.handleToggleToolbar();
+    });
+
+    expect(setToolbarVisible).toHaveBeenCalledWith(expect.any(Function));
+    expect(setSelectionMenu).toHaveBeenCalledWith(expect.any(Function));
   });
 });
