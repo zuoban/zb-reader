@@ -47,7 +47,6 @@ export const readerSettingsSchema = z.object({
   ttsPitch: optionalNumber,
   ttsVolume: optionalNumber,
   microsoftPreloadCount: optionalNumber,
-  ttsAutoNextChapter: z.boolean().optional(),
   ttsHighlightColor: z.string().optional(),
   autoScrollToActive: z.boolean().optional(),
   flipMode: z.enum(["scroll", "page"]).optional(),

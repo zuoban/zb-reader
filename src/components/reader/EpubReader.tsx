@@ -59,10 +59,10 @@ interface EpubReaderProps {
 export type { ReaderParagraph };
 
 export interface EpubReaderRef {
-  goToLocation: (cfi: string) => void;
-  goToHref: (href: string) => void;
-  nextPage: () => void;
-  prevPage: () => void;
+  goToLocation: (cfi: string) => Promise<void>;
+  goToHref: (href: string) => Promise<void>;
+  nextPage: () => Promise<void>;
+  prevPage: () => Promise<void>;
   scrollDown: (amount?: number) => void;
   scrollUp: (amount?: number) => void;
   getCurrentLocation: () => string | null;
@@ -153,28 +153,25 @@ const EpubReader = forwardRef<EpubReaderRef, EpubReaderProps>(
     );
 
     useImperativeHandle(ref, () => ({
-      goToLocation(cfi: string) {
-        void resolveRangeSafely(cfi).then((range) => {
-          if (!range) return;
-          renditionRef.current?.display(stripScrollSuffix(cfi));
-        });
+      async goToLocation(cfi: string) {
+        const range = await resolveRangeSafely(cfi);
+        if (!range) return;
+        await renditionRef.current?.display(stripScrollSuffix(cfi));
       },
-      goToHref(href: string) {
-        renditionRef.current?.display(href);
+      async goToHref(href: string) {
+        await renditionRef.current?.display(href);
       },
-      nextPage() {
+      async nextPage() {
         const rendition = renditionRef.current;
         if (!rendition) return;
-        void rendition.next().then(() => {
-          epubContextRef.current.getScrollContainer()?.scrollTo(0, 0);
-        });
+        await rendition.next();
+        epubContextRef.current.getScrollContainer()?.scrollTo(0, 0);
       },
-      prevPage() {
+      async prevPage() {
         const rendition = renditionRef.current;
         if (!rendition) return;
-        void rendition.prev().then(() => {
-          epubContextRef.current.getScrollContainer()?.scrollTo(0, 0);
-        });
+        await rendition.prev();
+        epubContextRef.current.getScrollContainer()?.scrollTo(0, 0);
       },
       scrollDown(amount = 300) {
         const container = epubContextRef.current.getScrollContainer();

@@ -12,7 +12,6 @@ const baseSettings = {
   ttsPitch: 1,
   ttsVolume: 1,
   ttsPreloadCount: 5,
-  ttsAutoNextChapter: true,
   ttsHighlightColor: "#3b82f6",
   autoScrollToActive: true,
   ttsImmersiveMode: false,

@@ -29,7 +29,6 @@ interface ReaderSettingsState {
   ttsVolume: number;
   ttsPreloadCount: number;
   ttsHighlightColor: string;
-  ttsAutoNextChapter: boolean;
   autoScrollToActive: boolean;
   flipMode: FlipMode;
   ttsImmersiveMode: boolean;
@@ -48,7 +47,6 @@ interface ReaderSettingsActions {
   setTtsVolume: (volume: number) => void;
   setTtsPreloadCount: (count: number) => void;
   setTtsHighlightColor: (color: string) => void;
-  setTtsAutoNextChapter: (enabled: boolean) => void;
   setAutoScrollToActive: (enabled: boolean) => void;
   setFlipMode: (mode: FlipMode) => void;
   setTtsImmersiveMode: (enabled: boolean) => void;
@@ -73,7 +71,6 @@ const DEFAULT_STATE: ReaderSettingsState = {
   ttsVolume: 1,
   ttsPreloadCount: 5,
   ttsHighlightColor: "#3b82f6",
-  ttsAutoNextChapter: true,
   autoScrollToActive: true,
   flipMode: "scroll",
   ttsImmersiveMode: false,
@@ -99,7 +96,6 @@ export const useReaderSettingsStore = create<
       setTtsPreloadCount: (count) =>
         set({ ttsPreloadCount: normalizeTtsPreloadCount(count) }),
       setTtsHighlightColor: (color) => set({ ttsHighlightColor: color }),
-      setTtsAutoNextChapter: (enabled) => set({ ttsAutoNextChapter: enabled }),
       setAutoScrollToActive: (enabled) => set({ autoScrollToActive: enabled }),
       setFlipMode: (flipMode) => set({ flipMode }),
       setTtsImmersiveMode: (ttsImmersiveMode) => set({ ttsImmersiveMode }),
@@ -148,7 +144,6 @@ export const useReaderSettingsStore = create<
                 ? normalizeTtsPreloadCount(settings.microsoftPreloadCount)
                 : DEFAULT_STATE.ttsPreloadCount,
             ttsHighlightColor: settings.ttsHighlightColor || DEFAULT_STATE.ttsHighlightColor,
-            ttsAutoNextChapter: settings.ttsAutoNextChapter ?? DEFAULT_STATE.ttsAutoNextChapter,
             autoScrollToActive: settings.autoScrollToActive ?? DEFAULT_STATE.autoScrollToActive,
             flipMode: settings.flipMode || DEFAULT_STATE.flipMode,
             ttsImmersiveMode: settings.ttsImmersiveMode ?? DEFAULT_STATE.ttsImmersiveMode,
@@ -179,7 +174,6 @@ export const useReaderSettingsStore = create<
               ttsVolume: state.ttsVolume,
               microsoftPreloadCount: state.ttsPreloadCount,
               ttsHighlightColor: state.ttsHighlightColor,
-              ttsAutoNextChapter: state.ttsAutoNextChapter,
               autoScrollToActive: state.autoScrollToActive,
               flipMode: state.flipMode,
               ttsImmersiveMode: state.ttsImmersiveMode,
@@ -251,7 +245,6 @@ export function useReaderSettingsValues() {
       ttsPitch: s.ttsPitch,
       ttsVolume: s.ttsVolume,
       ttsPreloadCount: s.ttsPreloadCount,
-      ttsAutoNextChapter: s.ttsAutoNextChapter,
       ttsHighlightColor: s.ttsHighlightColor,
       flipMode: s.flipMode,
       ttsImmersiveMode: s.ttsImmersiveMode,

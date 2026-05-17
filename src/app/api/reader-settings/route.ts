@@ -27,7 +27,6 @@ const DEFAULTS = {
   ttsPitch: 1,
   ttsVolume: 1,
   microsoftPreloadCount: 5,
-  ttsAutoNextChapter: false,
   ttsHighlightColor: "#3b82f6",
   autoScrollToActive: true,
   flipMode: "scroll" as const,
@@ -68,7 +67,6 @@ function toResponseShape(settings: typeof readerSettings.$inferSelect | null | u
     ttsPitch: settings.ttsPitch,
     ttsVolume: settings.ttsVolume,
     microsoftPreloadCount: settings.microsoftPreloadCount,
-    ttsAutoNextChapter: settings.ttsAutoNextChapter,
     ttsHighlightColor: settings.ttsHighlightColor || "#3b82f6",
     autoScrollToActive: settings.autoScrollToActive,
     flipMode: settings.flipMode || DEFAULTS.flipMode,
@@ -131,10 +129,6 @@ export async function PUT(req: NextRequest) {
       microsoftPreloadCount: normalizeMicrosoftPreloadCount(
         payload.microsoftPreloadCount ?? existing?.microsoftPreloadCount ?? DEFAULTS.microsoftPreloadCount
       ),
-      ttsAutoNextChapter:
-        typeof payload.ttsAutoNextChapter === "boolean"
-          ? payload.ttsAutoNextChapter
-          : existing?.ttsAutoNextChapter ?? DEFAULTS.ttsAutoNextChapter,
       ttsHighlightColor:
         typeof payload.ttsHighlightColor === "string"
           ? payload.ttsHighlightColor
@@ -195,7 +189,6 @@ export async function PUT(req: NextRequest) {
         ttsPitch: nextValues.ttsPitch,
         ttsVolume: nextValues.ttsVolume,
         microsoftPreloadCount: nextValues.microsoftPreloadCount,
-        ttsAutoNextChapter: nextValues.ttsAutoNextChapter,
         ttsHighlightColor: nextValues.ttsHighlightColor,
         autoScrollToActive: nextValues.autoScrollToActive,
         flipMode: nextValues.flipMode,

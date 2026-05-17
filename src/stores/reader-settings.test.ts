@@ -167,6 +167,21 @@ describe("useReaderSettingsStore", () => {
       );
     });
 
+    it("does not save removed TTS auto-next setting", async () => {
+      useReaderSettingsStore.setState({
+        loaded: true,
+      });
+
+      mockFetch.mockResolvedValueOnce({ ok: true });
+
+      await act(async () => {
+        await useReaderSettingsStore.getState().saveToServer();
+      });
+
+      const [, init] = mockFetch.mock.calls[0];
+      expect(JSON.parse(init.body)).not.toHaveProperty("ttsAutoNextChapter");
+    });
+
     it("does not show toast on 401 (session expired)", async () => {
       useReaderSettingsStore.setState({ loaded: true });
       mockFetch.mockResolvedValueOnce({ ok: false, status: 401 });

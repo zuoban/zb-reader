@@ -49,7 +49,6 @@ interface UseReaderTtsSessionParams {
   setIsTtsViewOpen: (value: boolean) => void;
   setToolbarVisible: (value: boolean) => void;
   stopCurrentAudio: () => void;
-  ttsAutoNextChapter: boolean;
   ttsCurrentIndexRef: React.MutableRefObject<number>;
   ttsPreloadWindowSize: number;
   ttsSessionRef: React.MutableRefObject<number>;
@@ -98,7 +97,6 @@ export function useReaderTtsSession({
   setIsTtsViewOpen,
   setToolbarVisible,
   stopCurrentAudio,
-  ttsAutoNextChapter,
   ttsCurrentIndexRef,
   ttsPreloadWindowSize,
   ttsSessionRef,
@@ -195,7 +193,7 @@ export function useReaderTtsSession({
 
   const tryAutoTurnPage = useCallback(
     async (sessionId: number): Promise<boolean> => {
-      if (!book || !ttsAutoNextChapter) return false;
+      if (!book) return false;
 
       const previousIdentity = getPageIdentity();
 
@@ -223,7 +221,7 @@ export function useReaderTtsSession({
         const isNearBottom = scrollBottom < 50;
 
         if (isNearBottom) {
-          epubInstance.nextPage();
+          await epubInstance.nextPage();
         } else {
           epubInstance.scrollDown();
         }
@@ -233,7 +231,7 @@ export function useReaderTtsSession({
 
       return waitForPageChange(previousIdentity, sessionId);
     },
-    [book, epubReaderRef, getPageIdentity, ttsAutoNextChapter, waitForPageChange]
+    [book, epubReaderRef, getPageIdentity, waitForPageChange]
   );
 
   const speakWithBrowserParagraphs = useCallback(

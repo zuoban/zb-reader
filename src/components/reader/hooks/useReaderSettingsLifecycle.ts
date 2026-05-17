@@ -14,7 +14,6 @@ interface ReaderSettingsLifecycleState {
   ttsPitch: number;
   ttsVolume: number;
   ttsPreloadCount: number;
-  ttsAutoNextChapter: boolean;
   ttsHighlightColor: string;
   autoScrollToActive: boolean;
   ttsImmersiveMode: boolean;
@@ -56,7 +55,6 @@ export function useReaderSettingsLifecycle(
     settings.ttsPitch,
     settings.ttsVolume,
     settings.ttsPreloadCount,
-    settings.ttsAutoNextChapter,
     settings.ttsHighlightColor,
     settings.autoScrollToActive,
     settings.ttsImmersiveMode,

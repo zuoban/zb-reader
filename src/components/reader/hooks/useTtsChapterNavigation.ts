@@ -97,9 +97,9 @@ export function useTtsChapterNavigation(deps: ChapterNavigationDeps) {
 
       const previousIdentity = getPageIdentity();
       if (direction === "prev") {
-        epubReaderRef.current?.prevPage();
+        await epubReaderRef.current?.prevPage();
       } else {
-        epubReaderRef.current?.nextPage();
+        await epubReaderRef.current?.nextPage();
       }
 
       const moved = await waitForPageChange(previousIdentity, sessionId);

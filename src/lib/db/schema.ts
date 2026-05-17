@@ -189,9 +189,6 @@ export const readerSettings = sqliteTable("reader_settings", {
   browserVoiceId: text("browser_voice_id"),
   ttsRate: real("tts_rate").default(1).notNull(),
   microsoftPreloadCount: integer("microsoft_preload_count").default(3).notNull(),
-  ttsAutoNextChapter: integer("tts_auto_next_chapter", { mode: "boolean" })
-    .default(false)
-    .notNull(),
   ttsHighlightColor: text("tts_highlight_color").default("#3b82f6").notNull(),
   fontFamily: text("font_family").default("system").notNull(),
   autoScrollToActive: integer("auto_scroll_to_active", { mode: "boolean" })

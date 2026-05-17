@@ -182,6 +182,18 @@ describe("readerSettingsSchema", () => {
 
     expect(result.success).toBe(false);
   });
+
+  it("strips removed TTS auto-next setting from payloads", () => {
+    const result = readerSettingsSchema.safeParse({
+      ttsAutoNextChapter: false,
+      ttsRate: "1.25",
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).not.toHaveProperty("ttsAutoNextChapter");
+    }
+  });
 });
 
 describe("userUpdateSchema", () => {

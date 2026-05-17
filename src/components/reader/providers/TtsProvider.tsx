@@ -48,7 +48,6 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
     ttsVoiceId: selectedTtsVoiceId,
     ttsRate,
     ttsPreloadCount,
-    ttsAutoNextChapter,
   } = useReaderSettingsValues();
   const setTtsRate = useReaderSettingsStore((s) => s.setTtsRate);
 
@@ -128,7 +127,6 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
       setIsTtsViewOpen,
       setToolbarVisible,
       stopCurrentAudio,
-      ttsAutoNextChapter,
       ttsCurrentIndexRef,
       ttsPreloadWindowSize: ttsPreloadCount,
       ttsSessionRef,
